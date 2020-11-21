@@ -33,35 +33,53 @@ class PokemonDataBox < SpriteWrapper
     @showExp      = false   # Specifically, show the Exp bar
     @animatingExp = false
     @expFlash     = 0
+    @sideSize     = sideSize
+    @onPlayerSide = true
+    @largeSideSize = (sideSize > 3)
     initializeDataBoxGraphic(sideSize)
     initializeOtherGraphics(viewport)
     refresh
   end
 
   def initializeDataBoxGraphic(sideSize)
-    onPlayerSide = ((@battler.index%2)==0)
+    @onPlayerSide = ((@battler.index%2)==0)
     # Get the data box graphic and set whether the HP numbers/Exp bar are shown
     if sideSize==1   # One Pokémon on side, use the regular dara box BG
       bgFilename = ["Graphics/Pictures/Battle/databox_normal",
                     "Graphics/Pictures/Battle/databox_normal_foe"][@battler.index%2]
-      if onPlayerSide
+      if @onPlayerSide
         @showHP  = true
         @showExp = true
       end
-    else   # Multiple Pokémon on side, use the thin dara box BG
+    elsif sideSize < 4 # Multiple Pokémon on side, use the thin dara box BG
       bgFilename = ["Graphics/Pictures/Battle/databox_thin",
                     "Graphics/Pictures/Battle/databox_thin_foe"][@battler.index%2]
+    else # For a side with 4 Pokémons or more. 
+      bgFilename = ["Graphics/Pictures/Battle/databox_tiny",
+                    "Graphics/Pictures/Battle/databox_tiny_foe"][@battler.index%2]
     end
     @databoxBitmap  = AnimatedBitmap.new(bgFilename)
     # Determine the co-ordinates of the data box and the left edge padding width
-    if onPlayerSide
-      @spriteX = Graphics.width - 244
-      @spriteY = Graphics.height - 192
-      @spriteBaseX = 34
+    if @onPlayerSide
+      if !@largeSideSize
+        @spriteX = Graphics.width - 244
+        @spriteY = Graphics.height - 192
+        @spriteBaseX = 34
+      else 
+        @spriteX = 10
+        @spriteY = Graphics.height - 96 - @databoxBitmap.height # 96 = heigth of the menu
+        @spriteBaseX = 10
+      end 
     else
-      @spriteX = -16
-      @spriteY = 36
-      @spriteBaseX = 16
+      if !@largeSideSize
+        @spriteX = -16
+        @spriteY = 36
+        @spriteBaseX = 16
+      else 
+        @spriteX = Graphics.width
+        @spriteY = 0
+        @spriteBaseX = 10
+      end 
     end
     case sideSize
     when 2
@@ -70,14 +88,21 @@ class PokemonDataBox < SpriteWrapper
     when 3
       @spriteX += [-12,  12, -6,  6,  0,  0][@battler.index]
       @spriteY += [-42, -46,  4,  0, 50, 46][@battler.index]
+    when 4, 5, 6
+      @spriteX += 80 * @battler.index / 2 if @onPlayerSide
+      @spriteX -= 20 + 80 * ((@battler.index - 1) / 2 + 1) if !@onPlayerSide
     end
   end
 
   def initializeOtherGraphics(viewport)
     # Create other bitmaps
     @numbersBitmap = AnimatedBitmap.new(_INTL("Graphics/Pictures/Battle/icon_numbers"))
-    @hpBarBitmap   = AnimatedBitmap.new(_INTL("Graphics/Pictures/Battle/overlay_hp"))
     @expBarBitmap  = AnimatedBitmap.new(_INTL("Graphics/Pictures/Battle/overlay_exp"))
+    if @largeSideSize
+      @hpBarBitmap   = AnimatedBitmap.new(_INTL("Graphics/Pictures/Battle/overlay_hp_tiny"))
+    else
+      @hpBarBitmap   = AnimatedBitmap.new(_INTL("Graphics/Pictures/Battle/overlay_hp"))
+    end 
     # Create sprite to draw HP numbers on
     @hpNumbers = BitmapSprite.new(124,16,viewport)
     pbSetSmallFont(@hpNumbers.bitmap)
@@ -111,14 +136,23 @@ class PokemonDataBox < SpriteWrapper
 
   def x=(value)
     super
-    @hpBar.x     = value+@spriteBaseX+102
+    if @largeSideSize
+      @hpBar.x     = value+@spriteBaseX
+    else 
+      @hpBar.x     = value+@spriteBaseX+102
+    end 
     @expBar.x    = value+@spriteBaseX+6
     @hpNumbers.x = value+@spriteBaseX+80
   end
 
   def y=(value)
     super
-    @hpBar.y     = value+40
+    if @largeSideSize
+      @hpBar.y     = value+56 if @onPlayerSide
+      @hpBar.y     = value+32 if !@onPlayerSide
+    else
+      @hpBar.y     = value+40
+    end 
     @expBar.y    = value+74
     @hpNumbers.y = value+52
   end
@@ -209,53 +243,69 @@ class PokemonDataBox < SpriteWrapper
     # Draw background panel
     self.bitmap.blt(0,0,@databoxBitmap.bitmap,Rect.new(0,0,@databoxBitmap.width,@databoxBitmap.height))
     # Draw Pokémon's name
-    nameWidth = self.bitmap.text_size(@battler.name).width
-    nameOffset = 0
-    nameOffset = nameWidth-116 if nameWidth>116
-    textPos.push([@battler.name,@spriteBaseX+8-nameOffset,6,false,NAME_BASE_COLOR,NAME_SHADOW_COLOR])
-    # Draw Pokémon's gender symbol
-    case @battler.displayGender
-    when 0   # Male
-      textPos.push([_INTL("♂"),@spriteBaseX+126,6,false,MALE_BASE_COLOR,MALE_SHADOW_COLOR])
-    when 1   # Female
-      textPos.push([_INTL("♀"),@spriteBaseX+126,6,false,FEMALE_BASE_COLOR,FEMALE_SHADOW_COLOR])
-    end
-    pbDrawTextPositions(self.bitmap,textPos)
-    # Draw Pokémon's level
-    imagePos.push(["Graphics/Pictures/Battle/overlay_lv",@spriteBaseX+140,16])
-    pbDrawNumber(@battler.level,self.bitmap,@spriteBaseX+162,16)
-    # Draw shiny icon
-    if @battler.shiny?
-      shinyX = (@battler.opposes?(0)) ? 206 : -6   # Foe's/player's
-      imagePos.push(["Graphics/Pictures/shiny",@spriteBaseX+shinyX,36])
-    end
-    # Draw Mega Evolution/Primal Reversion icon
-    if @battler.mega?
-      imagePos.push(["Graphics/Pictures/Battle/icon_mega",@spriteBaseX+8,34])
-    elsif @battler.primal?
-      primalX = (@battler.opposes?) ? 208 : -28   # Foe's/player's
-      if @battler.isSpecies?(:KYOGRE)
-        imagePos.push(["Graphics/Pictures/Battle/icon_primal_Kyogre",@spriteBaseX+primalX,4])
-      elsif @battler.isSpecies?(:GROUDON)
-        imagePos.push(["Graphics/Pictures/Battle/icon_primal_Groudon",@spriteBaseX+primalX,4])
+    if !@largeSideSize
+      nameWidth = self.bitmap.text_size(@battler.name).width
+      nameOffset = 0
+      nameOffset = nameWidth-116 if nameWidth>116
+      textPos.push([@battler.name,@spriteBaseX+8-nameOffset,6,false,NAME_BASE_COLOR,NAME_SHADOW_COLOR])
+      # Draw Pokémon's gender symbol
+      case @battler.displayGender
+      when 0   # Male
+        textPos.push([_INTL("♂"),@spriteBaseX+126,6,false,MALE_BASE_COLOR,MALE_SHADOW_COLOR])
+      when 1   # Female
+        textPos.push([_INTL("♀"),@spriteBaseX+126,6,false,FEMALE_BASE_COLOR,FEMALE_SHADOW_COLOR])
       end
-    end
-    # Draw owned icon (foe Pokémon only)
-    if @battler.owned? && @battler.opposes?(0)
-      imagePos.push(["Graphics/Pictures/Battle/icon_own",@spriteBaseX+8,36])
+      pbDrawTextPositions(self.bitmap,textPos)
+    end 
+    # Draw Pokémon's level
+    if !@largeSideSize
+      imagePos.push(["Graphics/Pictures/Battle/overlay_lv",@spriteBaseX+140,16])
+      pbDrawNumber(@battler.level,self.bitmap,@spriteBaseX+162,16)
+    else 
+      if @onPlayerSide
+        imagePos.push(["Graphics/Pictures/Battle/overlay_lv",@spriteBaseX,32])
+        pbDrawNumber(@battler.level,self.bitmap,@spriteBaseX+22,32)
+      else 
+        imagePos.push(["Graphics/Pictures/Battle/overlay_lv",@spriteBaseX,8])
+        pbDrawNumber(@battler.level,self.bitmap,@spriteBaseX+22,8)
+      end 
+    end 
+    if !@largeSideSize
+      # Draw shiny icon
+      if @battler.shiny?
+        shinyX = (@battler.opposes?(0)) ? 206 : -6   # Foe's/player's
+        imagePos.push(["Graphics/Pictures/shiny",@spriteBaseX+shinyX,36])
+      end
+      # Draw Mega Evolution/Primal Reversion icon
+      if @battler.mega?
+        imagePos.push(["Graphics/Pictures/Battle/icon_mega",@spriteBaseX+8,34])
+      elsif @battler.primal?
+        primalX = (@battler.opposes?) ? 208 : -28   # Foe's/player's
+        if @battler.isSpecies?(:KYOGRE)
+          imagePos.push(["Graphics/Pictures/Battle/icon_primal_Kyogre",@spriteBaseX+primalX,4])
+        elsif @battler.isSpecies?(:GROUDON)
+          imagePos.push(["Graphics/Pictures/Battle/icon_primal_Groudon",@spriteBaseX+primalX,4])
+        end
+      end
+      # Draw owned icon (foe Pokémon only)
+      if @battler.owned? && @battler.opposes?(0)
+        imagePos.push(["Graphics/Pictures/Battle/icon_own",@spriteBaseX+8,36])
+      end
     end
     # Draw status icon
     if @battler.status>0
       s = @battler.status
       s = 6 if s==PBStatuses::POISON && @battler.statusCount>0   # Badly poisoned
-      imagePos.push(["Graphics/Pictures/Battle/icon_statuses",@spriteBaseX+24,36,
+      status_x = (@largeSideSize ? @spriteBaseX : @spriteBaseX+24)
+      status_y = (@largeSideSize ? 8 : 36)
+      imagePos.push(["Graphics/Pictures/Battle/icon_statuses",status_x,status_y,
          0,(s-1)*STATUS_ICON_HEIGHT,-1,STATUS_ICON_HEIGHT])
     end
     pbDrawImagePositions(self.bitmap,imagePos)
     refreshHP
     refreshExp
   end
-
+  
   def refreshHP
     @hpNumbers.bitmap.clear
     return if !@battler.pokemon
@@ -496,6 +546,8 @@ class PokemonBattlerSprite < RPG::Sprite
     @spriteXExtra     = 0   # Offset due to "bobbing" animation
     @spriteYExtra     = 0   # Offset due to "bobbing" animation
     @_iconBitmap      = nil
+    @onPlayerSide     = ((index%2)==0)
+    @largeSideSize    = (sideSize > 3)
     self.visible      = false
   end
 

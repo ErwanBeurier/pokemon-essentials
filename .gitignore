@@ -15,3 +15,6 @@ RGSS*.dll
 # Temp files
 
 ~*
+# Word files
+*.docx
+errorlog.txt - Raccourci.lnk

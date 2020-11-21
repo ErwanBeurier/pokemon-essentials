@@ -177,6 +177,8 @@ class PokeBattle_Battle
   # For "1v2" names, the first number is for the player's side and the second
   # number is for the opposing side.
   def setBattleMode(mode)
+    @sideSizes = PokeBattle_Battle.parseBattleMode(mode)
+    return 
     @sideSizes =
       case mode
       when "triple", "3v3"; [3,3]
@@ -469,6 +471,8 @@ class PokeBattle_Battle
   # opposite side, and also when deciding which target to select first for some
   # moves.
   def pbGetOpposingIndicesInOrder(idxBattler)
+    ret = pbGetOpposingIndicesInOrderComplete(idxBattler)
+    return ret if ret
     case pbSideSize(0)
     when 1
       case pbSideSize(1)
@@ -517,6 +521,7 @@ class PokeBattle_Battle
   end
 
   def nearBattlers?(idxBattler1,idxBattler2)
+    return nearBattlersComplete?(idxBattler1,idxBattler2)
     return false if idxBattler1==idxBattler2
     return true if pbSideSize(0)<=2 && pbSideSize(1)<=2
     # Get all pairs of battler positions that are not close to each other

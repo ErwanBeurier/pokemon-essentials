@@ -170,6 +170,20 @@ class PokeBattle_Battle
       when 3
         pbDisplayPaused(_INTL("Oh! A wild {1}, {2} and {3} appeared!",foeParty[0].name,
            foeParty[1].name,foeParty[2].name))
+      when 4
+        pbDisplayPaused(_INTL("Oh! A wild {1}, {2}, {3} and {4} appeared!",
+            foeParty[0].name,foeParty[1].name,
+            foeParty[2].name,foeParty[3].name))
+      when 5
+        pbDisplayPaused(_INTL("Oh! A wild {1}, {2}, {3}, {4} and {5} appeared!",
+            foeParty[0].name, foeParty[1].name,
+            foeParty[2].name, foeParty[3].name,
+            foeParty[4].name))
+      when 5
+        pbDisplayPaused(_INTL("Oh! A wild {1}, {2}, {3}, {4}, {5} and {6} appeared!",
+            foeParty[0].name, foeParty[1].name,
+            foeParty[2].name, foeParty[3].name,
+            foeParty[4].name, foeParty[5].name))
       end
     else   # Trainer battle
       case @opponent.length
@@ -203,6 +217,20 @@ class PokeBattle_Battle
         when 3
           msg += _INTL("{1} sent out {2}, {3} and {4}!",t.fullname,
              @battlers[sent[0]].name,@battlers[sent[1]].name,@battlers[sent[2]].name)
+        when 4
+          msg += _INTL("{1} sent out {2}, {3}, {4} and {5}!",t.fullname,
+             @battlers[sent[0]].name,@battlers[sent[1]].name,
+             @battlers[sent[2]].name,@battlers[sent[3]].name)
+        when 5
+          msg += _INTL("{1} sent out {2}, {3}, {4}, {5} and {6}!",t.fullname,
+             @battlers[sent[0]].name,@battlers[sent[1]].name,
+             @battlers[sent[2]].name,@battlers[sent[3]].name,
+             @battlers[sent[4]].name)
+        when 6
+          msg += _INTL("{1} sent out {2}, {3}, {4}, {5}, {6} and {7}!",t.fullname,
+             @battlers[sent[0]].name,@battlers[sent[1]].name,
+             @battlers[sent[2]].name,@battlers[sent[3]].name,
+             @battlers[sent[4]].name,@battlers[sent[5]].name)
         end
         toSendOut.concat(sent)
       end
@@ -218,6 +246,19 @@ class PokeBattle_Battle
         when 3
           msg += _INTL("Go! {1}, {2} and {3}!",@battlers[sent[0]].name,
              @battlers[sent[1]].name,@battlers[sent[2]].name)
+        when 4
+          msg += _INTL("Go! {1}, {2}, {3} and {4}!",@battlers[sent[0]].name,
+             @battlers[sent[1]].name,@battlers[sent[2]].name,
+             @battlers[sent[3]].name)
+        when 5
+          msg += _INTL("Go! {1}, {2}, {3}, {4} and {5}!",@battlers[sent[0]].name,
+             @battlers[sent[1]].name,@battlers[sent[2]].name,
+             @battlers[sent[3]].name,@battlers[sent[4]].name)
+        when 6
+          msg += _INTL("Go! {1}, {2}, {3}, {4}, {5} and {6}!",@battlers[sent[0]].name,
+             @battlers[sent[1]].name,@battlers[sent[2]].name,
+             @battlers[sent[3]].name,@battlers[sent[4]].name,
+             @battlers[sent[5]].name)
         end
         toSendOut.concat(sent)
       end

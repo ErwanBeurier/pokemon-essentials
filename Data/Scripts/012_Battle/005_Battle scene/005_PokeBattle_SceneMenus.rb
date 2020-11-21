@@ -459,7 +459,7 @@ class TargetMenuDisplay < BattleMenuBase
     super(viewport)
     @sideSizes = sideSizes
     maxIndex = (@sideSizes[0]>@sideSizes[1]) ? (@sideSizes[0]-1)*2 : @sideSizes[1]*2-1
-    @smallButtons = (@sideSizes.max>2)
+    # @smallButtons = (@sideSizes.max>2)
     self.x = 0
     self.y = Graphics.height-96
     @texts = []
@@ -477,9 +477,16 @@ class TargetMenuDisplay < BattleMenuBase
       inc = ((i%2)==0) ? i/2 : numButtons-1-i/2
       button = SpriteWrapper.new(viewport)
       button.bitmap = @buttonBitmap.bitmap
-      button.src_rect.width  = (@smallButtons) ? CMD_BUTTON_WIDTH_SMALL : @buttonBitmap.width/2
+      button.src_rect.width = [236, 236, 170, 124, 100, 84][numButtons-1]
       button.src_rect.height = BUTTON_HEIGHT
-      if @smallButtons
+      if numButtons==6
+        button.x    = self.x+4#+170-[0,41,82,123,164,205][numButtons-1]
+      elsif numButtons==5
+        button.x    = self.x+12#+170-[0,50,100,150,200][numButtons-1]
+      elsif numButtons==4
+        button.x    = self.x+12#+124-[0,,8,4][numButtons-1]
+      # elsif @smallButtons
+      elsif numButtons==3
         button.x    = self.x+170-[0,82,166][numButtons-1]
       else
         button.x    = self.x+138-[0,116][numButtons-1]
@@ -527,7 +534,9 @@ class TargetMenuDisplay < BattleMenuBase
         sel ||= (@mode==1)
         buttonType = ((i%2)==0) ? 1 : 2
       end
-      buttonType = 2*buttonType + ((@smallButtons) ? 1 : 0)
+      # buttonType = 2*buttonType + ((@smallButtons) ? 1 : 0)
+      # buttonType = 2*buttonType + ((@sideSizes.max > 2) ? 1 : 0)
+      buttonType = 6*buttonType + @sideSizes[i%2]-1
       button.src_rect.x = (sel) ? @buttonBitmap.width/2 : 0
       button.src_rect.y = buttonType*BUTTON_HEIGHT
       button.z          = self.z + ((sel) ? 3 : 2)
@@ -537,6 +546,7 @@ class TargetMenuDisplay < BattleMenuBase
     textpos = []
     @buttons.each_with_index do |button,i|
       next if !button || @texts[i].nil? || @texts[i]==""
+      @texts[i] = @texts[i][0...4] + "..." if @sideSizes[i%2] > 4 && @texts[i].length > 6
       x = button.x-self.x+button.src_rect.width/2
       y = button.y-self.y+8
       textpos.push([@texts[i],x,y,2,TEXT_BASE_COLOR,TEXT_SHADOW_COLOR])

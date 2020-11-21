@@ -49,7 +49,11 @@ class PokemonTemp
     when "outcome", "outcomevar";  rules["outcomeVar"]     = var
     when "nopartner";              rules["noPartner"]      = true
     else
-      raise _INTL("Battle rule \"{1}\" does not exist.",rule)
+      if PokeBattle_Battle.isValidBattleMode?(rule.to_s.downcase)
+        rules["size"] = rule.to_s.downcase
+      else 
+        raise _INTL("Battle rule \"{1}\" does not exist.",rule)
+      end 
     end
   end
 end
@@ -220,6 +224,18 @@ def pbCanTripleBattle?
   return true if $Trainer.ablePokemonCount>=3
   return $PokemonGlobal.partner && $Trainer.ablePokemonCount>=2
 end
+
+def pbCanNBattle?(n)
+  case n
+  when 2
+    return pbCanDoubleBattle?
+  when 3
+    return pbCanTripleBattle?
+  when 4, 5, 6, 1
+    return $Trainer.ablePokemonCount >= n
+  end 
+  return false 
+end 
 
 #===============================================================================
 # Start a wild battle
