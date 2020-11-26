@@ -290,17 +290,17 @@ class PokeBattle_Battler
     # Darmanitan - Zen Mode
     if isConst?(@species,PBSpecies,:DARMANITAN) && isConst?(@ability,PBAbilities,:ZENMODE)
       if @hp<=@totalhp/2
-        if @form!=2 && @form!=3
+        if @form!=1 && @form!=3
           @battle.pbShowAbilitySplash(self,true)
           @battle.pbHideAbilitySplash(self)
-          pbChangeForm(2,_INTL("{1} triggered!",abilityName)) if @form == 0
-          pbChangeForm(3,_INTL("{1} triggered!",abilityName)) if @form == 1
+          pbChangeForm(1,_INTL("{1} triggered!",abilityName)) if @form == 0
+          pbChangeForm(3,_INTL("{1} triggered!",abilityName)) if @form == 2
         end
-      elsif @form!=0 && @form != 1
+      elsif @form!=0 && @form != 2
         @battle.pbShowAbilitySplash(self,true)
         @battle.pbHideAbilitySplash(self)
-        pbChangeForm(0,_INTL("{1} triggered!",abilityName)) if @form == 2
-        pbChangeForm(1,_INTL("{1} triggered!",abilityName)) if @form == 3
+        pbChangeForm(0,_INTL("{1} triggered!",abilityName)) if @form == 1
+        pbChangeForm(2,_INTL("{1} triggered!",abilityName)) if @form == 3
       end
     end
     # Minior - Shields Down

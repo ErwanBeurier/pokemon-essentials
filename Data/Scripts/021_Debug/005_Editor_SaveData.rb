@@ -4,9 +4,9 @@
 def pbSaveTypes
   return if (PBTypes.maxValue rescue 0)==0
   File.open("PBS/types.txt","wb") { |f|
-    f.write(0xEF.chr)
-    f.write(0xBB.chr)
-    f.write(0xBF.chr)
+    # f.write(0xEF.chr)
+    # f.write(0xBB.chr)
+    # f.write(0xBF.chr)
     f.write("\# "+_INTL("See the documentation on the wiki to learn how to edit this file."))
     f.write("\r\n")
     for i in 0..(PBTypes.maxValue rescue 25)
@@ -49,9 +49,9 @@ end
 #===============================================================================
 def pbSaveAbilities
   File.open("PBS/abilities.txt","wb") { |f|
-    f.write(0xEF.chr)
-    f.write(0xBB.chr)
-    f.write(0xBF.chr)
+    # f.write(0xEF.chr)
+    # f.write(0xBB.chr)
+    # f.write(0xBF.chr)
     f.write("\# "+_INTL("See the documentation on the wiki to learn how to edit this file."))
     f.write("\r\n")
     f.write("\#-------------------------------\r\n")
@@ -75,9 +75,9 @@ def pbSaveMoveData
   movesData = pbLoadMovesData
   return if !movesData
   File.open("PBS/moves.txt","wb") { |f|
-    f.write(0xEF.chr)
-    f.write(0xBB.chr)
-    f.write(0xBF.chr)
+    # f.write(0xEF.chr)
+    # f.write(0xBB.chr)
+    # f.write(0xBF.chr)
     f.write("\# "+_INTL("See the documentation on the wiki to learn how to edit this file."))
     f.write("\r\n")
     currentType = -1
@@ -146,9 +146,9 @@ end
 
 def pbSerializeConnectionData(conndata,mapinfos)
   File.open("PBS/connections.txt","wb") { |f|
-    f.write(0xEF.chr)
-    f.write(0xBB.chr)
-    f.write(0xBF.chr)
+    # f.write(0xEF.chr)
+    # f.write(0xBB.chr)
+    # f.write(0xBF.chr)
     f.write("\# "+_INTL("See the documentation on the wiki to learn how to edit this file."))
     f.write("\r\n")
     f.write("\#-------------------------------\r\n")
@@ -187,9 +187,9 @@ end
 def pbSerializeMetadata(metadata,mapinfos)
   save_data(metadata,"Data/metadata.dat")
   File.open("PBS/metadata.txt","wb") { |f|
-    f.write(0xEF.chr)
-    f.write(0xBB.chr)
-    f.write(0xBF.chr)
+    # f.write(0xEF.chr)
+    # f.write(0xBB.chr)
+    # f.write(0xBF.chr)
     f.write("\# "+_INTL("See the documentation on the wiki to learn how to edit this file."))
     f.write("\r\n")
     for i in 0...metadata.length
@@ -231,9 +231,9 @@ def pbSaveItems
   itemData = pbLoadItemsData rescue nil
   return if !itemData || itemData.length==0
   File.open("PBS/items.txt","wb") { |f|
-    f.write(0xEF.chr)
-    f.write(0xBB.chr)
-    f.write(0xBF.chr)
+    # f.write(0xEF.chr)
+    # f.write(0xBB.chr)
+    # f.write(0xBF.chr)
     f.write("\# "+_INTL("See the documentation on the wiki to learn how to edit this file."))
     f.write("\r\n")
     curpocket = 0
@@ -269,9 +269,9 @@ def pbSaveBerryPlants
   berryPlantData = load_data("Data/berry_plants.dat")
   return if !berryPlantData || berryPlantData.length==0
   File.open("PBS/berryplants.txt","wb") { |f|
-    f.write(0xEF.chr)
-    f.write(0xBB.chr)
-    f.write(0xBF.chr)
+    # f.write(0xEF.chr)
+    # f.write(0xBB.chr)
+    # f.write(0xBF.chr)
     f.write("\# "+_INTL("See the documentation on the wiki to learn how to edit this file."))
     f.write("\r\n")
     f.write("\#-------------------------------\r\n")
@@ -296,9 +296,9 @@ def pbSaveTrainerLists
   trainerlists = load_data("Data/trainer_lists.dat") rescue nil
   return if !trainerlists
   File.open("PBS/trainerlists.txt","wb") { |f|
-    f.write(0xEF.chr)
-    f.write(0xBB.chr)
-    f.write(0xBF.chr)
+    # f.write(0xEF.chr)
+    # f.write(0xBB.chr)
+    # f.write(0xBF.chr)
     f.write("\# "+_INTL("See the documentation on the wiki to learn how to edit this file."))
     f.write("\r\n")
     for tr in trainerlists
@@ -322,9 +322,9 @@ def pbSaveMachines
   machines = pbLoadSpeciesTMData
   return if !machines
   File.open("PBS/tm.txt","wb") { |f|
-    f.write(0xEF.chr)
-    f.write(0xBB.chr)
-    f.write(0xBF.chr)
+    # f.write(0xEF.chr)
+    # f.write(0xBB.chr)
+    # f.write(0xBF.chr)
     f.write("\# "+_INTL("See the documentation on the wiki to learn how to edit this file."))
     f.write("\r\n")
     for i in 1...machines.length
@@ -356,9 +356,9 @@ def pbSaveEncounterData
   return if !encdata
   mapinfos = pbLoadRxData("Data/MapInfos")
   File.open("PBS/encounters.txt","wb") { |f|
-    f.write(0xEF.chr)
-    f.write(0xBB.chr)
-    f.write(0xBF.chr)
+    # f.write(0xEF.chr)
+    # f.write(0xBB.chr)
+    # f.write(0xBF.chr)
     f.write("\# "+_INTL("See the documentation on the wiki to learn how to edit this file."))
     f.write("\r\n")
     sortedkeys = encdata.keys.sort { |a,b| a<=>b }
@@ -401,9 +401,9 @@ def pbSaveTrainerTypes
   data = pbLoadTrainerTypesData
   return if !data
   File.open("PBS/trainertypes.txt","wb") { |f|
-    f.write(0xEF.chr)
-    f.write(0xBB.chr)
-    f.write(0xBF.chr)
+    # f.write(0xEF.chr)
+    # f.write(0xBB.chr)
+    # f.write(0xBF.chr)
     f.write("\# "+_INTL("See the documentation on the wiki to learn how to edit this file."))
     f.write("\r\n")
     f.write("\#-------------------------------\r\n")
@@ -434,9 +434,9 @@ def pbSaveTrainerBattles
   data = pbLoadTrainersData
   return if !data
   File.open("PBS/trainers.txt","wb") { |f|
-    f.write(0xEF.chr)
-    f.write(0xBB.chr)
-    f.write(0xBF.chr)
+    # f.write(0xEF.chr)
+    # f.write(0xBB.chr)
+    # f.write(0xBF.chr)
     f.write("\# "+_INTL("See the documentation on the wiki to learn how to edit this file."))
     f.write("\r\n")
     for trainer in data
@@ -543,9 +543,9 @@ def pbSaveTownMap
   mapdata = pbLoadTownMapData
   return if !mapdata
   File.open("PBS/townmap.txt","wb") { |f|
-    f.write(0xEF.chr)
-    f.write(0xBB.chr)
-    f.write(0xBF.chr)
+    # f.write(0xEF.chr)
+    # f.write(0xBB.chr)
+    # f.write(0xBF.chr)
     f.write("\# "+_INTL("See the documentation on the wiki to learn how to edit this file."))
     f.write("\r\n")
     for i in 0...mapdata.length
@@ -575,9 +575,9 @@ def pbSavePhoneData
   data = load_data("Data/phone.dat") rescue nil
   return if !data
   File.open("PBS/phone.txt","wb") { |f|
-    f.write(0xEF.chr)
-    f.write(0xBB.chr)
-    f.write(0xBF.chr)
+    # f.write(0xEF.chr)
+    # f.write(0xBB.chr)
+    # f.write(0xBF.chr)
     f.write("\# "+_INTL("See the documentation on the wiki to learn how to edit this file."))
     f.write("\r\n")
     f.write("\#-------------------------------\r\n")
@@ -619,9 +619,9 @@ def pbSavePokemonData
   regionaldata = pbLoadRegionalDexes
   numRegions   = regionaldata.length
   pokedata = File.open("PBS/pokemon.txt","wb") rescue nil
-  pokedata.write(0xEF.chr)
-  pokedata.write(0xBB.chr)
-  pokedata.write(0xBF.chr)
+  # pokedata.write(0xEF.chr)
+  # pokedata.write(0xBB.chr)
+  # pokedata.write(0xBF.chr)
   pokedata.write("\# "+_INTL("See the documentation on the wiki to learn how to edit this file."))
   pokedata.write("\r\n")
   for i in 1..(PBSpecies.maxValue rescue PBSpecies.getCount-1 rescue messages.getCount(MessageTypes::Species)-1)
@@ -877,9 +877,9 @@ def pbSavePokemonFormsData
   movesets     = pbLoadMovesetsData
   eggMoves     = pbLoadEggMovesData
   pokedata = File.open("PBS/pokemonforms.txt","wb") rescue nil
-  pokedata.write(0xEF.chr)
-  pokedata.write(0xBB.chr)
-  pokedata.write(0xBF.chr)
+  # pokedata.write(0xEF.chr)
+  # pokedata.write(0xBB.chr)
+  # pokedata.write(0xBF.chr)
   pokedata.write("\# "+_INTL("See the documentation on the wiki to learn how to edit this file."))
   pokedata.write("\r\n")
   m1 = (PBSpecies.maxValue+1 rescue PBSpecies.getCount rescue messages.getCount(MessageTypes::Species))
@@ -1338,9 +1338,9 @@ end
 def pbSaveShadowMoves
   shadow_movesets = pbLoadShadowMovesets
   File.open("PBS/shadowmoves.txt","wb") { |f|
-    f.write(0xEF.chr)
-    f.write(0xBB.chr)
-    f.write(0xBF.chr)
+    # f.write(0xEF.chr)
+    # f.write(0xBB.chr)
+    # f.write(0xBF.chr)
     f.write("\# "+_INTL("See the documentation on the wiki to learn how to edit this file."))
     f.write("\r\n")
     f.write("\#-------------------------------\r\n")
@@ -1375,9 +1375,9 @@ def pbSaveBTTrainers(bttrainers,filename)
      "PokemonNos"    => [5,"*u"]
   }
   File.open(filename,"wb") { |f|
-    f.write(0xEF.chr)
-    f.write(0xBB.chr)
-    f.write(0xBF.chr)
+    # f.write(0xEF.chr)
+    # f.write(0xBB.chr)
+    # f.write(0xBF.chr)
     f.write("\# "+_INTL("See the documentation on the wiki to learn how to edit this file."))
     f.write("\r\n")
     for i in 0...bttrainers.length
@@ -1414,9 +1414,9 @@ def pbSaveBattlePokemon(btpokemon,filename)
   items   = {0=>""}
   natures = {}
   File.open(filename,"wb") { |f|
-    f.write(0xEF.chr)
-    f.write(0xBB.chr)
-    f.write(0xBF.chr)
+    # f.write(0xEF.chr)
+    # f.write(0xBB.chr)
+    # f.write(0xBF.chr)
     f.write("\# "+_INTL("See the documentation on the wiki to learn how to edit this file."))
     f.write("\r\n")
     f.write("\#-------------------------------\r\n")
@@ -1479,4 +1479,8 @@ def pbSaveAllData
   pbSavePokemonData;      Graphics.update
   pbSavePokemonFormsData; Graphics.update
   pbSaveShadowMoves;      Graphics.update
+  scSaveMovesets;         Graphics.update
+  scSaveLearnedMoves;     Graphics.update
+  scSaveTiers;            Graphics.update
+  scSavePersonalItems;    Graphics.update
 end

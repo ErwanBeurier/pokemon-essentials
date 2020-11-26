@@ -1,4 +1,4 @@
-﻿# See the documentation on the wiki to learn how to edit this file.
+# See the documentation on the wiki to learn how to edit this file.
 #-------------------------------
 [VENUSAUR,1]
 FormName = Mega Venusaur
@@ -1357,7 +1357,6 @@ BattlerEnemyY = 16
 FormName = Mega Audino
 MegaStone = AUDINITE
 Type1 = NORMAL
-Type2 = FAIRY
 BaseStats = 103,60,126,50,80,126
 Abilities = HEALER
 HiddenAbility = HEALER
@@ -1374,7 +1373,7 @@ Pokedex = Even Basculin, which devours everything it can with its huge jaws, is 
 WildItemUncommon = DEEPSEASCALE
 BattlerEnemyY = 37
 #-------------------------------
-[DARUMAKA,1]
+[DARUMAKA,2]
 FormName = Galarian
 Type1 = ICE
 Moves = 1,POWDERSNOW,1,TACKLE,4,TAUNT,8,BITE,12,AVALANCHE,16,WORKUP,20,ICEFANG,24,HEADBUTT,28,ICEPUNCH,32,UPROAR,36,BELLYDRUM,40,BLIZZARD,44,THRASH,48,SUPERPOWER
@@ -1387,6 +1386,16 @@ BattlerPlayerY = 31
 Evolutions = DARMANITAN,Item,ICESTONE
 #-------------------------------
 [DARMANITAN,1]
+FormName = Zen Mode
+Type1 = FIRE
+Type2 = PSYCHIC
+BaseStats = 105,30,105,55,140,105
+EffortPoints = 0,0,0,0,2,0
+Color = Blue
+Pokedex = When wounded, it stops moving. It goes as still as stone to meditate, sharpening its mind and spirit.
+BattlerEnemyY = 33
+#-------------------------------
+[DARMANITAN,2]
 FormName = Galarian
 Type1 = ICE
 BaseStats = 105,140,55,95,40,55
@@ -1397,16 +1406,6 @@ Weight = 120.0
 Color = White
 Pokedex = Though it has a gentle disposition, it's also very strong. It will quickly freeze the snowball on its head before going for a headbutt.
 BattlerPlayerY = 45
-BattlerEnemyY = 33
-#-------------------------------
-[DARMANITAN,2]
-FormName = Zen Mode
-Type1 = FIRE
-Type2 = PSYCHIC
-BaseStats = 105,30,105,55,140,105
-EffortPoints = 0,0,0,0,2,0
-Color = Blue
-Pokedex = When wounded, it stops moving. It goes as still as stone to meditate, sharpening its mind and spirit.
 BattlerEnemyY = 33
 #-------------------------------
 [DARMANITAN,3]
@@ -2384,3 +2383,631 @@ Kind = High King
 Pokedex = Legend says that by using its power to see all events from past to future, this Pokémon saved the creatures of a forest from a meteorite strike.
 BattlerPlayerY = 8
 BattlerEnemyY = 12
+#-------------------------------
+# Project STRAT variants 
+#-------------------------------
+[BUTTERFREE,1]
+FormName = Psychic Variant
+Type1 = BUG
+Type2 = PSYCHIC
+Moves = 1,CONFUSION,10,CONFUSION,12,POISONPOWDER,12,STUNSPORE,12,SLEEPPOWDER,16,GUST,18,SUPERSONIC,22,WHIRLWIND,24,PSYBEAM,28,SILVERWIND,30,TAILWIND,34,RAGEPOWDER,36,SAFEGUARD,40,CAPTIVATE,42,PSYSTRIKE,46,QUIVERDANCE
+#-------------------------------
+[BUTTERFREE,2]
+FormName = Fairy Variant
+Type1 = BUG
+Type2 = FAIRY
+Moves = 1,FAIRYWIND,10,FAIRYWIND,12,POISONPOWDER,12,STUNSPORE,12,SLEEPPOWDER,16,GUST,18,SUPERSONIC,22,WHIRLWIND,24,DRAININGKISS,28,SILVERWIND,30,TAILWIND,34,RAGEPOWDER,36,SAFEGUARD,40,CAPTIVATE,42,BUGBUZZ,46,QUIVERDANCE
+#-------------------------------
+[BUTTERFREE,3]
+FormName = Fly Variant
+Moves = 1,CONFUSION,10,CONFUSION,12,POISONPOWDER,12,STUNSPORE,12,SLEEPPOWDER,16,GUST,18,SUPERSONIC,22,WHIRLWIND,24,PSYBEAM,28,SILVERWIND,30,TAILWIND,34,RAGEPOWDER,36,SAFEGUARD,40,CAPTIVATE,42,AIRSLASH,46,QUIVERDANCE
+#-------------------------------
+[BUTTERFREE,4]
+FormName = White
+#-------------------------------
+[BEEDRILL,2]
+FormName = Dark Variant
+Type1 = BUG
+Type2 = DARK
+Moves = 1,FURYATTACK,10,FURYATTACK,13,FOCUSENERGY,16,TWINEEDLE,19,RAGE,22,PURSUIT,25,SUCKERPUNCH,28,PINMISSILE,31,AGILITY,34,ASSURANCE,37,THROATCHOP,40,ENDEAVOR,45,FELLSTINGER
+#-------------------------------
+[BEEDRILL,3]
+FormName = Mega Beedrill - Dark Variant
+Type1 = BUG
+Type2 = DARK
+MegaStone = BEEDRILLITE
+BaseStats = 65,150,40,145,15,80
+Abilities = ADAPTABILITY
+HiddenAbility = ADAPTABILITY
+Height = 1.4
+Weight = 40.5
+Pokedex = Its legs have become poison stingers. It stabs its prey repeatedly with the stingers on its limbs, dealing the final blow with the stinger on its rear.
+BattlerPlayerY = 19
+BattlerEnemyY = 13
+UnmegaForm = 2
+#-------------------------------
+[PIDGEOT,2]
+FormName = Savage
+Abilities = INTIMIDATE
+HiddenAbility = INTIMIDATE
+#-------------------------------
+[PIDGEOT,3]
+FormName = Mega Pidgeot - Savage
+MegaStone = PIDGEOTITE
+BaseStats = 83,80,80,121,135,80
+Abilities = INTIMIDATE
+HiddenAbility = INTIMIDATE
+Height = 2.2
+Weight = 50.5
+Pokedex = With its muscular strength now greatly increased, it can fly continuously for two weeks without resting.
+BattlerPlayerY = 1
+BattlerEnemyY = 13
+UnmegaForm = 2
+#-------------------------------
+[PIDGEOT,4]
+FormName = Winter
+#-------------------------------
+[PIDGEOT,5]
+FormName = Mega Pidgeot - Winter
+MegaStone = PIDGEOTITE
+BaseStats = 83,80,80,121,135,80
+Abilities = NOGUARD
+HiddenAbility = NOGUARD
+Height = 2.2
+Weight = 50.5
+Pokedex = With its muscular strength now greatly increased, it can fly continuously for two weeks without resting.
+BattlerPlayerY = 1
+BattlerEnemyY = 13
+UnmegaForm = 4
+#-------------------------------
+[RATTATA,2]
+FormName = Poisonous
+EggMoves = BITE,COUNTER,FINALGAMBIT,POISONFANG,FURYSWIPES,LASTRESORT,MEFIRST,REVENGE,REVERSAL,SCREECH,UPROAR
+#-------------------------------
+[RATICATE,2]
+FormName = Poisonous
+Abilities = RUNAWAY,POISONTOUCH
+HiddenAbility = STRONGJAW
+Moves = 1,SWORDSDANCE,1,TACKLE,1,TAILWHIP,1,QUICKATTACK,1,FOCUSENERGY,4,QUICKATTACK,7,FOCUSENERGY,10,BITE,13,PURSUIT,16,HYPERFANG,19,SUCKERPUNCH,20,SCARYFACE,24,CRUNCH,29,POISONFANG,34,SUPERFANG,39,DOUBLEEDGE,44,ENDEAVOR
+#-------------------------------
+[FEAROW,1]
+FormName = Royal
+Moves = 1,DRILLRUN,1,PLUCK,1,PECK,1,GROWL,1,FURYATTACK,1,LEER,5,LEER,9,FURYATTACK,13,SUCKERPUNCH,17,AERIALACE,23,MIRRORMOVE,29,AGILITY,35,ASSURANCE,41,ROOST,47,DRILLPECK,53,DRILLRUN
+#-------------------------------
+[ARBOK,1]
+FormName = Pale
+Type1 = POISON
+Type2 = DARK
+Moves = 1,PURSUIT,1,KNOCKOFF,1,WRAP,1,LEER,1,BITE,1,POISONSTING,4,POISONSTING,9,BITE,12,GLARE,17,SCREECH,20,ACID,22,CRUNCH,27,STOCKPILE,27,SPITUP,27,SWALLOW,32,ACIDSPRAY,39,MUDBOMB,44,GASTROACID,48,BELCH,51,HAZE,56,COIL,63,GUNKSHOT
+#-------------------------------
+[RAICHU,2]
+FormName = Normal Variant
+Type1 = ELECTRIC
+Type2 = NORMAL
+Moves = 1,THUNDERSHOCK,1,TAILWHIP,1,QUICKATTACK,1,THUNDERBOLT,1,HYPERVOICE
+#-------------------------------
+[NIDOQUEEN,1]
+FormName = Darkened
+Type1 = POISON
+Type2 = DARK
+Moves = 1,SUPERPOWER,1,SCRATCH,1,TAILWHIP,1,CRUNCH,1,POISONSTING,23,SUCKERPUNCH,35,BODYSLAM,43,CRUNCH,58,SUPERPOWER
+#-------------------------------
+[NIDOQUEEN,2]
+FormName = Drakoid
+Type1 = POISON
+Type2 = DRAGON
+Moves = 1,SUPERPOWER,1,SCRATCH,1,TAILWHIP,1,DRAGONCLAW,1,POISONSTING,23,DRAGONHAMMER,35,BODYSLAM,43,EARTHPOWER,58,SUPERPOWER
+#-------------------------------
+[NIDOQUEEN,3]
+FormName = Pure
+Type1 = POISON
+#-------------------------------
+[NIDOKING,1]
+FormName = Darkened
+Type1 = POISON
+Type2 = DARK
+Moves = 1,MEGAHORN,1,CRUNCH,1,FOCUSENERGY,1,DOUBLEKICK,1,POISONSTING,23,SUCKERPUNCH,35,THRASH,43,EARTHPOWER,58,MEGAHORN
+#-------------------------------
+[NIDOKING,2]
+FormName = Drakoid
+Type1 = POISON
+Type2 = DRAGON
+Moves = 1,MEGAHORN,1,PECK,1,FOCUSENERGY,1,DRAGONCLAW,1,POISONSTING,23,CHIPAWAY,35,OUTRAGE,43,EARTHPOWER,58,MEGAHORN
+#-------------------------------
+[NIDOKING,3]
+FormName = Pure
+Type1 = POISON
+#-------------------------------
+[NINETALES,2]
+FormName = Psychic Variant
+Type1 = FIRE
+Type2 = PSYCHIC
+Moves = 1,IMPRISON,1,NASTYPLOT,1,FLAMETHROWER,1,QUICKATTACK,1,CONFUSERAY,1,SAFEGUARD,1,PSYCHIC
+#-------------------------------
+[NINETALES,3]
+FormName = Fairy Variant
+Type1 = FIRE
+Type2 = FAIRY
+Moves = 1,IMPRISON,1,NASTYPLOT,1,FLAMETHROWER,1,QUICKATTACK,1,CONFUSERAY,1,SAFEGUARD,1,MOONBLAST
+#-------------------------------
+[JIGGLYPUFF,1]
+FormName = Fairy Variant
+Type1 = FAIRY
+#-------------------------------
+[JIGGLYPUFF,2]
+FormName = Normal Variant
+Type1 = NORMAL
+#-------------------------------
+[WIGGLYTUFF,1]
+FormName = Fairy Variant
+Type1 = FAIRY
+#-------------------------------
+[WIGGLYTUFF,2]
+FormName = Normal Variant
+Type1 = NORMAL
+#-------------------------------
+[WIGGLYTUFF,3]
+FormName = Ghost Variant
+Type1 = GHOST
+Type2 = FAIRY
+HiddenAbility = HIGHPOTENTIAL
+Moves = 1,PHANTOMFORCE,1,PLAYROUGH,1,SING,1,DEFENSECURL,1,DISABLE,1,OMINOUSWIND,40,HEX,45,NASTYPLOT
+#-------------------------------
+[ZUBAT,1]
+FormName = Dark Variant
+Type1 = DARK
+Type2 = FLYING
+Moves = 1,ABSORB,5,SUPERSONIC,7,ASTONISH,11,BITE,13,WINGATTACK,17,CONFUSERAY,19,AIRCUTTER,23,SWIFT,25,POISONFANG,29,MEANLOOK,31,LEECHLIFE,35,HAZE,37,CRUNCH,41,AIRSLASH,43,QUICKGUARD
+#-------------------------------
+[GOLBAT,1]
+FormName = Dark Variant
+Type1 = DARK
+Type2 = FLYING
+Moves = 1,SCREECH,1,LEECHLIFE,1,SUPERSONIC,1,ASTONISH,1,BITE,5,SUPERSONIC,7,ASTONISH,11,BITE,13,WINGATTACK,17,CONFUSERAY,19,AIRCUTTER,24,SWIFT,27,POISONFANG,32,MEANLOOK,35,ACROBATICS,40,HAZE,43,CRUNCH,48,AIRSLASH,51,QUICKGUARD
+#-------------------------------
+[CROBAT,1]
+FormName = Dark Variant
+Type1 = DARK
+Type2 = FLYING
+Moves = 1,CROSSPOISON,1,SCREECH,1,LEECHLIFE,1,SUPERSONIC,1,ASTONISH,1,BITE,5,SUPERSONIC,7,ASTONISH,11,BITE,13,WINGATTACK,17,CONFUSERAY,19,AIRCUTTER,24,SWIFT,27,POISONFANG,32,MEANLOOK,35,ACROBATICS,40,HAZE,43,CRUNCH,48,AIRSLASH,51,QUICKGUARD
+#-------------------------------
+[GOLDUCK,1]
+FormName = Psychic Variant
+Type1 = WATER
+Type2 = PSYCHIC
+#-------------------------------
+[PONYTA,2]
+FormName = Purple Flame
+Type1 = FIRE
+Type2 = GHOST
+Moves = 1,GROWL,1,TACKLE,4,TAILWHIP,9,EMBER,13,FLAMEWHEEL,17,STOMP,21,FLAMECHARGE,25,FIRESPIN,29,SHADOWSNEAK,33,INFERNO,37,AGILITY,41,FIREBLAST,45,BOUNCE,49,FLAREBLITZ,55,GHOSTGALLOP
+#-------------------------------
+[PONYTA,3]
+FormName = Blue Flame
+Abilities = VITALSPIRIT
+HiddenAbility = GUTS
+#-------------------------------
+[PONYTA,4]
+FormName = Green Flame 
+Abilities = BLAZE
+HiddenAbility = SAPSIPPER
+#-------------------------------
+[RAPIDASH,2]
+FormName = Purple Flame
+Type1 = FIRE
+Type2 = GHOST
+Moves = 1,POISONJAB,1,MEGAHORN,1,GROWL,1,QUICKATTACK,1,EMBER,1,TAILWHIP,4,TAILWHIP,9,EMBER,13,FLAMEWHEEL,17,STOMP,21,FLAMECHARGE,25,FIRESPIN,29,SHADOWSNEAK,33,INFERNO,37,AGILITY,40,FURYATTACK,41,FIREBLAST,45,BOUNCE,49,FLAREBLITZ,57,GHOSTGALLOP
+#-------------------------------
+[RAPIDASH,3]
+FormName = Blue Flame
+Abilities = VITALSPIRIT
+HiddenAbility = GUTS
+#-------------------------------
+[RAPIDASH,4]
+FormName = Green Flame 
+Abilities = BLAZE
+HiddenAbility = SAPSIPPER
+#-------------------------------
+[GENGAR,2]
+FormName = Floating
+Abilities = LEVITATE
+#-------------------------------
+[GENGAR,3]
+FormName = Mega Gengar - Floating
+MegaStone = GENGARITE
+BaseStats = 60,65,80,130,170,95
+Abilities = LEVITATE
+HiddenAbility = LEVITATE
+Height = 1.4
+Pokedex = The energy of Mega Evolution awakened it. It sinks into another dimension, where it keeps a patient watch for its chance to attack.
+BattlerPlayerY = 28
+BattlerEnemyY = 21
+UnmegaForm = 2
+#-------------------------------
+[ONIX,1]
+FormName = Ruby
+BaseStats = 35,100,160,70,30,45
+Moves = 1,MUDSPORT,1,TACKLE,1,HARDEN,1,FLAMEWHEEL,1,BIND,4,CURSE,7,ROCKTHROW,10,ROCKTOMB,13,RAGE,16,STEALTHROCK,19,ROCKPOLISH,20,GYROBALL,22,SMACKDOWN,25,DRAGONBREATH,28,SLAM,31,SCREECH,34,ROCKSLIDE,37,SANDTOMB,40,IRONTAIL,43,DIG,46,STONEEDGE,49,FLAREBLITZ,52,SANDSTORM
+Evolutions = 
+#-------------------------------
+[ONIX,2]
+FormName = Saphir
+BaseStats = 35,100,160,70,30,45
+Moves = 1,MUDSPORT,1,TACKLE,1,HARDEN,1,ICICLECRASH,1,ICESHARD,1,BIND,4,CURSE,7,ROCKTHROW,10,ROCKTOMB,13,RAGE,16,STEALTHROCK,19,ROCKPOLISH,20,GYROBALL,22,SMACKDOWN,25,DRAGONBREATH,28,SLAM,31,SCREECH,34,ROCKSLIDE,37,SANDTOMB,40,IRONTAIL,43,DIG,46,STONEEDGE,49,DOUBLEEDGE,52,SANDSTORM
+Evolutions = 
+#-------------------------------
+[MAROWAK,2]
+FormName = Ghost Variant
+Type1 = GROUND
+Type2 = GHOST
+#-------------------------------
+[CHANSEY,1]
+FormName = Fairy Variant
+Type1 = FAIRY
+Moves = 1,SWEETKISS,1,DISARMINGVOICE,1,COVET,1,CHARM,1,MINIMIZE,1,POUND,1,COPYCAT,1,DEFENSECURL,4,TAILWHIP,8,ECHOEDVOICE,12,LIFEDEW,16,SING,20,FLING,24,TAKEDOWN,28,HEALPULSE,32,HELPINGHAND,36,LIGHTSCREEN,40,PLAYROUGH,44,SOFTBOILED,48,LASTRESORT,52,HEALINGWISH
+#-------------------------------
+[BLISSEY,1]
+FormName = Fairy Variant
+Type1 = FAIRY
+Moves = 1,SWEETKISS,1,DISARMINGVOICE,1,COVET,1,CHARM,1,MINIMIZE,1,POUND,1,COPYCAT,1,DEFENSECURL,4,TAILWHIP,8,ECHOEDVOICE,12,LIFEDEW,16,SING,20,FLING,24,TAKEDOWN,28,HEALPULSE,32,HELPINGHAND,36,LIGHTSCREEN,40,PLAYROUGH,44,SOFTBOILED,48,LASTRESORT,52,HEALINGWISH
+#-------------------------------
+[MRMIME,2]
+FormName = Psychic Variant
+Type1 = PSYCHIC
+#-------------------------------
+[TAUROS,1]
+FormName = Savage
+Abilities = INTIMIDATE,MOXIE
+HiddenAbility = ROCKHEAD
+#-------------------------------
+[GYARADOS,2]
+FormName = Darkened
+Type1 = WATER
+Type2 = DARK
+#-------------------------------
+[GYARADOS,3]
+FormName = Mega Gyarados - Darkened
+MegaStone = GYARADOSITE
+Type1 = WATER
+Type2 = DARK
+BaseStats = 95,155,109,81,70,130
+Abilities = MOLDBREAKER
+HiddenAbility = MOLDBREAKER
+Weight = 305.0
+Pokedex = It zooms out of the water at Mach speeds. Even large ships caught in its path are split cleanly in two!
+BattlerPlayerY = 6
+BattlerEnemyY = 8
+UnmegaForm = 2
+#-------------------------------
+[GYARADOS,4]
+FormName = Drakoid
+Type1 = WATER
+Type2 = DRAGON
+#-------------------------------
+[GYARADOS,5]
+FormName = Mega Gyarados - Drakoid
+MegaStone = GYARADOSITE
+Type1 = WATER
+Type2 = DRAGON
+BaseStats = 95,155,109,81,70,130
+Abilities = MOLDBREAKER
+HiddenAbility = MOLDBREAKER
+Weight = 305.0
+Pokedex = It zooms out of the water at Mach speeds. Even large ships caught in its path are split cleanly in two!
+BattlerPlayerY = 6
+BattlerEnemyY = 8
+UnmegaForm = 4
+#-------------------------------
+[GYARADOS,6]
+FormName = Dragon Variant
+Type1 = DRAGON
+#-------------------------------
+[GYARADOS,7]
+FormName = Mega Gyarados - Dragon Variant
+MegaStone = GYARADOSITE
+Type1 = DRAGON
+BaseStats = 95,155,109,81,70,130
+Abilities = MOLDBREAKER
+HiddenAbility = MOLDBREAKER
+Weight = 305.0
+Pokedex = It zooms out of the water at Mach speeds. Even large ships caught in its path are split cleanly in two!
+BattlerPlayerY = 6
+BattlerEnemyY = 8
+UnmegaForm = 6
+#-------------------------------
+[GYARADOS,8]
+FormName = Water Variant
+Type1 = WATER
+#-------------------------------
+[GYARADOS,9]
+FormName = Mega Gyarados - Water Variant
+MegaStone = GYARADOSITE
+Type1 = WATER
+BaseStats = 95,155,109,81,70,130
+Abilities = MOLDBREAKER
+HiddenAbility = MOLDBREAKER
+Weight = 305.0
+Pokedex = It zooms out of the water at Mach speeds. Even large ships caught in its path are split cleanly in two!
+BattlerPlayerY = 6
+BattlerEnemyY = 8
+UnmegaForm = 8
+#-------------------------------
+[LAPRAS,1]
+FormName = Drakoid
+Type1 = WATER
+Type2 = DRAGON
+#-------------------------------
+[LAPRAS,2]
+FormName = Water Variant
+Type1 = WATER
+Abilities = DRIZZLE
+HiddenAbility = DRIZZLE
+#-------------------------------
+[AERODACTYL,2]
+FormName = Drakoid
+Type1 = ROCK
+Type2 = DRAGON
+Abilities = LEVITATE
+HiddenAbility = LEVITATE
+#-------------------------------
+[AERODACTYL,3]
+FormName = Mega Aerodactyl - Drakoid
+MegaStone = AERODACTYLITE
+BaseStats = 80,135,85,150,70,95
+Type1 = ROCK
+Type2 = DRAGON
+Abilities = LEVITATE
+HiddenAbility = LEVITATE
+Height = 2.1
+Weight = 79.0
+Pokedex = When it Mega Evolves, it becomes more vicious than ever before. Some say that's because its excess of power is causing it pain.
+BattlerPlayerY = 21
+BattlerEnemyY = 19
+UnmegaForm = 2
+#-------------------------------
+[FURRET,1]
+FormName = Power Form
+Abilities = HUGEPOWER
+HiddenAbility = HUGEPOWER
+#-------------------------------
+[NOCTOWL,1]
+FormName = Psychic Variant 
+Type1 = PSYCHIC
+Type2 = FLYING
+#-------------------------------
+[LEDIAN,1]
+FormName = Psychic Variant 
+Type1 = BUG
+Type2 = PSYCHIC
+Moves = 1,TACKLE,1,SUPERSONIC,1,SWIFT,5,SUPERSONIC,8,SWIFT,12,LIGHTSCREEN,12,REFLECT,12,SAFEGUARD,15,MACHPUNCH,20,SILVERWIND,24,COMETPUNCH,29,BATONPASS,33,AGILITY,38,BUGBUZZ,42,PSYCHIC,47,DOUBLEEDGE
+#-------------------------------
+[ARIADOS,1]
+FormName = Ghost Variant 
+Type1 = BUG
+Type2 = GHOST
+Moves = 0,SWORDSDANCE,1,SWORDSDANCE,1,FOCUSENERGY,1,VENOMDRENCH,1,FELLSTINGER,1,BUGBITE,1,ASTONISH,1,STRINGSHOT,1,CONSTRICT,1,ABSORB,5,ABSORB,8,INFESTATION,12,SCARYFACE,15,NIGHTSHADE,19,SHADOWSNEAK,23,FURYSWIPES,28,SUCKERPUNCH,32,SPIDERWEB,37,AGILITY,41,PINMISSILE,46,PSYCHIC,50,POISONJAB,55,SHADOWCLAW,58,STICKYWEB,63,TOXICTHREAD
+#-------------------------------
+[BELLOSSOM,1]
+FormName = Dark Flower
+Type1 = GRASS
+Type2 = DARK
+Moves = 0,PETALBLIZZARD,1,PETALBLIZZARD,1,QUIVERDANCE,1,MEGADRAIN,1,POISONPOWDER,1,STUNSPORE,1,SLEEPPOWDER,1,GIGADRAIN,1,TOXIC,1,DARKPULSE,1,GRASSYTERRAIN,1,MOONLIGHT,1,PETALDANCE,1,ABSORB,1,GROWTH,1,ACID,1,SWEETSCENT
+#-------------------------------
+[MARILL,1]
+FormName = From The Old Continent
+Type1 = WATER
+Type2 = NORMAL
+Moves = 1,ROLLOUT,1,DEFENSECURL,1,TACKLE,1,WATERGUN,1,TAILWHIP,1,HELPINGHAND,6,BUBBLEBEAM,9,CHARM,12,SLAM,15,BOUNCE,19,AQUATAIL,21,BODYSLAM,24,AQUARING,27,RAINDANCE,30,HYDROPUMP,33,DOUBLEEDGE,36,SUPERPOWER
+#-------------------------------
+[AZUMARILL,1]
+FormName = From The Old Continent
+Type1 = WATER
+Type2 = NORMAL
+Moves = 1,ROLLOUT,1,DEFENSECURL,1,TACKLE,1,WATERGUN,1,TAILWHIP,1,HELPINGHAND,6,BUBBLEBEAM,9,CHARM,12,SLAM,15,BOUNCE,21,AQUATAIL,25,BODYSLAM,30,AQUARING,35,RAINDANCE,40,HYDROPUMP,45,DOUBLEEDGE,50,SUPERPOWER
+#-------------------------------
+[JUMPLUFF,1]
+FormName = Offensive
+BaseStats = 75,55,70,110,95,55
+#-------------------------------
+[DUNSPARCE,1]
+FormName = Dragon Variant
+Type1 = DRAGON
+Moves = 1,FLAIL,1,DEFENSECURL,4,MUDSLAP,8,ROLLOUT,12,GLARE,16,SCREECH,20,ANCIENTPOWER,24,DRILLRUN,28,YAWN,32,BODYSLAM,36,TAKEDOWN,40,ROOST,44,DRAGONRUSH,48,COIL,52,DRAGONHAMMER,56,ENDEAVOR
+EggMoves = BIDE,ANCIENTPOWER,BITE,HEADBUTT,ASTONISH,CURSE,TRUMPCARD,MAGICCOAT,SNORE,DRAGONDANCE,SECRETPOWER,SLEEPTALK,HEX
+#-------------------------------
+[DUNSPARCE,2]
+FormName = Drakoid
+Type1 = NORMAL
+Type2 = DRAGON
+Moves = 1,FLAIL,1,DEFENSECURL,4,MUDSLAP,8,ROLLOUT,12,GLARE,16,SCREECH,20,ANCIENTPOWER,24,DRILLRUN,28,YAWN,32,BODYSLAM,36,TAKEDOWN,40,ROOST,44,DRAGONHAMMER,48,COIL,52,DOUBLEEDGE,56,ENDEAVOR
+EggMoves = BIDE,ANCIENTPOWER,BITE,HEADBUTT,ASTONISH,CURSE,TRUMPCARD,MAGICCOAT,SNORE,DRAGONDANCE,SECRETPOWER,SLEEPTALK,HEX
+#-------------------------------
+[SNUBBULL,1]
+FormName = From The Old Continent
+Type1 = NORMAL
+#-------------------------------
+[GRANBULL,1]
+FormName = From The Old Continent
+Type1 = NORMAL
+#-------------------------------
+[KINGDRA,1]
+FormName = From The Old Continent
+Type1 = WATER
+#-------------------------------
+[MASQUERAIN,1]
+FormName = Water Variant
+Type1 = BUG
+Type2 = WATER
+Abilities = LEVITATE
+HiddenAbility = LEVITATE
+Moves = 1,QUIVERDANCE,1,WHIRLWIND,1,BUGBUZZ,1,OMINOUSWIND,1,BUBBLE,1,QUICKATTACK,1,SWEETSCENT,1,WATERSPORT,6,QUICKATTACK,9,SWEETSCENT,14,WATERSPORT,17,GUST,22,SCARYFACE,22,WATERPULSE,26,STUNSPORE,32,SILVERWIND,38,AIRSLASH,42,BUGBUZZ,48,WHIRLWIND,52,QUIVERDANCE
+#-------------------------------
+[SLAKING,1]
+FormName = Active
+Abilities = EARLYBIRD
+HiddenAbility = OBLIVIOUS
+BaseStats = 100,110,80,100,65,65
+#-------------------------------
+[SKITTY,1]
+FormName = Fairy Kitty
+Type1 = NORMAL
+Type2 = FAIRY
+Abilities = PIXILATE
+HiddenAbility = WONDERSKIN
+#-------------------------------
+[DELCATTY,1]
+FormName = Fairy Kitty
+Type1 = NORMAL
+Type2 = FAIRY
+Abilities = PIXILATE
+HiddenAbility = WONDERSKIN
+#-------------------------------
+[VOLBEAT,1]
+FormName = Fairy Variant
+Type1 = BUG
+Type2 = FAIRY
+#-------------------------------
+[ILLUMISE,1]
+FormName = Fairy Variant
+Type1 = BUG
+Type2 = FAIRY
+#-------------------------------
+[ROSELIA,1]
+FormName = Fairy Variant
+Type1 = GRASS
+Type2 = FAIRY
+#-------------------------------
+[ROSERADE,1]
+FormName = Fairy Variant
+Type1 = GRASS
+Type2 = FAIRY
+#-------------------------------
+[VIBRAVA,1]
+FormName = Bug Variant
+Type1 = BUG
+Type2 = DRAGON
+#------------------------------
+[FLYGON,1]
+FormName = Bug Variant
+Type1 = BUG
+Type2 = DRAGON
+#-------------------------------
+[ALTARIA,2]
+FormName = Darkened
+HiddenAbility = FURCOAT
+#-------------------------------
+[ALTARIA,3]
+FormName = Mega Altaria - Darkened 
+MegaStone = ALTARIANITE
+Type1 = DRAGON
+Type2 = FAIRY
+BaseStats = 75,110,110,80,110,105
+Abilities = FURCOAT
+HiddenAbility = FURCOAT
+Height = 1.5
+BattlerPlayerY = 9
+BattlerEnemyY = 13
+UnmegaForm = 2
+#-------------------------------
+[SEVIPER,1]
+FormName = Darkened
+Type1 = POISON
+Type2 = DARK
+#-------------------------------
+[MILOTIC,1]
+FormName = Fairy Variant 
+Type1 = WATER
+Type2 = FAIRY
+Moves = 0,WATERPULSE,1,WATERPULSE,1,FLAIL,1,SPLASH,1,TACKLE,1,WRAP,1,WATERGUN,4,DISARMINGVOICE,8,TWISTER,12,AQUARING,16,ATTRACT,20,LIFEDEW,24,DRAGONTAIL,28,RECOVER,32,AQUATAIL,36,SAFEGUARD,40,MOONBLAST,44,RAINDANCE,48,COIL,52,HYDROPUMP
+#-------------------------------
+[TROPIUS,1]
+FormName = Drakoid
+Type1 = GRASS
+Type2 = DRAGON
+#-------------------------------
+[GLALIE,2]
+FormName = Darkened
+Type1 = ICE
+Type2 = DARK
+#-------------------------------
+[GLALIE,3]
+FormName = Mega Glalie - Darkened
+Type1 = ICE
+Type2 = DARK
+MegaStone = GLALITITE
+BaseStats = 80,120,80,100,120,80
+Abilities = REFRIGERATE
+HiddenAbility = REFRIGERATE
+Height = 2.1
+Weight = 350.2
+Pokedex = It envelops prey in its mouth, freezing them instantly. But its jaw is dislocated, so it's unable to eat them.
+BattlerPlayerY = 21
+BattlerEnemyY = 20
+UnmegaForm = 2
+#-------------------------------
+[RAMPARDOS,1]
+FormName = Drakoid
+Type1 = ROCK
+Type2 = DRAGON
+#-------------------------------
+[DRAPION,1]
+FormName = Bug Variant
+Type1 = POISON
+Type2 = BUG
+#-------------------------------
+[PURRLOIN,1]
+FormName = Normal Variant
+Type1 = NORMAL
+#-------------------------------
+[LIEPARD,1]
+FormName = Normal Variant
+Type1 = NORMAL
+#-------------------------------
+[MUSHARNA,1]
+FormName = Fairy Variant
+Type1 = PSYCHIC
+Type2 = FAIRY
+#-------------------------------
+[AUDINO,2]
+FormName = Fairy Variant
+Type1 = NORMAL
+Type2 = FAIRY
+#-------------------------------
+[AUDINO,3]
+FormName = Mega Audino - Fairy Variant
+MegaStone = AUDINITE
+Type1 = NORMAL
+Type2 = FAIRY
+BaseStats = 103,60,126,50,80,126
+Abilities = HEALER
+HiddenAbility = HEALER
+Height = 1.5
+Weight = 32.0
+Color = White
+BattlerPlayerY = 24
+BattlerEnemyY = 21
+UnmegaForm = 2
+#-------------------------------
+[LILLIGANT,1]
+FormName = Fairy Variant
+Type1 = GRASS
+Type2 = FAIRY
+Moves = 1,GROWTH,1,LEECHSEED,1,MEGADRAIN,1,SYNTHESIS,10,TEETERDANCE,28,QUIVERDANCE,46,PETALDANCE,50,PETALBLIZZARD
+#-------------------------------
+[ARCHEN,1]
+FormName = Optimist
+Abilities = KEENEYE,EARLYBIRD
+HiddenAbility = DEFIANT
+BaseStats = 45,90,43,70,64,43
+#-------------------------------
+[ARCHEOPS,1]
+FormName = Optimist
+Abilities = KEENEYE,EARLYBIRD
+HiddenAbility = DEFIANT
+BaseStats = 65,110,60,110,90,60
+#-------------------------------
+[BRAVIARY,1]
+FormName = Royal
+Abilities = INTIMIDATE
+HiddenAbility = INTIMIDATE
+#-------------------------------

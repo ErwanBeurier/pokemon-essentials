@@ -1156,6 +1156,15 @@ def pbCompileAllData(mustCompile)
     # Depends on PBSpecies, PBItems, PBMoves
     yield(_INTL("Compiling Trainer data"))
     pbCompileTrainers
+    # Project STRAT additions:
+    yield(_INTL("Compiling movesets"))
+    scCompileMovesets
+    yield(_INTL("Compiling learned moves"))
+    scCompileLearnedMoves
+    yield(_INTL("Compiling tiers"))
+    scCompileTiers
+    yield(_INTL("Compiling personal items"))
+    scCompilePersonalItems
     # Depends on PBTrainers
     yield(_INTL("Compiling phone data"))
     pbCompilePhoneData
@@ -1211,7 +1220,11 @@ def pbCompiler
        "trainer_types.dat",
        "trainers.dat",
        "types.dat",
-       "Constants.rxdata"
+       "Constants.rxdata",
+       "scmovesets.dat",
+       "sclearned.dat",
+       "sctiers.dat",
+       "scpersonalitems.dat"
     ]
     textFiles = [
        "abilities.txt",
@@ -1230,7 +1243,11 @@ def pbCompiler
        "trainerlists.txt",
        "trainers.txt",
        "trainertypes.txt",
-       "types.txt"
+       "types.txt",
+       "scmovesets.txt",
+       "sclearned.txt",
+       "sctiers.txt",
+       "scpersonalitems.txt"
     ]
     latestDataTime = 0
     latestTextTime = 0

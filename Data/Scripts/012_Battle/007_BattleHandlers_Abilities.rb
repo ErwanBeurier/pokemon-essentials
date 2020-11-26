@@ -967,6 +967,12 @@ BattleHandlers::DamageCalcUserAbility.add(:HUGEPOWER,
 
 BattleHandlers::DamageCalcUserAbility.copy(:HUGEPOWER,:PUREPOWER)
 
+BattleHandlers::DamageCalcUserAbility.add(:HIGHPOTENTIAL,
+  proc { |ability,user,target,move,mults,baseDmg,type|
+    mults[ATK_MULT] *= 2 if move.specialMove?
+  }
+)
+
 BattleHandlers::DamageCalcUserAbility.add(:HUSTLE,
   proc { |ability,user,target,move,mults,baseDmg,type|
     mults[ATK_MULT] *= 1.5 if move.physicalMove?

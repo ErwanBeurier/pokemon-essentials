@@ -267,3 +267,4 @@
 265,GRIMNEIGH,Grim Neigh,"Boosts Sp. Atk after knocking out any Pokémon."
 266,ASONEICE,As One,"Possesses 2 abilities, Unnerve and Chilling Neigh"
 267,ASONEGHOST,As One,"Possesses 2 abilities, Unnerve and Grim Neigh"
+500,HIGHPOTENTIAL,High Potential,"Raises the Pokémon's Sp. Atk stat."

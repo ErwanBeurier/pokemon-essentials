@@ -1,4 +1,4 @@
-﻿# See the documentation on the wiki to learn how to edit this file.
+# See the documentation on the wiki to learn how to edit this file.
 #-------------------------------
 [1]
 Name = Bulbasaur
@@ -5329,7 +5329,7 @@ Name = Ledian
 InternalName = LEDIAN
 Type1 = BUG
 Type2 = FLYING
-BaseStats = 55,35,50,85,55,110
+BaseStats = 55,35,50,85,85,110
 GenderRate = Female50Percent
 GrowthRate = Fast
 BaseEXP = 137
@@ -11906,7 +11906,7 @@ BaseEXP = 116
 EffortPoints = 0,0,0,1,0,0
 Rareness = 225
 Happiness = 70
-Abilities = SWIFTSWIM
+Abilities = SWIFTSWIM,HIGHPOTENTIAL
 HiddenAbility = HYDRATION
 Moves = 1,TACKLE,1,CHARM,4,WATERGUN,7,AGILITY,9,DRAININGKISS,13,LUCKYCHANT,17,WATERPULSE,20,ATTRACT,22,HEARTSTAMP,26,FLAIL,31,SWEETKISS,34,TAKEDOWN,37,CAPTIVATE,40,AQUARING,42,SOAK,46,HYDROPUMP,49,SAFEGUARD
 EggMoves = SPLASH,SUPERSONIC,WATERSPORT,MUDSPORT,CAPTIVATE,AQUARING,AQUAJET,HEALPULSE,BRINE,ENTRAINMENT
@@ -15576,7 +15576,7 @@ BaseEXP = 302
 EffortPoints = 0,3,0,0,0,0
 Rareness = 3
 Happiness = 0
-Abilities = SLOWSTART
+Abilities = OBLIVIOUS
 Moves = 1,HEAVYSLAM,1,CRUSHGRIP,1,FIREPUNCH,1,ICEPUNCH,1,THUNDERPUNCH,1,DIZZYPUNCH,1,KNOCKOFF,1,CONFUSERAY,1,FORESIGHT,25,REVENGE,40,WIDEGUARD,50,ZENHEADBUTT,65,PAYBACK,75,CRUSHGRIP,90,HEAVYSLAM,100,GIGAIMPACT
 Compatibility = Undiscovered
 StepsToHatch = 30855

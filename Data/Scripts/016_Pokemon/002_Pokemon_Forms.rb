@@ -377,8 +377,8 @@ MultipleForms.register(:BASCULIN,{
 
 MultipleForms.register(:DARMANITAN,{
   "getFormOnLeavingBattle" => proc { |pkmn,battle,usedInBattle,endBattle|
-    next 0 if pkmn.form==2
-    next 1 if pkmn.form==3
+    next 0 if pkmn.form==1
+    next 2 if pkmn.form==3
   }
 })
 
