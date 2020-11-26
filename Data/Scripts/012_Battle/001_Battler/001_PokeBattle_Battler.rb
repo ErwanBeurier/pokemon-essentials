@@ -407,7 +407,8 @@ class PokeBattle_Battler
       :RKSSYSTEM,
       :ASONEICE,
       :ASONEGHOST,
-	  :NEUTRALIZINGGAS
+	  :NEUTRALIZINGGAS,
+	  :HUNGERSWITCH
     ]
     abilityBlacklist.each do |a|
       return true if isConst?(abil, PBAbilities, a)
@@ -590,7 +591,7 @@ class PokeBattle_Battler
   
   def canTakeHealingWish?
 	# Also works with Lunar Dance. 
-	return canHeal? && pbHasAnyStatus?
+	return canHeal? || pbHasAnyStatus?
   end 
   
   def affectedByContactEffect?(showMsg=false)
