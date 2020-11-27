@@ -15,6 +15,7 @@
 #   Decompilation of Data/movesets.dat
 # Each Pokémon has a set of movesets, to be used by NPCs in random battle, or 
 # by the player who doesn't want to spend time making a team.
+# Compiled for faster acces later.
 # 
 # -----------------------------------------------------------------------------
 # Database of movepools:
@@ -23,6 +24,23 @@
 # Each Pokémon is associated with the list of moves it can learn. This is 
 # faster than checking the pokemon data + tm.dat and such in order to gather 
 # the movepool of a given Pokémon. Used in Teambuilder, in the move selection.
+# Compiled for faster acces later.
+# 
+# -----------------------------------------------------------------------------
+# Database of tiers:
+#   Compilation of PBS/sctiers.txt
+#   Decompilation of Data/sctiers.dat
+# Description of tiers of Pokémons. Note that these tiers are different to the 
+# one from Smogon/Showdown.
+# Compiled for faster acces later.
+# 
+# -----------------------------------------------------------------------------
+# Database of personal items:
+#   Compilation of PBS/scpersonalitems.txt
+#   Decompilation of Data/scpersonalitems.dat
+# Description of personal items: items that work only with a given Pokémon 
+# (e.g. Mega-Stones, or Thick Club for Marowak).
+# Compiled for faster acces later.
 # 
 ###############################################################################
 
