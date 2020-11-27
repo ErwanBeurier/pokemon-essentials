@@ -11,15 +11,6 @@
 
 
 
-
-
-
-# IDEE : 
-# Ici, retirer tout ce qui est gestoin des objets personnels.
-
-
-
-
 # TODO:
 # - Pattern for ARCEUS
 # - Lightclay
@@ -67,8 +58,8 @@ def scChooseAbility(pokemon, tiers)
 	
 	allowed = [] 
 	
-	for i in 0...ret[0].length 
-		if not tiers.banned_abilities.include?(ret[0][i])
+	for i in 0...ret.length 
+		if not tiers.banned_abilities.include?(ret[i][0])
 			allowed.push(i)
 		end 
 	end 
@@ -95,10 +86,11 @@ def scChooseAbility(pokemon, tiers)
 	if allowed.empty?
 		return 0 # Still return a Pokemon... 
 	end 
+  
 	
 	a = allowed[rand(allowed.length)]
 	
-	return ret[1][a]
+	return ret[a][0]
 end 
 
 
@@ -120,7 +112,7 @@ end
 
 
 
-def scGenerateTeamRand(tierid, trainer, replace_dead_members = false, type_of_team = -1, type1 = -1, type2 = -1)
+def scGenerateTeamRand(trainer, type_of_team = -1, type1 = -1, type2 = -1)
 	# type_of_team:
 	# if < 0: choose at random.
 	# if = 0: Hyper Offense (Lead + 4 offensive + anything)
@@ -134,15 +126,11 @@ def scGenerateTeamRand(tierid, trainer, replace_dead_members = false, type_of_te
 	party_species = [] 
 	party_roles = [] 
 	
-	# In a Nuzzlocke ladder, every dead Pokémon will be changed. 
-	# Used only if replace_dead_members is true. 
-	party_survivors = [] 
 	
-	# Check if nil. 
-	if not tierid
-		tierid = "FE"
-	end
-	
+	# Get tier. 
+  tierid = "FE"
+  tierid = $PokemonTemp.battleRules["tier"] if $PokemonTemp.battleRules["tier"]
+  
 	result_generation = []
   tiers = loadTiers(tierid)
   
@@ -201,10 +189,11 @@ def scGenerateTeamRand(tierid, trainer, replace_dead_members = false, type_of_te
 	party_movesets = result_generation[2]
 	
   
-  # For Nuzzlocke modes, replace the species that died. 
+	# In a Nuzzlocke ladder, every dead Pokémon will be changed. 
 	deleted_species = []
+	party_survivors = [] 
 	
-	if replace_dead_members
+	if $PokemonTemp.battleRules["nuzzlocke"]
 		# Remove duplicates. 
 		for i in 0...trainer.party.length
 			pk = trainer.party[i]
@@ -277,12 +266,15 @@ def scGenerateTeamRand(tierid, trainer, replace_dead_members = false, type_of_te
 	
 	# And then, create the actual party: create the Pokemons + choose a moveset. 
 	for i_sp in 0...party_species.length
-		sp = party_species[i_sp]
 		pkmn = party_movesets[i_sp]
-		
+			
+    # Give form if applicable. 
+    form = (pkmn[SCMovesetsMetadata::FORM] ? pkmn[SCMovesetsMetadata::FORM] : 0)
+    sp = pbGetFSpeciesFromForm(pkmn[SCMovesetsMetadata::SPECIES], form)
+    
 		# For each species, choose one moveset.
-		pokemon = PokeBattle_Pokemon.new(pkmn[SCMovesetsMetadata::SPECIES],pkmn[SCMovesetsMetadata::LEVEL], trainer)
-		
+		pokemon = PokeBattle_Pokemon.new(sp,pkmn[SCMovesetsMetadata::LEVEL], trainer)
+    
 		# Check if it has moves. If not, then the moves will be given by the level. 
 		# Allow Ditto that has only one move, but also EVs/IVs and such. 
 		# Pokemons like Caterpie don't have moves at all, neither do they have EVs/IVs and such.
@@ -301,7 +293,7 @@ def scGenerateTeamRand(tierid, trainer, replace_dead_members = false, type_of_te
 				# We filter the moves again. Do not give several offensive 
 				# moves with the same type (unless one has priority). 
         
- 				if pkmn[m] == 0
+ 				if !pkmn[m]
 					break 
 				end
         
@@ -311,14 +303,13 @@ def scGenerateTeamRand(tierid, trainer, replace_dead_members = false, type_of_te
 					raise _INTL("pkmn[m]={2} is a Fixnum, rather than an array: m={1} and " + scConvertMovesetToString(pkmn), m, pkmn[m])
 				end 
 				
-				
 				for mvid in pkmn[m]
 					
 					if given_moves.include?(mvid)
 						next 
 					end 
 					
-					mvdata = PBMove.new(mvid)
+					mvdata = PBMoveData.new(mvid)
 					
 					if (mvdata.priority <= 0 and (mvdata.category == 0 or mvdata.category == 1) and mvdata.basedamage >= 60) or isConst?(mvid, PBMoves, :LOWKICK) or isConst?(mvid, PBMoves, :GRASSKNOT)
 						# Then, it's an offensive move.
@@ -339,8 +330,8 @@ def scGenerateTeamRand(tierid, trainer, replace_dead_members = false, type_of_te
 					else 
 						filtered_again.push(mvid)
 					end 
-				end 
-				
+				end
+        
 				# Some security: if filtered_again is empty, then use a trick to force a fourth move. 
 				if filtered_again.empty?
 					for mvid in pkmn[m]
@@ -362,8 +353,8 @@ def scGenerateTeamRand(tierid, trainer, replace_dead_members = false, type_of_te
 				if mvid == nil
 					raise _INTL("Nil move for {1}\nFiltered again = {2}\nFiltered moves = {3}\nGiven moves={4}", pokemon.species, filtered_again,pkmn[m], given_moves)
 				end 
-				mvdata = PBMove.new(mvid)
-				pokemon.moves[m-SCMovesetsMetadata::MOVE1] = mvdata
+				mvdata = PBMoveData.new(mvid)
+				pokemon.moves[m-SCMovesetsMetadata::MOVE1] = PBMove.new(mvid)
 				given_moves.push(mvid)
 
 				if mvdata.priority <= 0 and (mvdata.category == 0 or mvdata.category == 1) and mvdata.basedamage >= 60
@@ -419,11 +410,8 @@ def scGenerateTeamRand(tierid, trainer, replace_dead_members = false, type_of_te
 				pokemon.setAbility(ab)
       else 
 				pokemon.setAbility(scChooseAbility(pokemon, tiers))
-      end 
-			
-			# Give form if applicable. 
-			pokemon.setForm(pkmn[SCMovesetsMetadata::FORM]) # Defaut is 0 
-			
+      end
+      
 			# Give gender 
 			pokemon.setGender(pkmn[SCMovesetsMetadata::GENDER]) if pkmn[SCMovesetsMetadata::GENDER]
 			

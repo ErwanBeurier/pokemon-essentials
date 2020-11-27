@@ -1,7 +1,9 @@
 class PokeBattle_Battle 
   
   def self.parseBattleMode(mode)
-    if mode == "double"
+    if mode == "single"
+      return [1, 1]
+    elsif mode == "double"
       return [2, 2]
     elsif mode == "triple"
       return [3, 3]
@@ -9,7 +11,7 @@ class PokeBattle_Battle
     
     m = mode.match /(\d)v(\d)/
     
-    if m.length == 3
+    if m && m.length == 3
       return [m[1].to_i, m[2].to_i]
     end 
     

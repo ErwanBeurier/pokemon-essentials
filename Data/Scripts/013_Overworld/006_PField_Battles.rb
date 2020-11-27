@@ -48,6 +48,8 @@ class PokemonTemp
     when "base";                   rules["base"]           = var
     when "outcome", "outcomevar";  rules["outcomeVar"]     = var
     when "nopartner";              rules["noPartner"]      = true
+    when "tier";                   rules["tier"]           = var
+    when "nuzzlocke";              rules["nuzzlocke"]      = true
     else
       if PokeBattle_Battle.isValidBattleMode?(rule.to_s.downcase)
         rules["size"] = rule.to_s.downcase
@@ -69,7 +71,7 @@ def setBattleRule(*args)
     else
       case arg.downcase
       when "terrain", "weather", "environment", "environ", "backdrop",
-           "battleback", "base", "outcome", "outcomevar"
+           "battleback", "base", "outcome", "outcomevar", "tier"
         r = arg
         next
       end

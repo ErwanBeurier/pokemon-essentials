@@ -540,7 +540,7 @@ MultipleForms.register(:HOOPA,{
     end
   },
   "onSetForm" => proc { |pkmn,form,oldForm|
-    pkmn.formTime = (form>0) ? pbGetTimeNow.to_i : nil
+    pkmn.formTime = (form && form>0) ? pbGetTimeNow.to_i : nil
   }
 })
 
