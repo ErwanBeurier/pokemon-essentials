@@ -356,6 +356,7 @@ class PokemonLoadScreen
           metadata             = Marshal.load(f)
           $PokemonBag          = Marshal.load(f)
           $PokemonStorage      = Marshal.load(f)
+          $CastleHandler       = Marshal.load(f)
           $SaveVersion         = Marshal.load(f) unless f.eof?
           pbRefreshResizeFactor   # To fix Game_Screen pictures
           magicNumberMatches = false
@@ -427,6 +428,7 @@ class PokemonLoadScreen
         $PokemonMap          = PokemonMapMetadata.new
         $PokemonGlobal       = PokemonGlobalMetadata.new
         $PokemonStorage      = PokemonStorage.new
+        $CastleHandler       = SCCastleData.new
         $PokemonEncounters   = PokemonEncounters.new
         $PokemonTemp.begunNewGame = true
         pbRefreshResizeFactor   # To fix Game_Screen pictures

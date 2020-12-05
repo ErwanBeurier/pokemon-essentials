@@ -1483,4 +1483,5 @@ def pbSaveAllData
   scSaveLearnedMoves;     Graphics.update
   scSaveTiers;            Graphics.update
   scSavePersonalItems;    Graphics.update
+  scSavePatterns;         Graphics.update
 end

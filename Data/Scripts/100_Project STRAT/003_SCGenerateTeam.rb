@@ -17,80 +17,44 @@
 # - Trick room setter 
 
 
-def scGetPersonalItems(speciesid, complete = false)
-	personal_items = scLoadPersonalItems(speciesid)
-  
-  return [] if !personal_items
-  
-  if complete
-    return personal_items
-  else 
-    only_items = []
-    
-    for p in personal_items
-      only_items.push(p[0])
-    end 
-    
-    return only_items
-  end 
-  
-end 
 
 
 
-
-def scChooseAbility(pokemon, tiers)
+def scChooseAbility(pokemon, tier)
 	
 	ret = pokemon.getAbilityList
-	# ret[0] = IDs of the Abilities
-	# ret[1] = the index of the ability (determines whether the corresponding ability is 0/1 or hidden 2)
+	# ret[i][0] = the index of the ability (determines whether the corresponding ability is 0/1 or hidden 2)
+	# ret[i][1] = IDs of the Abilities
 	
 	# For Kabutops : 
-	# ret[0] = [SWIFTSWIM, BATTLEARMOR, WEAKARMOR] 
-	# ret[1] = [0, 1, 2] 
+	# ret[0] = [0, SWIFTSWIM] 
+	# ret[1] = [1, BATTLEARMOR] 
+	# ret[2] = [2, WEAKARMOR] 
 	# For Venusaur:
-	# ret[0] = [OVERGROW, CHLOROPHYLL] 
-	# ret[1] = [0, 2] 
-	
-	
-	# debug_lol = [PBSpecies::WISHIWASHI, PBSpecies::SOLROCK, PBSpecies::LIEPARD]
-	
+	# ret[0] = [0, OVERGROW] 
+	# ret[1] = [2, CHLOROPHYLL] 	
 	
 	allowed = [] 
 	
 	for i in 0...ret.length 
-		if not tiers.banned_abilities.include?(ret[i][0])
+		if not tier.banned_abilities.include?(ret[i][0])
 			allowed.push(i)
 		end 
 	end 
-	
-	# if debug_lol.include?(pokemon.species)
-		# allo = " allowed = " 
-		# ret0 = " ret[0] = "
-		# ret1 = " ret[1] = "
 		
-		# for ab in allowed
-			# allo += ab.to_s + ";"
-			# ret0 += getConstantName(PBAbilities, ret[0][ab]) + ";"
-			# ret1 += ret[1][ab].to_s + ";"
-		# end 
-		
-		# Kernel.pbMessage(pbGetSpeciesConst(pokemon.species) + allo + ret0 + ret1)
-	# end 
-	
 	# For Kabutops:
 	# allowed = [0, 1, 2]
 	# For Venusaur:
 	# allowed = [0, 1]
 	
 	if allowed.empty?
-		return 0 # Still return a Pokemon... 
+		return ret[0][1] # Still return a Pokemon... 
 	end 
   
 	
 	a = allowed[rand(allowed.length)]
 	
-	return ret[a][0]
+	return ret[a][1]
 end 
 
 
@@ -128,11 +92,10 @@ def scGenerateTeamRand(trainer, type_of_team = -1, type1 = -1, type2 = -1)
 	
 	
 	# Get tier. 
-  tierid = "FE"
-  tierid = $PokemonTemp.battleRules["tier"] if $PokemonTemp.battleRules["tier"]
+  tierid = scGetTier()
   
 	result_generation = []
-  tiers = loadTiers(tierid)
+  tier = loadTiers(tierid)
   
   
   
@@ -147,16 +110,16 @@ def scGenerateTeamRand(trainer, type_of_team = -1, type1 = -1, type2 = -1)
     if counter == trainer.party.length 
       # All dead; change type! 
       if trainer == $Trainer
-        result_generation = tiers.randTeamSpecies(nil, type_of_team)
+        result_generation = tier.randTeamSpecies(nil, type_of_team)
         # wanted_type = nil alloww the player to choose the type 
       else
-        result_generation = tiers.randTeamSpecies(-1, type_of_team)
+        result_generation = tier.randTeamSpecies(-1, type_of_team)
         # wanted_type = -1 chooses the type at random. 
       end 
     else 
       wanted_type = type1
-      wanted_type = tiers.findType(trainer.party) if type1 != nil && type1 < 0
-      result_generation = tiers.randTeamSpecies(wanted_type, type_of_team)
+      wanted_type = tier.findType(trainer.party) if type1 != nil && type1 < 0
+      result_generation = tier.randTeamSpecies(wanted_type, type_of_team)
     end 
   elsif tierid == "BI"
     # If all POkémons are KO, then change the type. 
@@ -168,20 +131,20 @@ def scGenerateTeamRand(trainer, type_of_team = -1, type1 = -1, type2 = -1)
     if counter == trainer.party.length 
       # All dead; change type! 
       if trainer == $Trainer
-        result_generation = tiers.randTeamSpecies(nil, nil, type_of_team)
+        result_generation = tier.randTeamSpecies(nil, nil, type_of_team)
         # wanted_type = nil alloww the player to choose the type 
       else
-        result_generation = tiers.randTeamSpecies(-1, -1, type_of_team)
+        result_generation = tier.randTeamSpecies(-1, -1, type_of_team)
         # wanted_type = -1 chooses the type at random. 
       end 
     else 
       wanted_types = [type1, type2]
-      wanted_types = tiers.findTypes(trainer.party) if type1 != nil && type1 < 0 &&type2 != nil && type2 < 0
-      result_generation = tiers.randTeamSpecies(wanted_types[0], wanted_types[1], type_of_team)
+      wanted_types = tier.findTypes(trainer.party) if type1 != nil && type1 < 0 &&type2 != nil && type2 < 0
+      result_generation = tier.randTeamSpecies(wanted_types[0], wanted_types[1], type_of_team)
     end 
     
   else 
-    result_generation = tiers.randTeamSpecies(type_of_team)
+    result_generation = tier.randTeamSpecies(type_of_team)
   end 
   
 	party_species = result_generation[0]
@@ -243,10 +206,10 @@ def scGenerateTeamRand(trainer, type_of_team = -1, type1 = -1, type2 = -1)
 			# Nobody died. 
 			message = "" 
 		end 
-		$game_variables[202] = message
+		$game_variables[59] = message
     
 	else
-		$game_variables[202] = ""
+		$game_variables[59] = ""
 	end
   
 	
@@ -258,7 +221,7 @@ def scGenerateTeamRand(trainer, type_of_team = -1, type1 = -1, type2 = -1)
 	
 	party = []
 	
-	if party_species.length != 6 and deleted_species.length > 0
+	if party_species.length != 6 && deleted_species.length > 0
 		raise _INTL("Party_species.length == {1} and deleted_species.length == {2}", 
 			party_species.length, deleted_species.length)
 	end 
@@ -267,7 +230,16 @@ def scGenerateTeamRand(trainer, type_of_team = -1, type1 = -1, type2 = -1)
 	# And then, create the actual party: create the Pokemons + choose a moveset. 
 	for i_sp in 0...party_species.length
 		pkmn = party_movesets[i_sp]
-			
+		pokemon = scGenerateMoveset(pkmn, trainer, tier)
+		party.push(pokemon)
+	end
+	
+	return party + party_survivors
+end 
+
+
+
+def scGenerateMoveset(pkmn, trainer, tier)
     # Give form if applicable. 
     form = (pkmn[SCMovesetsMetadata::FORM] ? pkmn[SCMovesetsMetadata::FORM] : 0)
     sp = pbGetFSpeciesFromForm(pkmn[SCMovesetsMetadata::SPECIES], form)
@@ -404,12 +376,12 @@ def scGenerateTeamRand(trainer, type_of_team = -1, type1 = -1, type2 = -1)
       pokemon.iv = (pkmn[SCMovesetsMetadata::IV] ? pkmn[SCMovesetsMetadata::IV] : Array.new(6, 31))
 			
 			# Give ability 
-			ab = pkmn[SCMovesetsMetadata::ABILITY]
+			ab = pkmn[SCMovesetsMetadata::ABILITYINDEX]
       
       if ab
-				pokemon.setAbility(ab)
+				pokemon.setAbility(ab) # Here, it's the INDEX!!!!
       else 
-				pokemon.setAbility(scChooseAbility(pokemon, tiers))
+				pokemon.setAbility(scChooseAbility(pokemon, tier))
       end
       
 			# Give gender 
@@ -421,20 +393,9 @@ def scGenerateTeamRand(trainer, type_of_team = -1, type1 = -1, type2 = -1)
 			
 			pokemon.calcStats
 		end 
-		
-		party.push(pokemon)
-	end
-	
-	return party + party_survivors
+    
+    return pokemon
 end 
-
-
-
-
-
-
-
-
 
 
 

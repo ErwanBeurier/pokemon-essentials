@@ -1,0 +1,408 @@
+# This file is specific to Pokémon Project STRAT by StCooler. Manually written.
+#-------------------------------
+Pokemon = CUBONE
+    OptionalItem = THICKCLUB
+#-------------------------------
+Pokemon = MAROWAK
+    OptionalItem = THICKCLUB
+#-------------------------------
+Pokemon = LATIAS
+    OptionalItem = SOULDEW
+Pokemon = LATIAS
+    Form = 1
+    RequiredItem = LATIASITE
+#-------------------------------
+Pokemon = LATIOS
+    OptionalItem = SOULDEW
+Pokemon = LATIOS
+    Form = 1
+    RequiredItem = LATIOSITE
+#-------------------------------
+Pokemon = DIALGA
+    OptionalItem = ADAMANTORB
+#-------------------------------
+Pokemon = PALKIA
+    OptionalItem = LUSTROUSORB
+#-------------------------------
+Pokemon = PIKACHU
+    OptionalItem = LIGHTBALL
+#-------------------------------
+Pokemon = FARFETCHD
+    OptionalItem = LEEK
+#-------------------------------
+Pokemon = CLAMPERL
+    OptionalItem = DEEPSEATOOTH
+Pokemon = CLAMPERL
+    OptionalItem = DEEPSEASCALE
+#-------------------------------
+Pokemon = GIRATINA
+    Form = 1
+    RequiredItem = GRISEOUSORB
+#-------------------------------
+Pokemon = GROUDON
+    Form = 1
+    RequiredItem = REDORB
+#-------------------------------
+Pokemon = KYOGRE
+    Form = 1
+    RequiredItem = BLUEORB
+#-------------------------------
+Pokemon = ZACIAN
+    Form = 1
+    RequiredItem = RUSTEDSWORD
+#-------------------------------
+Pokemon = ZAMAZENTA
+    Form = 1
+    RequiredItem = RUSTEDSHIELD
+#-------------------------------
+Pokemon = SILVALLY
+    Form = 1
+    RequiredItem = FIGHTINGMEMORY
+Pokemon = SILVALLY
+    Form = 2
+    RequiredItem = FLYINGMEMORY
+Pokemon = SILVALLY
+    Form = 3
+    RequiredItem = POISONMEMORY
+Pokemon = SILVALLY
+    Form = 4
+    RequiredItem = GROUNDMEMORY
+Pokemon = SILVALLY
+    Form = 5
+    RequiredItem = ROCKMEMORY
+Pokemon = SILVALLY
+    Form = 6
+    RequiredItem = BUGMEMORY
+Pokemon = SILVALLY
+    Form = 7
+    RequiredItem = GHOSTMEMORY
+Pokemon = SILVALLY
+    Form = 8
+    RequiredItem = STEELMEMORY
+Pokemon = SILVALLY
+    Form = 10
+    RequiredItem = FIREMEMORY
+Pokemon = SILVALLY
+    Form = 11
+    RequiredItem = WATERMEMORY
+Pokemon = SILVALLY
+    Form = 12
+    RequiredItem = GRASSMEMORY
+Pokemon = SILVALLY
+    Form = 13
+    RequiredItem = ELECTRICMEMORY
+Pokemon = SILVALLY
+    Form = 14
+    RequiredItem = PSYCHICMEMORY
+Pokemon = SILVALLY
+    Form = 15
+    RequiredItem = ICEMEMORY
+Pokemon = SILVALLY
+    Form = 16
+    RequiredItem = DRAGONMEMORY
+Pokemon = SILVALLY
+    Form = 17
+    RequiredItem = DARKMEMORY
+Pokemon = SILVALLY
+    Form = 18
+    RequiredItem = FAIRYMEMORY
+#-------------------------------
+Pokemon = ARCEUS
+    Form = 1
+    RequiredItem = FISTPLATE
+Pokemon = ARCEUS
+    Form = 2
+    RequiredItem = SKYPLATE
+Pokemon = ARCEUS
+    Form = 3
+    RequiredItem = TOXICPLATE
+Pokemon = ARCEUS
+    Form = 4
+    RequiredItem = EARTHPLATE
+Pokemon = ARCEUS
+    Form = 5
+    RequiredItem = STONEPLATE
+Pokemon = ARCEUS
+    Form = 6
+    RequiredItem = INSECTPLATE
+Pokemon = ARCEUS
+    Form = 7
+    RequiredItem = SPOOKYPLATE
+Pokemon = ARCEUS
+    Form = 8
+    RequiredItem = IRONPLATE
+Pokemon = ARCEUS
+    Form = 10
+    RequiredItem = FLAMEPLATE
+Pokemon = ARCEUS
+    Form = 11
+    RequiredItem = SPLASHPLATE
+Pokemon = ARCEUS
+    Form = 12
+    RequiredItem = MEADOWPLATE
+Pokemon = ARCEUS
+    Form = 13
+    RequiredItem = ZAPPLATE
+Pokemon = ARCEUS
+    Form = 14
+    RequiredItem = MINDPLATE
+Pokemon = ARCEUS
+    Form = 15
+    RequiredItem = ICICLEPLATE
+Pokemon = ARCEUS
+    Form = 16
+    RequiredItem = DRACOPLATE
+Pokemon = ARCEUS
+    Form = 17
+    RequiredItem = DREADPLATE
+Pokemon = ARCEUS
+    Form = 18
+    RequiredItem = PIXIEPLATE
+#-------------------------------
+Pokemon = VENUSAUR
+    Form = 1
+    RequiredItem = VENUSAURITE
+#-------------------------------
+Pokemon = CHARIZARD
+    Form = 1
+    RequiredItem = CHARIZARDITEX
+Pokemon = CHARIZARD
+    Form = 2
+    RequiredItem = CHARIZARDITEY
+#-------------------------------
+Pokemon = BLASTOISE
+    Form = 1
+    RequiredItem = BLASTOISINITE
+#-------------------------------
+Pokemon = BEEDRILL
+    Form = 1
+    RequiredItem = BEEDRILLITE
+Pokemon = BEEDRILL
+    BaseForm = 2
+    Form = 3
+    RequiredItem = BEEDRILLITE
+#-------------------------------
+Pokemon = PIDGEOT
+    Form = 1
+    RequiredItem = PIDGEOTITE
+Pokemon = PIDGEOT
+    BaseForm = 2
+    Form = 3
+    RequiredItem = PIDGEOTITE
+Pokemon = PIDGEOT
+    BaseForm = 4
+    Form = 5
+    RequiredItem = PIDGEOTITE
+#-------------------------------
+Pokemon = ALAKAZAM
+    Form = 1
+    RequiredItem = ALAKAZITE
+#-------------------------------
+Pokemon = SLOWBRO
+    Form = 1
+    RequiredItem = SLOWBRONITE
+#-------------------------------
+Pokemon = GENGAR
+    Form = 1
+    RequiredItem = GENGARITE
+Pokemon = GENGAR
+    BaseForm = 2
+    Form = 3
+    RequiredItem = GENGARITE
+#-------------------------------
+Pokemon = KANGASKHAN
+    Form = 1
+    RequiredItem = KANGASKHANITE
+#-------------------------------
+Pokemon = PINSIR
+    Form = 1
+    RequiredItem = PINSIRITE
+#-------------------------------
+Pokemon = GYARADOS
+    Form = 1
+    RequiredItem = GYARADOSITE
+Pokemon = GYARADOS
+    BaseForm = 2
+    Form = 3
+    RequiredItem = GYARADOSITE
+Pokemon = GYARADOS
+    BaseForm = 4
+    Form = 5
+    RequiredItem = GYARADOSITE
+Pokemon = GYARADOS
+    BaseForm = 6
+    Form = 7
+    RequiredItem = GYARADOSITE
+Pokemon = GYARADOS
+    BaseForm = 8
+    Form = 9
+    RequiredItem = GYARADOSITE
+#-------------------------------
+Pokemon = AERODACTYL
+    Form = 1
+    RequiredItem = AERODACTYLITE
+Pokemon = AERODACTYL
+    BaseForm = 2
+    Form = 3
+    RequiredItem = AERODACTYLITE
+#-------------------------------
+Pokemon = MEWTWO
+    Form = 1
+    RequiredItem = MEWTWONITEX
+Pokemon = MEWTWO
+    Form = 2
+    RequiredItem = MEWTWONITEY
+#-------------------------------
+Pokemon = AMPHAROS
+    Form = 1
+    RequiredItem = AMPHAROSITE
+#-------------------------------
+Pokemon = STEELIX
+    Form = 1
+    RequiredItem = STEELIXITE
+#-------------------------------
+Pokemon = SCIZOR
+    Form = 1
+    RequiredItem = SCIZORITE
+#-------------------------------
+Pokemon = HERACROSS
+    Form = 1
+    RequiredItem = HERACRONITE
+#-------------------------------
+Pokemon = HOUNDOOM
+    Form = 1
+    RequiredItem = HOUNDOOMINITE
+#-------------------------------
+Pokemon = TYRANITAR
+    Form = 1
+    RequiredItem = TYRANITARITE
+#-------------------------------
+Pokemon = SCEPTILE
+    Form = 1
+    RequiredItem = SCEPTILITE
+#-------------------------------
+Pokemon = BLAZIKEN
+    Form = 1
+    RequiredItem = BLAZIKENITE
+#-------------------------------
+Pokemon = SWAMPERT
+    Form = 1
+    RequiredItem = SWAMPERTITE
+#-------------------------------
+Pokemon = GARDEVOIR
+    Form = 1
+    RequiredItem = GARDEVOIRITE
+#-------------------------------
+Pokemon = SABLEYE
+    Form = 1
+    RequiredItem = SABLENITE
+#-------------------------------
+Pokemon = MAWILE
+    Form = 1
+    RequiredItem = MAWILITE
+#-------------------------------
+Pokemon = AGGRON
+    Form = 1
+    RequiredItem = AGGRONITE
+#-------------------------------
+Pokemon = MEDICHAM
+    Form = 1
+    RequiredItem = MEDICHAMITE
+#-------------------------------
+Pokemon = MANECTRIC
+    Form = 1
+    RequiredItem = MANECTITE
+#-------------------------------
+Pokemon = SHARPEDO
+    Form = 1
+    RequiredItem = SHARPEDONITE
+#-------------------------------
+Pokemon = CAMERUPT
+    Form = 1
+    RequiredItem = CAMERUPTITE
+#-------------------------------
+Pokemon = ALTARIA
+    Form = 1
+    RequiredItem = ALTARIANITE
+Pokemon = ALTARIA
+    BaseForm = 2
+    Form = 3
+    RequiredItem = ALTARIANITE
+#-------------------------------
+Pokemon = BANETTE
+    Form = 1
+    RequiredItem = BANETTITE
+#-------------------------------
+Pokemon = ABSOL
+    Form = 1
+    RequiredItem = ABSOLITE
+#-------------------------------
+Pokemon = GLALIE
+    Form = 1
+    RequiredItem = GLALITITE
+Pokemon = GLALIE
+    BaseForm = 2
+    Form = 3
+    RequiredItem = GLALITITE
+#-------------------------------
+Pokemon = SALAMENCE
+    Form = 1
+    RequiredItem = SALAMENCITE
+#-------------------------------
+Pokemon = METAGROSS
+    Form = 1
+    RequiredItem = METAGROSSITE
+#-------------------------------
+Pokemon = LOPUNNY
+    Form = 1
+    RequiredItem = LOPUNNITE
+#-------------------------------
+Pokemon = GARCHOMP
+    Form = 1
+    RequiredItem = GARCHOMPITE
+#-------------------------------
+Pokemon = LUCARIO
+    Form = 1
+    RequiredItem = LUCARIONITE
+#-------------------------------
+Pokemon = ABOMASNOW
+    Form = 1
+    RequiredItem = ABOMASITE
+#-------------------------------
+Pokemon = GALLADE
+    Form = 1
+    RequiredItem = GALLADITE
+#-------------------------------
+Pokemon = AUDINO
+    Form = 1
+    RequiredItem = AUDINITE
+Pokemon = AUDINO
+    BaseForm = 2
+    Form = 3
+    RequiredItem = AUDINITE
+#-------------------------------
+Pokemon = DIANCIE
+    Form = 1
+    RequiredItem = DIANCITE
+#-------------------------------
+Pokemon = ZYGARDE
+    BaseForm = 0
+    Form = 2
+    RequiredAbility = POWERCONSTRUCT
+#-------------------------------
+Pokemon = RAYQUAZA
+    Form = 1
+    RequiredMove = DRAGONASCENT
+#-------------------------------
+Pokemon = GRENINJA
+    BaseForm = 2
+    Form = 3
+    RequiredAbility = BATTLEBOND
+#-------------------------------
+Pokemon = MEOWSTIC
+    Form = 1
+    RequiredGender = Female
+#-------------------------------
+Pokemon = TOXTRICITY
+    Form = 1
+    RequiredNatures = LONELY, BOLD, RELAXED, TIMID, SERIOUS, MODEST, MILD, QUIET, BASHFUL, CALM, GENTLE, CAREFUL

@@ -150,7 +150,7 @@ class SCTiers
 				
 				# Check the movesets. 
 				if !movesetlog.keys.include?(pk)
-					raise _INTL("No moveset for {1}", PBSpecies.getName(pk))
+					raise _INTL("No moveset for {1}.", PBSpecies.getName(pk))
 				end 
 				
 				for mv in movesetlog[pk]
@@ -264,20 +264,20 @@ class SCTiers
 		for pk in party
 			if @banned_pkmns.include?(pk.fSpecies)
 				valid = false 
-				report.push(_INTL("Pokémon {1} is not allowed", PBSpecies.getName(pk.fSpecies)))
+				report.push(_INTL("Pokémon {1} is not allowed.", PBSpecies.getName(pk.fSpecies)))
 			end 
 			if @banned_items.include?(pk.item)
 				valid = false 
-				report.push(_INTL("Item {1} on {2} is not allowed", PBItems.getName(pk.item), PBSpecies.getName(pk.species)))
+				report.push(_INTL("Item {1} on {2} is not allowed.", PBItems.getName(pk.item), PBSpecies.getName(pk.species)))
 			end 
 			if @banned_abilities.include?(pk.ability)
 				valid = false 
-				report.push(_INTL("Ability {1} on {2} is not allowed", PBAbilities.getName(pk.ability), PBSpecies.getName(pk.species)))
+				report.push(_INTL("Ability {1} on {2} is not allowed.", PBAbilities.getName(pk.ability), PBSpecies.getName(pk.species)))
 			end 
 			for m in pk.moves
 				if @banned_moves.include?(m.id)
 					valid = false 
-					report.push(_INTL("Move {1} on {2} is not allowed", PBMoves.getName(m.id), PBSpecies.getName(pk.species)))
+					report.push(_INTL("Move {1} on {2} is not allowed.", PBMoves.getName(m.id), PBSpecies.getName(pk.species)))
 				end 
 			end 
 		end 
@@ -294,7 +294,7 @@ class SCTiers
 		
 		for pk in party_list
 			# No species defined. 
-			next if pk[SCMovesetsMetadata::SPECIES] == -1
+			next if !pk[SCMovesetsMetadata::SPECIES]
 			
 			species_name = PBSpecies.getName(pk[SCMovesetsMetadata::SPECIES])
 			# for i in 0...pk.length
@@ -304,32 +304,32 @@ class SCTiers
 			form_species = pbGetFSpeciesFromForm(pk[SCMovesetsMetadata::SPECIES], pk[SCMovesetsMetadata::FORM])
       
 			if @banned_pkmns.include?(form_species)
-				report.push(_INTL("Pokémon {1} in form {2} is not allowed", 
+				report.push(_INTL("Pokémon {1} in form {2} is not allowed.", 
           species_name, pk[SCMovesetsMetadata::FORM].to_s))
 			end 
 			if @banned_items.include?(pk[SCMovesetsMetadata::ITEM])
-				report.push(_INTL("Item {1} on {2} is not allowed", 
+				report.push(_INTL("Item {1} on {2} is not allowed.", 
           PBItems.getName(pk[SCMovesetsMetadata::ITEM]), species_name))
 			end 
 			
 			# Check ability ffs it's so stupid how it's handled. 
-      ability = -1 
-      if pk[SCMovesetsMetadata::ABILITY] == 2
-        ability = pbGetSpeciesData(pk[SCMovesetsMetadata::SPECIES], pk[SCMovesetsMetadata::FORM], SpeciesHiddenAbility)
-      else 
-        ability = pbGetSpeciesData(pk[SCMovesetsMetadata::SPECIES], pk[SCMovesetsMetadata::FORM], SpeciesAbilities)
-        ability = ability[pk[SCMovesetsMetadata::ABILITY]]
-      end 
-			if @banned_abilities.include?(ability)
+      # ability = -1 
+      # if pk[SCMovesetsMetadata::ABILITYINDEX] == 2
+        # ability = pbGetSpeciesData(pk[SCMovesetsMetadata::SPECIES], pk[SCMovesetsMetadata::FORM], SpeciesHiddenAbility)
+      # else 
+        # ability = pbGetSpeciesData(pk[SCMovesetsMetadata::SPECIES], pk[SCMovesetsMetadata::FORM], SpeciesAbilities)
+        # ability = ability[pk[SCMovesetsMetadata::ABILITYINDEX]]
+      # end 
+			if @banned_abilities.include?(pk[SCMovesetsMetadata::ABILITY])
 				valid = false 
-				report.push(_INTL("Ability {1} on {2} is not allowed", PBAbilities.getName(ability), species_name))
+				report.push(_INTL("Ability {1} on {2} is not allowed.", PBAbilities.getName(pk[SCMovesetsMetadata::ABILITY]), species_name))
 			end 
 			
 			# raise _INTL("{1} num 9 => {2}", pk[0], pk[9])
-			for i in SCMovesetsMetadata.MOVE1..SCMovesetsMetadata.MOVE4
+			for m in SCMovesetsMetadata::MOVE1..SCMovesetsMetadata::MOVE4
 				if @banned_moves.include?(pk[m])
 					valid = false 
-					report.push(_INTL("Move {1} on {2} is not allowed", PBMoves.getName(pk[m]), species_name))
+					report.push(_INTL("Move {1} on {2} is not allowed.", PBMoves.getName(pk[m]), species_name))
 				end 
 			end 
 		end 
@@ -1127,8 +1127,20 @@ end
 
 
 
-def isValidForTier(tierid, party, show_messages)
+def trainerPartyIsValid
+  # Checks if the party of the player is valid for the current tier.
+  return isValidForTier($Trainer.party, false, nil)
+end 
+
+
+def trainerPartyFitsCurrentTier
+  return $PokemonTemp.battleRules["tierofteam"] == scGetTier()
+end 
+
+
+def isValidForTier(party, show_messages, tierid = nil)
 	# Checks if the given party is valid for the given tierid.
+  tierid = scGetTier() if !tierid
 	tier = loadTiers(tierid)
 	
 	res = tier.isValid(party)
@@ -1149,8 +1161,9 @@ end
 
 
 
-def partyListIsValidForTier(tierid, party_list, show_messages)
+def partyListIsValidForTier(party_list, show_messages, tierid = nil)
 	# Checks if the given party is valid for the given tierid.
+  tierid = scGetTier() if !tierid
 	tier = loadTiers(tierid)
 	
 	res = tier.partyListIsValid(party_list)

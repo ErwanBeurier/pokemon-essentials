@@ -268,3 +268,4 @@
 266,ASONEICE,As One,"Possesses 2 abilities, Unnerve and Chilling Neigh"
 267,ASONEGHOST,As One,"Possesses 2 abilities, Unnerve and Grim Neigh"
 500,HIGHPOTENTIAL,High Potential,"Raises the Pokémon's Sp. Atk stat."
+501,BEESWARM,Bee Swarm,"Queen and swarm each attacks."

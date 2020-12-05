@@ -24,7 +24,8 @@ end
 
 def scTrainerBattle(trainerID, trainerName, format = "single", endSpeech=nil,
                     trainerPartyID=-1, canLose=true, outcomeVar=1)
-  setBattleRule(format)
+  setBattleRule(format) if format
+  endSpeech = "..." if !endSpeech
   return pbTrainerBattle(trainerID, trainerName, endSpeech, false, trainerPartyID, canLose, outcomeVar)
 end 
 

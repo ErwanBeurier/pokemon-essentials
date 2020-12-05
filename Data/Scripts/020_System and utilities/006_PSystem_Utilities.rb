@@ -705,6 +705,7 @@ def pbTrainerName(name=nil,outfit=0)
   $Trainer.outfit = outfit
   if trname==nil
     trname = pbEnterPlayerName(_INTL("Your name?"),0,MAX_PLAYER_NAME_SIZE)
+    # trname = pbMessageFreeText(_INTL("Your name?"),"", false,MAX_PLAYER_NAME_SIZE)
     if trname==""
       gender = pbGetTrainerTypeGender(trainertype)
       trname = pbSuggestTrainerName(gender)

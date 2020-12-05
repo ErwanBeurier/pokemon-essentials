@@ -366,6 +366,10 @@ class PokeBattle_AI
     if skill>=PBTrainerAI.mediumSkill && user.hasActiveAbility?(:PARENTALBOND)
       multipliers[BASE_DMG_MULT] *= 1.25
     end
+    # Bee Swarm (Project STRAT)
+    if skill>=PBTrainerAI.mediumSkill && user.hasActiveAbility?(:BEESWARM)
+      multipliers[BASE_DMG_MULT] *= 1.25
+    end
     # Me First
     # TODO
     # Helping Hand - n/a

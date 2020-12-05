@@ -1157,6 +1157,8 @@ def pbCompileAllData(mustCompile)
     yield(_INTL("Compiling Trainer data"))
     pbCompileTrainers
     # Project STRAT additions:
+    yield(_INTL("Compiling patterns"))
+    scCompilePatterns
     yield(_INTL("Compiling movesets"))
     scCompileMovesets
     yield(_INTL("Compiling learned moves"))
@@ -1224,7 +1226,7 @@ def pbCompiler
        "scmovesets.dat",
        "sclearned.dat",
        "sctiers.dat",
-       "scpersonalitems.dat"
+       "scformreqs.dat"
     ]
     textFiles = [
        "abilities.txt",
@@ -1247,7 +1249,8 @@ def pbCompiler
        "scmovesets.txt",
        "sclearned.txt",
        "sctiers.txt",
-       "scpersonalitems.txt"
+       "scformreqs.txt",
+       "scmvstpatterns.txt" # No dat file
     ]
     latestDataTime = 0
     latestTextTime = 0
