@@ -5,7 +5,7 @@
 BattleHandlers::SpeedCalcAbility.add(:CHLOROPHYLL,
   proc { |ability,battler,mult|
     w = battler.battle.pbWeather
-    next mult*2 if w==PBWeather::Sun || w==PBWeather::HarshSun if !battler.hasActiveItem?(:UTILITYUMBRELLA)
+    next mult*2 if w==PBWeather::Sun || w==PBWeather::HarshSun if !battler.hasUtilityUmbrella?
   }
 )
 
@@ -44,7 +44,7 @@ BattleHandlers::SpeedCalcAbility.add(:SURGESURFER,
 BattleHandlers::SpeedCalcAbility.add(:SWIFTSWIM,
   proc { |ability,battler,mult|
     w = battler.battle.pbWeather
-    next mult*2 if w==PBWeather::Rain || w==PBWeather::HeavyRain if !battler.hasActiveItem?(:UTILITYUMBRELLA)
+    next mult*2 if w==PBWeather::Rain || w==PBWeather::HeavyRain if !battler.hasUtilityUmbrella?
   }
 )
 
@@ -155,7 +155,7 @@ BattleHandlers::StatusImmunityAbility.add(:LEAFGUARD,
   proc { |ability,battler,status|
     w = battler.battle.pbWeather
     next true if (w==PBWeather::Sun || w==PBWeather::HarshSun) &&
-    !battler.hasActiveItem?(:UTILITYUMBRELLA)
+    !battler.hasUtilityUmbrella?
   }
 )
 
@@ -947,7 +947,7 @@ BattleHandlers::DamageCalcUserAbility.add(:FLOWERGIFT,
   proc { |ability,user,target,move,mults,baseDmg,type|
     w = user.battle.pbWeather
     if move.physicalMove? && (w==PBWeather::Sun || w==PBWeather::HarshSun) &&
-      !target.hasActiveItem?(:UTILITYUMBRELLA)
+      !target.hasUtilityUmbrella?
       mults[ATK_MULT] = (mults[ATK_MULT]*1.5).round
     end
   }
@@ -1067,7 +1067,7 @@ BattleHandlers::DamageCalcUserAbility.add(:SOLARPOWER,
   proc { |ability,user,target,move,mults,baseDmg,type|
     w = user.battle.pbWeather
     if move.specialMove? && (w==PBWeather::Sun || w==PBWeather::HarshSun) &&
-      !target.hasActiveItem?(:UTILITYUMBRELLA)
+      !target.hasUtilityUmbrella?
       mults[ATK_MULT] = (mults[ATK_MULT]*1.5).round
     end
   }
@@ -1194,7 +1194,7 @@ BattleHandlers::DamageCalcUserAllyAbility.add(:FLOWERGIFT,
   proc { |ability,user,target,move,mults,baseDmg,type|
     w = user.battle.pbWeather
     if move.physicalMove? && (w==PBWeather::Sun || w==PBWeather::HarshSun) &&
-      !target.hasActiveItem?(:UTILITYUMBRELLA)
+      !target.hasUtilityUmbrella?
       mults[ATK_MULT] = (mults[ATK_MULT]*1.5).round
     end
   }
@@ -1238,7 +1238,7 @@ BattleHandlers::DamageCalcTargetAbility.add(:FLOWERGIFT,
   proc { |ability,user,target,move,mults,baseDmg,type|
     w = user.battle.pbWeather
     if move.specialMove? && (w==PBWeather::Sun || w==PBWeather::HarshSun) &&
-      !target.hasActiveItem?(:UTILITYUMBRELLA)
+      !target.hasUtilityUmbrella?
       mults[DEF_MULT] = (mults[DEF_MULT]*1.5).round
     end
   }
@@ -1343,7 +1343,7 @@ BattleHandlers::DamageCalcTargetAllyAbility.add(:FLOWERGIFT,
   proc { |ability,user,target,move,mults,baseDmg,type|
     w = user.battle.pbWeather
     if move.specialMove? && (w==PBWeather::Sun || w==PBWeather::HarshSun) &&
-      !target.hasActiveItem?(:UTILITYUMBRELLA)
+      !target.hasUtilityUmbrella?
       mults[DEF_MULT] = (mults[DEF_MULT]*1.5).round
     end
   }
@@ -2132,7 +2132,7 @@ BattleHandlers::EORHealingAbility.add(:HEALER,
 
 BattleHandlers::EORHealingAbility.add(:HYDRATION,
   proc { |ability,battler,battle|
-  if !battler.hasActiveItem?(:UTILITYUMBRELLA)
+  if !battler.hasUtilityUmbrella?
     next if battler.status==PBStatuses::NONE
     curWeather = battle.pbWeather
     next if curWeather!=PBWeather::Rain && curWeather!=PBWeather::HeavyRain
@@ -2277,7 +2277,7 @@ BattleHandlers::EOREffectAbility.add(:HUNGERSWITCH,
 BattleHandlers::EORGainItemAbility.add(:HARVEST,
   proc { |ability,battler,battle|
     next if battler.item>0
-    next if battler.recycleItem<=0 || !pbIsBerry?(battler.recycleItem) && !battler.hasActiveItem?(:UTILITYUMBRELLA)
+    next if battler.recycleItem<=0 || !pbIsBerry?(battler.recycleItem) && !battler.hasUtilityUmbrella?
     curWeather = battle.pbWeather
     if curWeather!=PBWeather::Sun && curWeather!=PBWeather::HarshSun
       next unless battle.pbRandom(100)<50

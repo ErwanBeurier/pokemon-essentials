@@ -398,7 +398,7 @@ class PokeBattle_Move
       multipliers[FINAL_DMG_MULT] *= 0.75
     end
     # Weather
-    if !target.hasActiveItem?(:UTILITYUMBRELLA)
+    if !target.hasUtilityUmbrella?
       case @battle.pbWeather
       when PBWeather::Sun, PBWeather::HarshSun
         if isConst?(type,PBTypes,:FIRE)
