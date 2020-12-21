@@ -76,7 +76,7 @@ end
 
 
 
-def scGenerateTeamRand(trainer, type_of_team = -1, type1 = -1, type2 = -1)
+def scGenerateTeamRand(trainer, type_of_team = -1, type1 = -1, type2 = -1, tierid = nil)
 	# type_of_team:
 	# if < 0: choose at random.
 	# if = 0: Hyper Offense (Lead + 4 offensive + anything)
@@ -92,7 +92,7 @@ def scGenerateTeamRand(trainer, type_of_team = -1, type1 = -1, type2 = -1)
 	
 	
 	# Get tier. 
-  tierid = scGetTier()
+  tierid = scGetTier() if !tierid
   
 	result_generation = []
   tier = loadTiers(tierid)
@@ -144,7 +144,7 @@ def scGenerateTeamRand(trainer, type_of_team = -1, type1 = -1, type2 = -1)
     end 
     
   else 
-    result_generation = tier.randTeamSpecies(type_of_team)
+    result_generation = tier.randTeamSpecies(type_of_team, trainer == $Trainer) # ask the strength of the team if ever. 
   end 
   
 	party_species = result_generation[0]
@@ -241,9 +241,11 @@ end
 
 def scGenerateMoveset(pkmn, trainer, tier)
     # Give form if applicable. 
-    form = (pkmn[SCMovesetsMetadata::FORM] ? pkmn[SCMovesetsMetadata::FORM] : 0)
-    sp = pbGetFSpeciesFromForm(pkmn[SCMovesetsMetadata::SPECIES], form)
+    form = (pkmn[SCMovesetsMetadata::BASEFORM] ? pkmn[SCMovesetsMetadata::BASEFORM] : pkmn[SCMovesetsMetadata::FORM])
+    form = (form ? form : 0)
+    sp = pbGetFSpeciesFromForm(pkmn[SCMovesetsMetadata::BASESPECIES], form)
     
+    # pbMessage(_INTL("Base species: {1}", PBSpecies.getName(pkmn[SCMovesetsMetadata::SPECIES] ? pkmn[SCMovesetsMetadata::SPECIES] : pkmn[SCMovesetsMetadata::BASESPECIES]))) 
 		# For each species, choose one moveset.
 		pokemon = PokeBattle_Pokemon.new(sp,pkmn[SCMovesetsMetadata::LEVEL], trainer)
     
@@ -322,6 +324,9 @@ def scGenerateMoveset(pkmn, trainer, tier)
 				
 				mvid = scsample(filtered_again, 1)
 				
+        pbMessage(_INTL("mvid[0] =  {1}", mvid[0])) if mvid.is_a?(Array)
+        pbMessage(_INTL("mvid[0] =  {1}", PBMoves.getName(mvid[0]))) if mvid.is_a?(Array)
+        
 				if mvid == nil
 					raise _INTL("Nil move for {1}\nFiltered again = {2}\nFiltered moves = {3}\nGiven moves={4}", pokemon.species, filtered_again,pkmn[m], given_moves)
 				end 

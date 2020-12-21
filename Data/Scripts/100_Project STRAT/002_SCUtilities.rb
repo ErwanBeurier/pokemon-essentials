@@ -15,15 +15,35 @@
 # the array.
 #----------------------------------------------------------
 def scsample(a, n)
+  n = a.length if n < 0
+  
+	if n == 1 && a.is_a?(Array) && a.length >= 1
+		return a[rand(a.length)]
+	end 
+	
+  indices = scsamplei(a, n)
+	a_sample = []
+	
+	# raise _INTL("indices.length = {1}, a.length = {2}", indices.length, a.length)
+	
+	indices.each { |i| a_sample.push(a[i]) }
+	
+	return a_sample
+end 
+
+
+
+def scsamplei(a, n)
+  # Returns the choice of indices of elements of a. 
 	if !a.is_a?(Array)
 		raise _INTL("In scsample: not an array.")
 	end 
 	if a.length == 0
 		raise _INTL("In scsample: empty array.")
 	end 
-	if n == 1
-		return a[rand(a.length)]
-	end 
+  
+  n = a.length if n > a.length
+  
 	cpt = 0
 	indices = []
 	
@@ -38,20 +58,9 @@ def scsample(a, n)
 		indices[j] = indices[i]
 		indices[i] = temp 
 	end 
-	
-	a_sample = []
-	
-	# raise _INTL("indices.length = {1}, a.length = {2}", indices.length, a.length)
-	
-	
-	for i in 0...n
-		a_sample.push(a[indices[i]])
-	end 
-	
-	return a_sample
+  
+  return indices[0...n] 
 end 
-
-
 
 
 

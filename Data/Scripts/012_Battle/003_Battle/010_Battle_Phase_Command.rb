@@ -214,10 +214,14 @@ class PokeBattle_Battle
         when 0    # Fight
           break if pbFightMenu(idxBattler)
         when 1    # Bag
-          if pbItemMenu(idxBattler,actioned.length==1)
-            commandsEnd = true if pbItemUsesAllActions?(@choices[idxBattler][1])
-            break
-          end
+          if !@internalBattle
+            break if pbOppPartyScreen(idxBattler)
+          else 
+            if pbItemMenu(idxBattler,actioned.length==1)
+              commandsEnd = true if pbItemUsesAllActions?(@choices[idxBattler][1])
+              break
+            end
+          end 
         when 2    # Pokémon
           break if pbPartyMenu(idxBattler)
         when 3    # Run

@@ -75,7 +75,8 @@ class PokeBattle_Trainer
   def skill   # Skill level (for AI)
     data = pbGetTrainerTypeData(@trainertype)
     return data[8] if data && data[8]
-    return 30
+    return moneyEarned
+    # return 30
   end
 
   def skillCode

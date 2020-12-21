@@ -10,9 +10,16 @@
 # that I won't share with the game (but you can ask me if you want).
 # 
 # -----------------------------------------------------------------------------
+# Database of patterns: 
+#   Compilation of PBS/scmvstpatterns.txt
+#   Decompilation (pattern names are stored in MessageTypes). 
+# Each moveset type is identified by a SCMovesetPatterns constant, for later 
+# use in the generation of movesets in the Team Builder. 
+# 
+# -----------------------------------------------------------------------------
 # Database of movesets: 
-#   Compilation of PBS/movesets.txt
-#   Decompilation of Data/movesets.dat
+#   Compilation of PBS/scmovesets.txt
+#   Decompilation of Data/scmovesets.dat
 # Each Pokémon has a set of movesets, to be used by NPCs in random battle, or 
 # by the player who doesn't want to spend time making a team.
 # Compiled for faster acces later.
@@ -20,11 +27,13 @@
 # -----------------------------------------------------------------------------
 # Database of movepools:
 #   Compilation of PBS/sclearned.txt
-#   Decompilation of Data/sclearned.dat
+#   Decompilation of Data/sclearned.dat and Data/scstattotals.dat
 # Each Pokémon is associated with the list of moves it can learn. This is 
 # faster than checking the pokemon data + tm.dat and such in order to gather 
 # the movepool of a given Pokémon. Used in Teambuilder, in the move selection.
 # Compiled for faster acces later.
+# The stat total is used in very big tiers, to rank Pokémons by base stats, 
+# and avoid having Dunsparce in the same team as Tyranitar in FE. 
 # 
 # -----------------------------------------------------------------------------
 # Database of tiers:
@@ -90,7 +99,7 @@ def scSavePatterns
       next if !abilname || abilname==""
       name = pbGetMessage(MessageTypes::MovesetPatterns,i)
       next if !name || name==""
-      f.write(sprintf("%d,%s,%s,%s\r\n",i,csvQuote(abilname),csvQuoteAlways(name)))
+      f.write(sprintf("%d,%s,%s\r\n",i,csvQuote(abilname),csvQuoteAlways(name)))
     end
   }
 end
@@ -109,6 +118,8 @@ end
 #===============================================================================
 
 module SCMovesetsMetadata
+  # Note that these constants will also be used in SCTeamBuilder, whose goal is 
+  # to manipulate Arrays indexed by these constants. 
   SPECIES = 0 
   FORM = 1 
   ITEM = 2 
@@ -126,11 +137,11 @@ module SCMovesetsMetadata
   HAPPINESS = 14
   BALL = 15
   LEVEL = 16
-  BASEFORM = 17
+  BASEFORM = 17 # If a Pokémon has two forms, and each form has a Mega (0 -> 1 / 2 -> 3)
   NICKNAME = 18
   FSPECIES = 19
   FORMNAME = 20
-  BASESPECIES = 21
+  BASESPECIES = 21 # If a Pokémon has two forms, and each form has a Mega (0 -> 1 / 2 -> 3)
   ABILITY = 22
   PATTERN = 23
   MAXINDEX = 23
@@ -162,7 +173,8 @@ module SCMovesetsMetadata
   
   
   def self.newEmpty2(speciesid = nil)
-    moveset = Array.new(MAXINDEX)
+    # Note that this function is also used in SCTeamBuilder, as a base. 
+    moveset = self.newEmpty()
     
     if speciesid
       sp = pbGetSpeciesFromFSpecies(speciesid)
@@ -263,6 +275,7 @@ def scCompileMovesets
           moveset[SCMovesetsMetadata::PATTERN] = 1 if !moveset[SCMovesetsMetadata::PATTERN]
           
           moveset[SCMovesetsMetadata::SPECIES] = pokemon_id
+          moveset[SCMovesetsMetadata::BASESPECIES] = pokemon_id if !moveset[SCMovesetsMetadata::BASESPECIES]
           
           if movesets[pokemon_id]
             movesets[pokemon_id].push(moveset)
@@ -277,13 +290,6 @@ def scCompileMovesets
         pokemon_id = record[0]
         moveset[SCMovesetsMetadata::LEVEL] = record[1]
       when "Move1", "Move2", "Move3", "Move4"
-        # debug_s = ""
-        # for i in 0...record.length
-          # debug_s += ", " if i > 0
-          # debug_s += getConstantName(PBMoves,record[i])
-        # end 
-        # raise _INTL("{1} and {2}", record.length, debug_s)
-        # raise _INTL("{1}", $~[2])
         record = [record] if record.is_a?(Integer)
         record.compact!
       when "Ability"
@@ -323,7 +329,11 @@ def scCompileMovesets
           raise _INTL("Bad moveset role: {1} (must be integer X*10 + Y, X=1..4 and Y=1..3)\r\n{2}",record,FileLineData.linereport)
         end 
       when "Form"
+        moveset[SCMovesetsMetadata::BASESPECIES] = pokemon_id
         pokemon_id = pbGetFSpeciesFromForm(pokemon_id, record)
+      # when "BaseForm"
+        # pokemon_id = pbGetFSpeciesFromForm(pokemon_id, record)
+        # moveset[SCMovesetsMetadata::BASESPECIES] = pokemon_id
       end
       if schema[0] <= SCMovesetsMetadata::MAXINDEX
         moveset[schema[0]] = record
@@ -335,6 +345,7 @@ def scCompileMovesets
     moveset[SCMovesetsMetadata::NATURE] = moveset_natures if moveset_natures.length > 0 
     moveset[SCMovesetsMetadata::EV] = moveset_ev_spreads if moveset_ev_spreads.length > 0 
     moveset[SCMovesetsMetadata::SPECIES] = pokemon_id
+    moveset[SCMovesetsMetadata::BASESPECIES] = pokemon_id if !moveset[SCMovesetsMetadata::BASESPECIES]
     
     if movesets[pokemon_id]
       movesets[pokemon_id].push(moveset)
@@ -393,7 +404,6 @@ end
 
 
 def scConvertMovesetToString(moveset, with_tab = false)
-# def getStringFromPkmn(poke, with_tab = false)
   s_tab = (with_tab ? "    " : "")
   
   poke1 = pbGetSpeciesFromFSpecies(moveset[SCMovesetsMetadata::SPECIES])
@@ -497,8 +507,8 @@ def scConvertMovesetToString(moveset, with_tab = false)
   if moveset[SCMovesetsMetadata::ROLE]
     s += sprintf(s_tab + "Role = %d\r\n",moveset[SCMovesetsMetadata::ROLE])
   end
-  if moveset[SCMovesetsMetadata::PATTERN]
-    s += sprintf(s_tab + "Pattern = %d\r\n",moveset[SCMovesetsMetadata::PATTERN])
+  if moveset[SCMovesetsMetadata::PATTERN] && moveset[SCMovesetsMetadata::PATTERN] != SCMovesetPatterns::NOPATTERN
+    s += sprintf(s_tab + "Pattern = %s\r\n",getConstantName(SCMovesetPatterns, moveset[SCMovesetsMetadata::PATTERN]))
   end
 	
 	return s 
@@ -513,25 +523,33 @@ end
 
 def scCompileLearnedMoves
   movepool = {}
+  stats = {}
   pbCompilerEachCommentedLine("PBS/sclearned.txt") { |line,lineno|
     if lineno%50==0
       Graphics.update
       Win32API.SetWindowText(_INTL("Processing PBS/sclearned.txt (line {1})...",lineno))
     end
-    if line[/^\s*(\w+)\s*=\s*(.*)$/]
+    if line[/^\s*(\w+)\s*=\s*(\d+)\s*,\s*(.*)$/]
       poke = pbGetCsvRecord($~[1],lineno,[0, "e", :PBSpecies])
-      movelist = pbGetCsvRecord($~[2],lineno,[1, "*e", :PBMoves])
+      total_bs = pbGetCsvRecord($~[2],lineno,[1, "i", nil])
+      total_bs = (total_bs / 10).to_i * 10
+      movelist = pbGetCsvRecord($~[3],lineno,[2, "*e", :PBMoves])
       movepool[poke] = movelist
+      stats[total_bs] = [] if !stats[total_bs]
+      stats[total_bs].push(poke)
     end 
   }
   save_data(movepool,"Data/sclearned.dat")
+  save_data(stats,"Data/scstattotals.dat")
 end 
 
 
 
 def scSaveLearnedMoves
   data = scLoadLearnedMoves
-  return if !data 
+  speciesData = pbLoadSpeciesData
+  return if !data || !speciesData
+  
   File.open("PBS/sclearned.txt","wb") { |f|
     f.write("\# "+_INTL("This file is specific to Pokémon Project STRAT by StCooler. Generated by decompiler.\r\n"))
     
@@ -544,12 +562,9 @@ def scSaveLearnedMoves
       
       next if !data[poke] && poke > PBSpecies.maxValue # Forms might not learn anything. 
       
-      # for i in 0...data[poke].length
-        # movename = getConstantName(PBMoves,data[poke][i]) # rescue pbGetMoveConst(moveset[move_i][i]) rescue nil
-        # next if !movename
-        # line.concat(", ") if i>0
-        # line.concat(movename)
-      # end
+      bs = speciesData[poke][SpeciesBaseStats].clone
+      bs_sum = bs[0] + bs[1] + bs[2] + bs[3] + bs[4] + bs[5]
+      line += bs_sum.to_s + ", "
       line += scConvertListToString(PBMoves, data[poke])
       
       f.write(line + "\r\n")
@@ -570,6 +585,16 @@ def scLoadLearnedMoves
 end
 
 
+
+def scLoadStatTotals
+  # To be improved: 
+  # $PokemonTemp = PokemonTemp.new if !$PokemonTemp
+  # if !$PokemonTemp.trainersData
+    # $PokemonTemp.trainersData = load_data("Data/trainers.dat") || []
+  # end
+  # return $PokemonTemp.trainersData
+  return load_data("Data/scstattotals.dat")
+end 
 
 
 #===============================================================================
@@ -599,7 +624,8 @@ module SCTiersData
     "Category"          => [0, "s", nil],
     "BannedAbilities"   => [0, "*e", :PBAbilities],
     "BannedItems"       => [0, "*e", :PBItems],
-    "BannedMoves"       => [0, "*e", :PBMoves]
+    "BannedMoves"       => [0, "*e", :PBMoves],
+    "Stratum"           => [0, "i", nil]
   }
   
   def self.isListOfPokemons(sectionname)
@@ -694,6 +720,7 @@ def scSaveTiers
       
       f.write("Name = " + data[tierid]["Name"] + "\r\n")
       f.write("Category = " + data[tierid]["Category"] + "\r\n")
+      f.write("Stratum = " + data[tierid]["Stratum"].to_s + "\r\n") if data[tierid]["Stratum"]
       
       for sec in 0...4
         temp = scConvertListToString(PBSpecies, data[tierid][ordered_sections[sec]])

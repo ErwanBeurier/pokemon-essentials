@@ -126,7 +126,7 @@ class PokeBattle_Battle
     @party2order       = Array.new(@party2.length) { |i| i }
     @party1starts      = [0]
     @party2starts      = [0]
-    @internalBattle    = true
+    @internalBattle    = !$PokemonTemp.battleRules["notinternal"]
     @debug             = false
     @canRun            = true
     @canLose           = false

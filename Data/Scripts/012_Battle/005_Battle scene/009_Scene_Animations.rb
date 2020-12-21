@@ -473,6 +473,7 @@ class PokeBattle_Scene
     return if !animID
     anim = animID[0]
     target = (targets && targets.is_a?(Array)) ? targets[0] : targets
+    target = user if !target
     animations = pbLoadBattleAnimations
     return if !animations
     pbSaveShadows {
@@ -522,6 +523,9 @@ class PokeBattle_Scene
        PokeBattle_SceneConstants::FOCUSTARGET_X,PokeBattle_SceneConstants::FOCUSTARGET_Y,
        oldUserX,oldUserY-userHeight/2,
        oldTargetX,oldTargetY-targetHeight/2)
+    # pbMessage(_INTL("FOCUSUSER: x={1},y={2}", PokeBattle_SceneConstants::FOCUSUSER_X, PokeBattle_SceneConstants::FOCUSUSER_Y))
+    # pbMessage(_INTL("oldUserX={1},oldUserY-uh/2={2}", oldUserX, oldUserY-userHeight/2))
+    # pbMessage(_INTL("oldTargetX={1},oldTargetY-th/2={2}", oldTargetX, oldTargetY-targetHeight/2))
     # Play the animation
     animPlayer.start
     loop do

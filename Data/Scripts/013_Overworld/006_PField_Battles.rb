@@ -56,6 +56,8 @@ class PokemonTemp
     when "nonuzzlocke";            rules["nuzzlocke"]      = false
     when "randplayerteam";         rules["randplayerteam"] = true
     when "fixedplayerteam";        rules["randplayerteam"] = false
+    when "internal";               rules["notinternal"]    = false
+    when "notinternal";            rules["notinternal"]    = true
     else
       if PokeBattle_Battle.isValidBattleMode?(rule.to_s.downcase)
         rules["size"] = rule.to_s.downcase
@@ -510,16 +512,18 @@ def pbTrainerBattle(trainerID, trainerName, endSpeech=nil,
       otherEvent.push(i)
     end
     # Load the trainer's data, and call an event which might modify it
-    trainer = pbLoadTrainer(trainerID,trainerName,trainerPartyID)
-    pbMissingTrainer(trainerID,trainerName,trainerPartyID) if !trainer
-    return false if !trainer
-    Events.onTrainerPartyLoad.trigger(nil,trainer)
-    # If there is exactly 1 other triggered trainer event, and this trainer has
-    # 6 or fewer Pokémon, record this trainer for a double battle caused by the
-    # other triggered trainer event
-    if otherEvent.length==1 && trainer[2].length<=6
-      $PokemonTemp.waitingTrainer = [trainer,endSpeech || trainer[3],thisEvent.id]
-      return false
+    if otherEvent.length==1
+      # If there is exactly 1 other triggered trainer event, and this trainer has
+      # 6 or fewer Pokémon, record this trainer for a double battle caused by the
+      # other triggered trainer event
+      trainer = pbLoadTrainer(trainerID,trainerName,trainerPartyID)
+      pbMissingTrainer(trainerID,trainerName,trainerPartyID) if !trainer
+      return false if !trainer
+      Events.onTrainerPartyLoad.trigger(nil,trainer)
+      if trainer[2].length<=6
+        $PokemonTemp.waitingTrainer = [trainer,endSpeech || trainer[3],thisEvent.id]
+        return false
+      end 
     end
   end
   # Set some battle rules

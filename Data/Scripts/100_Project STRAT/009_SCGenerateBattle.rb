@@ -24,10 +24,23 @@ end
 
 def scTrainerBattle(trainerID, trainerName, format = "single", endSpeech=nil,
                     trainerPartyID=-1, canLose=true, outcomeVar=1)
-  setBattleRule(format) if format
+  setBattleRule(format) if format && format != "single"
+  setBattleRule("notinternal")
   endSpeech = "..." if !endSpeech
-  return pbTrainerBattle(trainerID, trainerName, endSpeech, false, trainerPartyID, canLose, outcomeVar)
+  
+  # Music management: the default BGM interferes with battle music
+  bgm = $game_system.getPlayingBGM
+  $game_system.setDefaultBGM(nil)
+  
+  pbHealAll 
+  res = pbTrainerBattle(trainerID, trainerName, endSpeech, false, trainerPartyID, canLose, outcomeVar)
+  pbHealAll
+  
+  # Music management: the default BGM interferes with battle music
+  $game_system.setDefaultBGM(bgm)
+  return res 
 end 
+
 
 
 
@@ -37,12 +50,24 @@ def scDoubleTrainerBattle(trainerID1, trainerName1, trainerID2, trainerName2, fo
   # Set some battle rules
   setBattleRule("outcomeVar",outcomeVar) if outcomeVar!=1
   setBattleRule("canLose") if canLose
+  setBattleRule("notinternal")
   setBattleRule(format)
+  
+  # Music management: the default BGM interferes with battle music
+  bgm = $game_system.getPlayingBGM
+  $game_system.setDefaultBGM(nil)
+  
+  pbHealAll
   # Perform the battle
   decision = pbTrainerBattleCore(
      [trainerID1,trainerName1,trainerPartyID1,endSpeech1],
      [trainerID2,trainerName2,trainerPartyID2,endSpeech2]
   )
+  pbHealAll
+  
+  # Music management: the default BGM interferes with battle music
+  $game_system.setDefaultBGM(bgm)
+  
   # Return true if the player won the battle, and false if any other result
   return (decision==1)
 end
@@ -56,13 +81,25 @@ def scTripleTrainerBattle(trainerID1, trainerName1, trainerID2, trainerName2, tr
   # Set some battle rules
   setBattleRule("outcomeVar",outcomeVar) if outcomeVar!=1
   setBattleRule("canLose") if canLose
+  setBattleRule("notinternal")
   setBattleRule(format)
+  
+  # Music management: the default BGM interferes with battle music
+  bgm = $game_system.getPlayingBGM
+  $game_system.setDefaultBGM(nil)
+  
+  pbHealAll
   # Perform the battle
   decision = pbTrainerBattleCore(
      [trainerID1,trainerName1,trainerPartyID1,endSpeech1],
      [trainerID2,trainerName2,trainerPartyID2,endSpeech2],
      [trainerID3,trainerName3,trainerPartyID3,endSpeech3]
   )
+  pbHealAll
+  
+  # Music management: the default BGM interferes with battle music
+  $game_system.setDefaultBGM(bgm)
+  
   # Return true if the player won the battle, and false if any other result
   return (decision==1)
 end

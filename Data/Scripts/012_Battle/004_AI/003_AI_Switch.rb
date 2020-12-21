@@ -1,3 +1,5 @@
+#-------------------------------------------------------------------------------
+# Switching pkmn
 class PokeBattle_AI
   #=============================================================================
   # Decide whether the opponent should switch Pokémon
@@ -5,90 +7,124 @@ class PokeBattle_AI
   def pbEnemyShouldWithdraw?(idxBattler)
     return pbEnemyShouldWithdrawEx?(idxBattler,false)
   end
-
+  
+  def shouldSwitchHandler(idxBattler,battler,opps)
+    battler = @battle.battlers[idxBattler]
+    skill = @battle.pbGetOwnerFromBattlerIndex(idxBattler).skill || 0
+    moves = battler.moves
+    hp = battler.hp
+    thp = battler.totalhp
+#    opps = battler.eachOpposing
+    move_pri = false
+    move_super = false
+    faster = false
+    opp_move_pri = false
+    higherhp = false 
+    hyper = false 
+    opp_hypereff = false
+    battler.moves.each do |m|
+      if m.priority>0
+        move_pri = true
+      end
+      opps.each do |o|
+        move_super = move_super || (m.damagingMove? && PBTypes.superEffective?(m.type,o.type1,o.type2))
+        if pbRoughStat(battler,PBStats::SPEED,skill) > pbRoughStat(o,PBStats::SPEED,skill)
+          faster = true
+        end
+        oppmoves = o.moves
+        oppmoves.each do |om|
+          if om.priority>0
+            opp_move_pri = true
+          end
+          if om.damagingMove? && typeHyperEffective?(om.type,battler.type1,battler.type2)
+            opp_hypereff = true 
+          end 
+        end
+        if hp > o.hp
+          higherhp = true
+        else
+          higherhp = false
+        end
+        if @battle.pbSideSize(battler.index+1)==1 &&
+          !battler.pbDirectOpposing.fainted? && skill>=PBTrainerAI.highSkill
+          opp = battler.pbDirectOpposing
+          if opp.effects[PBEffects::HyperBeam]>0 ||
+            (opp.hasActiveAbility?(:TRUANT) && opp.effects[PBEffects::Truant])
+            hyper = true
+          end
+        end
+      end
+    end
+    pbMessage(_INTL("opp_hypereff={1}; move_super={2}", opp_hypereff, move_super))
+    pbMessage(_INTL("faster={1}; higherhp={2}; hyper={3}", faster, higherhp, hyper))
+    if move_pri && !opp_move_pri
+      return false
+    end
+    if skill >= PBTrainerAI.mediumSkill
+      if move_super && faster
+        return false
+      end
+    end
+    if skill >= PBTrainerAI.highSkill
+      if opp_hypereff && !faster
+        return true 
+      end 
+      if (higherhp && faster) || (higherhp && move_pri) || (higherhp && faster && move_super)
+        return false
+      end
+    end
+    if skill >= PBTrainerAI.bestSkill
+      if battler.effects[PBEffects::PerishSong]==1
+        return true
+      end
+      if hyper
+        return false
+      end
+    end
+    if skill >= PBTrainerAI.beastMode
+      if battler.effects[PBEffects::Encore]>0
+        idxEncoredMove = battler.pbEncoredMoveIndex
+        if idxEncoredMove>=0
+          scoreSum   = 0
+          scoreCount = 0
+          battler.eachOpposing do |b|
+            scoreSum += pbGetMoveScore(battler.moves[idxEncoredMove],battler,b,skill)
+            scoreCount += 1
+          end
+          if scoreCount>0 && scoreSum/scoreCount<=20
+            return false
+          end
+        end
+      end
+      if battler.status==PBStatuses::POISON && battler.statusCount>0
+        toxicHP = battler.totalhp/16
+        nextToxicHP = toxicHP*(battler.effects[PBEffects::Toxic]+1)
+        if battler.hp<=nextToxicHP && battler.hp>toxicHP*2
+          return true
+        end
+      end
+    end
+    return false
+  end
+  
   def pbEnemyShouldWithdrawEx?(idxBattler,forceSwitch)
     return false if @battle.wildBattle?
-    shouldSwitch = forceSwitch
+    if forceSwitch
+      shouldSwitch = forceSwitch
+    end
     batonPass = -1
     moveType = -1
     skill = @battle.pbGetOwnerFromBattlerIndex(idxBattler).skill || 0
     battler = @battle.battlers[idxBattler]
-    # If Pokémon is within 6 levels of the foe, and foe's last move was
-    # super-effective and powerful
-    if !shouldSwitch && battler.turnCount>0 && skill>=PBTrainerAI.highSkill
-      target = battler.pbDirectOpposing(true)
-      if !target.fainted? && target.lastMoveUsed>0 &&
-         (target.level-battler.level).abs<=6
-        moveData = pbGetMoveData(target.lastMoveUsed)
-        moveType = moveData[MOVE_TYPE]
-        typeMod = pbCalcTypeMod(moveType,target,battler)
-        if PBTypes.superEffective?(typeMod) && moveData[MOVE_BASE_DAMAGE]>50
-          switchChance = (moveData[MOVE_BASE_DAMAGE]>70) ? 30 : 20
-          shouldSwitch = (pbAIRandom(100)<switchChance)
-        end
-      end
-    end
-    # Pokémon can't do anything (must have been in battle for at least 5 rounds)
-    if !@battle.pbCanChooseAnyMove?(idxBattler) &&
-       battler.turnCount && battler.turnCount>=5
-      shouldSwitch = true
-    end
-    # Pokémon is Perish Songed and has Baton Pass
-    if skill>=PBTrainerAI.highSkill && battler.effects[PBEffects::PerishSong]==1
-      battler.eachMoveWithIndex do |m,i|
-        next if m.function!="0ED"   # Baton Pass
-        next if !@battle.pbCanChooseMove?(idxBattler,i,false)
-        batonPass = i
-        break
-      end
-    end
-    # Pokémon will faint because of bad poisoning at the end of this round, but
-    # would survive at least one more round if it were regular poisoning instead
-    if battler.status==PBStatuses::POISON && battler.statusCount>0 &&
-       skill>=PBTrainerAI.highSkill
-      toxicHP = battler.totalhp/16
-      nextToxicHP = toxicHP*(battler.effects[PBEffects::Toxic]+1)
-      if battler.hp<=nextToxicHP && battler.hp>toxicHP*2
-        shouldSwitch = true if pbAIRandom(100)<80
-      end
-    end
-    # Pokémon is Encored into an unfavourable move
-    if battler.effects[PBEffects::Encore]>0 && skill>=PBTrainerAI.mediumSkill
-      idxEncoredMove = battler.pbEncoredMoveIndex
-      if idxEncoredMove>=0
-        scoreSum   = 0
-        scoreCount = 0
-        battler.eachOpposing do |b|
-          scoreSum += pbGetMoveScore(battler.moves[idxEncoredMove],battler,b,skill)
-          scoreCount += 1
-        end
-        if scoreCount>0 && scoreSum/scoreCount<=20
-          shouldSwitch = true if pbAIRandom(100)<80
-        end
-      end
-    end
-    # If there is a single foe and it is resting after Hyper Beam or is
-    # Truanting (i.e. free turn)
-    if @battle.pbSideSize(battler.index+1)==1 &&
-       !battler.pbDirectOpposing.fainted? && skill>=PBTrainerAI.highSkill
-      opp = battler.pbDirectOpposing
-      if opp.effects[PBEffects::HyperBeam]>0 ||
-         (opp.hasActiveAbility?(:TRUANT) && opp.effects[PBEffects::Truant])
-        shouldSwitch = false if pbAIRandom(100)<80
-      end
-    end
-    # Sudden Death rule - I'm not sure what this means
-    if @battle.rules["suddendeath"] && battler.turnCount>0
-      if battler.hp<=battler.totalhp/4 && pbAIRandom(100)<30
-        shouldSwitch = true
-      elsif battler.hp<=battler.totalhp/2 && pbAIRandom(100)<80
-        shouldSwitch = true
-      end
-    end
-    # Pokémon is about to faint because of Perish Song
-    if battler.effects[PBEffects::PerishSong]==1
-      shouldSwitch = true
-    end
+    opps = []
+    @battle.pbGetOpposingIndicesInOrder(idxBattler).each do |i|
+      # pbMessage("Index: {1} => {2}", i,  @battle.battlers[i].pbThis())
+      if @battle.battlers[i] && !@battle.battlers[i].fainted? && battler.opposes?(i)
+        opps.push(@battle.battlers[i])
+      end 
+    end 
+    #I removed all this bc it's handled in the shouldSwitchHandler def
+    shouldSwitch = shouldSwitchHandler(idxBattler,battler,opps)
     if shouldSwitch
       list = []
       @battle.pbParty(idxBattler).each_with_index do |pkmn,i|
@@ -134,26 +170,26 @@ class PokeBattle_AI
         end
         if @battle.pbRegisterSwitch(idxBattler,list[0])
           PBDebug.log("[AI] #{battler.pbThis} (#{idxBattler}) will switch with " +
-                      "#{@battle.pbParty(idxBattler)[list[0]].name}")
-          return true
+            "#{@battle.pbParty(idxBattler)[list[0]].name}")
+          return 
         end
       end
     end
     return false
   end
-
+  
   #=============================================================================
   # Choose a replacement Pokémon
   #=============================================================================
   def pbDefaultChooseNewEnemy(idxBattler,party)
     enemies = []
-    party.each_with_index do |_p,i|
+    party.each_with_index do |p,i|
       enemies.push(i) if @battle.pbCanSwitchLax?(idxBattler,i)
     end
     return -1 if enemies.length==0
     return pbChooseBestNewEnemy(idxBattler,party,enemies)
   end
-
+  
   def pbChooseBestNewEnemy(idxBattler,party,enemies)
     return -1 if !enemies || enemies.length==0
     best    = -1
@@ -163,15 +199,16 @@ class PokeBattle_AI
       pkmn = party[i]
       sum  = 0
       pkmn.moves.each do |m|
-        next if m.id==0
+        next if !m || m.id==0
         moveData = movesData[m.id]
         next if moveData[MOVE_BASE_DAMAGE]==0
         @battle.battlers[idxBattler].eachOpposing do |b|
           bTypes = b.pbTypes(true)
           sum += PBTypes.getCombinedEffectiveness(moveData[MOVE_TYPE],
-             bTypes[0],bTypes[1],bTypes[2])
+            bTypes[0],bTypes[1],bTypes[2])
         end
       end
+      # pbMessage(_INTL("best: {1}", m.class.name))
       if best==-1 || sum>bestSum
         best = i
         bestSum = sum

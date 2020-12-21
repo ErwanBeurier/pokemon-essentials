@@ -18,7 +18,7 @@
 
 MultipleForms.register(:BEEDRILL,{
   "getSpecificMegaForm" => proc { |pkmn|
-    next pkmn.form + 1 if [0, 2].include?(pkmn.form)
+    next pkmn.form + 1 if [0, 2].include?(pkmn.form) &&  pkmn.hasItem?(:BEEDRILLITE)
     next
   },
   "getSpecificUnmegaForm" => proc { |pkmn|
@@ -29,7 +29,7 @@ MultipleForms.register(:BEEDRILL,{
 
 MultipleForms.register(:GENGAR,{
   "getSpecificMegaForm" => proc { |pkmn|
-    next pkmn.form + 1 if [0, 2].include?(pkmn.form)
+    next pkmn.form + 1 if [0, 2].include?(pkmn.form) &&  pkmn.hasItem?(:GENGARITE)
     next
   },
   "getSpecificUnmegaForm" => proc { |pkmn|
@@ -40,7 +40,7 @@ MultipleForms.register(:GENGAR,{
 
 MultipleForms.register(:PIDGEOT,{
   "getSpecificMegaForm" => proc { |pkmn|
-    next pkmn.form + 1 if [0, 2, 4].include?(pkmn.form)
+    next pkmn.form + 1 if [0, 2, 4].include?(pkmn.form) &&  pkmn.hasItem?(:PIDGEOTITE)
     next
   },
   "getSpecificUnmegaForm" => proc { |pkmn|
@@ -51,7 +51,7 @@ MultipleForms.register(:PIDGEOT,{
 
 MultipleForms.register(:GYARADOS,{
   "getSpecificMegaForm" => proc { |pkmn|
-    next pkmn.form + 1 if [0, 2, 4, 6, 8].include?(pkmn.form)
+    next pkmn.form + 1 if [0, 2, 4, 6, 8].include?(pkmn.form) &&  pkmn.hasItem?(:GYARADOSITE)
     next
   },
   "getSpecificUnmegaForm" => proc { |pkmn|
@@ -62,7 +62,7 @@ MultipleForms.register(:GYARADOS,{
 
 MultipleForms.register(:AERODACTYL,{
   "getSpecificMegaForm" => proc { |pkmn|
-    next pkmn.form + 1 if [0, 2].include?(pkmn.form)
+    next pkmn.form + 1 if [0, 2].include?(pkmn.form) &&  pkmn.hasItem?(:AERODACTYLITE)
     next
   },
   "getSpecificUnmegaForm" => proc { |pkmn|
@@ -73,7 +73,7 @@ MultipleForms.register(:AERODACTYL,{
 
 MultipleForms.register(:ALTARIA,{
   "getSpecificMegaForm" => proc { |pkmn|
-    next pkmn.form + 1 if [0, 2].include?(pkmn.form)
+    next pkmn.form + 1 if [0, 2].include?(pkmn.form) &&  pkmn.hasItem?(:ALTARIANITE)
     next
   },
   "getSpecificUnmegaForm" => proc { |pkmn|
@@ -84,7 +84,7 @@ MultipleForms.register(:ALTARIA,{
 
 MultipleForms.register(:GLALIE,{
   "getSpecificMegaForm" => proc { |pkmn|
-    next pkmn.form + 1 if [0, 2].include?(pkmn.form)
+    next pkmn.form + 1 if [0, 2].include?(pkmn.form) &&  pkmn.hasItem?(:GLALITITE)
     next
   },
   "getSpecificUnmegaForm" => proc { |pkmn|
@@ -95,7 +95,7 @@ MultipleForms.register(:GLALIE,{
 
 MultipleForms.register(:AUDINO,{
   "getSpecificMegaForm" => proc { |pkmn|
-    next pkmn.form + 1 if [0, 2].include?(pkmn.form)
+    next pkmn.form + 1 if [0, 2].include?(pkmn.form) &&  pkmn.hasItem?(:AUDINITE)
     next
   },
   "getSpecificUnmegaForm" => proc { |pkmn|

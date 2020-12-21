@@ -43,7 +43,12 @@ class SCTiers
 	attr_reader(:category)
 	# dictionary of species, by first letter.
 	attr_reader(:dict_of_species)
-	
+  # This is an integer. For FE, should be 50.
+  # This means that generated teams will have Pokémons with base stat total within a range of 50.
+  # This allows for (kind of) balanced teams and should avoid having Tyranitar with Dunsparce. 
+	attr_reader(:stratum_range)
+	attr_reader(:stratum)
+	attr_reader(:strata)
 	
 	
 	def initialize(dictionary)
@@ -57,7 +62,18 @@ class SCTiers
 		@banned_items = dictionary["BannedItems"]
 		@banned_moves = dictionary["BannedMoves"]
 		@banned_abilities = dictionary["BannedAbilities"]
-		
+    
+    if dictionary["Stratum"]
+      @stratum_range = dictionary["Stratum"]
+      @stratum = 450
+      @strata = nil
+      chooseStratum(@stratum)
+    else 
+      @stratum_range = nil 
+      @stratum = nil 
+      @strata = nil 
+    end 
+    
 		@dict_of_species = nil 
 	end 
 	
@@ -66,10 +82,20 @@ class SCTiers
 	def fastRandSpecies(num_species)
 		return scsample(@frequent_pkmns, num_species)
 	end 
+  
+  
+  
+  def chooseStratum(new_stratum)
+    return if !@stratum_range || ! @stratum
+    data = scLoadStatTotals
+    @strata = []
+    data.each_pair { |bs, list_poke|
+      @strata += list_poke if bs > new_stratum - @stratum_range && bs <= new_stratum + @stratum_range
+    }
+    @strata = nil if @strata.length < 14
+  end 
 	
-	
-	
-	def randTeamSpecies(type_of_team = -1)
+	def randTeamSpecies(type_of_team = -1, ask_stratum = false)
 		# type_of_team:
 		# if < 0: choose at random.
 		# if = 0: Hyper Offense (Lead + 4 offensive + anything)
@@ -78,6 +104,12 @@ class SCTiers
 		# if = 3: Defensive (Lead + Offensive + 4 defensive)
 		# if = 4: Stall (5 defensive + Anything)
 		
+    if ask_stratum && @stratum
+      # Then the player wants to choose. 
+      @stratum = stratumMenu
+      chooseStratum(@stratum)
+    end 
+    
 		team_roles = [0, 0, 0, 0, 0, 0]
 		
 		# 0 = anything 
@@ -129,12 +161,14 @@ class SCTiers
 		movesetlog = load_data("Data/scmovesets.dat")
 		
 		list_poke = Array.new(@frequent_pkmns)
+    list_poke = list_poke & @strata if @strata
 		i = 0 
 		# for i in 0...6
 		while i < 6
 			# Kernel.pbMessage(_INTL("i={1}", i))
 			if i == 4
 				list_poke = @frequent_pkmns + @rare_pkmns
+        list_poke = list_poke & @strata if @strata
 				# Rare only for the last two slots. 
 			end 
 			
@@ -256,6 +290,19 @@ class SCTiers
 	end 
 	
 	
+  def stratumMenu
+		list_strata = [600, 550, 500, 450, 400]
+    list_strata_str = ["Very strong", "Strong", "Medium", "Weak", "Very weak"]
+    
+		cmd = Kernel.pbMessage("How strong do you want your team?", list_strata_str, -1)
+		
+		if cmd > -1 
+			return list_strata[cmd]
+		end 
+		
+		return list_strata[2]
+  end 
+  
 	
 	def isValid(party)
 		valid = true 
@@ -301,7 +348,7 @@ class SCTiers
 				# Kernel.pbMessage(_INTL("pk[{1}]={2}", i, pk[i]))
 			# end 
 			
-			form_species = pbGetFSpeciesFromForm(pk[SCMovesetsMetadata::SPECIES], pk[SCMovesetsMetadata::FORM])
+			form_species = pbGetFSpeciesFromForm(pk[SCMovesetsMetadata::BASESPECIES], pk[SCMovesetsMetadata::FORM])
       
 			if @banned_pkmns.include?(form_species)
 				report.push(_INTL("Pokémon {1} in form {2} is not allowed.", 
@@ -313,13 +360,6 @@ class SCTiers
 			end 
 			
 			# Check ability ffs it's so stupid how it's handled. 
-      # ability = -1 
-      # if pk[SCMovesetsMetadata::ABILITYINDEX] == 2
-        # ability = pbGetSpeciesData(pk[SCMovesetsMetadata::SPECIES], pk[SCMovesetsMetadata::FORM], SpeciesHiddenAbility)
-      # else 
-        # ability = pbGetSpeciesData(pk[SCMovesetsMetadata::SPECIES], pk[SCMovesetsMetadata::FORM], SpeciesAbilities)
-        # ability = ability[pk[SCMovesetsMetadata::ABILITYINDEX]]
-      # end 
 			if @banned_abilities.include?(pk[SCMovesetsMetadata::ABILITY])
 				valid = false 
 				report.push(_INTL("Ability {1} on {2} is not allowed.", PBAbilities.getName(pk[SCMovesetsMetadata::ABILITY]), species_name))
@@ -496,6 +536,7 @@ class SCMonotypeTiers < SCTiers
 			Kernel.pbMessage(_INTL("Choosen type: {1}.", PBTypes.getName(wanted_type))) if warn_player
 		end 
 		
+    # pbMessage(_INTL("@pkmns_per_type length: is {1}", @pkmns_per_type.keys.length))
 		@frequent_pkmns = @untyped_frequent_pkmns & @pkmns_per_type[wanted_type]
 		@rare_pkmns = @untyped_rare_pkmns & @pkmns_per_type[wanted_type]
 		
@@ -1003,7 +1044,7 @@ class SCBitypeTiers < SCTiers
 		list_species = []
 		
 		for pkmn in party
-      sp = pbGetFSpeciesFromForm(pkmn[SCMovesetsMetadata::SPECIES], pkmn[SCMonotypeTiers::FORM])
+      sp = pbGetFSpeciesFromForm(pkmn[SCMovesetsMetadata::BASESPECIES], pkmn[SCMonotypeTiers::FORM])
 			list_species.push(sp)
 		end 
 		
@@ -1147,10 +1188,10 @@ def isValidForTier(party, show_messages, tierid = nil)
 	
 	if show_messages
 		if res[0]
-			Kernel.pbMessage("The team is valid.")
+			pbMessage("The team is valid.")
 		else
 			for explanation in res[1]
-				Kernel.pbMessage(explanation)
+				pbMessage(explanation)
 			end 
 		end 
 	end 

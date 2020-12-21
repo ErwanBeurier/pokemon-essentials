@@ -23,7 +23,7 @@ class SCTeamStorage
 	def addTeam(name, party, tiers)
 		slot = self.newEmptySlot
 		slot["Name"] = name 
-		slot["Party"] = party 
+		slot["Party"] = party # Party list
 		slot["Tiers"] = tiers 
 		# @content.push(slot)
 		self.modifyTeam(self.lastNonEmptyIndex + 1, name, party, tiers)

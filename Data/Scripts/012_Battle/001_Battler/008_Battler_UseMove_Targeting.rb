@@ -77,10 +77,10 @@ class PokeBattle_Battler
           pbAddTargetRandomFoe(targets,user,move,false)
         end
       end
-    when PBTargets::UserAndAllies
+    when PBTargets::UserAndAllies, PBTargets::UserSide
       pbAddTarget(targets,user,user,move,true,true)
       @battle.eachSameSideBattler(user.index) { |b| pbAddTarget(targets,user,b,move,false,true) }
-    when PBTargets::AllFoes
+    when PBTargets::AllFoes, PBTargets::FoeSide
       @battle.eachOtherSideBattler(user.index) { |b| pbAddTarget(targets,user,b,move,false) }
     when PBTargets::AllBattlers
       @battle.eachBattler { |b| pbAddTarget(targets,user,b,move,false,true) }
