@@ -95,9 +95,7 @@ def scGenerateTeamRand(trainer, type_of_team = -1, type1 = -1, type2 = -1, tieri
   tierid = scGetTier() if !tierid
   
 	result_generation = []
-  tier = loadTiers(tierid)
-  
-  
+  tier = loadTier(tierid)
   
   # Generate the Pokémons. 
   if tierid == "MONO"
@@ -151,12 +149,18 @@ def scGenerateTeamRand(trainer, type_of_team = -1, type1 = -1, type2 = -1, tieri
 	party_roles = result_generation[1]
 	party_movesets = result_generation[2]
 	
+  # movesetlog = load_data("Data/scmovesets.dat")
+  # party_species[0] = PBSpecies::ABOMASNOW
+  # party_movesets[0] = movesetlog[party_species[0]][0]
+  # party_roles[0] = party_movesets[0][SCMovesetsData::ROLE]
+  
+  
   
 	# In a Nuzzlocke ladder, every dead Pokémon will be changed. 
 	deleted_species = []
 	party_survivors = [] 
 	
-	if $PokemonTemp.battleRules["nuzzlocke"]
+	if scIsNuzzlocke()
 		# Remove duplicates. 
 		for i in 0...trainer.party.length
 			pk = trainer.party[i]
@@ -241,18 +245,19 @@ end
 
 def scGenerateMoveset(pkmn, trainer, tier)
     # Give form if applicable. 
-    form = (pkmn[SCMovesetsMetadata::BASEFORM] ? pkmn[SCMovesetsMetadata::BASEFORM] : pkmn[SCMovesetsMetadata::FORM])
+    # form = (pkmn[SCMovesetsData::BASEFORM] ? pkmn[SCMovesetsData::BASEFORM] : pkmn[SCMovesetsData::FORM])
+    form = pkmn[SCMovesetsData::FORM]
     form = (form ? form : 0)
-    sp = pbGetFSpeciesFromForm(pkmn[SCMovesetsMetadata::BASESPECIES], form)
+    sp = pbGetFSpeciesFromForm(pkmn[SCMovesetsData::BASESPECIES], form)
     
-    # pbMessage(_INTL("Base species: {1}", PBSpecies.getName(pkmn[SCMovesetsMetadata::SPECIES] ? pkmn[SCMovesetsMetadata::SPECIES] : pkmn[SCMovesetsMetadata::BASESPECIES]))) 
+    # pbMessage(_INTL("Base species: {1}", PBSpecies.getName(pkmn[SCMovesetsData::SPECIES] ? pkmn[SCMovesetsData::SPECIES] : pkmn[SCMovesetsData::BASESPECIES]))) 
 		# For each species, choose one moveset.
-		pokemon = PokeBattle_Pokemon.new(sp,pkmn[SCMovesetsMetadata::LEVEL], trainer)
+		pokemon = PokeBattle_Pokemon.new(sp,pkmn[SCMovesetsData::LEVEL], trainer)
     
 		# Check if it has moves. If not, then the moves will be given by the level. 
 		# Allow Ditto that has only one move, but also EVs/IVs and such. 
 		# Pokemons like Caterpie don't have moves at all, neither do they have EVs/IVs and such.
-		if pkmn[SCMovesetsMetadata::MOVE1]
+		if pkmn[SCMovesetsData::MOVE1]
 			# Give moves 
 			# First, give a STAB.
 			# Then, give moves. 
@@ -263,7 +268,7 @@ def scGenerateMoveset(pkmn, trainer, tier)
 			
 			# Kernel.pbMessage(_INTL("{1}",pkmn))
 			
-			for m in SCMovesetsMetadata::MOVE1..SCMovesetsMetadata::MOVE4
+			for m in SCMovesetsData::MOVE1..SCMovesetsData::MOVE4
 				# We filter the moves again. Do not give several offensive 
 				# moves with the same type (unless one has priority). 
         
@@ -331,7 +336,7 @@ def scGenerateMoveset(pkmn, trainer, tier)
 					raise _INTL("Nil move for {1}\nFiltered again = {2}\nFiltered moves = {3}\nGiven moves={4}", pokemon.species, filtered_again,pkmn[m], given_moves)
 				end 
 				mvdata = PBMoveData.new(mvid)
-				pokemon.moves[m-SCMovesetsMetadata::MOVE1] = PBMove.new(mvid)
+				pokemon.moves[m-SCMovesetsData::MOVE1] = PBMove.new(mvid)
 				given_moves.push(mvid)
 
 				if mvdata.priority <= 0 and (mvdata.category == 0 or mvdata.category == 1) and mvdata.basedamage >= 60
@@ -348,17 +353,17 @@ def scGenerateMoveset(pkmn, trainer, tier)
 			
 			# Give nature and corresponding EVs if applicable. 
       
-      ev_i = rand(pkmn[SCMovesetsMetadata::EV].length)
+      ev_i = rand(pkmn[SCMovesetsData::EV].length)
       nat_i = 0
       
-      if pkmn[SCMovesetsMetadata::EV].length == pkmn[SCMovesetsMetadata::NATURE].length
+      if pkmn[SCMovesetsData::EV].length == pkmn[SCMovesetsData::NATURE].length
         nat_i = ev_i 
       else 
-        nat_i = rand(pkmn[SCMovesetsMetadata::NATURE].length)
+        nat_i = rand(pkmn[SCMovesetsData::NATURE].length)
       end 
       
-      pokemon.setNature(pkmn[SCMovesetsMetadata::NATURE][nat_i])
-      pokemon.ev = pkmn[SCMovesetsMetadata::EV][ev_i]
+      pokemon.setNature(pkmn[SCMovesetsData::NATURE][nat_i])
+      pokemon.ev = pkmn[SCMovesetsData::EV][ev_i]
 			
 			totalev = 0
 			
@@ -378,10 +383,10 @@ def scGenerateMoveset(pkmn, trainer, tier)
 			
 			
 			# Give IVs 
-      pokemon.iv = (pkmn[SCMovesetsMetadata::IV] ? pkmn[SCMovesetsMetadata::IV] : Array.new(6, 31))
+      pokemon.iv = (pkmn[SCMovesetsData::IV] ? pkmn[SCMovesetsData::IV] : Array.new(6, 31))
 			
 			# Give ability 
-			ab = pkmn[SCMovesetsMetadata::ABILITYINDEX]
+			ab = pkmn[SCMovesetsData::ABILITYINDEX]
       
       if ab
 				pokemon.setAbility(ab) # Here, it's the INDEX!!!!
@@ -390,11 +395,11 @@ def scGenerateMoveset(pkmn, trainer, tier)
       end
       
 			# Give gender 
-			pokemon.setGender(pkmn[SCMovesetsMetadata::GENDER]) if pkmn[SCMovesetsMetadata::GENDER]
+			pokemon.setGender(pkmn[SCMovesetsData::GENDER]) if pkmn[SCMovesetsData::GENDER]
 			
 			# Give item.
-      it = rand(pkmn[SCMovesetsMetadata::ITEM].length)
-      pokemon.item = pkmn[SCMovesetsMetadata::ITEM][it]
+      it = rand(pkmn[SCMovesetsData::ITEM].length)
+      pokemon.item = pkmn[SCMovesetsData::ITEM][it]
 			
 			pokemon.calcStats
 		end 

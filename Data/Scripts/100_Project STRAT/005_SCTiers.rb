@@ -1,5 +1,5 @@
 ###############################################################################
-# SCTiers and co
+# SCTier and co
 # 
 # This script is part of Pokémon Project STRAT by StCooler, and is therefore 
 # not part of Pokémon Essentials. 
@@ -10,8 +10,8 @@
 
 
 
-#---------------------------------------------------------------
-# SCTiers 
+# ==============================================================
+# SCTier 
 # General class for tiers. General tiers should be instances of 
 # this instance. Subclassing is required only when there is more 
 # than just lists of banned + frequent + rare + allowed Pokémons. 
@@ -19,8 +19,8 @@
 # type will have its own list of allowed Pokémons (for 
 # complexity reasons, I prepared lists of Pokémons per type, 
 # instead of checking the types on-the-fly). 
-#---------------------------------------------------------------
-class SCTiers 
+# ==============================================================
+class SCTier 
 	# Probability 0 of being chosen 
 	attr_reader(:banned_pkmns)
 	# High probability of being chosen
@@ -95,6 +95,8 @@ class SCTiers
     @strata = nil if @strata.length < 14
   end 
 	
+  
+  
 	def randTeamSpecies(type_of_team = -1, ask_stratum = false)
 		# type_of_team:
 		# if < 0: choose at random.
@@ -119,7 +121,7 @@ class SCTiers
 		# 4X = Support 
 		# X = 0 if any, 1 if physical, 2 if special, 3 if mixed
 		# Notes: 
-		# - Lead include Offensive (just in case the tiers does not have enough Leads).
+		# - Lead include Offensive (just in case the tier does not have enough Leads).
 		# - Support include Defensive
 		
 		
@@ -149,16 +151,17 @@ class SCTiers
 			end 
 		end 
 		# Filter the pokémons per role. 
-		# for each wanted role defined in team_roles, list all the pokémons that match this role. 
-		# Normally, Random tiers shouldn't have problems of availability, as each tiers
-		# should have enough both physical and special sweepers and defensive. 
+		# for each wanted role defined in team_roles, list all the pokémons that 
+    # match this role. 
+		# Normally, Random tiers shouldn't have problems of availability, as each 
+    # tier should have enough both physical and special sweepers and defensive. 
 		
 		
 		team_pkmns = []
 
 		movesets = {} # movesets of the picked Pokemons
 		
-		movesetlog = load_data("Data/scmovesets.dat")
+		movesetlog = scLoadMovesetsData
 		
 		list_poke = Array.new(@frequent_pkmns)
     list_poke = list_poke & @strata if @strata
@@ -195,39 +198,39 @@ class SCTiers
 					
 					case team_roles[i]
 					when 21, 22, 23, 31, 32, 33
-						add_the_moveset = (mv[SCMovesetsMetadata::ROLE] == team_roles[i])
+						add_the_moveset = (mv[SCMovesetsData::ROLE] == team_roles[i])
 						
 					when 10 # Any lead
 						# Leads include Offensive, but this will be handled later. 
-						if [11, 12, 13].include?(mv[SCMovesetsMetadata::ROLE])
-							choice_of_lead = mv[SCMovesetsMetadata::ROLE] # To remember if we gave a physical or special or mixed lead. 
+						if [11, 12, 13].include?(mv[SCMovesetsData::ROLE])
+							choice_of_lead = mv[SCMovesetsData::ROLE] # To remember if we gave a physical or special or mixed lead. 
 							add_the_moveset = true 
 						end 
 						
 					when 15 # We couldn't find a real lead, take an offensive mon. 
-						if [21, 22, 23].include?(mv[SCMovesetsMetadata::ROLE])
-							choice_of_lead = mv[SCMovesetsMetadata::ROLE] - 10 
+						if [21, 22, 23].include?(mv[SCMovesetsData::ROLE])
+							choice_of_lead = mv[SCMovesetsData::ROLE] - 10 
 							# They are supposed to be leads. 
 							add_the_moveset = true 
 						end 
 						
 					when 20 # Any offensive, except if we chose a specific lead. 
-						if choice_of_lead == 11 && mv[SCMovesetsMetadata::ROLE] == 22 
+						if choice_of_lead == 11 && mv[SCMovesetsData::ROLE] == 22 
 							# We gave a physical lead. Give a special offensive. 
 							choice_of_lead = 10 
 							add_the_moveset = true 
-						elsif choice_of_lead == 12 && mv[SCMovesetsMetadata::ROLE] == 21 
+						elsif choice_of_lead == 12 && mv[SCMovesetsData::ROLE] == 21 
 							# We gave a special lead. Give a physical offensive. 
 							choice_of_lead = 10 
 							add_the_moveset = true 
-						elsif [21, 22, 23].include?(mv[SCMovesetsMetadata::ROLE])
+						elsif [21, 22, 23].include?(mv[SCMovesetsData::ROLE])
 							add_the_moveset = true 
 						end 
 					when 30 # Any defensive 
-						add_the_moveset = ([31, 32, 33].include?(mv[SCMovesetsMetadata::ROLE]))
+						add_the_moveset = ([31, 32, 33].include?(mv[SCMovesetsData::ROLE]))
 						
 					when 40 # Any support 
-						add_the_moveset = ([40, 41, 42, 43, 31, 32, 33].include?(mv[SCMovesetsMetadata::ROLE]))
+						add_the_moveset = ([40, 41, 42, 43, 31, 32, 33].include?(mv[SCMovesetsData::ROLE]))
 						
 					when 0 # No condition, take any set. 
 						add_the_moveset = true 
@@ -236,15 +239,16 @@ class SCTiers
 					
 					if add_the_moveset
 						filtered_pokemons.push(pk)
-						filtered_pokemons_roles.push(mv[SCMovesetsMetadata::ROLE])
+						filtered_pokemons_roles.push(mv[SCMovesetsData::ROLE])
 						filtered_movesets.push(mv)
 					end 
 				end 
 			end 
 			
 			if filtered_pokemons.empty?
-				# Ah crap. No Pokémon were found for that given role. Probably the tiers is too shallow.
-				# But we don't need to warn the player about the wrong choices of tiers made by the creator.
+				# Ah crap. No Pokémon were found for that given role. Probably the tier
+        # is too shallow. But we don't need to warn the player about the wrong 
+        # choices of tier made by the creator.
 				# Let's quick fix this. 
 				
 				if team_roles[i] == 0
@@ -289,6 +293,7 @@ class SCTiers
 		return [team_pkmns, team_roles, movesets]
 	end 
 	
+  
 	
   def stratumMenu
 		list_strata = [600, 550, 500, 450, 400]
@@ -303,11 +308,17 @@ class SCTiers
 		return list_strata[2]
   end 
   
+  
 	
 	def isValid(party)
 		valid = true 
 		report = []
 		
+    if party.length != 6
+      valid = false 
+      report.push(_INTL("Your party doesn't have the right number of Pokémon: {1}.", party.length))
+    end 
+    
 		for pk in party
 			if @banned_pkmns.include?(pk.fSpecies)
 				valid = false 
@@ -341,32 +352,32 @@ class SCTiers
 		
 		for pk in party_list
 			# No species defined. 
-			next if !pk[SCMovesetsMetadata::SPECIES]
+			next if !pk[SCMovesetsData::SPECIES]
 			
-			species_name = PBSpecies.getName(pk[SCMovesetsMetadata::SPECIES])
+			species_name = PBSpecies.getName(pk[SCMovesetsData::SPECIES])
 			# for i in 0...pk.length
 				# Kernel.pbMessage(_INTL("pk[{1}]={2}", i, pk[i]))
 			# end 
 			
-			form_species = pbGetFSpeciesFromForm(pk[SCMovesetsMetadata::BASESPECIES], pk[SCMovesetsMetadata::FORM])
+			form_species = pbGetFSpeciesFromForm(pk[SCMovesetsData::BASESPECIES], pk[SCMovesetsData::FORM])
       
 			if @banned_pkmns.include?(form_species)
 				report.push(_INTL("Pokémon {1} in form {2} is not allowed.", 
-          species_name, pk[SCMovesetsMetadata::FORM].to_s))
+          species_name, pk[SCMovesetsData::FORM].to_s))
 			end 
-			if @banned_items.include?(pk[SCMovesetsMetadata::ITEM])
+			if @banned_items.include?(pk[SCMovesetsData::ITEM])
 				report.push(_INTL("Item {1} on {2} is not allowed.", 
-          PBItems.getName(pk[SCMovesetsMetadata::ITEM]), species_name))
+          PBItems.getName(pk[SCMovesetsData::ITEM]), species_name))
 			end 
 			
 			# Check ability ffs it's so stupid how it's handled. 
-			if @banned_abilities.include?(pk[SCMovesetsMetadata::ABILITY])
+			if @banned_abilities.include?(pk[SCMovesetsData::ABILITY])
 				valid = false 
-				report.push(_INTL("Ability {1} on {2} is not allowed.", PBAbilities.getName(pk[SCMovesetsMetadata::ABILITY]), species_name))
+				report.push(_INTL("Ability {1} on {2} is not allowed.", PBAbilities.getName(pk[SCMovesetsData::ABILITY]), species_name))
 			end 
 			
 			# raise _INTL("{1} num 9 => {2}", pk[0], pk[9])
-			for m in SCMovesetsMetadata::MOVE1..SCMovesetsMetadata::MOVE4
+			for m in SCMovesetsData::MOVE1..SCMovesetsData::MOVE4
 				if @banned_moves.include?(pk[m])
 					valid = false 
 					report.push(_INTL("Move {1} on {2} is not allowed.", PBMoves.getName(pk[m]), species_name))
@@ -477,13 +488,13 @@ end
 
 
 
-#---------------------------------------------------------------
-# SCMonotypeTiers 
-# Special class for the Monotype tiers. Along with the list of 
+# ==============================================================
+# SCMonotypeTier 
+# Special class for the Monotype tier. Along with the list of 
 # banned/allowed/rare/frequent Pokémons, there is a list of 
-# Pokémons per type. 
-#---------------------------------------------------------------
-class SCMonotypeTiers < SCTiers
+# Pokémons per type + the generation of teams needs this. 
+# ==============================================================
+class SCMonotypeTier < SCTier
 	# Dictionary to store the list of Pokémons per type. 
 	attr_reader(:pkmns_per_type)
 	
@@ -496,7 +507,7 @@ class SCMonotypeTiers < SCTiers
 		@pkmns_per_type = {} 
 		
 		# In practice, I am probably only using one Monotype tier, 
-		# based on the FE tiers, but I leave the opportunity to change my mind. 
+		# based on the FE tier, but I leave the opportunity to change my mind. 
 		for key in dictionary.keys
 			if key[0...5] == "Type:"
 				t = getConst(PBTypes,key[5..-1])
@@ -587,7 +598,7 @@ class SCMonotypeTiers < SCTiers
 		list_species = []
 		
 		for pkmn in party_list
-      sp = pbGetFSpeciesFromForm(pkmn[SCMonotypeTiers::SPECIES], pkmn[SCMonotypeTiers::FORM])
+      sp = pbGetFSpeciesFromForm(pkmn[SCMonotypeTier::SPECIES], pkmn[SCMonotypeTier::FORM])
 			list_species.push(sp)
 		end 
 		
@@ -651,15 +662,15 @@ end
 
 
 
-#---------------------------------------------------------------
-# SCPersonalisedTiers 
-# Special class for the tiers on-the-fly. Along with the list 
+# ==============================================================
+# SCPersonalisedTier 
+# Special class for the tier on-the-fly. Along with the list 
 # of banned/allowed/rare/frequent Pokémons, there is a list of 
-# Pokémons per "big tiers". It's an attempt to allow the player 
+# Pokémons per "big tier". It's an attempt to allow the player 
 # to design their own tier. 
-#---------------------------------------------------------------
-class SCPersonalisedTiers < SCTiers
-	# tiers "On-The-Fly"
+# ==============================================================
+class SCPersonalisedTier < SCTier
+	# tiers "On-The-Fly" - DEPRECATED
 	
 	def initialize(dictionary)
 		super(dictionary)
@@ -668,7 +679,7 @@ class SCPersonalisedTiers < SCTiers
 		# 0 = banned
 		# 1 = allowed but almost never to be seen (allowed for player, but NPC will never have them)
 		# 2 = allowed but rare 
-		# 3 = allowed but common (the main POkémons of the Tiers)
+		# 3 = allowed but common (the main POkémons of the tier)
 		@personalised_data = {}
 		@personalised_data["FullyEvolved"] = [3, dictionary["FullyEvolved"]]
 		@personalised_data["NotFullyEvolved"] = [0, dictionary["NotFullyEvolved"]]
@@ -795,7 +806,7 @@ class SCPersonalisedTiers < SCTiers
 	# 0 = banned
 	# 1 = allowed but almost never to be seen (allowed for player, but NPC will never have them)
 	# 2 = allowed but rare 
-	# 3 = allowed but common (the main POkémons of the Tiers)
+	# 3 = allowed but common (the main POkémons of the tier)
 	def allowCategory(class_name)
 		@personalised_data[class_name] = 1 
 	end 
@@ -887,13 +898,13 @@ end
 
 
 
-#---------------------------------------------------------------
-# SCBitypeTiers 
-# Special class for the Bitype tiers. Along with the list of 
+# ==============================================================
+# SCBitypeTier 
+# Special class for the Bitype tier. Along with the list of 
 # banned/allowed/rare/frequent Pokémons, there is a list of 
 # Pokémons per pair of types. 
-#---------------------------------------------------------------
-class SCBitypeTiers < SCTiers
+# ==============================================================
+class SCBitypeTier < SCTier
 	# Matrix types x types => list of Pokémons. 
 	attr_reader(:pkmns_bitype)
 	
@@ -907,7 +918,7 @@ class SCBitypeTiers < SCTiers
 		@rich_bitypes = [] # All the bi-types with enough pokemons (number > @enough_pkmns)
 		
 		# In practice, I am probably only using one Monotype tier, 
-		# based on the FE tiers, but I leave the opportunity to change my mind. 
+		# based on the FE tier, but I leave the opportunity to change my mind. 
 		for key in dictionary.keys
 			if key[0...5] == "Type:"
 				two_types = key[5..-1].split(",")
@@ -1044,7 +1055,7 @@ class SCBitypeTiers < SCTiers
 		list_species = []
 		
 		for pkmn in party
-      sp = pbGetFSpeciesFromForm(pkmn[SCMovesetsMetadata::BASESPECIES], pkmn[SCMonotypeTiers::FORM])
+      sp = pbGetFSpeciesFromForm(pkmn[SCMovesetsData::BASESPECIES], pkmn[SCMonotypeTier::FORM])
 			list_species.push(sp)
 		end 
 		
@@ -1122,11 +1133,11 @@ end
 
 
 
-#---------------------------------------------------------------
+# ==============================================================
 # Functions
-#---------------------------------------------------------------
-def loadTiers(tierid)
-	# Loads the tiers from the compiled file. 
+# ==============================================================
+def loadTier(tierid)
+	# Loads the tier from the compiled file. 
 	# Returns a class. 
   
   if tierid.is_a?(Array)
@@ -1144,27 +1155,26 @@ def loadTiers(tierid)
 		dictionary["BannedMoves"] = []
 		dictionary["BannedAbilities"] = []
 		
-		return SCTiers.new(dictionary)
+		return SCTier.new(dictionary)
   end 
   
-	tiers_dict = load_data("Data/sctiers.dat")
+	tier_dict = scLoadTierData
 	
-	if not tiers_dict.key?(tierid)
+	if !tier_dict.key?(tierid)
 		raise _INTL("{1} is not a tier!", tierid)
 	end 
 	
   case tierid
   when "MONO"
-		return SCMonotypeTiers.new(tiers_dict[tierid])
+		return SCMonotypeTier.new(tier_dict[tierid])
   when "BI"
-		return SCBitypeTiers.new(tiers_dict[tierid])
+		return SCBitypeTier.new(tier_dict[tierid])
   when "OTF"
-		return SCPersonalisedTiers.new(tiers_dict[tierid])
+		return SCPersonalisedTier.new(tier_dict[tierid])
 	end 
 	
-	return SCTiers.new(tiers_dict[tierid])
+	return SCTier.new(tier_dict[tierid])
 end 
-
 
 
 
@@ -1174,15 +1184,17 @@ def trainerPartyIsValid
 end 
 
 
+
 def trainerPartyFitsCurrentTier
-  return $PokemonTemp.battleRules["tierofteam"] == scGetTier()
+  return scGetTierOfTeam() == scGetTier()
 end 
+
 
 
 def isValidForTier(party, show_messages, tierid = nil)
 	# Checks if the given party is valid for the given tierid.
   tierid = scGetTier() if !tierid
-	tier = loadTiers(tierid)
+	tier = loadTier(tierid)
 	
 	res = tier.isValid(party)
 	
@@ -1201,11 +1213,10 @@ end
 
 
 
-
 def partyListIsValidForTier(party_list, show_messages, tierid = nil)
 	# Checks if the given party is valid for the given tierid.
   tierid = scGetTier() if !tierid
-	tier = loadTiers(tierid)
+	tier = loadTier(tierid)
 	
 	res = tier.partyListIsValid(party_list)
 	

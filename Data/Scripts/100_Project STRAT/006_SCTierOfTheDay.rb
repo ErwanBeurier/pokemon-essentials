@@ -8,7 +8,7 @@ class SCTierOfTheDayHandler
 		@current_tier = nil
     @already_chosen_tiers = []
 		@all_tiers = [] 
-		tiers = load_data("Data/sctiers.dat")
+		tiers = scLoadTierData
 		
 		for tier in tiers["TierList"]
 			if tiers[tier]["Category"] == "Random" || tiers[tier]["Category"] == "Micro-tier"

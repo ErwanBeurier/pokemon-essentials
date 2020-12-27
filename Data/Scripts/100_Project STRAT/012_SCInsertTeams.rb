@@ -19,21 +19,93 @@
 
 
 def scNewMovesetData(pokeid, ability, nature, item, move1, move2, move3, move4, evs)
-	pklist = scEmptyPokemonData(pokeid)
-	
-	pklist[4] = ability # ability number (0, 1, 2)
-	pklist[5] = item 
-	pklist[6] = nature
-	pklist[9][0] = move1
-	pklist[9][1] = move2
-	pklist[9][2] = move3 # For Delta Volcarona
-	pklist[9][3] = move4
-	pklist[10] = evs
+	pklist = SCTB.initData(pokeid)
+  
+  # Ability
+  ab = SCTB.getAbilityIndex(ability, pokeid)
+  pklist[SCMovesetsData::ABILITY] = ability
+  pklist[SCMovesetsData::ABILITYINDEX] = ab
+  
+  # Nature 
+  pklist[SCMovesetsData::NATURE] = nature
+  
+  # Item 
+  pklist[SCMovesetsData::ITEM] = item 
+  
+  # Moves 
+  pklist[SCMovesetsData::MOVE1] = move1
+  pklist[SCMovesetsData::MOVE2] = move2
+  pklist[SCMovesetsData::MOVE3] = move3
+  pklist[SCMovesetsData::MOVE4] = move4
+  
+  # Stats
+  pklist[SCMovesetsData::EV] = evs.clone
 	
 	return pklist 
 end 
 
 
+
+
+
+
+def scInsertTeamToStorage(tier, id)
+  trainerdata = pbLoadTrainer(PBTrainers::POKEMONTRAINER_Red, "Player", id)
+  
+  party = []
+  team_name = "Unnamed"
+  
+  trainers = pbLoadTrainersData
+  for trainer in trainers
+    thistrainerid = trainer[0]
+    name          = trainer[1]
+    thispartyid   = trainer[4]
+    next if thistrainerid!=PBTrainers::POKEMONTRAINER_Red || name!="Player" || thispartyid!=id
+    # LoseText will contain the name of the team. 
+    team_name = pbGetMessageFromHash(MessageTypes::TrainerLoseText,trainer[5])
+    
+    # Load up each Pokémon in the trainer's party
+    for poke in trainer[3]
+      fspecies = pbGetFSpeciesFromForm(poke[TPSPECIES], (poke[TPFORM] ? poke[TPFORM] : 0))
+      
+      mvstdata = SCTB.initData(fspecies)
+      
+      mvstdata[SCMovesetsData::LEVEL] = poke[TPLEVEL]
+      mvstdata[SCMovesetsData::ITEM] = poke[TPITEM] if poke[TPITEM]
+      
+      if poke[TPMOVES] && poke[TPMOVES].length>0
+        for i in 0...poke[TPMOVES].length
+          mvstdata[SCMovesetsData::MOVE1 + i] = poke[TPMOVES][i]
+        end
+      end
+      
+      mvstdata[SCMovesetsData::ABILITYINDEX] = (poke[TPABILITY] || 0)
+      mvstdata[SCMovesetsData::ABILITY] = SCTB.getAbilityFromIndex(mvstdata[SCMovesetsData::ABILITYINDEX], fspecies)
+      
+      mvstdata[SCMovesetsData::GENDER] = (poke[TPGENDER]) ? poke[TPGENDER] : ($Trainer.female?) ? 1 : 0
+      mvstdata[SCMovesetsData::SHINY] = (poke[TPSHINY] == true)
+      mvstdata[SCMovesetsData::NATURE] = poke[TPNATURE] if poke[TPNATURE]
+      
+      for i in 0...6
+        if poke[TPIV] && poke[TPIV].length == 6
+          mvstdata[SCMovesetsData::IV][i] = poke[TPIV][i]
+        end
+        if poke[TPEV] && poke[TPEV].length == 6 
+          mvstdata[SCMovesetsData::EV][i] = poke[TPEV][i]
+        end
+      end
+      
+      mvstdata[SCMovesetsData::HAPPINESS] = poke[TPHAPPINESS] if poke[TPHAPPINESS]
+      mvstdata[SCMovesetsData::NICKNAME] = poke[TPNAME] if poke[TPNAME] && poke[TPNAME]!=""
+      mvstdata[SCMovesetsData::BALL] = poke[TPBALL] if poke[TPBALL]
+      
+      party.push(mvstdata)
+    end
+  end
+  
+  
+	scTeamStorage.addTeam(team_name, party, tier)
+end 
 
 
 

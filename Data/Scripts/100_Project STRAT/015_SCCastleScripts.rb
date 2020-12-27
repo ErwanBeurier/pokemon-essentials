@@ -7,7 +7,7 @@
 #----------------------------------------------------------
 # Menu for the PC:
 # - Teambuilder 
-# - Change tiers 
+# - Change tier
 # - Tier statistics. 
 #----------------------------------------------------------
 def scCastlePC

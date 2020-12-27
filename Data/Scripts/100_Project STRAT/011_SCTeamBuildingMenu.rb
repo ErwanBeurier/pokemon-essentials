@@ -21,11 +21,6 @@
 
 
 
-# scTeamStorage = SCTeamStorage.new
-
-
-
-
 module SCTB
 	##### Main Method
 	def self.open
@@ -91,7 +86,7 @@ module SCTB
 	
 	
 	
-	def self.shortTiersSpecies(tier, choose_moveset)
+	def self.shortTierSpecies(tier, choose_moveset)
 		# Shows a menu displaying all the Pokémon in the tier, provided the tier is "small" enough. 
 		commands = []
     
@@ -478,8 +473,8 @@ module SCTB
     
     formData[base_species].each_index do |i|
       form_name = self.getFormName(base_species, i)
-      form_name = (i == 0 ? "Normal form" : form_name)
-      form_list.push([i, self.getFormName(base_species, i), base_species, pbGetFSpeciesFromForm(base_species, i)])
+      # form_name = (i == 0 ? "Normal form" : form_name)
+      form_list.push([i, form_name, base_species, pbGetFSpeciesFromForm(base_species, i)])
     end 
     
     return form_list
@@ -490,6 +485,8 @@ module SCTB
 	def self.getFormName(speciesid, form)
 		fspecies = pbGetFSpeciesFromForm(speciesid, form)
     formName = pbGetMessage(MessageTypes::FormNames,fspecies)
+    formName = "Normal form" if formName == "" && form == 0
+    # pbMessage(_INTL("Form name: \"{1}\"", formName))
     return formName
 	end 
 	
@@ -518,15 +515,15 @@ module SCTB
 			return required
 		end 
 		
-    required[SCFormData::SPECIES] = form_list[0][3]
-		required[SCFormData::BASESPECIES] = form_list[0][2]
+    required[SCFormData::SPECIES] = form_list[form][3]
+		required[SCFormData::BASESPECIES] = form_list[form][2]
 		
     given_requirements = false 
     requiredData = scLoadPersonalItems(speciesid)
     
     if requiredData && requiredData.is_a?(Array)
       requiredData.each do |req|
-        next if req[SCFormData::FORM] != form 
+        next if req[SCFormData::FORM] != form_list[form][0] 
         required = req 
         given_requirements = true 
       end 
@@ -538,7 +535,6 @@ module SCTB
       required[SCFormData::BASESPECIES] = form_list[form][3]
     end 
     
-    # pbMessage(_INTL("Base form = {1}, Base species = {2}, FSpecies = {3}, wanted form = {4}", required[SCFormData::BASEFORM], required[SCFormData::BASESPECIES], required[SCFormData::SPECIES], required[SCFormData::FORM]))
     required[SCFormData::FORMNAME] = form_list[form][1]
     
 		return required
@@ -550,25 +546,25 @@ module SCTB
 		# Returns a formatted list gathering all the information about a moveset. 
 		# Takes into consideration the required stuff from SCTB.formMenu. 
     
-    data = SCMovesetsMetadata.newEmpty2(species_stuff)
-    data[SCMovesetsMetadata::LEVEL] = 120
+    data = SCMovesetsData.newEmpty2(species_stuff)
+    data[SCMovesetsData::LEVEL] = 120
     return data if !species_stuff
     
     reqs = scLoadFormRequirements(species_stuff)
     return data if !reqs
     
     reqs.each { |req|
-      next if req[SCFormData::FORM] != data[SCMovesetsMetadata::FORM]
+      next if req[SCFormData::FORM] != data[SCMovesetsData::FORM]
       
-      data[SCMovesetsMetadata::BASEFORM] = req[SCFormData::BASEFORM] if req[SCFormData::BASEFORM] != req[SCFormData::FORM]
-      data[SCMovesetsMetadata::BASESPECIES] = req[SCFormData::BASESPECIES]
+      data[SCMovesetsData::BASEFORM] = req[SCFormData::BASEFORM] #if req[SCFormData::BASEFORM] != req[SCFormData::FORM]
+      data[SCMovesetsData::BASESPECIES] = req[SCFormData::BASESPECIES]
       
-      data[SCMovesetsMetadata::ITEM] = req[SCFormData::REQITEM] if req[SCFormData::REQITEM]
-      data[SCMovesetsMetadata::MOVE1] = req[SCFormData::REQMOVE] if req[SCFormData::REQMOVE]
-      data[SCMovesetsMetadata::GENDER] = req[SCFormData::REQGENDER] if req[SCFormData::REQGENDER]
+      data[SCMovesetsData::ITEM] = req[SCFormData::REQITEM] if req[SCFormData::REQITEM]
+      data[SCMovesetsData::MOVE1] = req[SCFormData::REQMOVE] if req[SCFormData::REQMOVE]
+      data[SCMovesetsData::GENDER] = req[SCFormData::REQGENDER] if req[SCFormData::REQGENDER]
       
       if req[SCFormData::REQABILITY]
-        data[SCMovesetsMetadata::ABILITYINDEX] = self.getAbilityIndex(req[SCFormData::REQABILITY], species_stuff)
+        data[SCMovesetsData::ABILITYINDEX] = self.getAbilityIndex(req[SCFormData::REQABILITY], species_stuff)
       end 
     }
     
@@ -615,6 +611,7 @@ module SCTB
   end 
   
   
+  
   def self.getAbilityFromIndex(ab_i, speciesid)
     ret = self.getAbilitiesFromSpecies(speciesid)
     
@@ -628,9 +625,11 @@ module SCTB
   end 
   
   
+  
   def self.EVIVToStr(eviv)
     return eviv[0].to_s+"/"+eviv[1].to_s+"/"+eviv[2].to_s+"/"+eviv[4].to_s+"/"+eviv[5].to_s+"/"+eviv[3].to_s
   end 
+  
   
   
   def self.oneValue(eviv, value)
@@ -641,15 +640,16 @@ module SCTB
   end 
   
   
+  
   def self.movesetMenu(speciesid, tier)
-    # speciesid if typically a pk[SCMovesetsMetadata::FSPECIES]
-    movesetdata = load_data("Data/scmovesets.dat")
+    # speciesid if typically a pk[SCMovesetsData::FSPECIES]
+    movesetdata = scLoadMovesetsData
     
     
     mvst_commands = ["Cancel"]
     
     movesetdata[speciesid].each { |mvst|
-      p = mvst[SCMovesetsMetadata::PATTERN]
+      p = mvst[SCMovesetsData::PATTERN]
       mvst_commands.push(SCMovesetPatterns.getName(p))
     }
     
@@ -730,7 +730,6 @@ class SCTeamViewer
 	
 	
 	def initialize
-		
 		@valid = nil
 		@exit = false
 		
@@ -746,15 +745,15 @@ class SCTeamViewer
 	
 	
 	def drawHeader
-		pbSetSystemFont(@sprites["background"].bitmap)
+		pbSetSystemFont(@sprites["header"].bitmap)
 		textpos=[          
 			["Teams",50,6,0,Color.new(248,248,248),Color.new(40,40,40)],
 			#    ["Online ID: #{$PokemonGlobal.onlineID}",350,6,2,Color.new(248,248,248),
 			#    Color.new(40,40,40)],
 		]
-		pbDrawTextPositions(@sprites["background"].bitmap,textpos)
+		pbDrawTextPositions(@sprites["header"].bitmap,textpos)
 	end 
-	
+  
 	
 	
 	def create_spriteset
@@ -764,7 +763,12 @@ class SCTeamViewer
 		
 		@sprites["background"] = IconSprite.new
 		@sprites["background"].setBitmap("Graphics/Pictures/GTS/gts background")
-
+    
+    @sprites["header"] = IconSprite.new
+    @sprites["header"].bitmap = Bitmap.new(@sprites["background"].bitmap.width, @sprites["background"].bitmap.height)
+    @sprites["header"].x = @sprites["background"].x
+    @sprites["header"].y = @sprites["background"].y 
+    
 		drawHeader
 		
 		# First three teams  
@@ -848,7 +852,7 @@ class SCTeamViewer
 		
 		@sprites[kt].bitmap.clear
 		
-		s = "[" + scTeamStorage.tiersAt(@index_upper + displayed_index) + "] "
+		s = "[" + scTeamStorage.tierAt(@index_upper + displayed_index) + "] "
 		s += scTeamStorage.nameAt(@index_upper + displayed_index)
 		
 		pbSetSystemFont(@sprites[kt].bitmap)
@@ -950,13 +954,13 @@ class SCTeamViewer
 			# Choose the type of team: 
 			
 			if res == 0 or res == 1
-				res2 = pbMessage("Use current tiers? (" + tier_choice + ")", ["Yes", "No"], -1)
+				res2 = pbMessage("Use current tier? (" + tier_choice + ")", ["Yes", "No"], -1)
 				
 				if res2 == 1
 					# Change tier. 
 					tier_choice = scSelectTierMenu
 					tier_choice = scGetTier() if tier_choice == ""
-					pbMessage("Chosen tiers: " + tier_choice + ".")
+					pbMessage("Chosen tier: " + tier_choice + ".")
 				end 
 			end 
 				
@@ -964,7 +968,6 @@ class SCTeamViewer
         # New team. 
 				Graphics.freeze
 				scene = SCTeamBuilder.new(false, scTeamStorage.partyAt(team_index), tier_choice)
-				@sprites["background"].dispose
 				data = scene.main
 				scTeamStorage.modifyTeam(team_index, "Empty", data, tier_choice)
 				create_spriteset
@@ -999,7 +1002,7 @@ class SCTeamViewer
 						keep_team = pbMessage("Keep this team?", ["Yes", "No"], 0)
 						
 						if keep_team == 0 
-							pbMessage("Generated team for tiers " + tier_choice + "!")
+							pbMessage("Generated team for tier " + tier_choice + "!")
 							break
 						else
 							team_type = pbMessage("Generate what type of team?", team_types, -1)
@@ -1015,20 +1018,22 @@ class SCTeamViewer
 			end 
 			
 		else 
-			options = ["Load", "Modify", "Rename", "Duplicate", "Change tiers", "Replace with current", "Delete", "Cancel"]
+			options = ["Load", "Modify", "Rename", "Duplicate", "Change tier", "Replace with current", "Delete"]
+      options.push("Export") if $DEBUG
+      options.push("Cancel")
 			
 			res = pbMessage("Do what?", options, -1)
 			
 			
 			if res == 0
 				# Load 
-				scene = SCTeamBuilder.new(false, scTeamStorage.partyAt(team_index), scTeamStorage.tiersAt(team_index))
+				scene = SCTeamBuilder.new(false, scTeamStorage.partyAt(team_index), scTeamStorage.tierAt(team_index))
 				scene.create_team(scTeamStorage.partyAt(team_index))
 				
 			elsif res == 1
 				# Modify party
 				Graphics.freeze
-				scene = SCTeamBuilder.new(false, scTeamStorage.partyAt(team_index), scTeamStorage.tiersAt(team_index))
+				scene = SCTeamBuilder.new(false, scTeamStorage.partyAt(team_index), scTeamStorage.tierAt(team_index))
 				@sprites["background"].dispose
 				data = scene.main
 				scTeamStorage.modifyPartyAt(team_index, data)
@@ -1059,7 +1064,7 @@ class SCTeamViewer
 				if temp == 0
 					# Modify party
 					Graphics.freeze
-					scene = SCTeamBuilder.new(false, scTeamStorage.partyAt(new_index), scTeamStorage.tiersAt(new_index))
+					scene = SCTeamBuilder.new(false, scTeamStorage.partyAt(new_index), scTeamStorage.tierAt(new_index))
 					@sprites["background"].dispose
 					data = scene.main
 					scTeamStorage.modifyPartyAt(team_index, data)
@@ -1068,17 +1073,17 @@ class SCTeamViewer
 				end 
 				
 			elsif res == 4 
-				# Change tiers 
+				# Change tier
 				tier_choice = scSelectTierMenu
 				
 				if tier_choice == ""
 					tier_choice = scGetTier()
 				else 
-					scTeamStorage.modifyTiersAt(team_index, tier_choice) 
+					scTeamStorage.modifyTierAt(team_index, tier_choice) 
 				end 
 				
 				Graphics.freeze
-				pbMessage("Chosen tiers: " + tier_choice + ".")
+				pbMessage("Chosen tier: " + tier_choice + ".")
 				create_spriteset
 				Graphics.transition
 				
@@ -1101,6 +1106,9 @@ class SCTeamViewer
 					create_spriteset
 					Graphics.transition
 				end 
+      elsif res == 7 && $DEBUG 
+        # Export team
+        scTeamStorage.export(team_index)
 			end 
 			
 		end 
@@ -1132,15 +1140,15 @@ end
 
 class SCTeamBuilder
 	
-	def initialize(currentParty = true, party = nil, tiers = "", force_valid = false)
+	def initialize(currentParty = true, party = nil, tier = nil, force_valid = false)
 		@party = [] 
 		
 		# This will allow, in the create_team functin, to check if a 
 		# species changed. 
 		# Do not store the Pokémons in the PC if the species did not change 
 		@original_party_species = [0,0,0,0,0,0] 
-		@tier = tiers 
-		@tier = scGetTier() if tiers == ""
+		@tier = tier 
+		@tier = scGetTier() if !tier
 		@force_valid = force_valid		
 		
 		if currentParty
@@ -1186,15 +1194,15 @@ class SCTeamBuilder
 	
 	
 	def drawHeader
-		pbSetSystemFont(@sprites["background"].bitmap)
+		pbSetSystemFont(@sprites["header"].bitmap)
 		textpos=[          
 			["Team builder",50,6,0,Color.new(248,248,248),Color.new(40,40,40)],
 			#    ["Online ID: #{$PokemonGlobal.onlineID}",350,6,2,Color.new(248,248,248),
 			#    Color.new(40,40,40)],
 		]
-		pbDrawTextPositions(@sprites["background"].bitmap,textpos)
+		pbDrawTextPositions(@sprites["header"].bitmap,textpos)
 	end 
-	
+  
 	
 	
 	def create_spriteset
@@ -1204,7 +1212,12 @@ class SCTeamBuilder
 		
 		@sprites["background"] = IconSprite.new
 		@sprites["background"].setBitmap("Graphics/Pictures/GTS/gts background")
-
+    
+    @sprites["header"] = IconSprite.new
+    @sprites["header"].bitmap = Bitmap.new(@sprites["background"].bitmap.width, @sprites["background"].bitmap.height)
+    @sprites["header"].x = @sprites["background"].x
+    @sprites["header"].y = @sprites["background"].y 
+    
 		drawHeader
 		
 		# POKEMONS 
@@ -1286,18 +1299,6 @@ class SCTeamBuilder
 			pbDrawTextPositions(@sprites[k].bitmap,textpos)
 		end 
 		
-		
-		
-		# pbSetSystemFont(@sprites["6tt"].bitmap)
-		# textpos=[          
-			# ["Validate party",
-			# #@sprites["4"].bitmap.width / 2, 2,2,Color.new(248,248,248),
-			# 70,0,0,Color.new(248,248,248),
-			# Color.new(40,40,40)],       
-		# ]
-		# pbDrawTextPositions(@sprites["6tt"].bitmap,textpos)
-
-		
 		pbSetSystemFont(@sprites["7tt"].bitmap)
 		textpos=[          
 			["Finish party!",
@@ -1338,13 +1339,13 @@ class SCTeamBuilder
 			k = i.to_s + "t"
 			@sprites[k].bitmap.clear
 			if (not @party[i].empty?) && @party[i][0]
-				#s = PBItems.getName(@wanted_data[SCMovesetsMetadata::ITEM]) 
+				#s = PBItems.getName(@wanted_data[SCMovesetsData::ITEM]) 
         
-        species_name = PBSpecies.getName(@party[i][SCMovesetsMetadata::SPECIES])
+        species_name = PBSpecies.getName(@party[i][SCMovesetsData::SPECIES])
         nickname = nil
         
-        if @party[i][SCMovesetsMetadata::NICKNAME] && @party[i][SCMovesetsMetadata::NICKNAME] != ""
-          nickname = @party[i][SCMovesetsMetadata::NICKNAME]
+        if @party[i][SCMovesetsData::NICKNAME] && @party[i][SCMovesetsData::NICKNAME] != ""
+          nickname = @party[i][SCMovesetsData::NICKNAME]
         end 
         
         name_nickname = (nickname ? _INTL("{1} ({2})", species_name, nickname) : species_name)
@@ -1458,15 +1459,15 @@ class SCTeamBuilder
 		# [-1, 1, 120, -1, 0, -1, nil, "", Array.new(6, 31), Array.new(4, -1), Array.new(6, 0), false, 0]
 		
 		# 0 = Species 
-		if !pkmn_data[SCMovesetsMetadata::BASESPECIES]
+		if !pkmn_data[SCMovesetsData::BASESPECIES]
 			msgs.push("No Pokémon is defined.")
 			return msgs 
 		end 
 		
 		# 1 = Min level (not used)
 		# 2 = Level 
-		if pkmn_data[SCMovesetsMetadata::LEVEL] && (pkmn_data[SCMovesetsMetadata::LEVEL] < 1 || pkmn_data[SCMovesetsMetadata::LEVEL] > 120)
-			msgs.push(_INTL("Given level is {1} (min: 1, max: 120)", pkmn_data[SCMovesetsMetadata::LEVEL]))
+		if pkmn_data[SCMovesetsData::LEVEL] && (pkmn_data[SCMovesetsData::LEVEL] < 1 || pkmn_data[SCMovesetsData::LEVEL] > 120)
+			msgs.push(_INTL("Given level is {1} (min: 1, max: 120)", pkmn_data[SCMovesetsData::LEVEL]))
 		end 
 		
 		# 3 = Gender 
@@ -1476,12 +1477,12 @@ class SCTeamBuilder
 		# DC; it's auto-filled.
 		
 		# 5 = Items 
-		if !pkmn_data[SCMovesetsMetadata::ITEM]
+		if !pkmn_data[SCMovesetsData::ITEM]
 			msgs.push("No item is defined.")
 		end
 		
 		# 6 = Nature 
-		if !pkmn_data[SCMovesetsMetadata::NATURE]
+		if !pkmn_data[SCMovesetsData::NATURE]
 			msgs.push("No nature is defined.")
 		end
 		
@@ -1489,35 +1490,35 @@ class SCTeamBuilder
 		# DC; auto-filled.
 		
 		# 8 = IVs 
-		if SCTB.oneValue(pkmn_data[SCMovesetsMetadata::IV], nil)
+		if SCTB.oneValue(pkmn_data[SCMovesetsData::IV], nil)
 			msgs.push("No IVs are defined.")
 		else 
 			for i in 0...6
-				if pkmn_data[SCMovesetsMetadata::IV][i] < 0 or pkmn_data[SCMovesetsMetadata::IV][i] > 31
-					msgs.push("Given IV is: {1} (min: 0, max: 31)", pkmn_data[SCMovesetsMetadata::IV][i])
+				if pkmn_data[SCMovesetsData::IV][i] < 0 or pkmn_data[SCMovesetsData::IV][i] > 31
+					msgs.push("Given IV is: {1} (min: 0, max: 31)", pkmn_data[SCMovesetsData::IV][i])
 					break 
 				end 
 			end 
 		end
 		
 		# 9 = moves 
-		if !pkmn_data[SCMovesetsMetadata::MOVE1] && !pkmn_data[SCMovesetsMetadata::MOVE2] && !pkmn_data[SCMovesetsMetadata::MOVE3] && !pkmn_data[SCMovesetsMetadata::MOVE4]
+		if !pkmn_data[SCMovesetsData::MOVE1] && !pkmn_data[SCMovesetsData::MOVE2] && !pkmn_data[SCMovesetsData::MOVE3] && !pkmn_data[SCMovesetsData::MOVE4]
 			msgs.push("No moves are defined.")
 		end 
 		
 				
 		# 10 = EVs 
-		if SCTB.oneValue(pkmn_data[SCMovesetsMetadata::EV], nil)
+		if SCTB.oneValue(pkmn_data[SCMovesetsData::EV], nil)
 			msgs.push("No EVs are defined.")
 		else 
 			total = 0
 			
 			for i in 0...6
-				if pkmn_data[SCMovesetsMetadata::EV][i] < 0 or pkmn_data[SCMovesetsMetadata::EV][i] > 255
-					msgs.push("Given EV is: {1} (min: 0, max: 255)", pkmn_data[SCMovesetsMetadata::EV][i])
+				if pkmn_data[SCMovesetsData::EV][i] < 0 or pkmn_data[SCMovesetsData::EV][i] > 255
+					msgs.push("Given EV is: {1} (min: 0, max: 255)", pkmn_data[SCMovesetsData::EV][i])
 					break 
 				end 
-				total += pkmn_data[SCMovesetsMetadata::EV][i]
+				total += pkmn_data[SCMovesetsData::EV][i]
 			end 
 			
 			if total > 510 or total < 0
@@ -1534,17 +1535,13 @@ class SCTeamBuilder
 	
 	def do_command
 		if @index >= 0 and @index < 6
-			
 			scene = SCWantedDataComplete.new(@party[@index], @tier)
 			@party[@index] = scene.main 
 		
 		elsif @index == 6 
-			
 			@valid = partyListIsValidForTier(@party, true, @tier)
 			
-			
 		elsif @index == 7
-			
 			canDo=true
 			
 			# Check if a Pokémon is valid. 
@@ -1582,48 +1579,48 @@ class SCTeamBuilder
 		for pkmn in party
 			next if !pkmn[0]
       # Form is handled at the creation of the Pokémon. 
-      base_species = pkmn[SCMovesetsMetadata::BASESPECIES] != nil ? pkmn[SCMovesetsMetadata::BASESPECIES] : pkmn[SCMovesetsMetadata::SPECIES]
-			pokemon = PokeBattle_Pokemon.new(base_species,pkmn[SCMovesetsMetadata::LEVEL], $Trainer)
+      base_species = pkmn[SCMovesetsData::BASESPECIES] != nil ? pkmn[SCMovesetsData::BASESPECIES] : pkmn[SCMovesetsData::SPECIES]
+			pokemon = PokeBattle_Pokemon.new(base_species,pkmn[SCMovesetsData::LEVEL], $Trainer)
 			
 			# Give gender; 0 if male and 1 if female 
-			if pkmn[SCMovesetsMetadata::GENDER]
-				pokemon.setGender(pkmn[SCMovesetsMetadata::GENDER])
+			if pkmn[SCMovesetsData::GENDER]
+				pokemon.setGender(pkmn[SCMovesetsData::GENDER])
 			end 
 			
 			# Give ability 
-			if pkmn[SCMovesetsMetadata::ABILITYINDEX]
-				pokemon.setAbility(pkmn[SCMovesetsMetadata::ABILITYINDEX])
+			if pkmn[SCMovesetsData::ABILITYINDEX]
+				pokemon.setAbility(pkmn[SCMovesetsData::ABILITYINDEX])
 			end 
 			
 			# Give item 
-			if pkmn[SCMovesetsMetadata::ITEM]
-				pokemon.item = pkmn[SCMovesetsMetadata::ITEM]
+			if pkmn[SCMovesetsData::ITEM]
+				pokemon.item = pkmn[SCMovesetsData::ITEM]
 			end 
 			
 			# Give nature 
-			if pkmn[SCMovesetsMetadata::NATURE]
-				pokemon.setNature(pkmn[SCMovesetsMetadata::NATURE])
+			if pkmn[SCMovesetsData::NATURE]
+				pokemon.setNature(pkmn[SCMovesetsData::NATURE])
 			end 
 			
 			# Give nickname 
-			if pkmn[SCMovesetsMetadata::NICKNAME] && pkmn[SCMovesetsMetadata::NICKNAME] != ""
-				pokemon.name = pkmn[SCMovesetsMetadata::NICKNAME]
+			if pkmn[SCMovesetsData::NICKNAME] && pkmn[SCMovesetsData::NICKNAME] != ""
+				pokemon.name = pkmn[SCMovesetsData::NICKNAME]
 			end 
 			
 			for i in 0...6
-				pokemon.iv[i] = pkmn[SCMovesetsMetadata::IV][i]
-				pokemon.ev[i] = pkmn[SCMovesetsMetadata::EV][i]
+				pokemon.iv[i] = pkmn[SCMovesetsData::IV][i]
+				pokemon.ev[i] = pkmn[SCMovesetsData::EV][i]
 			end 
 			
 			# Check if it has moves. If not, then the moves will be given by the level. 
 			for i in 0...4
-				if pkmn[SCMovesetsMetadata::MOVE1 + i]
-					pokemon.moves[i] = PBMove.new(pkmn[SCMovesetsMetadata::MOVE1 + i])
+				if pkmn[SCMovesetsData::MOVE1 + i]
+					pokemon.moves[i] = PBMove.new(pkmn[SCMovesetsData::MOVE1 + i])
 				end 
 			end 
 			
 			# Shiny 
-			if pkmn[SCMovesetsMetadata::SHINY] == true
+			if pkmn[SCMovesetsData::SHINY] == true
 				pokemon.makeShiny 
 			end 
 			
@@ -1651,7 +1648,7 @@ class SCTeamBuilder
 		$Trainer.party = new_team
 		
     # Store the tier of the team, just to warn the player in case they fight in another tier.
-    setBattleRule("tierofteam", @tier)
+    scSetTierOfTeam(@tier)
     
 		pbMessage("Done!")
 		
@@ -1673,58 +1670,58 @@ def convertPartyToList(party)
 		# pkmn[1] # Useless
 		
 		# Actual level 
-		pkmn[SCMovesetsMetadata::LEVEL] = pk.level
+		pkmn[SCMovesetsData::LEVEL] = pk.level
 		
 		# Gender 
-		# pkmn[SCMovesetsMetadata::GENDER] = pk.gender
+		# pkmn[SCMovesetsData::GENDER] = pk.gender
     # Don't give gender. 
 		
 		# Ability (number between 0 and 2)
-		pkmn[SCMovesetsMetadata::ABILITYINDEX] = pk.abilityIndex
-		pkmn[SCMovesetsMetadata::ABILITY] = pk.ability
+		pkmn[SCMovesetsData::ABILITYINDEX] = pk.abilityIndex
+		pkmn[SCMovesetsData::ABILITY] = pk.ability
 		
 		# The item is already an ID !
-		pkmn[SCMovesetsMetadata::ITEM] = pk.item 
+		pkmn[SCMovesetsData::ITEM] = pk.item 
 		
 		# Nature 
-		pkmn[SCMovesetsMetadata::NATURE] = pk.nature
+		pkmn[SCMovesetsData::NATURE] = pk.nature
 		
 		# Nickname 
 		
 		if pk.name == PBSpecies.getName(pk.species)
-			pkmn[SCMovesetsMetadata::NICKNAME] = "" 
+			pkmn[SCMovesetsData::NICKNAME] = "" 
     else
-      pkmn[SCMovesetsMetadata::NICKNAME] = pk.name
+      pkmn[SCMovesetsData::NICKNAME] = pk.name
 		end 
 		
 		# IVs			
 		for i in 0...6
-			pkmn[SCMovesetsMetadata::IV][i] = pk.iv[i]
+			pkmn[SCMovesetsData::IV][i] = pk.iv[i]
 		end 
 		
 		# Moves 			
 		for i in 0...4
 			if pk.moves[i]
-				pkmn[SCMovesetsMetadata::MOVE1 + i] = pk.moves[i].id
+				pkmn[SCMovesetsData::MOVE1 + i] = pk.moves[i].id
 			else
-				pkmn[SCMovesetsMetadata::MOVE1 + i] = nil
+				pkmn[SCMovesetsData::MOVE1 + i] = nil
 			end 
 		end 
 		
 		# EVs
 		for i in 0...6
-			pkmn[SCMovesetsMetadata::EV][i] = pk.ev[i]
+			pkmn[SCMovesetsData::EV][i] = pk.ev[i]
 		end 
 		
 		# Shiny 
-		pkmn[SCMovesetsMetadata::SHINY] = pk.isShiny?
+		pkmn[SCMovesetsData::SHINY] = pk.isShiny?
 		
 		# Form 
 		
-		# pkmn[SCMovesetsMetadata::FORM] = pk.form
-		# pkmn[SCMovesetsMetadata::BASEFORM] = pk.form
-    # pkmn[SCMovesetsMetadata::FORMNAME] = SCTB.getFormName(pk.species, pk.form)
-		# pkmn[SCMovesetsMetadata
+		# pkmn[SCMovesetsData::FORM] = pk.form
+		# pkmn[SCMovesetsData::BASEFORM] = pk.form
+    # pkmn[SCMovesetsData::FORMNAME] = SCTB.getFormName(pk.species, pk.form)
+		# pkmn[SCMovesetsData
 		party_list.push(pkmn)
 	end 
 	
@@ -1736,7 +1733,7 @@ end
 
 def scAdaptCurrentTeam
 	# Short function 
-	tb = SCTeamBuilder.new(true, nil, "", true)
+	tb = SCTeamBuilder.new(true, nil, nil, true)
 	tb.main 
 	tb.create_team(nil)
 end 
@@ -1755,14 +1752,14 @@ end
 class SCWantedDataComplete 
 	# Displays a menu in which you can create a Pokémon member of the Team. 
 	
-	def initialize(data=nil, tiers = "")
+	def initialize(data=nil, tier=nil)
 		@exit = false
 		@wanted_data = SCTB.initData(nil)
 		@wanted_data = data if data!=nil
 		@index = 0 # Line 
 		@column = 0 
-		tiers = scGetTier() if tiers == "" 
-		@tier = loadTiers(tiers)
+		tier = scGetTier() if !tier
+		@tier = loadTier(tier)
 		@base_stats = []
 		@species_name = "????"
 		@filter_by_type = nil 
@@ -1774,20 +1771,20 @@ class SCWantedDataComplete
 	
 	
 	def getBaseStats
-		if !@wanted_data[SCMovesetsMetadata::FSPECIES]
+		if !@wanted_data[SCMovesetsData::FSPECIES]
 			return [] 
 		end 
-    return pbGetSpeciesData(@wanted_data[SCMovesetsMetadata::BASESPECIES],@wanted_data[SCMovesetsMetadata::FORM],SpeciesBaseStats)
+    return pbGetSpeciesData(@wanted_data[SCMovesetsData::BASESPECIES],@wanted_data[SCMovesetsData::FORM],SpeciesBaseStats)
 	end
 	
 	
 	
 	def drawHeader
-		pbSetSystemFont(@sprites["background"].bitmap)
+		pbSetSystemFont(@sprites["header"].bitmap)
 		textpos=[          
 			["Pokemon Wanted Data",50,6,0,Color.new(248,248,248),Color.new(40,40,40)],
 		]
-		pbDrawTextPositions(@sprites["background"].bitmap,textpos)
+		pbDrawTextPositions(@sprites["header"].bitmap,textpos)
 	end 
 	
 	
@@ -1798,7 +1795,12 @@ class SCWantedDataComplete
 		
 		@sprites["background"] = IconSprite.new
 		@sprites["background"].setBitmap("Graphics/Pictures/GTS/gts background")
-
+    
+    @sprites["header"] = IconSprite.new
+    @sprites["header"].bitmap = Bitmap.new(@sprites["background"].bitmap.width, @sprites["background"].bitmap.height)
+    @sprites["header"].x = @sprites["background"].x
+    @sprites["header"].y = @sprites["background"].y 
+    
 		drawHeader
 		
 		
@@ -2085,7 +2087,7 @@ class SCWantedDataComplete
 		pbDrawTextPositions(@sprites["0t"].bitmap,textpos)
 		
 		
-		if @wanted_data[SCMovesetsMetadata::SPECIES]
+		if @wanted_data[SCMovesetsData::SPECIES]
 			
 			# ---------------------------------
 			# Nature
@@ -2093,7 +2095,7 @@ class SCWantedDataComplete
 			@sprites["1t"].bitmap.clear
 			
 			s = "No nature given"
-			s = ("Nature: " + PBNatures.getName(@wanted_data[SCMovesetsMetadata::NATURE])) if @wanted_data[SCMovesetsMetadata::NATURE]
+			s = ("Nature: " + PBNatures.getName(@wanted_data[SCMovesetsData::NATURE])) if @wanted_data[SCMovesetsData::NATURE]
 			pbSetSystemFont(@sprites["1t"].bitmap)
 			textpos=[
 				[s, 110, 4, 2, Color.new(248,248,248), Color.new(40,40,40)],
@@ -2105,7 +2107,7 @@ class SCWantedDataComplete
       # ---------------------------------
       # Types 
       
-      temp_types = scGetSpeciesTypes(@wanted_data[SCMovesetsMetadata::SPECIES], @wanted_data[SCMovesetsMetadata::FORM])
+      temp_types = scGetSpeciesTypes(@wanted_data[SCMovesetsData::SPECIES], @wanted_data[SCMovesetsData::FORM])
       
       @sprites["type2"].bitmap = nil 
       @sprites["type1"].bitmap = nil 
@@ -2138,7 +2140,11 @@ class SCWantedDataComplete
 			# ---------------------------------
 			# Form 
 			# Line 2, column 2 
-      form_name = (@wanted_data[SCMovesetsMetadata::FORMNAME] ? @wanted_data[SCMovesetsMetadata::FORMNAME] : "")
+      form_name = @wanted_data[SCMovesetsData::FORMNAME]
+      if !form_name || form_name == ""
+        form_name = SCTB.getFormName(@wanted_data[SCMovesetsData::BASESPECIES], @wanted_data[SCMovesetsData::FORM])
+        @wanted_data[SCMovesetsData::FORMNAME] = form_name
+      end 
 			pbSetSystemFont(@sprites["1t"].bitmap)
 			textpos=[
 				[form_name,325,4,2,Color.new(248,248,248),Color.new(40,40,40)],
@@ -2154,7 +2160,7 @@ class SCWantedDataComplete
 			@sprites["2t"].bitmap.clear
 			
 			s = "No item"
-			s = PBItems.getName(@wanted_data[SCMovesetsMetadata::ITEM]) if @wanted_data[SCMovesetsMetadata::ITEM]
+			s = PBItems.getName(@wanted_data[SCMovesetsData::ITEM]) if @wanted_data[SCMovesetsData::ITEM]
 			pbSetSystemFont(@sprites["2t"].bitmap)
 			textpos=[          
 				[s,110,4,2,Color.new(248,248,248),Color.new(40,40,40)],
@@ -2165,18 +2171,18 @@ class SCWantedDataComplete
 			# ---------------------------------
 			# Ability 
 			# Line 3, column 2
-			@wanted_data[SCMovesetsMetadata::ABILITYINDEX]=0 if !@wanted_data[SCMovesetsMetadata::ABILITYINDEX]
-      @wanted_data[SCMovesetsMetadata::ABILITY] = SCTB.getAbilityFromIndex(
-                                                @wanted_data[SCMovesetsMetadata::ABILITYINDEX], 
-                                                @wanted_data[SCMovesetsMetadata::FSPECIES])
+			@wanted_data[SCMovesetsData::ABILITYINDEX]=0 if !@wanted_data[SCMovesetsData::ABILITYINDEX]
+      @wanted_data[SCMovesetsData::ABILITY] = SCTB.getAbilityFromIndex(
+                                                @wanted_data[SCMovesetsData::ABILITYINDEX], 
+                                                @wanted_data[SCMovesetsData::FSPECIES])
       begin 
-			lr = PBAbilities.getName(@wanted_data[SCMovesetsMetadata::ABILITY]) 
+			lr = PBAbilities.getName(@wanted_data[SCMovesetsData::ABILITY]) 
       rescue 
         raise _INTL("Species {2}, Form {3}, ability index {1}, ability {4}", 
-                                                @wanted_data[SCMovesetsMetadata::ABILITYINDEX], 
-                                                @wanted_data[SCMovesetsMetadata::SPECIES], 
-                                                @wanted_data[SCMovesetsMetadata::FORM],
-                                                @wanted_data[SCMovesetsMetadata::ABILITY].class.name)
+                                                @wanted_data[SCMovesetsData::ABILITYINDEX], 
+                                                @wanted_data[SCMovesetsData::SPECIES], 
+                                                @wanted_data[SCMovesetsData::FORM],
+                                                @wanted_data[SCMovesetsData::ABILITY].class.name)
       end 
 			pbSetSystemFont(@sprites["2t"].bitmap)
 			textpos=[          
@@ -2194,7 +2200,7 @@ class SCWantedDataComplete
 			
 			pbSetSystemFont(@sprites["3t"].bitmap)
 			textpos=[          
-				[getMoveFor(@wanted_data[SCMovesetsMetadata::MOVE1]),110,4,2,Color.new(248,248,248),Color.new(40,40,40)],
+				[getMoveFor(@wanted_data[SCMovesetsData::MOVE1]),110,4,2,Color.new(248,248,248),Color.new(40,40,40)],
 			]
 			pbDrawTextPositions(@sprites["3t"].bitmap,textpos)
 			
@@ -2203,7 +2209,7 @@ class SCWantedDataComplete
 			# Line 4, column 2 
 			pbSetSystemFont(@sprites["3t"].bitmap)
 			textpos=[          
-				[getMoveFor(@wanted_data[SCMovesetsMetadata::MOVE2]),325,4,2,Color.new(248,248,248),Color.new(40,40,40)],
+				[getMoveFor(@wanted_data[SCMovesetsData::MOVE2]),325,4,2,Color.new(248,248,248),Color.new(40,40,40)],
 			]
 			pbDrawTextPositions(@sprites["3t"].bitmap,textpos)
 			
@@ -2213,7 +2219,7 @@ class SCWantedDataComplete
 
 			pbSetSystemFont(@sprites["4t"].bitmap)
 			textpos=[          
-				[getMoveFor(@wanted_data[SCMovesetsMetadata::MOVE3]),110,4,2,Color.new(248,248,248),Color.new(40,40,40)],
+				[getMoveFor(@wanted_data[SCMovesetsData::MOVE3]),110,4,2,Color.new(248,248,248),Color.new(40,40,40)],
 			]
 			pbDrawTextPositions(@sprites["4t"].bitmap,textpos)
 			
@@ -2221,7 +2227,7 @@ class SCWantedDataComplete
 			# Line 5, column 2 
 			pbSetSystemFont(@sprites["4t"].bitmap)
 			textpos=[          
-				[getMoveFor(@wanted_data[SCMovesetsMetadata::MOVE4]),325,4,2,Color.new(248,248,248),Color.new(40,40,40)],
+				[getMoveFor(@wanted_data[SCMovesetsData::MOVE4]),325,4,2,Color.new(248,248,248),Color.new(40,40,40)],
 			]
 			pbDrawTextPositions(@sprites["4t"].bitmap,textpos)
 			
@@ -2232,7 +2238,7 @@ class SCWantedDataComplete
 			@sprites["5t"].bitmap.clear
 			
 			pbSetSystemFont(@sprites["5t"].bitmap)
-			qq=SCTB.EVIVToStr(@wanted_data[SCMovesetsMetadata::EV])
+			qq=SCTB.EVIVToStr(@wanted_data[SCMovesetsData::EV])
 			textpos=[          
 				[qq,110,4,2,Color.new(248,248,248),Color.new(40,40,40)],
 			]
@@ -2243,7 +2249,7 @@ class SCWantedDataComplete
 			# IVs 
 			# Line 6, column 2
 			pbSetSystemFont(@sprites["5t"].bitmap)
-			qq=SCTB.EVIVToStr(@wanted_data[SCMovesetsMetadata::IV])
+			qq=SCTB.EVIVToStr(@wanted_data[SCMovesetsData::IV])
 			textpos=[          
 				[qq,325,4,2,Color.new(248,248,248),Color.new(40,40,40)],
 			]
@@ -2255,7 +2261,7 @@ class SCWantedDataComplete
 			# Line 7, column 1
 			@sprites["6t"].bitmap.clear
 			
-      nickname = (@wanted_data[SCMovesetsMetadata::NICKNAME] ? @wanted_data[SCMovesetsMetadata::NICKNAME] : "")
+      nickname = (@wanted_data[SCMovesetsData::NICKNAME] ? @wanted_data[SCMovesetsData::NICKNAME] : "")
 			pbSetSystemFont(@sprites["6t"].bitmap)
 			textpos=[          
 				[nickname,110,4,2,Color.new(248,248,248),Color.new(40,40,40)],
@@ -2267,7 +2273,7 @@ class SCWantedDataComplete
 			# Shiny
 			# Line 7, column 2
 			s = "Not shiny"
-			s = "Shiny" if @wanted_data[SCMovesetsMetadata::SHINY]
+			s = "Shiny" if @wanted_data[SCMovesetsData::SHINY]
 			pbSetSystemFont(@sprites["6t"].bitmap)
 			textpos=[          
 			[s,325,4,2,Color.new(248,248,248),Color.new(40,40,40)],
@@ -2283,20 +2289,20 @@ class SCWantedDataComplete
 			
 			pbSetSystemFont(@sprites["7t"].bitmap)
 			textpos=[          
-				["Level: " + @wanted_data[SCMovesetsMetadata::LEVEL].to_s,110,4,2,Color.new(248,248,248),Color.new(40,40,40)],
+				["Level: " + @wanted_data[SCMovesetsData::LEVEL].to_s,110,4,2,Color.new(248,248,248),Color.new(40,40,40)],
 			]
 			pbDrawTextPositions(@sprites["7t"].bitmap,textpos)
 			
 			
 			# ----------------------------------
 			# Gender 
-      genderdata = scGender(@wanted_data[SCMovesetsMetadata::BASESPECIES], @wanted_data[SCMovesetsMetadata::FORM], true)
+      genderdata = scGender(@wanted_data[SCMovesetsData::BASESPECIES], @wanted_data[SCMovesetsData::FORM], true)
 			
 			g = "Random" 
       if genderdata.length == 1
         g = genderdata[0]
-      elsif [0,1].include?(@wanted_data[SCMovesetsMetadata::GENDER])
-        g = genderdata[@wanted_data[SCMovesetsMetadata::GENDER]]
+      elsif [0,1].include?(@wanted_data[SCMovesetsData::GENDER])
+        g = genderdata[@wanted_data[SCMovesetsData::GENDER]]
       end 
 			
 			pbSetSystemFont(@sprites["7t"].bitmap)
@@ -2384,18 +2390,18 @@ class SCWantedDataComplete
 		@species_name = "????"
 		@base_stats = [] 
 		
-		if @wanted_data[SCMovesetsMetadata::SPECIES]
+		if @wanted_data[SCMovesetsData::SPECIES]
 			@base_stats = self.getBaseStats
-			@species_name = PBSpecies.getName(@wanted_data[SCMovesetsMetadata::SPECIES])
+			@species_name = PBSpecies.getName(@wanted_data[SCMovesetsData::SPECIES])
 			
 			# This file is made in scCompileSCLearnedMoves
 			# It uses PBS/sclearned.txt, generated by generate_movesets.py. 
-			all_moves = load_data("Data/sclearned.dat")
-			# Should be species -> form -> list of moves. 
+			all_moves = scLoadLearnedMoves
+			# Should be species -> list of moves. 
 			@moves = []
-      @numbermoves=all_moves[@wanted_data[SCMovesetsMetadata::FSPECIES]]
-      @numbermoves=all_moves[@wanted_data[SCMovesetsMetadata::BASESPECIES]] if !@numbermoves
-      @numbermoves=all_moves[@wanted_data[SCMovesetsMetadata::SPECIES]] if !@numbermoves
+      @numbermoves=all_moves[@wanted_data[SCMovesetsData::FSPECIES]]
+      @numbermoves=all_moves[@wanted_data[SCMovesetsData::BASESPECIES]] if !@numbermoves
+      @numbermoves=all_moves[@wanted_data[SCMovesetsData::SPECIES]] if !@numbermoves
       
 			
 			for mv in @numbermoves
@@ -2415,13 +2421,13 @@ class SCWantedDataComplete
       
       # Change species 
       if @tier.numAllowed() < 50
-        s = SCTB.shortTiersSpecies(@tier, @wanted_data[SCMovesetsMetadata::FSPECIES])
+        s = SCTB.shortTierSpecies(@tier, @wanted_data[SCMovesetsData::FSPECIES])
         if s[0] && s[0] > 0
           @wanted_data = SCTB.initData(s[0])
           resetMoves
         elsif s[0] && s[0] == -2 
           # Choose moveset
-            temp = SCTB.movesetMenu(@wanted_data[SCMovesetsMetadata::FSPECIES], @tier)
+            temp = SCTB.movesetMenu(@wanted_data[SCMovesetsData::FSPECIES], @tier)
             @wanted_data = temp if temp 
         end 
       else
@@ -2433,7 +2439,7 @@ class SCWantedDataComplete
           choose_moveset_command = false 
           commands2 = ["Cancel"]
           
-          if @wanted_data[SCMovesetsMetadata::SPECIES]
+          if @wanted_data[SCMovesetsData::SPECIES]
             commands2.push("Choose moveset")
             choose_moveset_command = true
             filter_index += 1
@@ -2461,7 +2467,7 @@ class SCWantedDataComplete
             break 
             
           elsif choose_moveset_command && c2 == 1
-            temp = SCTB.movesetMenu(@wanted_data[SCMovesetsMetadata::FSPECIES], @tier)
+            temp = SCTB.movesetMenu(@wanted_data[SCMovesetsData::FSPECIES], @tier)
             @wanted_data = temp if temp 
             break 
             
@@ -2493,7 +2499,7 @@ class SCWantedDataComplete
               ans = pbMessage("Choose moveset?", ["Yes", "No"], 1)
               
               if ans == 0
-                temp = SCTB.movesetMenu(@wanted_data[SCMovesetsMetadata::FSPECIES], @tier)
+                temp = SCTB.movesetMenu(@wanted_data[SCMovesetsData::FSPECIES], @tier)
                 @wanted_data = temp if temp 
               end 
               break 
@@ -2508,7 +2514,7 @@ class SCWantedDataComplete
 			if @column == 0
 				# Nature 
 				
-				if !@wanted_data[SCMovesetsMetadata::SPECIES]
+				if !@wanted_data[SCMovesetsData::SPECIES]
 					pbMessage("Select a species before selecting a nature.")
 				else
           commands = []
@@ -2526,51 +2532,51 @@ class SCWantedDataComplete
           end
 					# Break
 					temp=pbMessage("Select a nature.",commands)
-					@wanted_data[SCMovesetsMetadata::NATURE]=temp - 1 if temp > 0
+					@wanted_data[SCMovesetsData::NATURE]=temp - 1 if temp > 0
 				end
 			else
 				# Form 
 				
-				if !@wanted_data[SCMovesetsMetadata::SPECIES]
+				if !@wanted_data[SCMovesetsData::SPECIES]
 					pbMessage("Select a species before selecting a form.")
 				else
-					result = SCTB.formMenu(@wanted_data[SCMovesetsMetadata::BASESPECIES])
+					result = SCTB.formMenu(@wanted_data[SCMovesetsData::BASESPECIES])
 					
 					if result[SCFormData::BASESPECIES]
           
             fspecies = pbGetFSpeciesFromForm(result[SCFormData::BASESPECIES], result[SCFormData::FORM])
             @wanted_data = SCTB.initData(fspecies) # Requirements are handled in this funciotn.
             
-						# @wanted_data[SCMovesetsMetadata::FORM] = result[SCFormData::FORM]
-						# @wanted_data[SCMovesetsMetadata::BASESPECIES] = result[SCFormData::BASESPECIES]
-            # @wanted_data[SCMovesetsMetadata::FORMNAME] = result[SCFormData::FORMNAME]
+						# @wanted_data[SCMovesetsData::FORM] = result[SCFormData::FORM]
+						# @wanted_data[SCMovesetsData::BASESPECIES] = result[SCFormData::BASESPECIES]
+            # @wanted_data[SCMovesetsData::FORMNAME] = result[SCFormData::FORMNAME]
 						# # [ 0: Form, 1: Item, 2: Ability, 3: Move, 4: Gender, 5: Form name, 6: asks for move reinit]
 						
 						# # Item :
 						# if result[SCFormData::REQITEM]
-							# @wanted_data[SCMovesetsMetadata::ITEM] = result[SCFormData::REQITEM]
+							# @wanted_data[SCMovesetsData::ITEM] = result[SCFormData::REQITEM]
 						# end 
 						
 						# # Ability :
             # if result[SCFormData::REQABILITY]
-              # @wanted_data[SCMovesetsMetadata::ABILITYINDEX] = SCTB.getAbilityIndex(result[SCFormData::REQABILITY], @wanted_data[SCMovesetsMetadata::FSPECIES])
+              # @wanted_data[SCMovesetsData::ABILITYINDEX] = SCTB.getAbilityIndex(result[SCFormData::REQABILITY], @wanted_data[SCMovesetsData::FSPECIES])
             # end 
 						
 						# # Gender :
 						# if result[SCFormData::REQGENDER]
-							# @wanted_data[SCMovesetsMetadata::GENDER] = result[SCFormData::REQGENDER]
+							# @wanted_data[SCMovesetsData::GENDER] = result[SCFormData::REQGENDER]
 						# end 
 						
 						# # Move :
-            # @wanted_data[SCMovesetsMetadata::MOVE1] = nil
-            # @wanted_data[SCMovesetsMetadata::MOVE2] = nil 
-            # @wanted_data[SCMovesetsMetadata::MOVE3] = nil 
-            # @wanted_data[SCMovesetsMetadata::MOVE4] = nil 
+            # @wanted_data[SCMovesetsData::MOVE1] = nil
+            # @wanted_data[SCMovesetsData::MOVE2] = nil 
+            # @wanted_data[SCMovesetsData::MOVE3] = nil 
+            # @wanted_data[SCMovesetsData::MOVE4] = nil 
             
             resetMoves
             
 						if result[SCFormData::REQMOVE]
-							@wanted_data[SCMovesetsMetadata::MOVE1] = result[SCFormData::REQMOVE]
+							@wanted_data[SCMovesetsData::MOVE1] = result[SCFormData::REQMOVE]
 						end 
             
             drawWantedData
@@ -2581,7 +2587,7 @@ class SCWantedDataComplete
             ans = pbMessage("Choose moveset?", ["Yes", "No"], 1)
             
             if ans == 0
-              temp = SCTB.movesetMenu(@wanted_data[SCMovesetsMetadata::FSPECIES], @tier)
+              temp = SCTB.movesetMenu(@wanted_data[SCMovesetsData::FSPECIES], @tier)
               @wanted_data = temp if temp 
             end 
 
@@ -2595,27 +2601,27 @@ class SCWantedDataComplete
 			if @column == 0
 				# Item 
 				
-				if !@wanted_data[SCMovesetsMetadata::SPECIES]
+				if !@wanted_data[SCMovesetsData::SPECIES]
 					pbMessage("Select a species before selecting an item.")
 				else
-					res = SCTB.itemsMenu(@wanted_data[SCMovesetsMetadata::BASESPECIES])
-					@wanted_data[SCMovesetsMetadata::ITEM] = res if res != -1
+					res = SCTB.itemsMenu(@wanted_data[SCMovesetsData::BASESPECIES])
+					@wanted_data[SCMovesetsData::ITEM] = res if res != -1
 				end
 			else 
 				# Ability
 				
-				if !@wanted_data[SCMovesetsMetadata::SPECIES]
+				if !@wanted_data[SCMovesetsData::SPECIES]
 					pbMessage("Select a species before selecting an ability.")
 				else
-					ret = SCTB.getAbilitiesFromSpecies(@wanted_data[SCMovesetsMetadata::FSPECIES])
+					ret = SCTB.getAbilitiesFromSpecies(@wanted_data[SCMovesetsData::FSPECIES])
 					ary=[]
 					
 					for i in 0...ret.length
 						ary.push(PBAbilities.getName(ret[i][0]))
 					end
           choice = pbMessage("Which ability would you like?", ary)
-					@wanted_data[SCMovesetsMetadata::ABILITYINDEX] = ret[choice][1]
-					@wanted_data[SCMovesetsMetadata::ABILITY] = ret[choice][0]
+					@wanted_data[SCMovesetsData::ABILITYINDEX] = ret[choice][1]
+					@wanted_data[SCMovesetsData::ABILITY] = ret[choice][0]
 				end
 			end 
 			
@@ -2626,7 +2632,7 @@ class SCWantedDataComplete
 			m=pbMessage("Choose a move.",@moves, -1)
 			if m > -1
         move = self.chooseHiddenPower(@numbermoves[m])
-        @wanted_data[SCMovesetsMetadata::MOVE1 + @column]=move if move 
+        @wanted_data[SCMovesetsData::MOVE1 + @column]=move if move 
 			end 
 			
 			
@@ -2636,7 +2642,7 @@ class SCWantedDataComplete
 			m=pbMessage("Choose a move.",@moves,-1)
 			if m>-1 
         move = self.chooseHiddenPower(@numbermoves[m])
-				@wanted_data[SCMovesetsMetadata::MOVE3 + @column]= move if move
+				@wanted_data[SCMovesetsData::MOVE3 + @column]= move if move
 			end 
 			
 		elsif @index == 5
@@ -2644,7 +2650,7 @@ class SCWantedDataComplete
 			
 			if @column == 0
 				# EVs 
-				if !@wanted_data[SCMovesetsMetadata::SPECIES]
+				if !@wanted_data[SCMovesetsData::SPECIES]
 					pbMessage("Select a species before selecting EVs.")
 				else
 					for i in 0..8
@@ -2666,7 +2672,7 @@ class SCWantedDataComplete
 				end
 			else 
 				# IVs 
-				if !@wanted_data[SCMovesetsMetadata::SPECIES]
+				if !@wanted_data[SCMovesetsData::SPECIES]
 					pbMessage("Select a species before selecting IVs.")
 				else
 					for i in 0..8
@@ -2695,23 +2701,23 @@ class SCWantedDataComplete
 			
 			if @column == 0
 				# Nickname 
-				if !@wanted_data[SCMovesetsMetadata::SPECIES]
+				if !@wanted_data[SCMovesetsData::SPECIES]
 					pbMessage("Select a species before giving a nickname.")
 				else
 					# Break (message,currenttext,passwordbox,maxlength
 					temp=pbMessageFreeText("Select a nickname.","",false,12)
-					@wanted_data[SCMovesetsMetadata::NICKNAME]=temp
+					@wanted_data[SCMovesetsData::NICKNAME]=temp
 				end 
 			else 
 				# Shiny 
-				if !@wanted_data[SCMovesetsMetadata::SPECIES]
+				if !@wanted_data[SCMovesetsData::SPECIES]
 					pbMessage("Select a species before saying if it is shiny.")
 				else
 					cmds = ["Yes", "No"]
 					
 					ans = pbMessage("Should the Pokémon be shiny?", cmds)
-					@wanted_data[SCMovesetsMetadata::SHINY] = false 
-					@wanted_data[SCMovesetsMetadata::SHINY] = true if ans == 0 or ans == "Yes"
+					@wanted_data[SCMovesetsData::SHINY] = false 
+					@wanted_data[SCMovesetsData::SHINY] = true if ans == 0 or ans == "Yes"
 				end 
 			end 
 		
@@ -2720,54 +2726,54 @@ class SCWantedDataComplete
 			
 			if @column == 0
 				# Level 
-				if !@wanted_data[SCMovesetsMetadata::SPECIES]
+				if !@wanted_data[SCMovesetsData::SPECIES]
 					pbMessage("Select a species before choosing its level.")
 				else
 					params=ChooseNumberParams.new
 					params.setRange(0, 120)
-					params.setDefaultValue(@wanted_data[SCMovesetsMetadata::LEVEL])
-					params.setCancelValue(@wanted_data[SCMovesetsMetadata::LEVEL])
+					params.setDefaultValue(@wanted_data[SCMovesetsData::LEVEL])
+					params.setCancelValue(@wanted_data[SCMovesetsData::LEVEL])
 					f=pbMessageChooseNumber(
 					_INTL("Set the level (max. 120)."),params) { }
-					@wanted_data[SCMovesetsMetadata::LEVEL]=f
+					@wanted_data[SCMovesetsData::LEVEL]=f
 				end 
 			else 
 				# Gender 
-				if !@wanted_data[SCMovesetsMetadata::SPECIES]
+				if !@wanted_data[SCMovesetsData::SPECIES]
 					pbMessage("Select a species before choosing its gender.")
 				else
-					cmds=scGender(@wanted_data[SCMovesetsMetadata::BASESPECIES], @wanted_data[SCMovesetsMetadata::FORM], true)
+					cmds=scGender(@wanted_data[SCMovesetsData::BASESPECIES], @wanted_data[SCMovesetsData::FORM], true)
           cmds.push("Random") if cmds.length == 2
           
-					@wanted_data[SCMovesetsMetadata::GENDER] = pbMessage("Which gender do you want?", cmds)
+					@wanted_data[SCMovesetsData::GENDER] = pbMessage("Which gender do you want?", cmds)
 					
-          @wanted_data[SCMovesetsMetadata::GENDER] = nil if cmds.length == 1
-          @wanted_data[SCMovesetsMetadata::GENDER] = nil if @wanted_data[SCMovesetsMetadata::GENDER] == 2
+          @wanted_data[SCMovesetsData::GENDER] = nil if cmds.length == 1
+          @wanted_data[SCMovesetsData::GENDER] = nil if @wanted_data[SCMovesetsData::GENDER] == 2
 				end 
 			end 
 			
 		elsif @index == 8
 			canDo=true
-			if !@wanted_data[SCMovesetsMetadata::SPECIES]
+			if !@wanted_data[SCMovesetsData::SPECIES]
 				pbMessage("No species is defined.")
 				canDo=false
 			end
-			if !@wanted_data[SCMovesetsMetadata::ITEM]
+			if !@wanted_data[SCMovesetsData::ITEM]
 				pbMessage("No item is defined.")
 				canDo=false
 			end
-			if !@wanted_data[SCMovesetsMetadata::NATURE]
+			if !@wanted_data[SCMovesetsData::NATURE]
 				pbMessage("No nature is defined.")
 				canDo=false
 			end
-			if !@wanted_data[SCMovesetsMetadata::NICKNAME]
-				@wanted_data[SCMovesetsMetadata::NICKNAME] = ""
+			if !@wanted_data[SCMovesetsData::NICKNAME]
+				@wanted_data[SCMovesetsData::NICKNAME] = ""
 			end
-			# if @wanted_data[SCMovesetsMetadata::EV][0]
+			# if @wanted_data[SCMovesetsData::EV][0]
 				# pbMessage("No EVs are defined.")
 				# canDo=false
 			# end
-			if !@wanted_data[SCMovesetsMetadata::MOVE1] && !@wanted_data[SCMovesetsMetadata::MOVE2] && !@wanted_data[SCMovesetsMetadata::MOVE3] && !@wanted_data[SCMovesetsMetadata::MOVE4]
+			if !@wanted_data[SCMovesetsData::MOVE1] && !@wanted_data[SCMovesetsData::MOVE2] && !@wanted_data[SCMovesetsData::MOVE3] && !@wanted_data[SCMovesetsData::MOVE4]
 				pbMessage("No moves are defined.")
 				canDo=false
 			end
@@ -2779,6 +2785,7 @@ class SCWantedDataComplete
 	end
 	
 	
+  
   def chooseHiddenPower(move)
     return move if move != PBMoves::HIDDENPOWER
     
@@ -2814,13 +2821,13 @@ class SCWantedDataComplete
   
 	
 	def showBaseStats
-		if @wanted_data[SCMovesetsMetadata::FSPECIES]
+		if @wanted_data[SCMovesetsData::FSPECIES]
 			for i in 0..8
 				k = i.to_s
 				@sprites[k+"tt"].bitmap.clear
 				@sprites[k+"t"].bitmap.clear
 			end
-			scene=SCBaseStats.new(@wanted_data[SCMovesetsMetadata::BASESPECIES], @wanted_data[SCMovesetsMetadata::FORM], @species_name, @wanted_data[SCMovesetsMetadata::FORMNAME], @base_stats)
+			scene=SCBaseStats.new(@wanted_data[SCMovesetsData::BASESPECIES], @wanted_data[SCMovesetsData::FORM], @species_name, @wanted_data[SCMovesetsData::FORMNAME], @base_stats)
 			scene.main
 			Graphics.freeze
 			create_spriteset
@@ -2833,8 +2840,6 @@ class SCWantedDataComplete
 			end
 		end
 	end 
-  
-  
 end
 
 
@@ -2940,6 +2945,7 @@ end
 
 
 
+
 ###############################################################################
 # SCBaseStats
 # 
@@ -2987,11 +2993,11 @@ class SCBaseStats
 	
 	
 	def drawHeader
-		pbSetSystemFont(@sprites["background"].bitmap)
+		pbSetSystemFont(@sprites["header"].bitmap)
 		textpos=[          
 			["Base stats",50,6,0,Color.new(248,248,248),Color.new(40,40,40)],
 		]
-		pbDrawTextPositions(@sprites["background"].bitmap,textpos)
+		pbDrawTextPositions(@sprites["header"].bitmap,textpos)
 	end 
 	
 	
@@ -3004,7 +3010,11 @@ class SCBaseStats
 		@sprites["background"] = IconSprite.new
 		@sprites["background"].setBitmap("Graphics/Pictures/GTS/gts background")
 
-		
+    @sprites["header"] = IconSprite.new
+    @sprites["header"].bitmap = Bitmap.new(@sprites["background"].bitmap.width, @sprites["background"].bitmap.height)
+    @sprites["header"].x = @sprites["background"].x
+    @sprites["header"].y = @sprites["background"].y 
+    
 		drawHeader
 		
 		# For Species + form. 
@@ -3199,11 +3209,7 @@ class SCBaseStats
 	def real_index
 		return scToDumbIndex(@index)
 	end 
-
 end
-
-
-
 
 
 
@@ -3218,7 +3224,6 @@ end
 # By StCooler. 
 ###############################################################################
 
-
 class SCWantedDataIVs
 	
 	def initialize(data)
@@ -3228,7 +3233,7 @@ class SCWantedDataIVs
 		@max_value = 31 # For IVs, the max value is 31
 		@default_value = 31 # For IVs, the default value is 31. 
 		@stat_name = "IV"
-		@index_main_data = SCMovesetsMetadata::IV # 8 for IVs, 10 for EVs. 
+		@index_main_data = SCMovesetsData::IV # 8 for IVs, 10 for EVs. 
 		# These two attributes are meant to be changed for EVs. 
 		@value_choices_text = ["31", "30", "0", "Other"]
 		@value_choices = [31, 30, 0]
@@ -3237,11 +3242,11 @@ class SCWantedDataIVs
 	
 	
 	def drawHeader
-		pbSetSystemFont(@sprites["background"].bitmap)
+		pbSetSystemFont(@sprites["header"].bitmap)
 		textpos=[          
 			["Choice of " + @stat_name + "s",50,6,0,Color.new(248,248,248),Color.new(40,40,40)],
 		]
-		pbDrawTextPositions(@sprites["background"].bitmap,textpos)
+		pbDrawTextPositions(@sprites["header"].bitmap,textpos)
 	end 
 	
 	
@@ -3252,7 +3257,12 @@ class SCWantedDataIVs
 		
 		@sprites["background"] = IconSprite.new
 		@sprites["background"].setBitmap("Graphics/Pictures/GTS/gts background")
-		
+    
+    @sprites["header"] = IconSprite.new
+    @sprites["header"].bitmap = Bitmap.new(@sprites["background"].bitmap.width, @sprites["background"].bitmap.height)
+    @sprites["header"].x = @sprites["background"].x
+    @sprites["header"].y = @sprites["background"].y 
+    
 		drawHeader
 		
 		
@@ -3457,11 +3467,12 @@ class SCWantedDataIVs
 	end
 	
 	
+  
 	def real_index
 		return scToDumbIndex(@index)
 	end 
-
 end
+
 
 
 
@@ -3471,6 +3482,7 @@ def scToDisplayedIndex(i)
 	indices = [0, 1, 2, 5, 3, 4]
 	return indices[i]
 end 
+
 
 
 
@@ -3494,7 +3506,7 @@ class SCWantedDataEVs < SCWantedDataIVs
 		@max_value = 255 # For IVs, the max value is 31
 		@default_value = 0 # For IVs, the default value is 31. 
 		@stat_name = "EV"
-		@index_main_data = SCMovesetsMetadata::EV # 8 for IVs, 10 for EVs 
+		@index_main_data = SCMovesetsData::EV # 8 for IVs, 10 for EVs 
 		@value_choices_text = ["252", "6", "0", "Other"]
 		@value_choices = [252, 6, 0]
 	end
@@ -3504,17 +3516,14 @@ end
 
 
 
-
-
-
-
-
-
-
-
-
-
-
+###############################################################################
+# SCWantedDataStats
+# 
+# Code derived from the GTSWantedDataIVs class.
+# Submenu for the team builder. 
+# Allows the modification of the EVs and IVs of a given Pokémon. 
+# Allows to see the base stats as well. 
+###############################################################################
 
 
 class SCWantedDataStats
@@ -3531,11 +3540,11 @@ class SCWantedDataStats
 	
 	
 	def drawHeader
-		pbSetSystemFont(@sprites["background"].bitmap)
+		pbSetSystemFont(@sprites["header"].bitmap)
 		textpos=[          
 			["Choice of EVs & IVs",50,6,0,Color.new(248,248,248),Color.new(40,40,40)],
 		]
-		pbDrawTextPositions(@sprites["background"].bitmap,textpos)
+		pbDrawTextPositions(@sprites["header"].bitmap,textpos)
 	end 
 	
 	
@@ -3546,7 +3555,12 @@ class SCWantedDataStats
 		
 		@sprites["background"] = IconSprite.new
 		@sprites["background"].setBitmap("Graphics/Pictures/GTS/gts background")
-		
+    
+    @sprites["header"] = IconSprite.new
+    @sprites["header"].bitmap = Bitmap.new(@sprites["background"].bitmap.width, @sprites["background"].bitmap.height)
+    @sprites["header"].x = @sprites["background"].x
+    @sprites["header"].y = @sprites["background"].y 
+    
 		drawHeader
 		
 		
@@ -3621,6 +3635,8 @@ class SCWantedDataStats
 		drawWantedData
 	end
 	
+  
+  
 	def drawSelector
     if @index == 6
       @sprites["selection_l"].x = @sprites["#{@index}"].x-2
@@ -3636,23 +3652,24 @@ class SCWantedDataStats
       @sprites["selection_r"].y = @sprites["#{@index}"].y-2
     end 
 	end 
-
+  
 	
+  
 	def drawWantedData
 		
 		drawHeader
 		
-		if !@wanted_data[SCMovesetsMetadata::EV].is_a?(Array)
-			@wanted_data[SCMovesetsMetadata::EV]=[]
+		if !@wanted_data[SCMovesetsData::EV].is_a?(Array)
+			@wanted_data[SCMovesetsData::EV]=[]
 			for i in 0..5
-				@wanted_data[SCMovesetsMetadata::EV][i]= 0
+				@wanted_data[SCMovesetsData::EV][i]= 0
 			end
 		end
     
-		if !@wanted_data[SCMovesetsMetadata::IV].is_a?(Array)
-			@wanted_data[SCMovesetsMetadata::IV]=[]
+		if !@wanted_data[SCMovesetsData::IV].is_a?(Array)
+			@wanted_data[SCMovesetsData::IV]=[]
 			for i in 0..5
-				@wanted_data[SCMovesetsMetadata::IV][i]= 31
+				@wanted_data[SCMovesetsData::IV][i]= 31
 			end
 		end
 		
@@ -3691,7 +3708,7 @@ class SCWantedDataStats
 			@sprites[kttt].bitmap.clear
 			pbSetSystemFont(@sprites[kttt].bitmap)
 			textpos=[
-				[@wanted_data[SCMovesetsMetadata::EV][i_prime].to_s,295,4,2,Color.new(248,248,248),Color.new(40,40,40)],
+				[@wanted_data[SCMovesetsData::EV][i_prime].to_s,295,4,2,Color.new(248,248,248),Color.new(40,40,40)],
 			]
 			pbDrawTextPositions(@sprites[kttt].bitmap,textpos)
       
@@ -3700,7 +3717,7 @@ class SCWantedDataStats
 			@sprites[ktttt].bitmap.clear
 			pbSetSystemFont(@sprites[ktttt].bitmap)
 			textpos=[
-				[@wanted_data[SCMovesetsMetadata::IV][i_prime].to_s,380,4,2,Color.new(248,248,248),Color.new(40,40,40)],
+				[@wanted_data[SCMovesetsData::IV][i_prime].to_s,380,4,2,Color.new(248,248,248),Color.new(40,40,40)],
 			]
 			pbDrawTextPositions(@sprites[ktttt].bitmap,textpos)
 		end 
@@ -3786,15 +3803,15 @@ class SCWantedDataStats
         r_index = self.real_index
         
         if res == 0 or res == 1 or res == 2 
-          @wanted_data[SCMovesetsMetadata::EV][r_index]=[252, 6, 0][res]
+          @wanted_data[SCMovesetsData::EV][r_index]=[252, 6, 0][res]
           
         else # res == 2
           params = ChooseNumberParams.new
           params.setRange(0,252)
-          params.setDefaultValue(@wanted_data[SCMovesetsMetadata::EV][r_index])
-          params.setCancelValue(@wanted_data[SCMovesetsMetadata::EV][r_index])
+          params.setDefaultValue(@wanted_data[SCMovesetsData::EV][r_index])
+          params.setCancelValue(@wanted_data[SCMovesetsData::EV][r_index])
           f=pbMessageChooseNumber(ev_str, params) { }
-          @wanted_data[SCMovesetsMetadata::EV][r_index]=f
+          @wanted_data[SCMovesetsData::EV][r_index]=f
         end 
         
       else # IVs 
@@ -3804,15 +3821,15 @@ class SCWantedDataStats
         r_index = self.real_index
         
         if res == 0 or res == 1 or res == 2 
-          @wanted_data[SCMovesetsMetadata::IV][r_index]=[31, 30, 0][res]
+          @wanted_data[SCMovesetsData::IV][r_index]=[31, 30, 0][res]
           
         else # res == 2
           params = ChooseNumberParams.new
           params.setRange(0,31)
-          params.setDefaultValue(@wanted_data[SCMovesetsMetadata::IV][r_index])
-          params.setCancelValue(@wanted_data[SCMovesetsMetadata::IV][r_index])
+          params.setDefaultValue(@wanted_data[SCMovesetsData::IV][r_index])
+          params.setCancelValue(@wanted_data[SCMovesetsData::IV][r_index])
           f=pbMessageChooseNumber(iv_str, params) { }
-          @wanted_data[SCMovesetsMetadata::IV][r_index]=f
+          @wanted_data[SCMovesetsData::IV][r_index]=f
         end 
       end 
 		else
@@ -3823,10 +3840,10 @@ class SCWantedDataStats
 	end
 	
 	
+  
 	def real_index
 		return scToDumbIndex(@index)
 	end 
-
 end
 
 

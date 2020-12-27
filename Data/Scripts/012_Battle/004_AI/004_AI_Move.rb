@@ -43,6 +43,7 @@ class PokeBattle_AI
     # Find any preferred moves and just choose from them
     if !wildBattler && skill>=PBTrainerAI.highSkill && maxScore>100
       stDev = pbStdDev(choices)
+      PBDebug.log("[AI] #{user.pbThis} (#{user.index}): std dev: #{stDev}")
       if stDev>=40
         preferredMoves = []
         choices.each do |c|
@@ -75,6 +76,16 @@ class PokeBattle_AI
         end
       end
     end
+    # Remove useless moves. 
+    if skill>=PBTrainerAI.mediumSkill
+      choices2 = []
+      choices.each do |c|
+        if c[1] > maxScore / 2
+          choices2.push(c)
+        end 
+      end 
+      choices = choices2.clone 
+    end 
     # Decide whether all choices are bad, and if so, try switching instead
     if !wildBattler && skill>=PBTrainerAI.highSkill
       badMoves = false

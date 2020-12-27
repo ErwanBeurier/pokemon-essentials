@@ -1,40 +1,88 @@
+###############################################################################
+# SCTierUtility
+# 
+# This script is part of Pokémon Project STRAT by StCooler, and is therefore 
+# not part of Pokémon Essentials. 
+# 
+# Management of tiers: set tiers, force tiers, access tiers. 
+# Also, tier of the team held by the player, when the player has loaded the 
+# team. 
+# Also also, menu to alter the current tier. 
+###############################################################################
+
+
+# Index of the game_variables that contains the tier. 
+TIER_VARIABLE = 51 
+# Stores whether the tier is forced for narrative reasons. 
+FORCED_TIER_SWITCH = 81
+# Contains the tier first intended for the team the player has. 
+TIER_OF_TEAM_VARIABLE = 66
+
+
 
 def scSetTier(tier, forced)
-	all_tiers = load_data("Data/sctiers.dat")
+	all_tiers = scLoadTierData
 	
 	if not all_tiers.keys.include?(tier)
-		raise _INTL("Given tiers \"{1}\" was set but does not exist.", tier)
+		raise _INTL("Given tier \"{1}\" was set but does not exist.", tier)
 	end 
 	
-	setBattleRule("tier", tier)
-  if forced
-    setBattleRule("forceTier")
-    # forced tier: for narrative reasons, don't allow the tier to be altered. 
-  else 
-    setBattleRule("unforceTier")
-  end 
+  $game_variables[TIER_VARIABLE] = tier 
+  $game_switches[FORCED_TIER_SWITCH] = forced
 end 
 
 
-
-def isNuzzlocke()
-  return ($PokemonTemp.battleRules["nuzzlocke"] != nil &&  $PokemonTemp.battleRules["nuzzlocke"])
-end 
 
 def scUnforceTier()
-  setBattleRule("unforceTier")
 	# The tier is not forced anymore. 
+  # The player can battle random players or take clients. 
+  $game_switches[FORCED_TIER_SWITCH] = false
 end 
-
 
 
 
 def scGetTier(simple = true)
-  $PokemonTemp.battleRules["tier"] = "FE" if !$PokemonTemp.battleRules["tier"]
+  $game_variables[TIER_VARIABLE] = "FE" if !$game_variables[TIER_VARIABLE] || $game_variables[TIER_VARIABLE] == 0
   
-  return $PokemonTemp.battleRules["tier"] if simple 
-	return [$PokemonTemp.battleRules["tier"], $PokemonTemp.battleRules["forcedTier"]]
+  return $game_variables[TIER_VARIABLE] if simple 
 	# Current tier ID + is it forced (for narrative reasons)
+	return [$game_variables[TIER_VARIABLE], $game_switches[FORCED_TIER_SWITCH]]
+end 
+
+
+
+def scGetTierOfTeam()
+  return $game_variables[TIER_OF_TEAM_VARIABLE]
+end 
+
+
+
+def scSetTierOfTeam(tier)
+  $game_variables[TIER_OF_TEAM_VARIABLE] = tier
+end
+
+
+
+#===============================================================================
+# Management of nuzzlocke
+#===============================================================================
+
+# Stores whether the player is doing a nuzzlocke challenge.
+NUZZLOCKE_SWITCH = 82
+
+
+def scIsNuzzlocke()
+  return ($game_switches[NUZZLOCKE_SWITCH] != nil && $game_switches[NUZZLOCKE_SWITCH])
+end 
+
+
+def scSetNuzzlocke()
+  $game_switches[NUZZLOCKE_SWITCH] = true 
+end 
+
+
+def scUnsetNuzzlocke()
+  $game_switches[NUZZLOCKE_SWITCH] = false 
 end 
 
 
@@ -45,7 +93,7 @@ def scSelectTierMenu
 	current_tier = scGetTier(false)
 	
 	if current_tier[1]
-		# Tiers is forced for narrative reasons.
+		# Tier is forced for narrative reasons.
 		pbMessage(_INTL("The tier of your previous client was {1}.", current_tier[0])) if scClientBattles.battleIsDone
 		pbMessage(_INTL("The tier of your next client is {1}.", current_tier[0])) if !scClientBattles.battleIsDone
 		pbMessage(_INTL("You cannot change tier now."))
@@ -54,12 +102,12 @@ def scSelectTierMenu
 	end 
 	
 	
-	tiers = load_data("Data/sctiers.dat")
+	tiers = scLoadTierData
 	
 	
-	tiers_cats = {} 
+	tier_cats = {} 
 	# dictionary category -> list of tier IDs 
-	tiers_cats_names = {}
+	tier_cats_names = {}
 	# dictionary category -> list of tier names. 
 	
 	# Load the tiers. 
@@ -71,40 +119,40 @@ def scSelectTierMenu
 		# if (cat != "Random" && cat != "Micro-tier") or scTOTDHandler.was_totd(t)
 		if true
 			# Add a Random tier only if it was Tier of the Day. (?)
-      if !tiers_cats[cat]
-        tiers_cats[cat] = []
-        tiers_cats_names[cat] = []
+      if !tier_cats[cat]
+        tier_cats[cat] = []
+        tier_cats_names[cat] = []
       end
       
-      tiers_cats[cat].push(t)
-      tiers_cats_names[cat].push(t_name)
+      tier_cats[cat].push(t)
+      tier_cats_names[cat].push(t_name)
 		end 
 	end
 	
 	
-	for c in tiers_cats.keys
-		tiers_cats[c] = tiers_cats[c].sort 
+	for c in tier_cats.keys
+		tier_cats[c] = tier_cats[c].sort 
 	end 
 	
 	# Special treatment for random tiers : gather them by stats. 
 	random_tiers = {}
-	random_tiers_keys = []
+	random_tier_keys = []
 	
-	for rand_tier in tiers_cats["Random"]
+	for rand_tier in tier_cats["Random"]
 		rand_section = "Base stats " + rand_tier[4..6] # RANDXXX-YY => Base stats XXX
-		random_tiers_keys.push(rand_section) if !random_tiers.keys.include?(rand_section)
+		random_tier_keys.push(rand_section) if !random_tiers.keys.include?(rand_section)
 		random_tiers[rand_section] = [] if !random_tiers.keys.include?(rand_section)
 		random_tiers[rand_section].push(rand_tier)
 	end 
 	
-	random_tiers_keys = random_tiers_keys.sort 
+	random_tier_keys = random_tier_keys.sort 
   random_tiers["Themed tiers"] = []
   
-  for themed_tier in tiers_cats["Micro-tier"]
+  for themed_tier in tier_cats["Micro-tier"]
     random_tiers["Themed tiers"].push(themed_tier)
   end 
   
-  random_tiers_keys = ["Themed tiers"] + random_tiers_keys
+  random_tier_keys = ["Themed tiers"] + random_tier_keys
 	
 	# The menu. 
 	cmd = 0
@@ -117,7 +165,7 @@ def scSelectTierMenu
 	# Old tier of the day = Random tiers that already appeared
 	
 	while cmd > -2 
-		cmd = pbMessage("Choose a category of tiers (current tiers=" + scGetTier()+ ").", menu_list, -2, nil, 0)
+		cmd = pbMessage("Choose a category of tier (current tier=" + scGetTier()+ ").", menu_list, -2, nil, 0)
 		
 		
 		if cmd > -2
@@ -150,12 +198,12 @@ def scSelectTierMenu
 			
 			elsif category == "Old tier of the day"
         pbMessage("These are tiers that were tier of the day at least once.")
-				cmd = pbMessage("Choose a base stat total.", random_tiers_keys, -1, nil, 0)
+				cmd = pbMessage("Choose a base stat total.", random_tier_keys, -1, nil, 0)
 				
 				if cmd > -1 
-					base_stat = random_tiers[random_tiers_keys[cmd]]
+					base_stat = random_tiers[random_tier_keys[cmd]]
 					
-					cmd = pbMessage("Choose a tiers (current=" + scGetTier() + ").", base_stat, -1, nil, 0)
+					cmd = pbMessage("Choose a tier (current=" + scGetTier() + ").", base_stat, -1, nil, 0)
 					
 					if cmd > -1
 						tierid = base_stat[cmd]
@@ -165,12 +213,12 @@ def scSelectTierMenu
         
 			elsif category == "Random"
         pbMessage("These tiers contain a selected list of Pokémons whose base stats are around a given total.")
-				cmd = pbMessage("Choose a base stat total.", random_tiers_keys, -1, nil, 0)
+				cmd = pbMessage("Choose a base stat total.", random_tier_keys, -1, nil, 0)
 				
 				if cmd > -1 
-					base_stat = random_tiers[random_tiers_keys[cmd]]
+					base_stat = random_tiers[random_tier_keys[cmd]]
 					
-					cmd = pbMessage("Choose a tiers (current=" + scGetTier() + ").", base_stat, -1, nil, 0)
+					cmd = pbMessage("Choose a tier (current=" + scGetTier() + ").", base_stat, -1, nil, 0)
 					
 					if cmd > -1
 						tierid = base_stat[cmd]
@@ -182,16 +230,16 @@ def scSelectTierMenu
         category = "Base stats tiers"
         
 				pbMessage("These tiers contain all Pokémons whose total base stats are around a given value.")
-				cmd = pbMessage("Choose a tier.", tiers_cats[category], -1, nil, 0)
+				cmd = pbMessage("Choose a tier.", tier_cats[category], -1, nil, 0)
 				
 				if cmd > -1
-					tierid = tiers_cats[category][cmd]
+					tierid = tier_cats[category][cmd]
 					cmd = -2
 				end
         
 			# elsif category == "OTF"
 				# tierid = "OTF"
-				# t = SCPersonalisedTiers.new(tiers[tierid])
+				# t = SCPersonalisedTier.new(tiers[tierid])
 				# t.menu
 				# cmd = -2 
 				
@@ -200,10 +248,10 @@ def scSelectTierMenu
 					category = "Preset tiers"
 				end 
 				
-				cmd = pbMessage("Choose a tiers (current=" + scGetTier() + ").", tiers_cats[category], -1, nil, 0)
+				cmd = pbMessage("Choose a tier (current=" + scGetTier() + ").", tier_cats[category], -1, nil, 0)
 				
 				if cmd > -1
-					tierid = tiers_cats[category][cmd]
+					tierid = tier_cats[category][cmd]
 					cmd = -2
 				end 
 			end 

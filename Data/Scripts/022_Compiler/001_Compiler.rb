@@ -1164,7 +1164,7 @@ def pbCompileAllData(mustCompile)
     yield(_INTL("Compiling learned moves"))
     scCompileLearnedMoves
     yield(_INTL("Compiling tiers"))
-    scCompileTiers
+    scCompileTier
     yield(_INTL("Compiling personal items"))
     scCompilePersonalItems
     # Depends on PBTrainers

@@ -117,7 +117,7 @@ end
 # Compile/decompile movesets
 #===============================================================================
 
-module SCMovesetsMetadata
+module SCMovesetsData
   # Note that these constants will also be used in SCTeamBuilder, whose goal is 
   # to manipulate Arrays indexed by these constants. 
   SPECIES = 0 
@@ -243,7 +243,7 @@ def scCompileMovesets
   trainers        = []
   pokemonindex    = -2
   movesets        = {}
-  moveset         = SCMovesetsMetadata.newEmpty()
+  moveset         = SCMovesetsData.newEmpty()
   moveset_natures = []
   moveset_ev_spreads = []
   pokemon_id      = -1 
@@ -259,7 +259,7 @@ def scCompileMovesets
     if line[/^\s*(\w+)\s*=\s*(.*)$/]
       # XXX=YYY lines
       settingname = $~[1]
-      schema = SCMovesetsMetadata::InfoTypes[settingname]
+      schema = SCMovesetsData::InfoTypes[settingname]
       next if !schema
       record = pbGetCsvRecord($~[2],lineno,schema)
       # Error checking in XXX=YYY lines
@@ -270,12 +270,12 @@ def scCompileMovesets
         end
         if pokemon_id > 0
           # Then new moveset. Store the current moveset. 
-          moveset[SCMovesetsMetadata::NATURE] = moveset_natures if moveset_natures.length > 0 
-          moveset[SCMovesetsMetadata::EV] = moveset_ev_spreads if moveset_ev_spreads.length > 0 
-          moveset[SCMovesetsMetadata::PATTERN] = 1 if !moveset[SCMovesetsMetadata::PATTERN]
+          moveset[SCMovesetsData::NATURE] = moveset_natures if moveset_natures.length > 0 
+          moveset[SCMovesetsData::EV] = moveset_ev_spreads if moveset_ev_spreads.length > 0 
+          moveset[SCMovesetsData::PATTERN] = 1 if !moveset[SCMovesetsData::PATTERN]
           
-          moveset[SCMovesetsMetadata::SPECIES] = pokemon_id
-          moveset[SCMovesetsMetadata::BASESPECIES] = pokemon_id if !moveset[SCMovesetsMetadata::BASESPECIES]
+          moveset[SCMovesetsData::SPECIES] = pokemon_id
+          moveset[SCMovesetsData::BASESPECIES] = pokemon_id if !moveset[SCMovesetsData::BASESPECIES]
           
           if movesets[pokemon_id]
             movesets[pokemon_id].push(moveset)
@@ -283,12 +283,12 @@ def scCompileMovesets
             movesets[pokemon_id] = [moveset]
           end 
           
-          moveset         = SCMovesetsMetadata.newEmpty()
+          moveset         = SCMovesetsData.newEmpty()
           moveset_natures = []
           moveset_ev_spreads = []
         end 
         pokemon_id = record[0]
-        moveset[SCMovesetsMetadata::LEVEL] = record[1]
+        moveset[SCMovesetsData::LEVEL] = record[1]
       when "Move1", "Move2", "Move3", "Move4"
         record = [record] if record.is_a?(Integer)
         record.compact!
@@ -325,27 +325,27 @@ def scCompileMovesets
           raise _INTL("Bad happiness: {1} (must be 0-255)\r\n{2}",record,FileLineData.linereport)
         end
       when "Role"
-        if !SCMovesetsMetadata.validRole(record)
+        if !SCMovesetsData.validRole(record)
           raise _INTL("Bad moveset role: {1} (must be integer X*10 + Y, X=1..4 and Y=1..3)\r\n{2}",record,FileLineData.linereport)
         end 
       when "Form"
-        moveset[SCMovesetsMetadata::BASESPECIES] = pokemon_id
+        moveset[SCMovesetsData::BASESPECIES] = pokemon_id
         pokemon_id = pbGetFSpeciesFromForm(pokemon_id, record)
       # when "BaseForm"
         # pokemon_id = pbGetFSpeciesFromForm(pokemon_id, record)
-        # moveset[SCMovesetsMetadata::BASESPECIES] = pokemon_id
+        # moveset[SCMovesetsData::BASESPECIES] = pokemon_id
       end
-      if schema[0] <= SCMovesetsMetadata::MAXINDEX
+      if schema[0] <= SCMovesetsData::MAXINDEX
         moveset[schema[0]] = record
       end 
     end
   }
   if pokemon_id > 0
     # Last moveset. 
-    moveset[SCMovesetsMetadata::NATURE] = moveset_natures if moveset_natures.length > 0 
-    moveset[SCMovesetsMetadata::EV] = moveset_ev_spreads if moveset_ev_spreads.length > 0 
-    moveset[SCMovesetsMetadata::SPECIES] = pokemon_id
-    moveset[SCMovesetsMetadata::BASESPECIES] = pokemon_id if !moveset[SCMovesetsMetadata::BASESPECIES]
+    moveset[SCMovesetsData::NATURE] = moveset_natures if moveset_natures.length > 0 
+    moveset[SCMovesetsData::EV] = moveset_ev_spreads if moveset_ev_spreads.length > 0 
+    moveset[SCMovesetsData::SPECIES] = pokemon_id
+    moveset[SCMovesetsData::BASESPECIES] = pokemon_id if !moveset[SCMovesetsData::BASESPECIES]
     
     if movesets[pokemon_id]
       movesets[pokemon_id].push(moveset)
@@ -403,26 +403,29 @@ end
 
 
 
-def scConvertMovesetToString(moveset, with_tab = false)
+def scConvertMovesetToString(moveset, with_tab = false, for_compiler = true)
   s_tab = (with_tab ? "    " : "")
   
-  poke1 = pbGetSpeciesFromFSpecies(moveset[SCMovesetsMetadata::SPECIES])
+  # Pokemon species + form
+  poke1 = pbGetSpeciesFromFSpecies(moveset[SCMovesetsData::SPECIES])
   species = getConstantName(PBSpecies,poke1[0]) #rescue pbGetSpeciesConst(poke1[0]) rescue ""
   
-  s = _INTL("Pokemon = {1},{2}\r\n", species, moveset[SCMovesetsMetadata::LEVEL])
+  s = _INTL("Pokemon = {1},{2}\r\n", species, moveset[SCMovesetsData::LEVEL])
   
-  if moveset[SCMovesetsMetadata::FORM]
-    s += sprintf(s_tab + "Form = %d\r\n",moveset[SCMovesetsMetadata::FORM])
+  if moveset[SCMovesetsData::FORM] && for_compiler
+    s += sprintf(s_tab + "Form = %d\r\n",moveset[SCMovesetsData::FORM])
   end
-  if moveset[SCMovesetsMetadata::BASEFORM]
-    s += sprintf(s_tab + "BaseForm = %d\r\n",moveset[SCMovesetsMetadata::BASEFORM])
+  if moveset[SCMovesetsData::BASEFORM]
+    s += sprintf(s_tab + "BaseForm = %d\r\n",moveset[SCMovesetsData::BASEFORM]) if for_compiler
+    s += sprintf(s_tab + "Form = %d\r\n",moveset[SCMovesetsData::BASEFORM]) if !for_compiler
   end 
   
-  if moveset[SCMovesetsMetadata::ITEM]
-    if moveset[SCMovesetsMetadata::ITEM].is_a?(Array)
+  # Item(s)
+  if moveset[SCMovesetsData::ITEM]
+    if moveset[SCMovesetsData::ITEM].is_a?(Array)
       item = "" 
-      for i in 0...moveset[SCMovesetsMetadata::ITEM].length
-        itemname = getConstantName(PBItems,moveset[SCMovesetsMetadata::ITEM][i]) rescue pbGetItemConst(moveset[SCMovesetsMetadata::ITEM][i]) rescue nil
+      for i in 0...moveset[SCMovesetsData::ITEM].length
+        itemname = getConstantName(PBItems,moveset[SCMovesetsData::ITEM][i]) rescue pbGetItemConst(moveset[SCMovesetsData::ITEM][i]) rescue nil
         next if !itemname
         item.concat(", ") if i>0
         item.concat(itemname)
@@ -430,89 +433,114 @@ def scConvertMovesetToString(moveset, with_tab = false)
       s += sprintf(s_tab + "Item = %s\r\n",item) if item
       
     else 
-      s += sprintf(s_tab + "Item = %s\r\n",getConstantName(PBItems,moveset[SCMovesetsMetadata::ITEM][i]))
+      s += sprintf(s_tab + "Item = %s\r\n",getConstantName(PBItems,moveset[SCMovesetsData::ITEM]))
     end 
   end
   
-  for move_i in SCMovesetsMetadata::MovesIndicesList
-    move_s = SCMovesetsMetadata::MovesIndices[move_i]
-    if moveset[move_i] 
-      if moveset[move_i].is_a?(Array)
-        movestring = ""
-        for i in 0...moveset[move_i].length
-          movename = getConstantName(PBMoves,moveset[move_i][i]) rescue pbGetMoveConst(moveset[move_i][i]) rescue nil
-          next if !movename
-          movestring.concat(", ") if i>0
-          movestring.concat(movename)
-        end
-        s += sprintf(s_tab + "" + move_s + " = %s\r\n",movestring) if movestring!=""
-        
-      else 
-        s += sprintf(s_tab + "" + move_s + " = %s\r\n",getConstantName(PBMoves,moveset[move_i]))
-      end 
+  # Move(s)
+  if for_compiler
+    for move_i in SCMovesetsData::MovesIndicesList
+      move_s = SCMovesetsData::MovesIndices[move_i]
+      if moveset[move_i] 
+        if moveset[move_i].is_a?(Array)
+          movestring = ""
+          for i in 0...moveset[move_i].length
+            movename = getConstantName(PBMoves,moveset[move_i][i]) rescue pbGetMoveConst(moveset[move_i][i]) rescue nil
+            next if !movename
+            movestring.concat(", ") if i>0
+            movestring.concat(movename)
+          end
+          s += sprintf(s_tab + "" + move_s + " = %s\r\n",movestring) if movestring!=""
+          
+        else 
+          s += sprintf(s_tab + "" + move_s + " = %s\r\n",getConstantName(PBMoves,moveset[move_i]))
+        end 
+      end
     end
+  else 
+    moves_s = "Moves = "
+    
+    for move_i in SCMovesetsData::MovesIndicesList
+      next if !moveset[move_i]
+      moves_s += ", " if move_i > SCMovesetsData::MOVE1
+      moves_s += getConstantName(PBMoves,moveset[move_i])
+    end 
+    
+    s += sprintf(s_tab + moves_s)
+  end 
+  
+  # Ability 
+  if moveset[SCMovesetsData::ABILITYINDEX]
+    s += sprintf(s_tab + "Ability = %d\r\n",moveset[SCMovesetsData::ABILITYINDEX])
   end
   
-  if moveset[SCMovesetsMetadata::ABILITYINDEX]
-    s += sprintf(s_tab + "Ability = %d\r\n",moveset[SCMovesetsMetadata::ABILITYINDEX])
-  end
-  
-  if moveset[SCMovesetsMetadata::NATURE]
-    if moveset[SCMovesetsMetadata::NATURE].is_a?(Array)
-      for i in 0...moveset[SCMovesetsMetadata::NATURE].length
-        nature = getConstantName(PBNatures,moveset[SCMovesetsMetadata::NATURE][i]) rescue nil
+  # Nature 
+  if moveset[SCMovesetsData::NATURE]
+    if moveset[SCMovesetsData::NATURE].is_a?(Array)
+      for i in 0...moveset[SCMovesetsData::NATURE].length
+        nature = getConstantName(PBNatures,moveset[SCMovesetsData::NATURE][i]) rescue nil
         s += sprintf(s_tab + "Nature%d = %s\r\n",i+1, nature) if nature
       end
     else 
-      s += sprintf(s_tab + "Nature1 = %s\r\n", getConstantName(PBNatures,moveset[SCMovesetsMetadata::NATURE]))
+      s += sprintf(s_tab + "Nature1 = %s\r\n", getConstantName(PBNatures,moveset[SCMovesetsData::NATURE]))
     end 
   end
   
-  if moveset[SCMovesetsMetadata::EV] && moveset[SCMovesetsMetadata::EV].length>0
-    ev_i = 1 
-    for ev_spread in moveset[SCMovesetsMetadata::EV]
-      s += sprintf(s_tab + "EV%d = %d",ev_i, ev_spread[0])
-      if ev_spread.length>1
-        for i in 1...6
-          s += sprintf(",%d",(i<ev_spread.length) ? ev_spread[i] : ev_spread[0])
+  if moveset[SCMovesetsData::EV] && moveset[SCMovesetsData::EV].length>0
+    
+    if moveset[SCMovesetsData::EV][0].is_a?(Array) || for_compiler
+      ev_i = 1 
+      for ev_spread in moveset[SCMovesetsData::EV]
+        s += sprintf(s_tab + "EV%d = %d",ev_i, ev_spread[0])
+        if ev_spread.length>1
+          for i in 1...6
+            s += sprintf(",%d",(i<ev_spread.length) ? ev_spread[i] : ev_spread[0])
+          end
         end
+        s += "\r\n"
+        ev_i += 1 
+      end 
+    else 
+      s += sprintf(s_tab + "EV = %d", moveset[SCMovesetsData::EV][0])
+      for i in 1...6
+        s += sprintf(",%d",moveset[SCMovesetsData::EV][i])
       end
-      s += "\r\n"
-      ev_i += 1 
     end 
   end
   
-  if moveset[SCMovesetsMetadata::IV] && moveset[SCMovesetsMetadata::IV].length>0
-    s += sprintf(s_tab + "IV = %d",moveset[SCMovesetsMetadata::IV][0])
-    if moveset[SCMovesetsMetadata::IV].length>1
+  if moveset[SCMovesetsData::IV] && moveset[SCMovesetsData::IV].length>0
+    s += sprintf(s_tab + "IV = %d",moveset[SCMovesetsData::IV][0])
+    if moveset[SCMovesetsData::IV].length>1
       for i in 1...6
-        s += sprintf(",%d",(i<moveset[SCMovesetsMetadata::IV].length) ? moveset[SCMovesetsMetadata::IV][i] : moveset[SCMovesetsMetadata::IV][0])
+        s += sprintf(",%d",(i<moveset[SCMovesetsData::IV].length) ? moveset[SCMovesetsData::IV][i] : moveset[SCMovesetsData::IV][0])
       end
     end
     s += "\r\n"
   end
   
-  if moveset[SCMovesetsMetadata::GENDER]
-    s += sprintf(s_tab + "Gender = %s\r\n",(moveset[SCMovesetsMetadata::GENDER]==1) ? "female" : "male")
+  if moveset[SCMovesetsData::GENDER]
+    s += sprintf(s_tab + "Gender = %s\r\n",(moveset[SCMovesetsData::GENDER]==1) ? "Female" : "Male")
   end
-  if moveset[SCMovesetsMetadata::SHINY]
+  if moveset[SCMovesetsData::SHINY]
     s += s_tab + "Shiny = yes\r\n"
   end
-  if moveset[SCMovesetsMetadata::HAPPINESS]
-    s += sprintf(s_tab + "Happiness = %d\r\n",moveset[SCMovesetsMetadata::HAPPINESS])
+  if moveset[SCMovesetsData::HAPPINESS] && moveset[SCMovesetsData::HAPPINESS] != 255
+    s += sprintf(s_tab + "Happiness = %d\r\n",moveset[SCMovesetsData::HAPPINESS])
   end
-  if moveset[SCMovesetsMetadata::BALL]
-    s += sprintf(s_tab + "Ball = %d\r\n",moveset[SCMovesetsMetadata::BALL])
+  if moveset[SCMovesetsData::BALL]
+    s += sprintf(s_tab + "Ball = %d\r\n",moveset[SCMovesetsData::BALL])
   end
-  if moveset[SCMovesetsMetadata::ROLE]
-    s += sprintf(s_tab + "Role = %d\r\n",moveset[SCMovesetsMetadata::ROLE])
+  if moveset[SCMovesetsData::ROLE] && for_compiler
+    s += sprintf(s_tab + "Role = %d\r\n",moveset[SCMovesetsData::ROLE])
   end
-  if moveset[SCMovesetsMetadata::PATTERN] && moveset[SCMovesetsMetadata::PATTERN] != SCMovesetPatterns::NOPATTERN
-    s += sprintf(s_tab + "Pattern = %s\r\n",getConstantName(SCMovesetPatterns, moveset[SCMovesetsMetadata::PATTERN]))
+  if moveset[SCMovesetsData::PATTERN] && moveset[SCMovesetsData::PATTERN] != SCMovesetPatterns::NOPATTERN && for_compiler
+    s += sprintf(s_tab + "Pattern = %s\r\n",getConstantName(SCMovesetPatterns, moveset[SCMovesetsData::PATTERN]))
   end
 	
 	return s 
 end 
+
+
 
 
 
@@ -601,7 +629,7 @@ end
 # Compile/decompile tiers
 #===============================================================================
 
-module SCTiersData
+module SCTierData
   
   def self.extractType(line)
     return nil if line[0...5] != "Type:"
@@ -666,7 +694,7 @@ end
 
 
 
-def scCompileTiers
+def scCompileTier
   tiers = {}
   tiers["TierList"] = [] # So the decompiler prints them in the same order as they were. 
   tierid = ""
@@ -685,10 +713,10 @@ def scCompileTiers
       content = $~[2]
       
       if content != ""
-        if SCTiersData.isListOfPokemons(sectionname)
+        if SCTierData.isListOfPokemons(sectionname)
           tiers[tierid][sectionname] = pbGetCsvRecord(content,lineno,[0, "*e", :PBSpecies])
         else 
-          schema = SCTiersData::InfoTypes[sectionname]
+          schema = SCTierData::InfoTypes[sectionname]
           raise _INTL("Unknown section: {1}") if !schema
           tiers[tierid][sectionname] = pbGetCsvRecord(content,lineno,schema)
         end 
@@ -702,11 +730,11 @@ end
 
 
 
-def scSaveTiers
+def scSaveTier
   data=load_data("Data/sctiers.dat")
   return if !data
   
-  typed_sections = SCTiersData.generateTypedSections
+  typed_sections = SCTierData.generateTypedSections
   ordered_sections = ["FrequentPokemons", "RarePokemons", "AllowedPokemons", "BannedPokemons", "BannedAbilities", "BannedItems", "BannedMoves", "Name", "Category", "ID"]
   
   File.open("PBS/sctiers.txt","wb") { |f|
@@ -714,7 +742,7 @@ def scSaveTiers
     
 		for tierid in data["TierList"]
       Graphics.update
-      Win32API.SetWindowText(_INTL("Processing tiers {1}.",tierid))
+      Win32API.SetWindowText(_INTL("Processing tier {1}.",tierid))
       
 			f.write("[" + tierid + "]\r\n")
       
@@ -742,7 +770,7 @@ def scSaveTiers
         
         # Avoid "The script is taking too long" error
         Graphics.update
-        Win32API.SetWindowText(_INTL("Processing tiers {1} ({2}).",tierid, sec))
+        Win32API.SetWindowText(_INTL("Processing tier {1} ({2}).",tierid, sec))
         
         temp = scConvertListToString(PBSpecies, data[tierid][sec])
         f.write(sec + " = " + temp + "\r\n")
@@ -762,6 +790,17 @@ def scConvertListToString(constant_type, the_list)
     line.concat(name)
   end
   return line 
+end 
+
+
+def scLoadTierData
+  # To be improved: 
+  # $PokemonTemp = PokemonTemp.new if !$PokemonTemp
+  # if !$PokemonTemp.trainersData
+    # $PokemonTemp.trainersData = load_data("Data/trainers.dat") || []
+  # end
+  # return $PokemonTemp.trainersData
+  return load_data("Data/sctiers.dat")
 end 
 
 

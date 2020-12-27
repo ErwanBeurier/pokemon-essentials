@@ -336,18 +336,18 @@ module SCClientBattles
   
   
   def self.biasedTiers
-    tiers_dict = load_data("Data/sctiers.dat")
-    tiers_list = []
+    tiers = scLoadTierData
+    tier_list = []
     
     # All tiers appear once. 
-    for t in tiers_dict["TierList"]
-      if tiers_dict[t]["Category"] != "Random" and t != "OTF"
-        tiers_list.push(t)
+    for t in tiers["TierList"]
+      if tiers[t]["Category"] != "Random" and t != "OTF"
+        tier_list.push(t)
       end 
       
       if t == 0 or t == "0"
         File.open("log.txt", "w") { |f| 
-          for stuff in tiers_list[t]
+          for stuff in tier_list[t]
             f.write stuff + "\n"
           end 
         }
@@ -359,20 +359,20 @@ module SCClientBattles
     # FE is more prestigious tier, so most people want this tier. 
     # However, their may be a hype for another tier throughout the game. 
     # The hyped tier is in a game_variable[205]
-    l = tiers_list.length
+    l = tier_list.length
     
-    while tiers_list.length < 2 * l 
-      # tiers_list.push("Random") # Tiers of the day. 
-      tiers_list.push("FE") # Most prestigious tier 
+    while tier_list.length < 2 * l 
+      # tier_list.push("Random") # Tier of the day. 
+      tier_list.push("FE") # Most prestigious tier 
       
       if SCClientBattles.hypedTier
-        tiers_list.push(SCClientBattles.hypedTier)
+        tier_list.push(SCClientBattles.hypedTier)
       else 
-        tiers_list.push("FE")
+        tier_list.push("FE")
       end 
     end 
     
-    return tiers_list
+    return tier_list
   end 
   
   def self.biasedFormats
@@ -494,7 +494,7 @@ class SCStadium
   def setTier(tier)
     @tier = tier 
     
-		tier_instance = loadTiers(tier)
+		tier_instance = loadTier(tier)
 		
 		# Fake teams just to display some Pokemons. 
     @client_pokemons = tier_instance.fastRandSpecies(2)

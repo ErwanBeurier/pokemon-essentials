@@ -20,13 +20,13 @@ class SCTeamStorage
 	end 
 	
 	
-	def addTeam(name, party, tiers)
+	def addTeam(name, party, tier)
 		slot = self.newEmptySlot
 		slot["Name"] = name 
 		slot["Party"] = party # Party list
-		slot["Tiers"] = tiers 
+		slot["Tier"] = tier
 		# @content.push(slot)
-		self.modifyTeam(self.lastNonEmptyIndex + 1, name, party, tiers)
+		self.modifyTeam(self.lastNonEmptyIndex + 1, name, party, tier)
 	end 
 	
 	
@@ -35,7 +35,7 @@ class SCTeamStorage
 	end 
 	
 	
-	def modifyTeam(index, name, party, tiers)
+	def modifyTeam(index, name, party, tier)
 		if index > @last_i
 			for i in 0...(index - @last_i)
 				self.addEmptyTeam
@@ -46,7 +46,7 @@ class SCTeamStorage
 		
 		@content[index]["Name"] = name 
 		@content[index]["Party"] = party 
-		@content[index]["Tiers"] = tiers 
+		@content[index]["Tier"] = tier
 	end 
 	
 	
@@ -58,14 +58,14 @@ class SCTeamStorage
 		@content[index]["Name"] = name 
 	end 
 	
-	def modifyTiersAt(index, tiers)
-		@content[index]["Tiers"] = tiers 
+	def modifyTierAt(index, tier)
+		@content[index]["Tier"] = tier
 	end 
 	
 	
 	
 	def duplicateAt(index)
-		self.addTeam(self.nameAt(index), self.partyAt(index), self.tiersAt(index))
+		self.addTeam(self.nameAt(index), self.partyAt(index), self.tierAt(index))
 		return @last_i  
 	end 
 	
@@ -79,7 +79,7 @@ class SCTeamStorage
 		
 		slot = {"Name"=> "", 
 				"Party"=> party, 
-				"Tiers"=> "OTF"}
+				"Tier"=> "OTF"}
 		
 		return slot 
 	end 
@@ -95,10 +95,10 @@ class SCTeamStorage
 			if !@content[index]["Party"][i][0]
 				icon_file_names.push("Graphics/Icons/icon000")
 			else 
-				speciesid = @content[index]["Party"][i][SCMovesetsMetadata::SPECIES]
-				gender = @content[index]["Party"][i][SCMovesetsMetadata::GENDER]
-				shiny = @content[index]["Party"][i][SCMovesetsMetadata::SHINY]
-				form = @content[index]["Party"][i][SCMovesetsMetadata::BASEFORM]
+				speciesid = @content[index]["Party"][i][SCMovesetsData::SPECIES]
+				gender = @content[index]["Party"][i][SCMovesetsData::GENDER]
+				shiny = @content[index]["Party"][i][SCMovesetsData::SHINY]
+				form = @content[index]["Party"][i][SCMovesetsData::BASEFORM]
 				shadow = false 
 				icon_file = pbCheckPokemonIconFiles([speciesid, (gender==1),shiny, form, shadow])
 				icon_file_names.push(icon_file)
@@ -117,8 +117,8 @@ class SCTeamStorage
 		return self.getDataAt(index, "Name")
 	end 
 	
-	def tiersAt(index)
-		return self.getDataAt(index, "Tiers")
+	def tierAt(index)
+		return self.getDataAt(index, "Tier")
 	end 
 	
 	def getDataAt(index, key)
@@ -140,7 +140,8 @@ class SCTeamStorage
 	
 	
 	def emptyPokemonData(speciesid)
-		return SCMovesetsMetadata.newEmpty2(speciesid)
+		# return SCMovesetsData.newEmpty2(speciesid)
+		return SCTB.initData(speciesid)
 	end 
 	
 	
@@ -151,9 +152,10 @@ class SCTeamStorage
 	end 
 	
 	
-	def isEmptyTeam?(index)	
+	def isEmptyTeam?(index)
+    return true if !@content[index]
 		for i in 0...6
-			if @content[index]["Party"][i][SCMovesetsMetadata::SPECIES]
+			if @content[index]["Party"][i][SCMovesetsData::SPECIES]
 				return false 
 			end 
 		end 
@@ -179,6 +181,23 @@ class SCTeamStorage
 		return max_i
 	end 
 	
+  
+  def export(index)
+    return if self.isEmptyTeam?(index)
+    
+    s = "#-------------------------------\r\n"
+    s += "[POKEMONTRAINER_Red,Player,X]\r\n"
+    s += "LoseText = \"" + @content[index]["Name"] + "\"\r\n"
+
+    for pklist in @content[index]["Party"]
+      s += scConvertMovesetToString(pklist, true, false)
+    end 
+    
+    File.open("PBS/scmovesets.txt","a") { |f|
+      f.write(s)
+    }
+    pbMessage(_INTL("Your team {1} is exported.", @content[index]["Name"]))
+  end 
 
 end 
 

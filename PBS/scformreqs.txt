@@ -9,12 +9,14 @@ Pokemon = MAROWAK
 Pokemon = LATIAS
     OptionalItem = SOULDEW
 Pokemon = LATIAS
+	BaseForm = 0
     Form = 1
     RequiredItem = LATIASITE
 #-------------------------------
 Pokemon = LATIOS
     OptionalItem = SOULDEW
 Pokemon = LATIOS
+	BaseForm = 0
     Form = 1
     RequiredItem = LATIOSITE
 #-------------------------------
@@ -40,10 +42,12 @@ Pokemon = GIRATINA
     RequiredItem = GRISEOUSORB
 #-------------------------------
 Pokemon = GROUDON
+	BaseForm = 0
     Form = 1
     RequiredItem = REDORB
 #-------------------------------
 Pokemon = KYOGRE
+	BaseForm = 0
     Form = 1
     RequiredItem = BLUEORB
 #-------------------------------
@@ -160,21 +164,26 @@ Pokemon = ARCEUS
     RequiredItem = PIXIEPLATE
 #-------------------------------
 Pokemon = VENUSAUR
+	BaseForm = 0
     Form = 1
     RequiredItem = VENUSAURITE
 #-------------------------------
 Pokemon = CHARIZARD
+	BaseForm = 0
     Form = 1
     RequiredItem = CHARIZARDITEX
 Pokemon = CHARIZARD
+	BaseForm = 0
     Form = 2
     RequiredItem = CHARIZARDITEY
 #-------------------------------
 Pokemon = BLASTOISE
+	BaseForm = 0
     Form = 1
     RequiredItem = BLASTOISINITE
 #-------------------------------
 Pokemon = BEEDRILL
+	BaseForm = 0
     Form = 1
     RequiredItem = BEEDRILLITE
 Pokemon = BEEDRILL
@@ -183,6 +192,7 @@ Pokemon = BEEDRILL
     RequiredItem = BEEDRILLITE
 #-------------------------------
 Pokemon = PIDGEOT
+	BaseForm = 0
     Form = 1
     RequiredItem = PIDGEOTITE
 Pokemon = PIDGEOT
@@ -195,14 +205,17 @@ Pokemon = PIDGEOT
     RequiredItem = PIDGEOTITE
 #-------------------------------
 Pokemon = ALAKAZAM
+	BaseForm = 0
     Form = 1
     RequiredItem = ALAKAZITE
 #-------------------------------
 Pokemon = SLOWBRO
+	BaseForm = 0
     Form = 1
     RequiredItem = SLOWBRONITE
 #-------------------------------
 Pokemon = GENGAR
+	BaseForm = 0
     Form = 1
     RequiredItem = GENGARITE
 Pokemon = GENGAR
@@ -211,14 +224,17 @@ Pokemon = GENGAR
     RequiredItem = GENGARITE
 #-------------------------------
 Pokemon = KANGASKHAN
+	BaseForm = 0
     Form = 1
     RequiredItem = KANGASKHANITE
 #-------------------------------
 Pokemon = PINSIR
+	BaseForm = 0
     Form = 1
     RequiredItem = PINSIRITE
 #-------------------------------
 Pokemon = GYARADOS
+	BaseForm = 0
     Form = 1
     RequiredItem = GYARADOSITE
 Pokemon = GYARADOS
@@ -239,6 +255,7 @@ Pokemon = GYARADOS
     RequiredItem = GYARADOSITE
 #-------------------------------
 Pokemon = AERODACTYL
+	BaseForm = 0
     Form = 1
     RequiredItem = AERODACTYLITE
 Pokemon = AERODACTYL
@@ -247,81 +264,101 @@ Pokemon = AERODACTYL
     RequiredItem = AERODACTYLITE
 #-------------------------------
 Pokemon = MEWTWO
+	BaseForm = 0
     Form = 1
     RequiredItem = MEWTWONITEX
 Pokemon = MEWTWO
+	BaseForm = 0
     Form = 2
     RequiredItem = MEWTWONITEY
 #-------------------------------
 Pokemon = AMPHAROS
+	BaseForm = 0
     Form = 1
     RequiredItem = AMPHAROSITE
 #-------------------------------
 Pokemon = STEELIX
+	BaseForm = 0
     Form = 1
     RequiredItem = STEELIXITE
 #-------------------------------
 Pokemon = SCIZOR
+	BaseForm = 0
     Form = 1
     RequiredItem = SCIZORITE
 #-------------------------------
 Pokemon = HERACROSS
+	BaseForm = 0
     Form = 1
     RequiredItem = HERACRONITE
 #-------------------------------
 Pokemon = HOUNDOOM
+	BaseForm = 0
     Form = 1
     RequiredItem = HOUNDOOMINITE
 #-------------------------------
 Pokemon = TYRANITAR
+	BaseForm = 0
     Form = 1
     RequiredItem = TYRANITARITE
 #-------------------------------
 Pokemon = SCEPTILE
+	BaseForm = 0
     Form = 1
     RequiredItem = SCEPTILITE
 #-------------------------------
 Pokemon = BLAZIKEN
+	BaseForm = 0
     Form = 1
     RequiredItem = BLAZIKENITE
 #-------------------------------
 Pokemon = SWAMPERT
+	BaseForm = 0
     Form = 1
     RequiredItem = SWAMPERTITE
 #-------------------------------
 Pokemon = GARDEVOIR
+	BaseForm = 0
     Form = 1
     RequiredItem = GARDEVOIRITE
 #-------------------------------
 Pokemon = SABLEYE
+	BaseForm = 0
     Form = 1
     RequiredItem = SABLENITE
 #-------------------------------
 Pokemon = MAWILE
+	BaseForm = 0
     Form = 1
     RequiredItem = MAWILITE
 #-------------------------------
 Pokemon = AGGRON
+	BaseForm = 0
     Form = 1
     RequiredItem = AGGRONITE
 #-------------------------------
 Pokemon = MEDICHAM
+	BaseForm = 0
     Form = 1
     RequiredItem = MEDICHAMITE
 #-------------------------------
 Pokemon = MANECTRIC
+	BaseForm = 0
     Form = 1
     RequiredItem = MANECTITE
 #-------------------------------
 Pokemon = SHARPEDO
+	BaseForm = 0
     Form = 1
     RequiredItem = SHARPEDONITE
 #-------------------------------
 Pokemon = CAMERUPT
+	BaseForm = 0
     Form = 1
     RequiredItem = CAMERUPTITE
 #-------------------------------
 Pokemon = ALTARIA
+	BaseForm = 0
     Form = 1
     RequiredItem = ALTARIANITE
 Pokemon = ALTARIA
@@ -330,14 +367,17 @@ Pokemon = ALTARIA
     RequiredItem = ALTARIANITE
 #-------------------------------
 Pokemon = BANETTE
+	BaseForm = 0
     Form = 1
     RequiredItem = BANETTITE
 #-------------------------------
 Pokemon = ABSOL
+	BaseForm = 0
     Form = 1
     RequiredItem = ABSOLITE
 #-------------------------------
 Pokemon = GLALIE
+	BaseForm = 0
     Form = 1
     RequiredItem = GLALITITE
 Pokemon = GLALIE
@@ -346,34 +386,42 @@ Pokemon = GLALIE
     RequiredItem = GLALITITE
 #-------------------------------
 Pokemon = SALAMENCE
+	BaseForm = 0
     Form = 1
     RequiredItem = SALAMENCITE
 #-------------------------------
 Pokemon = METAGROSS
+	BaseForm = 0
     Form = 1
     RequiredItem = METAGROSSITE
 #-------------------------------
 Pokemon = LOPUNNY
+	BaseForm = 0
     Form = 1
     RequiredItem = LOPUNNITE
 #-------------------------------
 Pokemon = GARCHOMP
+	BaseForm = 0
     Form = 1
     RequiredItem = GARCHOMPITE
 #-------------------------------
 Pokemon = LUCARIO
+	BaseForm = 0
     Form = 1
     RequiredItem = LUCARIONITE
 #-------------------------------
 Pokemon = ABOMASNOW
+	BaseForm = 0
     Form = 1
     RequiredItem = ABOMASITE
 #-------------------------------
 Pokemon = GALLADE
+	BaseForm = 0
     Form = 1
     RequiredItem = GALLADITE
 #-------------------------------
 Pokemon = AUDINO
+	BaseForm = 0
     Form = 1
     RequiredItem = AUDINITE
 Pokemon = AUDINO
@@ -382,6 +430,7 @@ Pokemon = AUDINO
     RequiredItem = AUDINITE
 #-------------------------------
 Pokemon = DIANCIE
+	BaseForm = 0
     Form = 1
     RequiredItem = DIANCITE
 #-------------------------------
@@ -391,6 +440,7 @@ Pokemon = ZYGARDE
     RequiredAbility = POWERCONSTRUCT
 #-------------------------------
 Pokemon = RAYQUAZA
+	BaseForm = 0
     Form = 1
     RequiredMove = DRAGONASCENT
 #-------------------------------

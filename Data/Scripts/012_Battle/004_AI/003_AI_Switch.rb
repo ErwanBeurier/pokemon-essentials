@@ -9,11 +9,11 @@ class PokeBattle_AI
   end
   
   def shouldSwitchHandler(idxBattler,battler,opps)
-    battler = @battle.battlers[idxBattler]
+    # battler = @battle.battlers[idxBattler]
     skill = @battle.pbGetOwnerFromBattlerIndex(idxBattler).skill || 0
-    moves = battler.moves
-    hp = battler.hp
-    thp = battler.totalhp
+    # moves = battler.moves
+    # hp = battler.hp
+    # thp = battler.totalhp
 #    opps = battler.eachOpposing
     move_pri = false
     move_super = false
@@ -40,7 +40,7 @@ class PokeBattle_AI
             opp_hypereff = true 
           end 
         end
-        if hp > o.hp
+        if battler.hp > o.hp
           higherhp = true
         else
           higherhp = false
@@ -66,7 +66,7 @@ class PokeBattle_AI
       end
     end
     if skill >= PBTrainerAI.highSkill
-      if opp_hypereff && !faster
+      if opp_hypereff && !faster && higherhp
         return true 
       end 
       if (higherhp && faster) || (higherhp && move_pri) || (higherhp && faster && move_super)
@@ -118,7 +118,6 @@ class PokeBattle_AI
     battler = @battle.battlers[idxBattler]
     opps = []
     @battle.pbGetOpposingIndicesInOrder(idxBattler).each do |i|
-      # pbMessage("Index: {1} => {2}", i,  @battle.battlers[i].pbThis())
       if @battle.battlers[i] && !@battle.battlers[i].fainted? && battler.opposes?(i)
         opps.push(@battle.battlers[i])
       end 
@@ -208,7 +207,6 @@ class PokeBattle_AI
             bTypes[0],bTypes[1],bTypes[2])
         end
       end
-      # pbMessage(_INTL("best: {1}", m.class.name))
       if best==-1 || sum>bestSum
         best = i
         bestSum = sum
@@ -216,4 +214,5 @@ class PokeBattle_AI
     end
     return best
   end
+  
 end

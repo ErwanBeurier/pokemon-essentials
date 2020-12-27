@@ -48,12 +48,6 @@ class PokemonTemp
     when "base";                   rules["base"]           = var
     when "outcome", "outcomevar";  rules["outcomeVar"]     = var
     when "nopartner";              rules["noPartner"]      = true
-    when "tier";                   rules["tier"]           = var
-    when "tierofteam";             rules["tierofteam"]     = var
-    when "forcetier";              rules["forcedTier"]     = true
-    when "unforcetier";            rules["forcedTier"]     = false
-    when "nuzzlocke";              rules["nuzzlocke"]      = true
-    when "nonuzzlocke";            rules["nuzzlocke"]      = false
     when "randplayerteam";         rules["randplayerteam"] = true
     when "fixedplayerteam";        rules["randplayerteam"] = false
     when "internal";               rules["notinternal"]    = false
@@ -79,7 +73,7 @@ def setBattleRule(*args)
     else
       case arg.downcase
       when "terrain", "weather", "environment", "environ", "backdrop",
-           "battleback", "base", "outcome", "outcomevar", "tier", "tierofteam"
+           "battleback", "base", "outcome", "outcomevar"
         r = arg
         next
       end
