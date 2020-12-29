@@ -154,6 +154,37 @@ class PokeBattle_Battler
 
   def inHyperMode?; return false; end
 
+
+  #=============================================================================
+  # Z-Moves 
+  #=============================================================================
+  
+  def pbZCrystalFromType(type)
+    zmovecomps = pbLoadZMoveCompatibility
+  
+    zmovecomps.each { |comp|
+      next if !comp[PBZMove::REQ_TYPE]
+      next if comp[PBZMove::REQ_TYPE] != type
+      return comp[PBZMove::HELD_ZCRYSTAL]
+    }
+    return nil 
+  end
+  
+  def hasZMove?
+    zmovedata = pbGetZMoveDataIfCompatible(self.pokemon, self.item)
+    return zmovedata != nil 
+  end    
+  
+  def pbCompatibleZMoveFromMove?(move)  
+    zmovedata = pbGetZMoveDataIfCompatible(self.pokemon, self.item, move)
+    return zmovedata != nil 
+  end
+  
+  def pbCompatibleZMoveFromIndex?(moveindex)
+    return pbCompatibleZMoveFromMove?(self.moves[moveindex])
+  end    
+  
+  
   #=============================================================================
   # Display-only properties
   #=============================================================================
@@ -442,6 +473,7 @@ class PokeBattle_Battler
   def unlosableItem?(check_item)
     return false if check_item <= 0
     return true if pbIsMail?(check_item)
+    return true if pbIsZCrystal?(item)
     return false if @effects[PBEffects::Transform]
     # Items that change a Pokémon's form
     return true if @pokemon && @pokemon.getMegaForm(true) > 0   # Mega Stone

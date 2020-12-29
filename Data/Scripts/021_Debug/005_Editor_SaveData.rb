@@ -1479,4 +1479,5 @@ def pbSaveAllData
   pbSavePokemonData;      Graphics.update
   pbSavePokemonFormsData; Graphics.update
   pbSaveShadowMoves;      Graphics.update
+  pbSaveZMoveCompatibility; Graphics.update
 end

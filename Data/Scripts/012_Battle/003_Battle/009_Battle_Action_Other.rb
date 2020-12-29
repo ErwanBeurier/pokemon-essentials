@@ -189,4 +189,73 @@ class PokeBattle_Battle
     end
     pbDisplay(_INTL("{1}'s Primal Reversion!\nIt reverted to its primal form!",battler.pbThis))
   end
+  
+  #=============================================================================
+  # Use Z-Move.
+  #=============================================================================
+  def pbCanZMove?(index)
+    return false if $game_switches[NO_Z_MOVE]
+    return false if !@battlers[index].hasZMove? 
+    return false if !pbHasZRing(index) 
+    side=(opposes?(index)) ? 1 : 0
+    owner=pbGetOwnerIndexFromBattlerIndex(index)
+    return false if @zMove[side][owner]!=-1 
+    return true
+  end
+
+  def pbRegisterZMove(index)
+    side=(opposes?(index)) ? 1 : 0
+    owner=pbGetOwnerIndexFromBattlerIndex(index)
+    @zMove[side][owner]=index
+  end
+  
+  def pbUnregisterZMove(idxBattler)
+    side  = @battlers[idxBattler].idxOwnSide
+    owner = pbGetOwnerIndexFromBattlerIndex(idxBattler)
+    @zMove[side][owner] = -1 if @zMove[side][owner]==idxBattler
+  end
+  
+  def pbToggleRegisteredZMove(idxBattler)
+    side  = @battlers[idxBattler].idxOwnSide
+    owner = pbGetOwnerIndexFromBattlerIndex(idxBattler)
+    if @zMove[side][owner]==idxBattler
+      @zMove[side][owner] = -1
+    else
+      @zMove[side][owner] = idxBattler
+    end
+  end
+  
+  def pbRegisteredZMove?(idxBattler)
+    side  = @battlers[idxBattler].idxOwnSide
+    owner = pbGetOwnerIndexFromBattlerIndex(idxBattler)
+    return @zMove[side][owner]==idxBattler
+  end
+  
+  def pbUseZMove(index,move,crystal)
+    return if !@battlers[index] || !@battlers[index].pokemon
+    return if !(@battlers[index].hasZMove? rescue false)
+    ownername=pbGetOwnerName(index)
+    pbDisplay(_INTL("{1} surrounded itself with its Z-Power!",@battlers[index].pbThis))         
+    pbCommonAnimation("ZPower",@battlers[index],nil)        
+    # pbMessage("Move: " + move.name)
+    zmove = PokeBattle_ZMove.pbFromOldMoveAndCrystal(self,@battlers[index],move,crystal)
+    zmove.pbUse(@battlers[index])
+    side=@battlers[index].idxOwnSide
+    owner=pbGetOwnerIndexFromBattlerIndex(index)
+    @zMove[side][owner]=-2
+  end
+  
+  def pbHasZRing(battlerIndex)
+    return true if !pbOwnedByPlayer?(battlerIndex)
+    for i in MEGA_RINGS
+      next if !hasConst?(PBItems,i)
+      return true if $PokemonBag.pbQuantity(i)>0
+    end
+    return false
+  end  
+  
+  def zMove
+    return @zMove
+  end    
+
 end
