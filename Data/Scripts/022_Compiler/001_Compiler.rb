@@ -1147,6 +1147,9 @@ def pbCompileAllData(mustCompile)
     # Depends on PBSpecies, PBMoves
     yield(_INTL("Compiling Pokémon forms data"))
     pbCompilePokemonForms
+    # Depends on PBSpecies, PBMoves, PBItems
+    yield(_INTL("Compiling Z-Moves compatibility data"))
+    pbCompileZMoveCompatibility
     # Depends on PBSpecies, PBMoves
     yield(_INTL("Compiling machine data"))
     pbCompileMachines
@@ -1226,7 +1229,8 @@ def pbCompiler
        "scmovesets.dat",
        "sclearned.dat",
        "sctiers.dat",
-       "scformreqs.dat"
+       "scformreqs.dat",
+       "zmovescomp.dat"
     ]
     textFiles = [
        "abilities.txt",
@@ -1250,7 +1254,8 @@ def pbCompiler
        "sclearned.txt",
        "sctiers.txt",
        "scformreqs.txt",
-       "scmvstpatterns.txt" # No dat file
+       "scmvstpatterns.txt", # No dat file
+       "zmovescomp.txt"
     ]
     latestDataTime = 0
     latestTextTime = 0

@@ -345,7 +345,7 @@ class PokeBattle_Battler
       @battle.successStates[user.index].protected = true
       return false
     end
-    if move.canProtectAgainst?
+    if move.canProtectAgainst? && !move.is_zmove
       # Quick Guard
       if target.pbOwnSide.effects[PBEffects::QuickGuard] &&
          @battle.choices[user.index][4]>0 && !unseenfist   # Move priority saved from pbCalculatePriority

@@ -176,6 +176,13 @@ class PokeBattle_Battle
       end
       b.effects[PBEffects::Rage] = false if !pbChoseMoveFunctionCode?(i,"093")   # Rage
     end
+    # Prepare for Z Moves
+    @battlers.each_with_index do |b,i|
+      next if @choices[i][0]!=:UseMove
+      side=(opposes?(i)) ? 1 : 0
+      owner=pbGetOwnerIndexFromBattlerIndex(i)
+      @choices[i][2].zmove=(@zMove[side][owner]==i)
+    end
     PBDebug.log("")
     # Calculate move order for this round
     pbCalculatePriority(true)

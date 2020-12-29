@@ -54,11 +54,17 @@ class PokeBattle_Battler
       @battle.pbJudge
       return false
     end
-    # Use the move
-    PBDebug.log("[Move usage] #{pbThis} started using #{choice[2].name}")
-    PBDebug.logonerr{
-      pbUseMove(choice,choice[2]==@battle.struggle)
-    }
+    if choice[2].zmove 
+      # Use Z-Moves 
+      choice[2].zmove=false
+      @battle.pbUseZMove(self.index,choice[2],self.item)
+    else
+      # Use the move
+      PBDebug.log("[Move usage] #{pbThis} started using #{choice[2].name}")
+      PBDebug.logonerr{
+        pbUseMove(choice,choice[2]==@battle.struggle)
+      }
+    end 
     @battle.pbJudge
     # Update priority order
     @battle.pbCalculatePriority if DYNAMIC_PRIORITY
@@ -159,7 +165,16 @@ class PokeBattle_Battler
     end
     choice[3] = target     # Target (-1 means no target yet)
     PBDebug.log("[Move usage] #{pbThis} started using the called/simple move #{choice[2].name}")
-    pbUseMove(choice,specialUsage)
+    side=(@battle.opposes?(self.index)) ? 1 : 0
+    owner=@battle.pbGetOwnerIndexFromBattlerIndex(self.index)
+    if @battle.zMove[side][owner]==self.index
+      crystal = pbZCrystalFromType(choice[2].type)
+      # zmove = PokeBattle_ZMove.new(@battle,self,choice[2],crystal)
+      zmove = PokeBattle_ZMove.pbFromOldMoveAndCrystal(@battle,self,choice[2],crystal)
+      zmove.pbUse(self, choice)
+    else
+      pbUseMove(choice,specialUsage)
+    end
   end
 
   #=============================================================================

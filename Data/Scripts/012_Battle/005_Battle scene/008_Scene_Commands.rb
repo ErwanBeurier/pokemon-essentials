@@ -65,7 +65,7 @@ class PokeBattle_Scene
   #=============================================================================
   # The player chooses a move for a Pokémon to use
   #=============================================================================
-  def pbFightMenu(idxBattler,megaEvoPossible=false)
+  def pbFightMenu(idxBattler,megaEvoPossible=false,zmovePossible=false)
     battler = @battle.battlers[idxBattler]
     cw = @sprites["fightWindow"]
     cw.battler = battler
@@ -74,7 +74,10 @@ class PokeBattle_Scene
       moveIndex = @lastMove[idxBattler]
     end
     cw.shiftMode = (@battle.pbCanShift?(idxBattler)) ? 1 : 0
+    # Z-Moves have priority over Mega-Evolutions
+    megaEvoPossible = false if zmovePossible 
     cw.setIndexAndMode(moveIndex,(megaEvoPossible) ? 1 : 0)
+    cw.zbutton = (zmovePossible) ? 1 : 0
     needFullRefresh = true
     needRefresh = false
     loop do
@@ -88,6 +91,10 @@ class PokeBattle_Scene
         if megaEvoPossible
           newMode = (@battle.pbRegisteredMegaEvolution?(idxBattler)) ? 2 : 1
           cw.mode = newMode if newMode!=cw.mode
+        end
+        if zmovePossible
+          newMode = (@battle.pbRegisteredZMove?(idxBattler)) ? 2 : 1
+          cw.zbutton = newMode if newMode!=cw.zbutton
         end
         needRefresh = false
       end
@@ -111,16 +118,22 @@ class PokeBattle_Scene
       pbPlayCursorSE if cw.index!=oldIndex
       # Actions
       if Input.trigger?(Input::C)      # Confirm choice
-        pbPlayDecisionSE
-        break if yield cw.index
+        if cw.zbutton == 2 && !battler.pbCompatibleZMoveFromIndex?(cw.index)
+          pbPlayCancelSE
+          @battle.pbDisplay(_INTL("{1} is not compatible with {2}!",PBMoves.getName(battler.moves[cw.index]),PBItems.getName(battler.item)))   
+          break if yield -1
+        else 
+          pbPlayDecisionSE
+          break if yield cw.index
+        end
         needFullRefresh = true
         needRefresh = true
       elsif Input.trigger?(Input::B)   # Cancel fight menu
         pbPlayCancelSE
         break if yield -1
         needRefresh = true
-      elsif Input.trigger?(Input::A)   # Toggle Mega Evolution
-        if megaEvoPossible
+      elsif Input.trigger?(Input::A)   # Toggle Mega Evolution/Z-Moves
+        if megaEvoPossible || zmovePossible
           pbPlayDecisionSE
           break if yield -2
           needRefresh = true

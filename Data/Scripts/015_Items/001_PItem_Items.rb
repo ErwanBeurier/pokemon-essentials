@@ -136,6 +136,22 @@ def pbIsMegaStone?(item)   # Does NOT include Red Orb/Blue Orb
   return ret && ret==12
 end
 
+def pbIsZCrystal?(item) 
+  ret = pbGetItemData(item,ITEM_TYPE)
+  return ret && ret==13
+end
+
+# Despite what the name might suggest, pbIsZCrystal? refers to the items who's 
+# internal names are of the form 'BUGNIUMZ2', whereas pbIsZCrystal2? refers to 
+# those of the form 'BUGNIUMZ'. This was a lack of foresight on my part, hope 
+# this clears it up.
+
+def pbIsZCrystal2?(item)
+  ret = pbGetItemData(item,ITEM_TYPE)
+  return ret && ret==14
+end
+
+
 # Important items can't be sold, given to hold, or tossed.
 def pbIsImportantItem?(item)
   itemData = pbLoadItemsData[getID(PBItems,item)]
@@ -143,6 +159,7 @@ def pbIsImportantItem?(item)
   return true if itemData[ITEM_TYPE] && itemData[ITEM_TYPE]==6   # Key item
   return true if itemData[ITEM_FIELD_USE] && itemData[ITEM_FIELD_USE]==4   # HM
   return true if itemData[ITEM_FIELD_USE] && itemData[ITEM_FIELD_USE]==3 && INFINITE_TMS   # TM
+  return true if itemData[ITEM_FIELD_USE] && itemData[ITEM_FIELD_USE]==14  # Key item representing Z-Crystals. 
   return false
 end
 

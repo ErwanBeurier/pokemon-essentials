@@ -1481,7 +1481,8 @@ def pbSaveAllData
   pbSaveShadowMoves;      Graphics.update
   scSaveMovesets;         Graphics.update
   scSaveLearnedMoves;     Graphics.update
-  scSaveTier;            Graphics.update
+  scSaveTier;             Graphics.update
   scSavePersonalItems;    Graphics.update
   scSavePatterns;         Graphics.update
+  pbSaveZMoveCompatibility; Graphics.update
 end

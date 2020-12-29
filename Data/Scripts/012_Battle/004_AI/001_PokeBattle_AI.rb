@@ -146,6 +146,53 @@ class PokeBattle_AI
   end
   
   #=============================================================================
+  # Decide whether the opponent should use a Z-Move.
+  #=============================================================================
+  def pbEnemyShouldZMove?(index)
+    # If all opposing have less than half HP, then don't Z-Move.
+    return false if !@battle.pbCanZMove?(index) #Conditions based on effectiveness and type handled later  
+    
+    @battle.battlers[index].eachOpposing { |opp|
+      return true if opp.hp>(opp.totalhp/2).round
+    }
+    return false 
+  end    
+  
+  def pbChooseEnemyZMove(index)  #Put specific cases for trainers using status Z-Moves
+    # Choose the move.
+    chosenmove=false
+    chosenindex=-1
+    attacker = @battle.battlers[index]
+    for i in 0..3
+      move=attacker.moves[i]
+      if attacker.pbCompatibleZMoveFromMove?(move)
+        if !chosenmove
+          chosenindex = i
+          chosenmove=move
+        else
+          if move.baseDamage>chosenmove.baseDamage
+            chosenindex=i
+            chosenmove=move
+          end          
+        end
+      end
+    end   
+    target_i = nil
+    target_eff = 0 
+    # Choose the target
+    attacker.eachOpposing { |opp|
+      temp_eff = chosenmove.pbCalcTypeMod(chosenmove.type,attacker,opp)        
+      if temp_eff > target_eff
+        target_i = opp.index
+        target_eff = target_eff
+      end 
+    }
+    @battle.pbRegisterZMove(index)
+    @battle.pbRegisterMove(index,chosenindex,false)
+    @battle.pbRegisterTarget(index,target_i)
+  end  
+
+  #=============================================================================
   # Choose an action
   #=============================================================================
   def pbDefaultChooseEnemyCommand(idxBattler)
@@ -155,6 +202,10 @@ class PokeBattle_AI
     @battle.pbRegisterMegaEvolution(idxBattler) if pbEnemyShouldMegaEvolve?(idxBattler)
     if SPIRIT_POWERS
       @battle.pbRegisterSpiritPower(idxBattler) if pbEnemyShouldUseSpiritPower?(idxBattler)
+    end 
+    if pbEnemyShouldZMove?(idxBattler)
+      pbChooseEnemyZMove(idxBattler)
+      return 
     end
     pbChooseMoves(idxBattler)
   end

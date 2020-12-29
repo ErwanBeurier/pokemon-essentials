@@ -202,6 +202,7 @@ end
 class FightMenuDisplay < BattleMenuBase
   attr_reader :battler
   attr_reader :shiftMode
+  attr_reader :zbutton
 
   # If true, displays graphics from Graphics/Pictures/Battle/overlay_fight.png
   #     and Graphics/Pictures/Battle/cursor_fight.png.
@@ -228,11 +229,14 @@ class FightMenuDisplay < BattleMenuBase
     @shiftMode = 0
     # NOTE: @mode is for the display of the Mega Evolution button.
     #       0=don't show, 1=show unpressed, 2=show pressed
+    @zbutton   = 0
+    # Z-Move addition: same as @mode
     if USE_GRAPHICS
       # Create bitmaps
       @buttonBitmap  = AnimatedBitmap.new(_INTL("Graphics/Pictures/Battle/cursor_fight"))
       @typeBitmap    = AnimatedBitmap.new(_INTL("Graphics/Pictures/types"))
       @megaEvoBitmap = AnimatedBitmap.new(_INTL("Graphics/Pictures/Battle/cursor_mega"))
+      @zmoveBitmap   = AnimatedBitmap.new(_INTL("Graphics/Pictures/Battle/cursor_zmove"))
       @shiftBitmap   = AnimatedBitmap.new(_INTL("Graphics/Pictures/Battle/cursor_shift"))
       # Create background graphic
       background = IconSprite.new(0,Graphics.height-96,viewport)
@@ -277,6 +281,13 @@ class FightMenuDisplay < BattleMenuBase
       @megaButton.y      = self.y-@megaEvoBitmap.height/2
       @megaButton.src_rect.height = @megaEvoBitmap.height/2
       addSprite("megaButton",@megaButton)
+      # Create Z-Move button
+      @zmoveButton = SpriteWrapper.new(viewport)
+      @zmoveButton.bitmap = @zmoveBitmap.bitmap
+      @zmoveButton.x      = self.x+146
+      @zmoveButton.y      = self.y-@zmoveBitmap.height/2
+      @zmoveButton.src_rect.height = @zmoveBitmap.height/2
+      addSprite("zmoveButton",@zmoveButton)
       # Create Shift button
       @shiftButton = SpriteWrapper.new(viewport)
       @shiftButton.bitmap = @shiftBitmap.bitmap
@@ -308,6 +319,7 @@ class FightMenuDisplay < BattleMenuBase
     @buttonBitmap.dispose if @buttonBitmap
     @typeBitmap.dispose if @typeBitmap
     @megaEvoBitmap.dispose if @megaEvoBitmap
+    @zmoveBitmap.dispose if @zmoveBitmap
     @shiftBitmap.dispose if @shiftBitmap
   end
 
@@ -330,6 +342,12 @@ class FightMenuDisplay < BattleMenuBase
     oldValue = @shiftMode
     @shiftMode = value
     refreshShiftButton if @shiftMode!=oldValue
+  end
+
+  def zbutton=(value)
+    oldValue = @zbutton
+    @zbutton = value
+    refreshZButton if @zbutton!=oldValue
   end
 
   def refreshButtonNames
@@ -425,10 +443,18 @@ class FightMenuDisplay < BattleMenuBase
     @visibility["shiftButton"] = (@shiftMode > 0)
   end
 
+  def refreshZButton
+    return if !USE_GRAPHICS
+    @zmoveButton.src_rect.y    = (@zbutton - 1) * @zmoveBitmap.height / 2
+    @zmoveButton.z             = self.z - 1
+    @visibility["zmoveButton"] = (@zbutton > 0)
+  end
+
   def refresh
     return if !@battler
     refreshSelection
     refreshMegaEvolutionButton
+    refreshZButton
     refreshShiftButton
   end
 end
