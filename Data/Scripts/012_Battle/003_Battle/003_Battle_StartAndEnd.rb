@@ -163,7 +163,15 @@ class PokeBattle_Battle
       foeParty = pbParty(1)
       case foeParty.length
       when 1
-        pbDisplayPaused(_INTL("Oh! A wild {1} appeared!",foeParty[0].name))
+       # Dynamax - Alters encounter text (Max Raids)
+       if defined?(MAXRAID_SWITCH) && $game_switches[MAXRAID_SWITCH]
+         text = "Dynamaxed"
+         text = "Gigantamax" if foeParty[0].gmaxFactor?
+         text = "Eternamax"  if isConst?(foeParty[0].species,PBSpecies,:ETERNATUS)
+         pbDisplayPaused(_INTL("Oh! A {1} {2} lurks in the den!",text,foeParty[0].name))
+       else
+         pbDisplayPaused(_INTL("Oh! A wild {1} appeared!",foeParty[0].name))
+       end
       when 2
         pbDisplayPaused(_INTL("Oh! A wild {1} and {2} appeared!",foeParty[0].name,
            foeParty[1].name))

@@ -370,6 +370,8 @@ class PokeBattle_Battler
       @moves[i].pp      = 5
       @moves[i].totalpp = 5
     end
+    # Dynamax - Inherits proper traits with Dynamax.
+    pbTransformDynamax(target)
     @effects[PBEffects::Disable]      = 0
     @effects[PBEffects::DisableMove]  = 0
     @effects[PBEffects::WeightChange] = target.effects[PBEffects::WeightChange]

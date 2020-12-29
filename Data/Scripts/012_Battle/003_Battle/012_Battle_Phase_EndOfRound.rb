@@ -277,6 +277,8 @@ class PokeBattle_Battle
         b.pbFaint if b.fainted?
       end
     end
+    # Dynamax - End of round effects (G-Max Vine Lash, Wildfire, etc.)
+    pbEORMaxMoveEffects(priority)
     # Status-curing effects/abilities and HP-healing items
     priority.each do |b|
       next if b.fainted?
@@ -603,6 +605,8 @@ class PokeBattle_Battle
       # Harvest, Pickup
       BattleHandlers.triggerEORGainItemAbility(b.ability,b,self) if b.abilityActive?
     end
+    # Dynamax - End of round effects (Max Raids)
+    pbEORMaxRaidEffects(priority)
     pbGainExp
     return if @decision>0
     # Form checks
@@ -681,6 +685,8 @@ class PokeBattle_Battle
     @field.effects[PBEffects::FusionFlare] = false
 	  # Neutralizing Gas
 	  pbCheckNeutralizingGas
+    # Dynamax - Counts down Dynamax turns.
+    pbDynamaxTimer
     @endOfRound = false
   end
 

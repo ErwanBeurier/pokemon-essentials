@@ -813,3 +813,14 @@
 789,TR97,TR97,TR97s,4,10000,"The user bites the target with its psychic capabilities. This can also destroy Light Screen and Reflect.",6,0,0,PSYCHICFANGS,
 790,TR98,TR98,TR98s,4,6000,"The user slams into the target using a full-force blast of water. This may also lower the target's Defense stat.",6,0,0,LIQUIDATION,
 791,TR99,TR99,TR99s,4,6000,"The user attacks by slamming its body into the target. The higher the user's Defense, the more damage it inflicts.",6,0,0,BODYPRESS,
+#--------------------------------
+900,DYNAMAXBAND,Dynamax Band,Dynamax Bands,8,0,"A Wishing Star has been affixed to it. It lets out light that allows Pokémon to Dynamax when at a Power Spot.",0,0,6,
+901,WISHINGPIECE,Wishing Piece,Wishing Pieces,1,10,"Throw one into a Pokémon Den to attract a wild Dynamax Pokémon.",0,0,0
+902,MAXMUSHROOMS,Max Mushrooms,,7,4000,"Mushrooms that have the power of changing Dynamax forms. They boost all stats of a Pokémon during battle.",0,3,0,
+903,MAXHONEY,Max Honey,Max Honies,2,4000,"Honey that Dynamax Vespiquen produces. It has the same effect as a Max Revive.",1,1,0,
+904,DYNAMAXCANDY,Dynamax Candy,Dynamax Candies,2,0,"Raises the Dynamax Level of a single Pokémon by one. A higher level means higher HP when Dynamaxed.",1,0,0,
+905,DYNAMAXCANDYXL,Dynamax Candy XL,Dynamax Candies XL,2,0,"Maxes out the Dynamax Level of a single Pokémon. A higher level means higher HP when Dynamaxed.",1,0,0,
+906,MAXEGGS,Max Eggs,,2,20000,"A bundle of highly nutritious, jumbo-sized eggs. Grants the entire party a large amount of Exp. Points.",2,0,0,
+907,MAXSCALES,Max Scales,,2,4000,"Reflective scales that act like a mirror. Pokémon are able to recall a past move when gazing into them.",1,0,0,
+908,MAXPLUMAGE,Max Plumage,Max Plumages,2,4000,"A bundle of six distinctly colored feathers. Increases each base stat of a Pokémon by 1 point.",1,0,0,
+909,MAXSOUP,Max Soup,Max Soups,2,8000,"A soup that packs a huge kick. Certain Pokémon that consume it may be given the ability to Gigantamax.",1,0,0,

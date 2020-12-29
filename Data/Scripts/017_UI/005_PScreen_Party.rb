@@ -206,6 +206,8 @@ class PokemonPartyPanel < SpriteWrapper
     @pkmnsprite.setOffset(PictureOrigin::Center)
     @pkmnsprite.active = @active
     @pkmnsprite.z      = self.z+2
+    # Dynamax - Enlarges Pokemon icon sprite when Dynamaxed.
+    pbDynamaxSize
     @helditemsprite = HeldItemIconSprite.new(0,0,@pokemon,viewport)
     @helditemsprite.z = self.z+3
     @overlaysprite = BitmapSprite.new(Graphics.width,Graphics.height,viewport)
@@ -260,6 +262,8 @@ class PokemonPartyPanel < SpriteWrapper
   def pokemon=(value)
     @pokemon = value
     @pkmnsprite.pokemon = value if @pkmnsprite && !@pkmnsprite.disposed?
+    # Dynamax - Enlarges Pokemon icon sprite when Dynamaxed.
+    pbDynamaxSize
     @helditemsprite.pokemon = value if @helditemsprite && !@helditemsprite.disposed?
     @refreshBitmap = true
     refresh
@@ -331,6 +335,8 @@ class PokemonPartyPanel < SpriteWrapper
       @pkmnsprite.x        = self.x+60
       @pkmnsprite.y        = self.y+40
       @pkmnsprite.color    = self.color
+      # Dynamax - Colors Dynamax Pokemon's icon sprites.
+      pbDynamaxColor
       @pkmnsprite.selected = self.selected
     end
     if @helditemsprite && !@helditemsprite.disposed?

@@ -191,6 +191,8 @@ class PokeBattle_Move
     return if target.damageState.disguise
     # Ice Face takes the damage
     return if target.damageState.iceface
+    # Dynamax - Damage thresholds (Max Raids)
+    damage = pbReduceMaxRaidDamage(target,damage)
     # Target takes the damage
     if damage>=target.hp
       damage = target.hp

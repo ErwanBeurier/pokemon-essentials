@@ -428,6 +428,8 @@ class PokeBattle_Battler
       realNumHits = 0
       for i in 0...numHits
         break if magicCoater>=0 || magicBouncer>=0
+        # Dynamax - Ends multi-hit moves early when Raid boss is defeated.
+        break if pbBreakRaidMultiHits(targets,i)
         success = pbProcessMoveHit(move,user,targets,i,skipAccuracyCheck)
         if !success
           if i==0 && targets.length>0
@@ -712,6 +714,8 @@ class PokeBattle_Battler
         next if b.damageState.unaffected
         move.pbEndureKOMessage(b)
       end
+      # Dynamax - Effects on hit (Max Raids)
+      pbProcessRaidEffectsOnHit(move,user,targets,hitNum)
       # HP-healing held items (checks all battlers rather than just targets
       # because Flame Burst's splash damage affects non-targets)
       @battle.pbPriority(true).each { |b| b.pbItemHPHealCheck }
@@ -728,6 +732,8 @@ class PokeBattle_Battler
     move.pbEffectGeneral(user)
     targets.each { |b| b.pbFaint if b && b.fainted? }
     user.pbFaint if user.fainted?
+    # Dynamax - Effects on hit (Max Raids)
+    pbProcessRaidEffectsOnHit2(move,user,targets)
     # Additional effect
     if !user.hasActiveAbility?(:SHEERFORCE)
       targets.each do |b|

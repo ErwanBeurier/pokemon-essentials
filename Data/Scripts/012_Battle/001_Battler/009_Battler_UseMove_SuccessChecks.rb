@@ -325,6 +325,9 @@ class PokeBattle_Battler
       @battle.pbDisplay(_INTL("{1} surrounds itself with psychic terrain!",target.pbThis))
       return false
     end
+    # Dynamax - Success Checks
+    ret = pbSuccessCheckDynamax(move,user,target)
+    return false if ret == false
     # Crafty Shield
     if target.pbOwnSide.effects[PBEffects::CraftyShield] && user.index!=target.index &&
        move.statusMove? && move.pbTarget(user)!=PBTargets::AllBattlers && !unseenfist && !move.function == "18E"

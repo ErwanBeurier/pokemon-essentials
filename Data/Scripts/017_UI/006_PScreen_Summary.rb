@@ -314,6 +314,9 @@ class PokemonSummary_Scene
     if @pokemon.shiny?
       imagepos.push([sprintf("Graphics/Pictures/shiny"),2,134])
     end
+    # Dynamax - Displays Dynamax Levels and G-Max Factor
+    pbDisplayGMaxFactor   if defined?(@pokemon.dynamax?)
+    pbDisplayDynamaxMeter if defined?(@pokemon.dynamax?)
     # Draw all images
     pbDrawImagePositions(overlay,imagepos)
     # Write various bits of text
@@ -328,6 +331,10 @@ class PokemonSummary_Scene
        [@pokemon.level.to_s,46,92,0,Color.new(64,64,64),Color.new(176,176,176)],
        [_INTL("Item"),66,318,0,base,shadow]
     ]
+    # Dynamax - For Dynamax Level display
+    if defined?(@pokemon.dynamax?)
+      textpos[3][0]="" if @page==3 && @pokemon.dynamaxAble?
+    end
     # Write the held item's name
     if @pokemon.hasItem?
       textpos.push([PBItems.getName(@pokemon.item),16,352,0,Color.new(64,64,64),Color.new(176,176,176)])
@@ -717,6 +724,13 @@ class PokemonSummary_Scene
     basedamage = moveData[MOVE_BASE_DAMAGE]
     category   = moveData[MOVE_CATEGORY]
     accuracy   = moveData[MOVE_ACCURACY]
+    # Dynamax - Displays Max Move data.
+    maxMoveData = pbGetMaxMoveData(moveToLearn,moveid)
+    if maxMoveData
+      basedamage = maxMoveData[0]
+      accuracy   = maxMoveData[1]
+      moveid     = maxMoveData[2]
+    end
     textpos = []
     # Write power and accuracy values for selected move
     if basedamage==0   # Status move
@@ -780,8 +794,10 @@ class PokemonSummary_Scene
         yPos += 20
       end
       if move && move.id>0
-        imagepos.push(["Graphics/Pictures/types",248,yPos+2,0,move.type*28,64,28])
-        textpos.push([PBMoves.getName(move.id),316,yPos,0,moveBase,moveShadow])
+        # Dynamax - Draws Max Move names and types. Also handles non-dynamax case. 
+        movelist = drawDynamaxMoveSel(move,yPos,moveBase,moveShadow,moveToLearn)
+        imagepos.push(movelist[0])
+        textpos.push(movelist[1])
         if move.totalpp>0
           textpos.push([_INTL("PP"),342,yPos+32,0,moveBase,moveShadow])
           ppfraction = 0
