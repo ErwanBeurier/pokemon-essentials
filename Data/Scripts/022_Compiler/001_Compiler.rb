@@ -1214,7 +1214,8 @@ def pbCompiler
        "trainer_types.dat",
        "trainers.dat",
        "types.dat",
-       "Constants.rxdata"
+       "Constants.rxdata",
+       "zmovescomp.dat"
     ]
     textFiles = [
        "abilities.txt",
@@ -1233,7 +1234,8 @@ def pbCompiler
        "trainerlists.txt",
        "trainers.txt",
        "trainertypes.txt",
-       "types.txt"
+       "types.txt",
+       "zmovescomp.txt"
     ]
     latestDataTime = 0
     latestTextTime = 0

@@ -1534,7 +1534,52 @@ class PokeBattle_Move_0B5 < PokeBattle_Move
        "172",   # Beak Blast
        # Event moves that do nothing
        "133",   # Hold Hands
-       "134"    # Celebrate
+       "134",    # Celebrate
+       # Z-moves:
+       "Z000", 
+       "Z001", 
+       "Z002", 
+       "Z003", 
+       "Z004", 
+       "Z005", 
+       "Z006", 
+       "Z007", 
+       "Z008", 
+       "Z009", 
+       "Z00A",
+       # Max-moves:
+       "200",
+       "201",
+       "202",
+       "203",
+       "204",
+       "205",
+       "206",
+       "207",
+       "208",
+       "209",
+       "20A",
+       "20B",
+       "20C",
+       "20D",
+       "20E",
+       "20F",
+       "210",
+       "211",
+       "212",
+       "213",
+       "214",
+       "215",
+       "216",
+       "217",
+       "218",
+       "219",
+       "21A",
+       "21B",
+       "21C",
+       "21D",
+       "21E",
+       "21F"
     ]
     if NEWEST_BATTLE_MECHANICS
       @moveBlacklist += [
@@ -1655,7 +1700,52 @@ class PokeBattle_Move_0B6 < PokeBattle_Move
        "172",   # Beak Blast
        # Event moves that do nothing
        "133",   # Hold Hands
-       "134"    # Celebrate
+       "134",   # Celebrate
+       # Z-moves:
+       "Z000", 
+       "Z001", 
+       "Z002", 
+       "Z003", 
+       "Z004", 
+       "Z005", 
+       "Z006", 
+       "Z007", 
+       "Z008", 
+       "Z009", 
+       "Z00A",
+       # Max-moves:
+       "200",
+       "201",
+       "202",
+       "203",
+       "204",
+       "205",
+       "206",
+       "207",
+       "208",
+       "209",
+       "20A",
+       "20B",
+       "20C",
+       "20D",
+       "20E",
+       "20F",
+       "210",
+       "211",
+       "212",
+       "213",
+       "214",
+       "215",
+       "216",
+       "217",
+       "218",
+       "219",
+       "21A",
+       "21B",
+       "21C",
+       "21D",
+       "21E",
+       "21F"
     ]
     @moveBlacklistSignatures = [
        :SNARL,

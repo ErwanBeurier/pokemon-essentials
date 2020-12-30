@@ -95,10 +95,10 @@ ItemHandlers::UseOnPokemon.copy(:BUGINIUMZ,:DARKINIUMZ,:DRAGONIUMZ,:ELECTRIUMZ,:
 #-------------------------------------------------------------------------------                               
 class PokemonBag
   def pbStoreItem(item,qty=1)
-    if item.pbIsZCrystal?(item)
+    item = getID(PBItems,item)
+    if pbIsZCrystal?(item)
       return true
     end
-    item = getID(PBItems,item)
     if !item || item<1
       raise ArgumentError.new(_INTL("Item number {1} is invalid.",item))
     end
@@ -234,7 +234,7 @@ class PokeBattle_Battler
     if @battle.zMove[side][owner]==self.index
       crystal = pbZCrystalFromType(choice[2].type)
       zmove = PokeBattle_ZMove.pbFromOldMoveAndCrystal(@battle,self,choice[2],crystal)
-      zmove.pbUse(self, choice)
+      zmove.pbUse(self, choice, specialUsage)
     else
       pbUseMove(choice,specialUsage)
     end
@@ -335,7 +335,7 @@ class PokeBattle_Battle
     return false if $game_switches[NO_Z_MOVE]
     return false if !pbHasZRing?(idxBattler)
     return false if !battler.hasZMove?
-    return false if battler.mega? || battler.hasMega?
+    # return false if battler.mega? || battler.hasMega?
     return false if battler.primal? || battler.hasPrimal?
     return false if battler.hasUltra?
     return false if battler.shadowPokemon?
@@ -386,7 +386,7 @@ class PokeBattle_Battle
     pbDisplay(_INTL("{1} surrounded itself with its Z-Power!",battler.pbThis))      
     pbCommonAnimation("ZPower",battler,nil)     
     zmove = PokeBattle_ZMove.pbFromOldMoveAndCrystal(self,battler,move,crystal)
-    zmove.pbUse(battler)
+    zmove.pbUse(battler, nil, false)
     side  = battler.idxOwnSide
     owner = pbGetOwnerIndexFromBattlerIndex(idxBattler)
     @zMove[side][owner] = -2
@@ -685,13 +685,13 @@ class PokeBattle_ZMove < PokeBattle_Move
     end
   end
   
-  def pbUse(battler, simplechoice=false)
+  def pbUse(battler, simplechoice=nil, specialUsage=false)
     battler.pbBeginTurn(self)
     if !@status
       @battle.pbDisplayBrief(_INTL("{1} unleashed its full force Z-Move!",battler.pbThis))
     end    
     zchoice=@battle.choices[battler.index] #[0,0,move,move.target]
-    if simplechoice!=false
+    if simplechoice
       zchoice=simplechoice
     end    
     ztargets=battler.pbFindTargets(zchoice,self,battler)
@@ -707,7 +707,7 @@ class PokeBattle_ZMove < PokeBattle_Move
         @battle.pbDisplay(_INTL("But there was no target..."))
       else
         #selftarget status moves here
-        pbZStatus(@oldmove.id,battler)        
+        pbZStatus(@oldmove.id,battler) if !specialUsage
         zchoice[2].name = @name
         battler.pbUseMove(zchoice)
         @oldmove.name = @oldname
@@ -715,7 +715,7 @@ class PokeBattle_ZMove < PokeBattle_Move
     else
       if @status
         #targeted status Z's here
-        pbZStatus(@oldmove.id,battler)
+        pbZStatus(@oldmove.id,battler) if !specialUsage
         zchoice[2].name = @name
         battler.pbUseMove(zchoice)
         @oldmove.name = @oldname
@@ -996,8 +996,8 @@ class PokeBattle_ZMove < PokeBattle_Move
     if resetID.include?(move)
       for stat in [PBStats::ATTACK,PBStats::DEFENSE,PBStats::SPEED,PBStats::SPATK,
                    PBStats::SPDEF,PBStats::ACCURACY,PBStats::EVASION]
-        if attacker.stages[i]<0
-          attacker.stages[i]=0
+        if attacker.stages[stat]<0
+          attacker.stages[stat]=0
         end
       end
       @battle.pbDisplayBrief(_INTL("{1}'s Z-Power returned its decreased stats to normal!",attacker.pbThis))

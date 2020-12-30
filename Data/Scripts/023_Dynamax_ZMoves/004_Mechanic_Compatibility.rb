@@ -133,6 +133,7 @@ class PokeBattle_AI
     if pbZMovesInstalled?
       @battle.pbRegisterUltraBurst(idxBattler) if pbEnemyShouldUltraBurst?(idxBattler)
       pbChooseEnemyZMove(idxBattler) if pbEnemyShouldZMove?(idxBattler)
+      return 
     end
     #---------------------------------------------------------------------------
     # Dynamax
@@ -539,11 +540,24 @@ class PokeBattle_Scene
     if megaEvoPossible || ultraPossible || zMovePossible || dynamaxPossible || zodiacPossible
       mechanicPossible = true
     end
-    pbMessage(_INTL("megaEvoPossible={1}", megaEvoPossible))
-    pbMessage(_INTL("ultraPossible={1}", ultraPossible))
-    pbMessage(_INTL("zMovePossible={1}", zMovePossible))
-    pbMessage(_INTL("dynamaxPossible={1}", dynamaxPossible))
-    pbMessage(_INTL("zodiacPossible={1}", zodiacPossible))
+    if ultraPossible
+      cw.chosen_button = FightMenuDisplay::UltraBurstButton
+    elsif zMovePossible
+      cw.chosen_button = FightMenuDisplay::ZMoveButton
+    elsif megaEvoPossible
+      cw.chosen_button = FightMenuDisplay::MegaButton
+    elsif dynamaxPossible
+      cw.chosen_button = FightMenuDisplay::DynamaxButton
+    elsif zodiacPossible
+      cw.chosen_button = FightMenuDisplay::ZodiacButton
+    else 
+      cw.chosen_button = FightMenuDisplay::NoButton
+    end 
+    # pbMessage(_INTL("ultraPossible={1}", ultraPossible))
+    # pbMessage(_INTL("zMovePossible={1}", zMovePossible))
+    # pbMessage(_INTL("megaEvoPossible={1}", megaEvoPossible))
+    # pbMessage(_INTL("dynamaxPossible={1}", dynamaxPossible))
+    # pbMessage(_INTL("zodiacPossible={1}", zodiacPossible))
     cw.setIndexAndMode(moveIndex,(mechanicPossible) ? 1 : 0)
     needFullRefresh = true
     needRefresh = false
@@ -713,6 +727,13 @@ end
 # Displays button graphics.
 #===============================================================================
 class FightMenuDisplay < BattleMenuBase
+  NoButton = -1 
+  MegaButton = 0
+  UltraBurstButton = 1
+  ZMoveButton = 2
+  DynamaxButton = 3
+  ZodiacButton = 4 
+  
   def initialize(viewport,z)
     super(viewport)
     self.x = 0
@@ -723,6 +744,22 @@ class FightMenuDisplay < BattleMenuBase
       @buttonBitmap  = AnimatedBitmap.new(_INTL("Graphics/Pictures/Battle/cursor_fight"))
       @typeBitmap    = AnimatedBitmap.new(_INTL("Graphics/Pictures/types"))
       @shiftBitmap   = AnimatedBitmap.new(_INTL("Graphics/Pictures/Battle/cursor_shift"))
+      # Load the buttons
+      @battleButtonBitmap = {}
+      # Mega Evolution
+      @battleButtonBitmap[MegaButton] = AnimatedBitmap.new(_INTL("Graphics/Pictures/Battle/cursor_mega"))
+      # Ultra Burst
+      @battleButtonBitmap[UltraBurstButton] = AnimatedBitmap.new(_INTL("Graphics/Pictures/Battle/cursor_ultra"))
+      # Z-Moves
+      @battleButtonBitmap[ZMoveButton] = AnimatedBitmap.new(_INTL("Graphics/Pictures/Battle/cursor_zmove"))
+      # Dynamax
+      @battleButtonBitmap[DynamaxButton] = AnimatedBitmap.new(_INTL("Graphics/Pictures/Dynamax/cursor_dynamax"))
+      @battleButtonBitmap[DynamaxButton] = AnimatedBitmap.new(_INTL("Graphics/Pictures/Dynamax/cursor_dynamax_2")) if DMAX_BUTTON_2
+      # Zodiac Powers
+      @battleButtonBitmap[ZodiacButton] = AnimatedBitmap.new(_INTL("Graphics/Pictures/Birthsigns/Other/battlezodiac"))
+      # Chosen button:
+      @chosen_button = NoButton
+      
       background = IconSprite.new(0,Graphics.height-96,viewport)
       background.setBitmap("Graphics/Pictures/Battle/overlay_fight")
       addSprite("background",background)
@@ -788,7 +825,9 @@ class FightMenuDisplay < BattleMenuBase
     @typeBitmap.dispose    if @typeBitmap
     @shiftBitmap.dispose   if @shiftBitmap
     #---------------------------------------------------------------------------
-    @battleButtonBitmap.dispose if @battleButtonBitmap
+    @battleButtonBitmap.each { |k,bmp|
+      bmp.dispose if bmp
+    }
     #---------------------------------------------------------------------------
   end
   
@@ -798,31 +837,31 @@ class FightMenuDisplay < BattleMenuBase
   def refreshBattleButton
     return if !USE_GRAPHICS
     if USE_GRAPHICS
-      if @battler.battle.pbCanUseBattleMechanic?(@battler.index)
-        if @battler.battle.pbCanMegaEvolve?(@battler.index)       # Mega Evolution
-          @battleButtonBitmap = AnimatedBitmap.new(_INTL("Graphics/Pictures/Battle/cursor_mega"))
-        elsif @battler.battle.pbCanUltraCompat?(@battler.index)   # Ultra Burst
-          @battleButtonBitmap = AnimatedBitmap.new(_INTL("Graphics/Pictures/Battle/cursor_ultra"))
-        elsif @battler.battle.pbCanZMoveCompat?(@battler.index)   # Z-Moves
-          @battleButtonBitmap = AnimatedBitmap.new(_INTL("Graphics/Pictures/Battle/cursor_zmove"))
-        elsif @battler.battle.pbCanDynamaxCompat?(@battler.index) # Dynamax
-          @battleButtonBitmap = AnimatedBitmap.new(_INTL("Graphics/Pictures/Dynamax/cursor_dynamax"))
-          @battleButtonBitmap = AnimatedBitmap.new(_INTL("Graphics/Pictures/Dynamax/cursor_dynamax_2")) if DMAX_BUTTON_2
-        elsif @battler.battle.pbCanZodiacCompat?(@battler.index)  # Zodiac Powers
-          @battleButtonBitmap = AnimatedBitmap.new(_INTL("Graphics/Pictures/Birthsigns/Other/battlezodiac"))
-        end
-        @battleButton.bitmap = @battleButtonBitmap.bitmap
+      if @chosen_button != NoButton
+      # if @battler.battle.pbCanUseBattleMechanic?(@battler.index)
+        @battleButton.bitmap = @battleButtonBitmap[@chosen_button].bitmap
         @battleButton.x      = self.x+146
-        @battleButton.y      = self.y-@battleButtonBitmap.height/2
-        @battleButton.src_rect.height = @battleButtonBitmap.height/2
+        @battleButton.y      = self.y-@battleButtonBitmap[@chosen_button].height/2
+        @battleButton.src_rect.height = @battleButtonBitmap[@chosen_button].height/2
         addSprite("battleButton",@battleButton)
-      end
+      # else 
+        # @chosen_button = -1
+      # end
+      end 
     end
-    if @battleButtonBitmap
-      @battleButton.src_rect.y    = (@mode - 1) * @battleButtonBitmap.height / 2
+    if @battleButtonBitmap[@chosen_button]
+      @battleButton.src_rect.y    = (@mode - 1) * @battleButtonBitmap[@chosen_button].height / 2
       @battleButton.z             = self.z - 1
       @visibility["battleButton"] = (@mode > 0)
+    else 
+      @visibility["battleButton"] = false
     end
+  end
+  
+  def chosen_button=(value)
+    oldValue = @chosen_button
+    @chosen_button = value
+    refresh if @chosen_button!=oldValue
   end
   
   def refresh
