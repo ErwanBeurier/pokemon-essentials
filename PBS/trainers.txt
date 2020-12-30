@@ -19,7 +19,7 @@ Pokemon = ONIX,14
     Shiny = yes
     Moves = HEADSMASH,ROCKTHROW,RAGE,ROCKTOMB
     Ability = 0
-    Item = SITRUSBERRY
+    Item = ROCKIUMZ
     IV = 20
     Ball = 19
 #-------------------------------

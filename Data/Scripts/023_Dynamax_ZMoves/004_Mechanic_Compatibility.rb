@@ -539,6 +539,11 @@ class PokeBattle_Scene
     if megaEvoPossible || ultraPossible || zMovePossible || dynamaxPossible || zodiacPossible
       mechanicPossible = true
     end
+    pbMessage(_INTL("megaEvoPossible={1}", megaEvoPossible))
+    pbMessage(_INTL("ultraPossible={1}", ultraPossible))
+    pbMessage(_INTL("zMovePossible={1}", zMovePossible))
+    pbMessage(_INTL("dynamaxPossible={1}", dynamaxPossible))
+    pbMessage(_INTL("zodiacPossible={1}", zodiacPossible))
     cw.setIndexAndMode(moveIndex,(mechanicPossible) ? 1 : 0)
     needFullRefresh = true
     needRefresh = false
@@ -601,7 +606,7 @@ class PokeBattle_Scene
         if zMovePossible
           if cw.mode==2
             if !battler.pbCompatibleZMoveFromIndex?(cw.index)
-              @battle.pbDisplay(_INTL("{1} is not compatible with {2}!",PBMoves.getName(battler.moves[ret]),PBItems.getName(battler.item)))
+              @battle.pbDisplay(_INTL("{1} is not compatible with {2}!",PBMoves.getName(battler.moves[cw.index]),PBItems.getName(battler.item)))
               #@lastmove[idxBattler]=cw.index
               return -1
             end
