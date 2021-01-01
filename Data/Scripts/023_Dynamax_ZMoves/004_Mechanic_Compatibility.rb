@@ -133,7 +133,6 @@ class PokeBattle_AI
     if pbZMovesInstalled?
       @battle.pbRegisterUltraBurst(idxBattler) if pbEnemyShouldUltraBurst?(idxBattler)
       pbChooseEnemyZMove(idxBattler) if pbEnemyShouldZMove?(idxBattler)
-      return 
     end
     #---------------------------------------------------------------------------
     # Dynamax
@@ -622,7 +621,11 @@ class PokeBattle_Scene
             if !battler.pbCompatibleZMoveFromIndex?(cw.index)
               @battle.pbDisplay(_INTL("{1} is not compatible with {2}!",PBMoves.getName(battler.moves[cw.index]),PBItems.getName(battler.item)))
               #@lastmove[idxBattler]=cw.index
-              return -1
+              if battler.effects[PBEffects::ZMoveButton]
+                battler.effects[PBEffects::ZMoveButton] = false
+                battler.pbZDisplayOldMoves
+              end
+              break if yield -1
             end
           end
         end
@@ -643,6 +646,15 @@ class PokeBattle_Scene
 # Cancel Selection
 #===============================================================================
       elsif Input.trigger?(Input::B)
+        #-----------------------------------------------------------------------
+        # Z-Moves - Reverts to base moves.
+        #-----------------------------------------------------------------------
+        if zMovePossible
+          if battler.effects[PBEffects::ZMoveButton]
+            battler.effects[PBEffects::ZMoveButton] = false
+            battler.pbZDisplayOldMoves
+          end
+        end
         #-----------------------------------------------------------------------
         # Dynamax - Reverts to base moves.
         #-----------------------------------------------------------------------
@@ -680,6 +692,13 @@ class PokeBattle_Scene
         # Z-Moves
         #-----------------------------------------------------------------------
         if zMovePossible
+          battler.effects[PBEffects::ZMoveButton] = !battler.effects[PBEffects::ZMoveButton]
+          if battler.effects[PBEffects::ZMoveButton]
+            battler.pbZDisplayZMoves
+          else
+            battler.pbZDisplayOldMoves
+          end
+          needFullRefresh = true
           pbPlayDecisionSE
           break if yield -4
           needRefresh = true

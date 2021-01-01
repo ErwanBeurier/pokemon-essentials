@@ -13,6 +13,16 @@ Z_RINGS              = [:ZRING, :ZPOWERRING]
 ################################################################################
 # New effects for Z-Moves.
 #===============================================================================
+module PBEffects
+  # These effects apply to a battler
+  UnZMoves = 300 # Records a Pokemon's base moves before using Z-moves.
+  UsedZMoveIndex = 301 # Records the index of the used Z-move. 
+  ZMoveButton = 302 
+  
+  # These effects apply to a battler position
+  ZHeal = 100 # Z-parting shot / Z-memento (weaker form of Lunar Dance/Healing Wish)
+end
+
 class PokeBattle_ActiveSide
   alias zmove_initialize initialize  
   def initialize
@@ -21,10 +31,14 @@ class PokeBattle_ActiveSide
   end
 end
 
-module PBEffects
-  ZHeal = 9
-end
-
+class PokeBattle_Battler
+  alias zmove_pbInitEffects pbInitEffects  
+  def pbInitEffects(batonpass)
+    zmove_pbInitEffects(batonpass)
+    @effects[PBEffects::UnZMoves]      = nil
+    @effects[PBEffects::UsedZMoveIndex] = -1
+  end
+end 
 
 ################################################################################
 # SECTION 3 - Z-CRYSTAL ITEMS
@@ -125,7 +139,8 @@ class PokeBattle_Battler
     return zmovedata != nil 
   end
 
-  def pbCompatibleZMoveFromMove?(move)  
+  def pbCompatibleZMoveFromMove?(move)
+    return true if move.is_a?(PokeBattle_ZMove)
     zmovedata = pbGetZMoveDataIfCompatible(self.pokemon, self.item, move)
     return zmovedata != nil 
   end
@@ -143,7 +158,17 @@ class PokeBattle_Battler
     }
     return nil 
   end
- 
+  
+  def pbZMoveFromType(type)
+    zmovecomps = pbLoadZMoveCompatibility
+    zmovecomps["order"].each { |comp|
+      next if !comp[PBZMove::REQ_TYPE]
+      next if comp[PBZMove::REQ_TYPE] != type
+      return comp[PBZMove::ZMOVE]
+    }
+    return nil 
+  end
+  
   def unlosableItem?(check_item)
     return false if check_item <= 0
     return true if pbIsMail?(check_item)
@@ -151,6 +176,40 @@ class PokeBattle_Battler
     return false if @effects[PBEffects::Transform]
     return true if @pokemon && @pokemon.getMegaForm(true) > 0
     return pbIsUnlosableItem?(check_item, @species, @ability)
+  end 
+  
+  #-----------------------------------------------------------------------------
+  # Displaying Z-moves/normal moves.
+  #-----------------------------------------------------------------------------
+  def pbZDisplayZMoves
+    oldmoves = [@moves[0],@moves[1],@moves[2],@moves[3]]
+    if !@effects[PBEffects::UnZMoves]
+      @effects[PBEffects::UnZMoves] = oldmoves
+    end
+    for i in 0...4
+      next if !@moves[i] || @moves[i].id == 0
+      comp = pbGetZMoveDataIfCompatible(self.pokemon, self.item, @moves[i])
+      next if !comp
+      @moves[i] = PokeBattle_ZMove.pbFromOldMoveAndCrystal(@battle, self, @moves[i], self.item)
+      @moves[i].pp = 1
+      @moves[i].totalpp = 1
+    end 
+  end 
+  
+  def pbZDisplayOldMoves
+    oldmoves = @pokemon.moves
+    # Gets a transformed Pokemon's copied moves from before the Z-move.
+    oldmoves = @effects[PBEffects::UnZMoves] if @effects[PBEffects::Transform] 
+    @moves  = [
+     PokeBattle_Move.pbFromPBMove(@battle,oldmoves[0]),
+     PokeBattle_Move.pbFromPBMove(@battle,oldmoves[1]),
+     PokeBattle_Move.pbFromPBMove(@battle,oldmoves[2]),
+     PokeBattle_Move.pbFromPBMove(@battle,oldmoves[3])
+    ]
+    for i in 0...4
+      next if !@moves[i] || @moves[i].id == 0
+      @moves[i].pp      -= 1 if i == @effects[PBEffects::UsedZMoveIndex]
+    end
   end 
   
   #-----------------------------------------------------------------------------
@@ -206,6 +265,7 @@ class PokeBattle_Battler
       # Use Z-Moves 
       choice[2].zmove=false
       @battle.pbUseZMove(self.index,choice[2],self.item)
+      pbZDisplayOldMoves
     else
       # Use the move
       PBDebug.log("[Move usage] #{pbThis} started using #{choice[2].name}")
@@ -345,6 +405,7 @@ class PokeBattle_Battle
     return @zMove[side][owner]==-1
   end
 
+  
   #-----------------------------------------------------------------------------
   # Registering the use of a Z-Move.
   #-----------------------------------------------------------------------------
@@ -384,7 +445,7 @@ class PokeBattle_Battle
     return if !battler || !battler.pokemon
     return if !battler.hasZMove?
     pbDisplay(_INTL("{1} surrounded itself with its Z-Power!",battler.pbThis))      
-    pbCommonAnimation("ZPower",battler,nil)     
+    pbCommonAnimation("ZPower",battler,nil)
     zmove = PokeBattle_ZMove.pbFromOldMoveAndCrystal(self,battler,move,crystal)
     zmove.pbUse(battler, nil, false)
     side  = battler.idxOwnSide
@@ -623,6 +684,7 @@ class PokeBattle_ZMove < PokeBattle_Move
     # pbmove is the PBMove of the new move.
     super(battle, pbmove)
     @status     = !(move.physicalMove?(move.type) || move.specialMove?(move.type))
+    @category   = move.category
     @oldmove    = move
     @oldname    = move.name
     @is_zmove   = true 
@@ -708,7 +770,8 @@ class PokeBattle_ZMove < PokeBattle_Move
       else
         #selftarget status moves here
         pbZStatus(@oldmove.id,battler) if !specialUsage
-        zchoice[2].name = @name
+        # zchoice[2].name = @name
+        zchoice[2] = @oldmove
         battler.pbUseMove(zchoice)
         @oldmove.name = @oldname
       end      
@@ -716,7 +779,7 @@ class PokeBattle_ZMove < PokeBattle_Move
       if @status
         #targeted status Z's here
         pbZStatus(@oldmove.id,battler) if !specialUsage
-        zchoice[2].name = @name
+        zchoice[2] = @oldmove
         battler.pbUseMove(zchoice)
         @oldmove.name = @oldname
       else
@@ -728,6 +791,7 @@ class PokeBattle_ZMove < PokeBattle_Move
   end 
   
   def PokeBattle_ZMove.pbFromOldMoveAndCrystal(battle,battler,move,crystal)
+    return move if move.is_a?(PokeBattle_ZMove)
     # Load the Z-move data
     zmovedata = pbGetZMoveDataIfCompatible(battler.pokemon, crystal, move)
     pbmove = nil
@@ -740,7 +804,16 @@ class PokeBattle_ZMove < PokeBattle_Move
       return PokeBattle_ZMove.new(battle,move,pbmove)
     end 
     
-    pbmove = PBMove.new(zmovedata[PBZMove::ZMOVE])
+    z_move_id = zmovedata[PBZMove::ZMOVE]
+    
+    # The following moves need to adapt their Z-move to their actual type: 
+    moves_to_check = [PBMoves::WEATHERBALL, PBMoves::TERRAINPULSE]
+    if crystal == PBItems::NORMALIUMZ2 && moves_to_check.include?(move.id)
+      new_type = move.pbBaseType(battler)
+      z_move_id = battler.pbZMoveFromType(new_type)
+    end 
+    
+    pbmove = PBMove.new(z_move_id)
     moveFunction = pbGetMoveData(pbmove.id,MOVE_FUNCTION_CODE) || "Z000"
     className = sprintf("PokeBattle_Move_%s",moveFunction)
     
@@ -750,6 +823,15 @@ class PokeBattle_ZMove < PokeBattle_Move
     return PokeBattle_ZMove.new(battle,move,pbmove)
   end
   
+  # Redefining this method so that damaging Z-moves do not trigger type-changing 
+  # abilities. However Z-moves are affected by Ion Deluge / Electrify; this is 
+  # handled in pbCalcType, which is left unchanged. 
+  def pbBaseType(user)
+    return @type if !@status
+    return super(user)
+  end
+  
+
 #===============================================================================
 # PokeBattle_Move Features needed for move use
 #===============================================================================
