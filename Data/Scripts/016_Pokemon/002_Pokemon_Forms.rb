@@ -397,23 +397,23 @@ MultipleForms.register(:ARCEUS,{
   "getForm" => proc { |pkmn|
     next nil if !isConst?(pkmn.ability,PBAbilities,:MULTITYPE)
     typeArray = {
-       1  => [:FISTPLATE,:FIGHTINIUMZ2],
-       2  => [:SKYPLATE,:FLYINIUMZ2],
-       3  => [:TOXICPLATE,:POISONIUMZ2],
-       4  => [:EARTHPLATE,:GROUNDIUMZ2],
-       5  => [:STONEPLATE,:ROCKIUMZ2],
-       6  => [:INSECTPLATE,:BUGINIUMZ2],
-       7  => [:SPOOKYPLATE,:GHOSTIUMZ2],
-       8  => [:IRONPLATE,:STEELIUMZ2],
-       10 => [:FLAMEPLATE,:FIRIUMZ2],
-       11 => [:SPLASHPLATE,:WATERIUMZ2],
-       12 => [:MEADOWPLATE,:GRASSIUMZ2],
-       13 => [:ZAPPLATE,:ELECTRIUMZ2],
-       14 => [:MINDPLATE,:PSYCHIUMZ2],
-       15 => [:ICICLEPLATE,:ICIUMZ2],
-       16 => [:DRACOPLATE,:DRAGONIUMZ2],
-       17 => [:DREADPLATE,:DARKINIUMZ2],
-       18 => [:PIXIEPLATE,:FAIRIUMZ2]
+       1  => [:FISTPLATE,:FIGHTINIUMZ],
+       2  => [:SKYPLATE,:FLYINIUMZ],
+       3  => [:TOXICPLATE,:POISONIUMZ],
+       4  => [:EARTHPLATE,:GROUNDIUMZ],
+       5  => [:STONEPLATE,:ROCKIUMZ],
+       6  => [:INSECTPLATE,:BUGINIUMZ],
+       7  => [:SPOOKYPLATE,:GHOSTIUMZ],
+       8  => [:IRONPLATE,:STEELIUMZ],
+       10 => [:FLAMEPLATE,:FIRIUMZ],
+       11 => [:SPLASHPLATE,:WATERIUMZ],
+       12 => [:MEADOWPLATE,:GRASSIUMZ],
+       13 => [:ZAPPLATE,:ELECTRIUMZ],
+       14 => [:MINDPLATE,:PSYCHIUMZ],
+       15 => [:ICICLEPLATE,:ICIUMZ],
+       16 => [:DRACOPLATE,:DRAGONIUMZ],
+       17 => [:DREADPLATE,:DARKINIUMZ],
+       18 => [:PIXIEPLATE,:FAIRIUMZ]
     }
     ret = 0
     typeArray.each do |f, items|

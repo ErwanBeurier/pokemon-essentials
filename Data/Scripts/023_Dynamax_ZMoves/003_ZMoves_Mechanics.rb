@@ -47,13 +47,9 @@ end
 #===============================================================================
 def pbIsZCrystal?(item)
   ret = pbGetItemData(item,ITEM_TYPE)
-  return ret && ret==13
-end
-
-def pbIsZCrystal2?(item)
-  ret = pbGetItemData(item,ITEM_TYPE)
   return ret && ret==14
 end
+
 
 def pbIsImportantItem?(item)
   itemData = pbLoadItemsData[getID(PBItems,item)]
@@ -80,13 +76,13 @@ ItemHandlers::UseOnPokemon.add(:BUGINIUMZ,proc{|item,pokemon,scene|
         if !$PokemonBag.pbStoreItem(pokemon.item)
           scene.pbDisplay(_INTL("The Bag is full. The Pokémon's item could not be removed."))
         else
-          pokemon.setItem(zcomp[PBZMove::HELD_ZCRYSTAL])
+          pokemon.setItem(zcomp[PBZMove::ZCRYSTAL])
           scene.pbDisplay(_INTL("The {1} was taken and replaced with the {2}.",itemname,PBItems.getName(item)))
           next true
         end
       end
     else
-      pokemon.setItem(zcomp[PBZMove::HELD_ZCRYSTAL])
+      pokemon.setItem(zcomp[PBZMove::ZCRYSTAL])
       scene.pbDisplay(_INTL("{1} was given the {2} to hold.",pokemon.name,PBItems.getName(item)))
       next true      
     end
@@ -154,7 +150,7 @@ class PokeBattle_Battler
     zmovecomps["order"].each { |comp|
       next if !comp[PBZMove::REQ_TYPE]
       next if comp[PBZMove::REQ_TYPE] != type
-      return comp[PBZMove::HELD_ZCRYSTAL]
+      return comp[PBZMove::ZCRYSTAL]
     }
     return nil 
   end
@@ -1336,12 +1332,11 @@ end
 module PBZMove
   # Z Moves compatibility
   
-  KEY_ZCRYSTAL = 0
-  HELD_ZCRYSTAL = 1
-  REQ_TYPE = 2
-  REQ_MOVE = 3
-  REQ_SPECIES = 4
-  ZMOVE = 5
+  ZCRYSTAL = 0
+  REQ_TYPE = 1
+  REQ_MOVE = 2
+  REQ_SPECIES = 3
+  ZMOVE = 4
 end 
 
 
@@ -1351,9 +1346,8 @@ def pbCompileZMoveCompatibility
   
   pbCompilerEachPreppedLine("PBS/zmovescomp.txt") { |line,lineno|
     record = []
-    lineRecord = pbGetCsvRecord(line,lineno,[0,"eeEEEe",
+    lineRecord = pbGetCsvRecord(line,lineno,[0,"eEEEe",
        PBItems, # Z-Crystal in the bag
-       PBItems, # Z-Crystal held by the Pokémon
        PBTypes, # Move type required for the Z-Move 
        PBMoves, # Specific move required for the Z-Move 
        PBSpecies, # Specific species required for the Z-Move
@@ -1364,11 +1358,8 @@ def pbCompileZMoveCompatibility
     if lineRecord[PBZMove::REQ_TYPE] && lineRecord[PBZMove::REQ_MOVE] && lineRecord[PBZMove::REQ_SPECIES]
       raise _INTL("Z-Moves are specific to either a type of moves, or a pair of a required move and species (do not specifiy a type + a move + a species).\r\n{1}",FileLineData.linereport)
     end
-    records[lineRecord[PBZMove::KEY_ZCRYSTAL]] = [] if !records[lineRecord[PBZMove::KEY_ZCRYSTAL]]
-    records[lineRecord[PBZMove::KEY_ZCRYSTAL]].push(lineRecord)
-    
-    records[lineRecord[PBZMove::HELD_ZCRYSTAL]] = [] if !records[lineRecord[PBZMove::HELD_ZCRYSTAL]]
-    records[lineRecord[PBZMove::HELD_ZCRYSTAL]].push(lineRecord)
+    records[lineRecord[PBZMove::ZCRYSTAL]] = [] if !records[lineRecord[PBZMove::ZCRYSTAL]]
+    records[lineRecord[PBZMove::ZCRYSTAL]].push(lineRecord)
     
     records["order"].push(lineRecord)
   }
@@ -1389,8 +1380,7 @@ def pbSaveZMoveCompatibility
     f.write("\r\n")
     zmovecomps.each { |comp| 
       f.write(sprintf("%s,%s,%s,%s,%s,%s",
-         getConstantName(PBItems,comp[PBZMove::KEY_ZCRYSTAL]),
-         getConstantName(PBItems,comp[PBZMove::HELD_ZCRYSTAL]),
+         getConstantName(PBItems,comp[PBZMove::ZCRYSTAL]),
          (comp[PBZMove::REQ_TYPE] ? getConstantName(PBTypes,comp[PBZMove::REQ_TYPE]) : ""),
          (comp[PBZMove::REQ_MOVE] ? getConstantName(PBMoves,comp[PBZMove::REQ_MOVE]) : ""),
          (comp[PBZMove::REQ_SPECIES] ? getConstantName(PBSpecies,comp[PBZMove::REQ_SPECIES]) : ""),
@@ -1410,8 +1400,6 @@ end
 # This is for ItemHandlers + the use of PokeBattle_ZMove.  
 def pbGetZMoveDataIfCompatible(pokemon, zcrystal, basemove = nil)
   # basemove = the base move to be transformed. For use in battle.
-  # zcrystal is either a Key-item crystal (returns true to pbIsZCrystal2?) 
-  # or a held crystal (returns true to pbIsZCrystal?)   
   zmovecomps = pbLoadZMoveCompatibility
   return nil if !zmovecomps || !zmovecomps[zcrystal]
   
