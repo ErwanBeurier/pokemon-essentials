@@ -7,6 +7,10 @@ NO_Z_MOVE            = 35    # Switch for disabling Z-Moves.
 NO_ULTRA_BURST       = 36    # Switch for disabling Ultra Burst.
 INCLUDE_NEWEST_MOVES = true  # Gives Z-Move effects to Gen 8 status moves.
 Z_RINGS              = [:ZRING, :ZPOWERRING]
+SHORTEN_Z_MOVE_NAMES = true  # If true, Z-moves that have a long name will be 
+                          # shortened when displayed in the FightMenuDisplay 
+                          # (player choosing moves in battle). If false, Z-move 
+                          # names will use the default display.
 
 ################################################################################
 # SECTION 2 - EFFECTS
@@ -15,12 +19,12 @@ Z_RINGS              = [:ZRING, :ZPOWERRING]
 #===============================================================================
 module PBEffects
   # These effects apply to a battler
-  UnZMoves = 300 # Records a Pokemon's base moves before using Z-moves.
+  UnZMoves       = 300 # Records a Pokemon's base moves before using Z-moves.
   UsedZMoveIndex = 301 # Records the index of the used Z-move. 
-  ZMoveButton = 302 
+  ZMoveButton    = 302 
   
   # These effects apply to a battler position
-  ZHeal = 100 # Z-parting shot / Z-memento (weaker form of Lunar Dance/Healing Wish)
+  ZHeal          = 100 # Z-parting shot / Z-memento (weaker form of Lunar Dance/Healing Wish)
 end
 
 class PokeBattle_ActiveSide
@@ -55,7 +59,7 @@ def pbIsImportantItem?(item)
   itemData = pbLoadItemsData[getID(PBItems,item)]
   return false if !itemData
   return true if itemData[ITEM_TYPE] && itemData[ITEM_TYPE]==6
-  return true if itemData[ITEM_TYPE] && itemData[ITEM_TYPE]==14  # Key item representing Z-Crystals.
+  return true if itemData[ITEM_TYPE] && itemData[ITEM_TYPE]==14  # Z-Crystals.
   return true if itemData[ITEM_FIELD_USE] && itemData[ITEM_FIELD_USE]==4
   return true if itemData[ITEM_FIELD_USE] && itemData[ITEM_FIELD_USE]==3 && INFINITE_TMS
   return false
@@ -99,26 +103,6 @@ ItemHandlers::UseOnPokemon.copy(:BUGINIUMZ,:DARKINIUMZ,:DRAGONIUMZ,:ELECTRIUMZ,:
                                 :INCINIUMZ,:PRIMARIUMZ,:EEVIUMZ,:PIKANIUMZ,:SNORLIUMZ, 
                                 :MEWNIUMZ,:TAPUNIUMZ,:MARSHADIUMZ,:PIKASHUNIUMZ,:KOMMONIUMZ,
                                 :LYCANIUMZ,:MIMIKIUMZ,:LUNALIUMZ,:SOLGANIUMZ,:ULTRANECROZIUMZ)
-
-#-------------------------------------------------------------------------------
-# Held Z-Crystals don't return to bag when removed.
-#-------------------------------------------------------------------------------                               
-class PokemonBag
-  def pbStoreItem(item,qty=1)
-    item = getID(PBItems,item)
-    if pbIsZCrystal?(item)
-      return true
-    end
-    if !item || item<1
-      raise ArgumentError.new(_INTL("Item number {1} is invalid.",item))
-    end
-    pocket = pbGetPocket(item)
-    maxsize = maxPocketSize(pocket)
-    maxsize = @pockets[pocket].length+1 if maxsize<0
-    return ItemStorageHelper.pbStoreItem(@pockets[pocket],maxsize,
-                                         BAG_MAX_PER_SLOT,item,qty,true)
-  end
-end
 
 
 ################################################################################
@@ -259,7 +243,7 @@ class PokeBattle_Battler
     end
     if choice[2].zmove 
       # Use Z-Moves 
-      choice[2].zmove=false
+      choice[2].zmove = false
       @battle.pbUseZMove(self.index,choice[2],self.item)
       pbZDisplayOldMoves
     else
@@ -391,7 +375,6 @@ class PokeBattle_Battle
     return false if $game_switches[NO_Z_MOVE]
     return false if !pbHasZRing?(idxBattler)
     return false if !battler.hasZMove?
-    # return false if battler.mega? || battler.hasMega?
     return false if battler.primal? || battler.hasPrimal?
     return false if battler.hasUltra?
     return false if battler.shadowPokemon?
@@ -556,8 +539,8 @@ end
 #===============================================================================
 MultipleForms.register(:NECROZMA,{
 "getUltraForm"=>proc{|pokemon|
-   next 3 if isConst?(pokemon.item,PBItems,:ULTRANECROZIUMZ2) && pokemon.form==1
-   next 4 if isConst?(pokemon.item,PBItems,:ULTRANECROZIUMZ2) && pokemon.form==2
+   next 3 if isConst?(pokemon.item,PBItems,:ULTRANECROZIUMZ) && pokemon.form==1
+   next 4 if isConst?(pokemon.item,PBItems,:ULTRANECROZIUMZ) && pokemon.form==2
    next
 },
 "getUltraName"=>proc{|pokemon|
@@ -657,15 +640,15 @@ end
 class PokeBattle_Move
   attr_accessor :name
   attr_accessor :zmove    # True if the player triggered the Z-Move
-  attr_accessor :is_zmove # True only if the move is an actual Z-Move.
-
+  attr_reader   :short_name
+  
   def to_int; return @id; end
 
   alias zmove_initialize initialize
   def initialize(battle,move)
     zmove_initialize(battle,move)
     @zmove      = false
-    @is_zmove   = false
+    @short_name = @name
   end
 end
 
@@ -683,12 +666,12 @@ class PokeBattle_ZMove < PokeBattle_Move
     @category   = move.category
     @oldmove    = move
     @oldname    = move.name
-    @is_zmove   = true 
     if @status 
       @name     = "Z-" + move.name
     end 
     @baseDamage = pbZMoveBaseDamage(move)
     @thismove   = self
+    @short_name = @name[0..12] + "..." if @name.length > 15 && SHORTEN_Z_MOVE_NAMES
   end
   
   def pbZMoveBaseDamage(oldmove)
@@ -766,7 +749,6 @@ class PokeBattle_ZMove < PokeBattle_Move
       else
         #selftarget status moves here
         pbZStatus(@oldmove.id,battler) if !specialUsage
-        # zchoice[2].name = @name
         zchoice[2] = @oldmove
         battler.pbUseMove(zchoice)
         @oldmove.name = @oldname
@@ -801,13 +783,6 @@ class PokeBattle_ZMove < PokeBattle_Move
     end 
     
     z_move_id = zmovedata[PBZMove::ZMOVE]
-    
-    # The following moves need to adapt their Z-move to their actual type: 
-    moves_to_check = [PBMoves::WEATHERBALL, PBMoves::TERRAINPULSE]
-    if crystal == PBItems::NORMALIUMZ2 && moves_to_check.include?(move.id)
-      new_type = move.pbBaseType(battler)
-      z_move_id = battler.pbZMoveFromType(new_type)
-    end 
     
     pbmove = PBMove.new(z_move_id)
     moveFunction = pbGetMoveData(pbmove.id,MOVE_FUNCTION_CODE) || "Z000"
@@ -1321,7 +1296,7 @@ class PokeBattle_Move_Z009 < PokeBattle_Move_Z007
     # Determine move's category
     @calcCategory = (realAtk>realSpAtk) ? 0 : 1
   end
-end 
+end
 
 
 ################################################################################
@@ -1446,5 +1421,5 @@ def pbGetZMoveDataIfCompatible(pokemon, zcrystal, basemove = nil)
     return comp if reqtype && reqmove && reqspecies
   }
   return nil 
-end 
+end
 

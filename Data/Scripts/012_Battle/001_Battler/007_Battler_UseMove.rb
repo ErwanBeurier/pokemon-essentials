@@ -171,6 +171,9 @@ class PokeBattle_Battler
     skipAccuracyCheck = (specialUsage && choice[2]!=@battle.struggle)
     # Start using the move
     pbBeginTurn(choice)
+    # Changes Z-Move/Max Moves under certain conditions.
+    ret = pbChangeZandMaxMove(choice)
+    choice[2] = ret if ret
     # Force the use of certain moves if they're already being used
     if usingMultiTurnAttack?
       choice[2] = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(@currentMove))

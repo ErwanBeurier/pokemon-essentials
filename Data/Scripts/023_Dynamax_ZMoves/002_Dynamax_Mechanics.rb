@@ -1,6 +1,6 @@
 #===============================================================================
 #
-# Dynamax/Gigantamax Script - Base script by fauno. Heavily modified by Lucidious89.
+# Dynamax/Gigantamax Script - Base script by fauno. Updated by Lucidious89.
 # Max Raid Battles - Created by Lucidious89
 #  For -Pokémon Essentials v18.1-
 #
@@ -840,8 +840,8 @@ class PokeBattle_Battler
         target.damageState.protected = true
         @battle.successStates[user.index].protected = true
         # Max Moves still reduce Raid Shield HP by 1, but only in single battle raids.
-        if @battle.pbSideSize(0)==1 && move.maxMove? &&
-           target.effects[PBEffects::MaxRaidBoss] &&
+        if @battle.pbSideSize(0)==1 && move.maxMove? && move.damagingMove? &&
+           target.effects[PBEffects::MaxRaidBoss] && 
            target.effects[PBEffects::RaidShield]>0
           @battle.pbDisplay(_INTL("{1}'s mysterious barrier took the hit!",target.pbThis))
           target.effects[PBEffects::RaidShield]-=1
@@ -1054,7 +1054,7 @@ class PokeBattle_Battler
          b.effects[PBEffects::MaxRaidBoss] && 
          b.effects[PBEffects::KnockOutCount]>0
         shieldbreak = 1
-        shieldbreak = 2 if move.maxMove?
+        shieldbreak = 2 if move.maxMove? && move.damagingMove?
         if hitNum>0
           shieldbreak = 0
         end
@@ -1439,6 +1439,9 @@ class PokeBattle_Battler
     return false if !powerspot && !DMAX_ANYMAP
     return false if mega? || hasMega?
     return false if primal? || hasPrimal?
+    # Prevents Dynamax if usable Z-Move or Ultra Burst is present.
+    return false if defined?(ultra?) && (ultra? || hasUltra?)
+    return false if defined?(hasZMove?) && hasZMove?
     return false if shadowPokemon?
     return true
   end
@@ -1500,8 +1503,6 @@ class PokeBattle_Battle
     owner = pbGetOwnerIndexFromBattlerIndex(idxBattler)
     return false if $game_switches[NO_DYNAMAX]                             # No Dynamax if switch enabled.
     return false if !battler.hasDynamax?                                   # No Dynamax if ineligible.
-    return false if pbCanUltraCompat?(idxBattler)                          # No Dynamax if Ultra Burst usable.
-    return false if pbCanZMoveCompat?(idxBattler)                          # No Dynamax if Z-Move usable.
     return false if pbCanZodiacCompat?(idxBattler)                         # No Dynamax if Zodiac Power usable.
     return false if wildBattle? && opposes?(idxBattler)                    # No Dynamax for wild Pokemon.
     return true if $DEBUG && Input.press?(Input::CTRL)                     # Allows Dynamax with CTRL in Debug.
@@ -2132,9 +2133,6 @@ class PokeBattle_Move
     @category=1
   end
   
-  # Max Moves use flag "x".
-  def maxMove?; return @flags[/x/]; end 
-  
   # Effect for Ability-ignoring G-Max Moves.
   def pbIgnoreAbilities?; return false; end
     
@@ -2188,147 +2186,7 @@ end
 # Changes Max Moves to a different type under certain conditions.
 #===============================================================================
 class PokeBattle_Battle
-  def pbChangeMaxMove(idxBattler,idxMove)
-    battler  = @battlers[idxBattler]
-    thismove = battler.moves[idxMove]
-    basemove = battler.pokemon.moves[idxMove].id
-    if thismove.type==0 && thismove.maxMove?
-      #-------------------------------------------------------------------------
-      # Abilities that change move type.
-      #-------------------------------------------------------------------------
-      newmove = :ICE      if isConst?(battler.ability,PBAbilities,:REFRIGERATE)
-      newtype = :FAIRY    if isConst?(battler.ability,PBAbilities,:PIXILATE)
-      newtype = :FLYING   if isConst?(battler.ability,PBAbilities,:AERILATE)
-      newtype = :ELECTRIC if isConst?(battler.ability,PBAbilities,:GALVANIZE)
-      #-------------------------------------------------------------------------
-      # Base move is Weather Ball.
-      #-------------------------------------------------------------------------
-      if basemove==getID(PBMoves,:WEATHERBALL)
-        case pbWeather
-        when PBWeather::Sun, PBWeather::HarshSun;   newtype = :FIRE
-        when PBWeather::Rain, PBWeather::HeavyRain; newtype = :WATER
-        when PBWeather::Sandstorm;                  newtype = :ROCK
-        when PBWeather::Hail;                       newtype = :ICE
-        end
-      #-------------------------------------------------------------------------
-      # Base move is Terrain Pulse.
-      #-------------------------------------------------------------------------
-      elsif basemove==getID(PBMoves,:TERRAINPULSE)
-        case @field.terrain
-        when PBBattleTerrains::Electric;            newtype = :ELECTRIC
-        when PBBattleTerrains::Grassy;              newtype = :GRASS
-        when PBBattleTerrains::Misty;               newtype = :FAIRY
-        when PBBattleTerrains::Psychic;             newtype = :PSYCHIC
-        end
-      #-------------------------------------------------------------------------
-      # Base move is Revelation Dance.
-      #-------------------------------------------------------------------------
-      elsif basemove==getID(PBMoves,:REVELATIONDANCE)
-        userTypes = battler.pbTypes(true)
-        newtype   = userTypes[0]
-      #-------------------------------------------------------------------------
-      # Base move is Techno Blast.
-      #-------------------------------------------------------------------------
-      elsif basemove==getID(PBMoves,:TECHNOBLAST) && battler.isSpecies?(:GENESECT)
-        itemtype  = true
-        itemTypes = {
-           :SHOCKDRIVE => :ELECTRIC,
-           :BURNDRIVE  => :FIRE,
-           :CHILLDRIVE => :ICE,
-           :DOUSEDRIVE => :WATER
-        }
-      #-------------------------------------------------------------------------
-      # Base move is Judgment.
-      #------------------------------------------------------------------------- 
-      elsif basemove==getID(PBMoves,:JUDGMENT) && 
-            isConst?(battler.ability,PBAbilities,:MULTITYPE)
-        itemtype  = true
-        itemTypes = {
-           :FISTPLATE   => :FIGHTING,
-           :SKYPLATE    => :FLYING,
-           :TOXICPLATE  => :POISON,
-           :EARTHPLATE  => :GROUND,
-           :STONEPLATE  => :ROCK,
-           :INSECTPLATE => :BUG,
-           :SPOOKYPLATE => :GHOST,
-           :IRONPLATE   => :STEEL,
-           :FLAMEPLATE  => :FIRE,
-           :SPLASHPLATE => :WATER,
-           :MEADOWPLATE => :GRASS,
-           :ZAPPLATE    => :ELECTRIC,
-           :MINDPLATE   => :PSYCHIC,
-           :ICICLEPLATE => :ICE,
-           :DRACOPLATE  => :DRAGON,
-           :DREADPLATE  => :DARK,
-           :PIXIEPLATE  => :FAIRY
-        }
-      #-------------------------------------------------------------------------
-      # Base move is Multi-Attack.
-      #-------------------------------------------------------------------------
-      elsif basemove==getID(PBMoves,:MULTIATTACK) && 
-            isConst?(battler.ability,PBAbilities,:RKSSYSTEM)
-        itemtype  = true
-        itemTypes = {
-           :FIGHTINGMEMORY => :FIGHTING,
-           :SLYINGMEMORY   => :FLYING,
-           :POISONMEMORY   => :POISON,
-           :GROUNDMEMORY   => :GROUND,
-           :ROCKMEMORY     => :ROCK,
-           :BUGMEMORY      => :BUG,
-           :GHOSTMEMORY    => :GHOST,
-           :STEELMEMORY    => :STEEL,
-           :FIREMEMORY     => :FIRE,
-           :WATERMEMORY    => :WATER,
-           :GRASSMEMORY    => :GRASS,
-           :ELECTRICMEMORY => :ELECTRIC,
-           :PSYCHICMEMORY  => :PSYCHIC,
-           :ICEMEMORY      => :ICE,
-           :DRAGONMEMORY   => :DRAGON,
-           :DARKMEMORY     => :DARK,
-           :FAIRYMEMORY    => :FAIRY
-        }
-      end
-      if battler.itemActive? && itemtype
-        itemTypes.each do |item, itemType|
-          next if !isConst?(battler.item,PBItems,item)
-          newtype = itemType
-          break
-        end
-      end
-      #-------------------------------------------------------------------------
-      # Converts Max Move into a Max Move of a new type.
-      #-------------------------------------------------------------------------
-      if newtype
-        newtype  = getID(PBTypes,newtype)
-        gmaxmove = pbGetGMaxMoveFromSpecies(battler,newtype)
-        if battler.gmaxFactor? && gmaxmove
-          maxMove = gmaxmove
-        else
-          maxMove = DYNAMAX_MOVES[newtype]
-        end
-        newMove = getConst(PBMoves,maxMove)
-        @choices[idxBattler][2] = PokeBattle_Move.pbFromPBMove(self,PBMove.new(newMove))
-        @choices[idxBattler][2].makeSpecial if thismove.specialMove?(type)
-        if !pbIsSetGmaxMove?(maxMove)
-          @choices[idxBattler][2].pbSetMaxMovePower(PokeBattle_Move.pbFromPBMove(self,PBMove.new(basemove)))
-        end
-      end
-    end
-  end
   
-  def pbRegisterMove(idxBattler,idxMove,showMessages=true)
-    battler = @battlers[idxBattler]
-    move = battler.moves[idxMove]
-    return false if !pbCanChooseMove?(idxBattler,idxMove,showMessages)
-    @choices[idxBattler][0] = :UseMove   # "Use move"
-    @choices[idxBattler][1] = idxMove    # Index of move to be used
-    @choices[idxBattler][2] = move       # PokeBattle_Move object
-    #---------------------------------------------------------------------------
-    pbChangeMaxMove(idxBattler,idxMove)  # Changes Max Move if needed
-    #---------------------------------------------------------------------------
-    @choices[idxBattler][3] = -1         # No target chosen yet
-    return true
-  end
   
 #===============================================================================
 # Handles the end of round effects of certain G-Max Moves.
@@ -2536,7 +2394,7 @@ end
 #===============================================================================
 # Guards the user from all attacks, including Max Moves.
 #-------------------------------------------------------------------------------
-class PokeBattle_Move_200 < PokeBattle_ProtectMove
+class PokeBattle_Move_D000 < PokeBattle_ProtectMove
   def initialize(battle,move)
     super
     @effect = PBEffects::MaxGuard
@@ -2548,7 +2406,7 @@ end
 #===============================================================================
 # Increases a stat of all ally Pokemon.
 #-------------------------------------------------------------------------------
-class PokeBattle_Move_201 < PokeBattle_StatUpMaxMove
+class PokeBattle_Move_D001 < PokeBattle_StatUpMaxMove
   def initialize(battle,move)
     super
     @statUp = [PBStats::ATTACK,1]  if isConst?(@id,PBMoves,:MAXKNUCKLE)
@@ -2566,7 +2424,7 @@ end
 #===============================================================================
 # Decreases a stat of all opposing Pokemon.
 #-------------------------------------------------------------------------------
-class PokeBattle_Move_202 < PokeBattle_TargetStatDownMaxMove
+class PokeBattle_Move_D002 < PokeBattle_TargetStatDownMaxMove
   def initialize(battle,move)
     super
     @statDown = [PBStats::ATTACK,1]  if isConst?(@id,PBMoves,:MAXWYRMWIND)
@@ -2584,7 +2442,7 @@ end
 #===============================================================================
 # Sets up weather effect on the field.
 #-------------------------------------------------------------------------------
-class PokeBattle_Move_203 < PokeBattle_WeatherMaxMove
+class PokeBattle_Move_D003 < PokeBattle_WeatherMaxMove
   def initialize(battle,move)
     super
     @weatherType = PBWeather::Sun       if isConst?(@id,PBMoves,:MAXFLARE)
@@ -2599,7 +2457,7 @@ end
 #===============================================================================
 # Sets up battle terrain on the field.
 #-------------------------------------------------------------------------------
-class PokeBattle_Move_204 < PokeBattle_TerrainMaxMove
+class PokeBattle_Move_D004 < PokeBattle_TerrainMaxMove
   def initialize(battle,move)
     super
     @terrainType = PBBattleTerrains::Electric if isConst?(@id,PBMoves,:MAXLIGHTNING)
@@ -2614,7 +2472,7 @@ end
 #===============================================================================
 # Damages all Pokemon on the opposing field for 4 turns.
 #-------------------------------------------------------------------------------
-class PokeBattle_Move_205 < PokeBattle_Move
+class PokeBattle_Move_D005 < PokeBattle_Move
   def pbEffectGeneral(user)
     if isConst?(@id,PBMoves,:GMAXVINELASH) &&
        user.pbOpposingSide.effects[PBEffects::VineLash]==0
@@ -2644,7 +2502,7 @@ end
 #===============================================================================
 # Bypasses target's abilities that would reduce or ignore damage.
 #-------------------------------------------------------------------------------
-class PokeBattle_Move_206 < PokeBattle_Move
+class PokeBattle_Move_D006 < PokeBattle_Move
   def pbIgnoreAbilities?; return true; end
 end
 
@@ -2653,7 +2511,7 @@ end
 #===============================================================================
 # Applies status effects on all opposing Pokemon.
 #-------------------------------------------------------------------------------
-class PokeBattle_Move_207 < PokeBattle_StatusMaxMove
+class PokeBattle_Move_D007 < PokeBattle_StatusMaxMove
   def initialize(battle,move)
     super
     if isConst?(@id,PBMoves,:GMAXMALODOR)
@@ -2676,7 +2534,7 @@ end
 #===============================================================================
 # Confuses all opposing Pokemon.
 #-------------------------------------------------------------------------------
-class PokeBattle_Move_208 < PokeBattle_ConfusionMaxMove
+class PokeBattle_Move_D008 < PokeBattle_ConfusionMaxMove
   def pbEffectGeneral(user)
     if isConst?(@id,PBMoves,:GMAXGOLDRUSH) && user.pbOwnedByPlayer?
       @battle.field.effects[PBEffects::PayDay] += 100*user.level
@@ -2690,7 +2548,7 @@ end
 #===============================================================================
 # Sets up entry hazard on the opposing side's field.
 #-------------------------------------------------------------------------------
-class PokeBattle_Move_209 < PokeBattle_Move
+class PokeBattle_Move_D009 < PokeBattle_Move
   def pbEffectGeneral(user)
     if isConst?(@id,PBMoves,:GMAXSTONESURGE) &&
        !user.pbOpposingSide.effects[PBEffects::StealthRock]
@@ -2712,7 +2570,7 @@ end
 #===============================================================================
 # Traps all opposing Pokemon in a vortex for multiple turns.
 #-------------------------------------------------------------------------------
-class PokeBattle_Move_20A < PokeBattle_Move
+class PokeBattle_Move_D010 < PokeBattle_Move
   def pbEffectAgainstTarget(user,target)
     moveid = getID(PBMoves,:FIRESPIN) if isConst?(@id,PBMoves,:GMAXCENTIFERNO)
     moveid = getID(PBMoves,:SANDTOMB) if isConst?(@id,PBMoves,:GMAXSANDBLAST)
@@ -2742,7 +2600,7 @@ end
 #===============================================================================
 # Blows away effects hazards and opponent side's effects.
 #-------------------------------------------------------------------------------
-class PokeBattle_Move_20B < PokeBattle_Move
+class PokeBattle_Move_D011 < PokeBattle_Move
   def pbEffectAgainstTarget(user,target)
     @battle.field.terrain = PBBattleTerrains::None
     target.pbOwnSide.effects[PBEffects::AuroraVeil]    = 0
@@ -2768,7 +2626,7 @@ end
 #===============================================================================
 # Increases gravity on the field for 5 rounds.
 #-------------------------------------------------------------------------------
-class PokeBattle_Move_20C < PokeBattle_Move
+class PokeBattle_Move_D012 < PokeBattle_Move
   def pbEffectGeneral(user)
     if @battle.field.effects[PBEffects::Gravity]==0
       @battle.field.effects[PBEffects::Gravity] = 5
@@ -2800,7 +2658,7 @@ end
 #===============================================================================
 # Heals all ally Pokemon by 1/6th their max HP.
 #-------------------------------------------------------------------------------
-class PokeBattle_Move_20D < PokeBattle_Move
+class PokeBattle_Move_D013 < PokeBattle_Move
   def healingMove?; return true; end
 
   def pbEffectGeneral(user)
@@ -2819,7 +2677,7 @@ end
 #===============================================================================
 # Cures any status conditions of all ally Pokemon.
 #-------------------------------------------------------------------------------
-class PokeBattle_Move_20E < PokeBattle_Move
+class PokeBattle_Move_D014 < PokeBattle_Move
   def pbEffectGeneral(user)
     @battle.eachBattler do |b|
       next if b.opposes?(user)
@@ -2846,7 +2704,7 @@ end
 #===============================================================================
 # User has a 50% chance to recover its last consumed item.
 #-------------------------------------------------------------------------------
-class PokeBattle_Move_20F < PokeBattle_Move
+class PokeBattle_Move_D015 < PokeBattle_Move
   def pbEffectGeneral(user)
     if @battle.pbRandom(10)<5
       item = user.recycleItem
@@ -2871,7 +2729,7 @@ end
 #===============================================================================
 # The target's last used move loses 2 PP.
 #-------------------------------------------------------------------------------
-class PokeBattle_Move_210 < PokeBattle_Move
+class PokeBattle_Move_D016 < PokeBattle_Move
   def pbEffectAgainstTarget(user,target)
     target.eachMove do |m|
       next if m.id!=target.lastRegularMoveUsed
@@ -2887,7 +2745,7 @@ end
 #===============================================================================
 # Sets up Aurora Veil for the party for 5 turns.
 #-------------------------------------------------------------------------------
-class PokeBattle_Move_211 < PokeBattle_Move
+class PokeBattle_Move_D017 < PokeBattle_Move
   def pbEffectGeneral(user)
     user.pbOwnSide.effects[PBEffects::AuroraVeil] = 5
     user.pbOwnSide.effects[PBEffects::AuroraVeil] = 8 if user.hasActiveItem?(:LIGHTCLAY)
@@ -2901,7 +2759,7 @@ end
 #===============================================================================
 # Increases the critical hit rate of all ally Pokemon.
 #-------------------------------------------------------------------------------
-class PokeBattle_Move_212 < PokeBattle_Move
+class PokeBattle_Move_D018 < PokeBattle_Move
   def pbEffectGeneral(user)
     @battle.eachBattler do |b|
       next if b.opposes?(user)
@@ -2917,7 +2775,7 @@ end
 #===============================================================================
 # Prevents all opposing Pokemon from switching.
 #-------------------------------------------------------------------------------
-class PokeBattle_Move_213 < PokeBattle_Move
+class PokeBattle_Move_D019 < PokeBattle_Move
   def pbEffectAgainstTarget(user,target)
     user.eachOpposing do |b|
       b.effects[PBEffects::MeanLook] = user.index
@@ -2930,7 +2788,7 @@ end
 #===============================================================================
 # Has a 50% chance of making the target drowsy.
 #-------------------------------------------------------------------------------
-class PokeBattle_Move_214 < PokeBattle_Move
+class PokeBattle_Move_D020 < PokeBattle_Move
   def pbEffectAgainstTarget(user,target)
     if target.effects[PBEffects::Yawn]==0 && @battle.pbRandom(10)<5
       target.effects[PBEffects::Yawn] = 2
@@ -2944,7 +2802,7 @@ end
 #===============================================================================
 # Infatuates all opposing Pokemon.
 #-------------------------------------------------------------------------------
-class PokeBattle_Move_215 < PokeBattle_Move
+class PokeBattle_Move_D021 < PokeBattle_Move
   def pbEffectAgainstTarget(user,target)
     user.eachOpposing do |b|
       b.pbAttract(user) if b.pbCanAttract?(user)
@@ -2957,7 +2815,7 @@ end
 #===============================================================================
 # Torments all opposing Pokemon.
 #-------------------------------------------------------------------------------
-class PokeBattle_Move_216 < PokeBattle_Move
+class PokeBattle_Move_D022 < PokeBattle_Move
   def pbEffectAgainstTarget(user,target)
     user.eachOpposing do |b|
       b.effects[PBEffects::Torment] = true
@@ -3048,95 +2906,6 @@ class PokeBattle_Move_06E < PokeBattle_FixedDamageMove
 end
 
 #===============================================================================
-# Moves that fail to copy Dynamax attributes.
-#===============================================================================
-# Mimic
-#-------------------------------------------------------------------------------
-class PokeBattle_Move_05C < PokeBattle_Move
-  def pbFailsAgainstTarget?(user,target)
-    lastMoveData = pbGetMoveData(target.lastRegularMoveUsed)
-    if target.lastRegularMoveUsed<=0 || target.dynamax? ||
-       user.pbHasMove?(target.lastRegularMoveUsed) ||
-       @moveBlacklist.include?(lastMoveData[MOVE_FUNCTION_CODE]) ||
-       isConst?(lastMoveData[MOVE_TYPE],PBTypes,:SHADOW)
-      @battle.pbDisplay(_INTL("But it failed!"))
-      return true
-    end
-    return false
-  end
-end
-
-#-------------------------------------------------------------------------------
-# Sketch
-#-------------------------------------------------------------------------------
-class PokeBattle_Move_05D < PokeBattle_Move
-  def pbFailsAgainstTarget?(user,target)
-    lastMoveData = pbGetMoveData(target.lastRegularMoveUsed)
-    if target.lastRegularMoveUsed<=0 || target.dynamax? ||
-       user.pbHasMove?(target.lastRegularMoveUsed) ||
-       @moveBlacklist.include?(lastMoveData[MOVE_FUNCTION_CODE]) ||
-       isConst?(lastMoveData[MOVE_TYPE],PBTypes,:SHADOW)
-      @battle.pbDisplay(_INTL("But it failed!"))
-      return true
-    end
-    return false
-  end
-end
-
-#-------------------------------------------------------------------------------
-# Copycat (copies base move)
-#-------------------------------------------------------------------------------
-class PokeBattle_Move_0AF < PokeBattle_Move
-  def pbEffectGeneral(user)
-    @battle.eachBattler do |b|
-      next if @battle.lastMoveUsed!=b.lastMoveUsed
-      if b.dynamax?
-        movesel  = @battle.choices[b.index][1]
-        lastmove = b.pokemon.moves[movesel].id
-      else
-        lastmove = @battle.lastMoveUsed
-      end
-    end
-    user.pbUseMoveSimple(lastmove)
-  end
-end
-
-#-------------------------------------------------------------------------------
-# Me First
-#-------------------------------------------------------------------------------
-class PokeBattle_Move_0B0 < PokeBattle_Move
-  def pbFailsAgainstTarget?(user,target)
-    return true if pbMoveFailedTargetAlreadyMoved?(target)
-    oppMove = @battle.choices[target.index][2]
-    if !oppMove || oppMove.id<=0 || target.dynamax? ||
-       oppMove.statusMove? || @moveBlacklist.include?(oppMove.function)
-      @battle.pbDisplay(_INTL("But it failed!"))
-      return true
-    end
-    return false
-  end
-end
-
-#-------------------------------------------------------------------------------
-# Transform
-#-------------------------------------------------------------------------------
-class PokeBattle_Move_069 < PokeBattle_Move
-  def pbFailsAgainstTarget?(user,target)
-    if target.effects[PBEffects::Transform] ||
-       target.effects[PBEffects::Illusion]
-      @battle.pbDisplay(_INTL("But it failed!"))
-      return true
-    end
-    if user.effects[PBEffects::Dynamax]>0 &&
-       target.effects[PBEffects::NoDynamax]
-      @battle.pbDisplay(_INTL("But it failed!"))
-      return true
-    end
-    return false
-  end
-end
-
-#===============================================================================
 # Moves that clear away hazard applied with G-Max Steelsurge.
 #===============================================================================
 # Defog
@@ -3180,7 +2949,7 @@ class PokeBattle_Move_110 < PokeBattle_Move
 end
 
 #===============================================================================
-# Move effects that do not trigger against Dynamax targets.
+# Moves that may function differently with Dynamax.
 #===============================================================================
 # Dragon Tail/Circle Throw
 #-------------------------------------------------------------------------------
@@ -3218,6 +2987,25 @@ class PokeBattle_Move_0EC < PokeBattle_Move
         b.pbEffectsOnSwitchIn(true) if roarSwitched.include?(b.index)
       end
     end
+  end
+end
+
+#-------------------------------------------------------------------------------
+# Transform 
+#-------------------------------------------------------------------------------
+class PokeBattle_Move_069 < PokeBattle_Move
+  def pbFailsAgainstTarget?(user,target)
+    if target.effects[PBEffects::Transform] ||
+       target.effects[PBEffects::Illusion]
+      @battle.pbDisplay(_INTL("But it failed!"))
+      return true
+    end
+    if user.effects[PBEffects::Dynamax]>0 &&
+       target.effects[PBEffects::NoDynamax]
+      @battle.pbDisplay(_INTL("But it failed!"))
+      return true
+    end
+    return false
   end
 end
 

@@ -97,6 +97,12 @@ class PokeBattle_Battle
   end
 end
 
+# Flags for Z-Moves and Max Moves.
+class PokeBattle_Move
+  def maxMove?; return @flags[/x/]; end
+  def zMove?;   return @flags[/z/]; end
+end
+
 #===============================================================================
 # Compatibility for mechanics that affect Pokemon sprites.
 #===============================================================================
@@ -157,7 +163,7 @@ end
 class PokeBattle_Battler
   def pbFaint(showMessage=true)
     #---------------------------------------------------------------------------
-    # Initiated capture sequence on Raid Boss when KO'd.
+    # Initiates capture sequence on Raid Boss when KO'd.
     #---------------------------------------------------------------------------
     if pbDynamaxInstalled? && @effects[PBEffects::MaxRaidBoss] && $game_switches[MAXRAID_SWITCH]
       self.hp += 1
@@ -200,6 +206,153 @@ class PokeBattle_Battler
       end
       #-------------------------------------------------------------------------
       @battle.pbEndPrimordialWeather
+    end
+  end
+  
+#===============================================================================
+# Determines correct Z-Move/Max Move to be used under certain conditions.
+#===============================================================================  
+  def pbChangeZandMaxMove(choice)
+    thismove = choice[2]
+    basemove = @pokemon.moves[choice[1]]
+    newtype  = :ELECTRIC if @effects[PBEffects::Electrify]
+    newtype  = :ELECTRIC if @battle.field.effects[PBEffects::IonDeluge] && thismove.type==0
+    if thismove.type==0 && thismove.damagingMove?
+      #-------------------------------------------------------------------------
+      # Abilities that change move type (only applies to Max Moves).
+      #-------------------------------------------------------------------------
+      newtype = :ICE      if hasActiveAbility?(:REFRIGERATE) && thismove.maxMove?
+      newtype = :FAIRY    if hasActiveAbility?(:PIXILATE)    && thismove.maxMove?
+      newtype = :FLYING   if hasActiveAbility?(:AERILATE)    && thismove.maxMove?
+      newtype = :ELECTRIC if hasActiveAbility?(:GALVANIZE)   && thismove.maxMove?
+      #-------------------------------------------------------------------------
+      # Weather is in play and base move is Weather Ball.
+      #-------------------------------------------------------------------------
+      if basemove.id==getID(PBMoves,:WEATHERBALL)
+        case @battle.pbWeather
+        when PBWeather::Sun, PBWeather::HarshSun;   newtype = :FIRE
+        when PBWeather::Rain, PBWeather::HeavyRain; newtype = :WATER
+        when PBWeather::Sandstorm;                  newtype = :ROCK
+        when PBWeather::Hail;                       newtype = :ICE
+        end
+      #-------------------------------------------------------------------------
+      # Terrain is in play and base move is Terrain Pulse.
+      #-------------------------------------------------------------------------
+      elsif basemove.id==getID(PBMoves,:TERRAINPULSE)
+        case @battle.field.terrain
+        when PBBattleTerrains::Electric;            newtype = :ELECTRIC
+        when PBBattleTerrains::Grassy;              newtype = :GRASS
+        when PBBattleTerrains::Misty;               newtype = :FAIRY
+        when PBBattleTerrains::Psychic;             newtype = :PSYCHIC
+        end
+      #-------------------------------------------------------------------------
+      # Base move is Revelation Dance.
+      #-------------------------------------------------------------------------
+      elsif basemove.id==getID(PBMoves,:REVELATIONDANCE)
+        userTypes = pbTypes(true)
+        newtype   = userTypes[0]
+      #-------------------------------------------------------------------------
+      # Base move is Techno Blast and a drive is held by Genesect.
+      #-------------------------------------------------------------------------
+      elsif basemove.id==getID(PBMoves,:TECHNOBLAST) && isSpecies?(:GENESECT)
+        itemtype  = true
+        itemTypes = {
+           :SHOCKDRIVE => :ELECTRIC,
+           :BURNDRIVE  => :FIRE,
+           :CHILLDRIVE => :ICE,
+           :DOUSEDRIVE => :WATER
+        }
+      #-------------------------------------------------------------------------
+      # Base move is Judgment and user has Multitype and held plate.
+      #-------------------------------------------------------------------------
+      elsif basemove.id==getID(PBMoves,:JUDGMENT) && hasActiveAbility?(:MULTITYPE)
+        itemtype  = true
+        itemTypes = {
+           :FISTPLATE   => :FIGHTING,
+           :SKYPLATE    => :FLYING,
+           :TOXICPLATE  => :POISON,
+           :EARTHPLATE  => :GROUND,
+           :STONEPLATE  => :ROCK,
+           :INSECTPLATE => :BUG,
+           :SPOOKYPLATE => :GHOST,
+           :IRONPLATE   => :STEEL,
+           :FLAMEPLATE  => :FIRE,
+           :SPLASHPLATE => :WATER,
+           :MEADOWPLATE => :GRASS,
+           :ZAPPLATE    => :ELECTRIC,
+           :MINDPLATE   => :PSYCHIC,
+           :ICICLEPLATE => :ICE,
+           :DRACOPLATE  => :DRAGON,
+           :DREADPLATE  => :DARK,
+           :PIXIEPLATE  => :FAIRY
+        }
+      #-------------------------------------------------------------------------
+      # Base move is Multi-Attack and user has RKS System and held memory.
+      #-------------------------------------------------------------------------
+      elsif basemove==getID(PBMoves,:MULTIATTACK) && hasActiveAbility?(:RKSSYSTEM)
+        itemtype  = true
+        itemTypes = {
+           :FIGHTINGMEMORY => :FIGHTING,
+           :SLYINGMEMORY   => :FLYING,
+           :POISONMEMORY   => :POISON,
+           :GROUNDMEMORY   => :GROUND,
+           :ROCKMEMORY     => :ROCK,
+           :BUGMEMORY      => :BUG,
+           :GHOSTMEMORY    => :GHOST,
+           :STEELMEMORY    => :STEEL,
+           :FIREMEMORY     => :FIRE,
+           :WATERMEMORY    => :WATER,
+           :GRASSMEMORY    => :GRASS,
+           :ELECTRICMEMORY => :ELECTRIC,
+           :PSYCHICMEMORY  => :PSYCHIC,
+           :ICEMEMORY      => :ICE,
+           :DRAGONMEMORY   => :DRAGON,
+           :DARKMEMORY     => :DARK,
+           :FAIRYMEMORY    => :FAIRY
+        }
+      end
+      if itemActive? && itemtype
+        itemTypes.each do |item, itemType|
+          next if !hasActiveItem?(item)
+          newtype = itemType
+          break
+        end
+      end
+    end
+    if newtype
+      newtype = getID(PBTypes,newtype)
+      #-------------------------------------------------------------------------
+      # Z-Moves - Converts to a new Z-Move of a given type.
+      #-------------------------------------------------------------------------
+      if thismove.zMove?
+        crystal = [:NORMALIUMZ,:EEVIUMZ,:SNORLIUMZ]
+        for i in crystal; newZMove = true if hasActiveItem?(i); end
+        if newZMove || @effects[PBEffects::Electrify]
+          oldMove = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(basemove.id))
+          zMove   = pbZMoveFromType(newtype)
+          newMove = PBMove.new(zMove)
+          newMove = PokeBattle_ZMove.new(@battle,oldMove,newMove)
+          return newMove
+        end
+      end
+      #-------------------------------------------------------------------------
+      # Max Moves - Converts to a new Max Move of a given type.
+      #-------------------------------------------------------------------------
+      if thismove.maxMove?
+        gmaxmove = pbGetGMaxMoveFromSpecies(@pokemon,newtype)
+        if gmaxFactor? && gmaxmove
+          maxMove = gmaxmove
+        else
+          maxMove = DYNAMAX_MOVES[newtype]
+        end
+        newMove = getConst(PBMoves,maxMove)
+        newMove = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(newMove))
+        newMove.makeSpecial if thismove.specialMove?(type)
+        if !pbIsSetGmaxMove?(maxMove)
+          newMove.pbSetMaxMovePower(PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(basemove.id)))
+        end
+        return newMove
+      end
     end
   end
 end
@@ -347,6 +500,7 @@ class PokeBattle_Battle
     pbClearChoice(idxBattler)
   end
   
+  # Checks user for eligibility with any battle mechanics. (Unused)
   def pbCanUseBattleMechanic?(idxBattler)
     if pbCanMegaEvolve?(idxBattler) ||
        pbCanZMoveCompat?(idxBattler) ||
@@ -438,6 +592,18 @@ class PokeBattle_Battle
       end
       b.effects[PBEffects::Rage] = false if !pbChoseMoveFunctionCode?(i,"093")   # Rage
     end
+    #---------------------------------------------------------------------------
+    # Prepare for Z-Moves, if installed.
+    #---------------------------------------------------------------------------
+    if pbZMovesInstalled?
+      @battlers.each_with_index do |b,i|
+        next if @choices[i][0]!=:UseMove
+        side=(opposes?(i)) ? 1 : 0
+        owner=pbGetOwnerIndexFromBattlerIndex(i)
+        @choices[i][2].zmove=(@zMove[side][owner]==i)
+      end
+    end
+    #---------------------------------------------------------------------------
     PBDebug.log("")
     # Calculate move order for this round
     pbCalculatePriority(true)
@@ -536,27 +702,15 @@ class PokeBattle_Scene
     end
     cw.shiftMode = (@battle.pbCanShift?(idxBattler)) ? 1 : 0
     mechanicPossible = false
+    cw.chosen_button = FightMenuDisplay::NoButton
+    cw.chosen_button = FightMenuDisplay::MegaButton       if megaEvoPossible
+    cw.chosen_button = FightMenuDisplay::UltraBurstButton if ultraPossible
+    cw.chosen_button = FightMenuDisplay::ZMoveButton      if zMovePossible
+    cw.chosen_button = FightMenuDisplay::DynamaxButton    if dynamaxPossible
+    cw.chosen_button = FightMenuDisplay::ZodiacButton     if zodiacPossible
     if megaEvoPossible || ultraPossible || zMovePossible || dynamaxPossible || zodiacPossible
       mechanicPossible = true
     end
-    if ultraPossible
-      cw.chosen_button = FightMenuDisplay::UltraBurstButton
-    elsif zMovePossible
-      cw.chosen_button = FightMenuDisplay::ZMoveButton
-    elsif megaEvoPossible
-      cw.chosen_button = FightMenuDisplay::MegaButton
-    elsif dynamaxPossible
-      cw.chosen_button = FightMenuDisplay::DynamaxButton
-    elsif zodiacPossible
-      cw.chosen_button = FightMenuDisplay::ZodiacButton
-    else 
-      cw.chosen_button = FightMenuDisplay::NoButton
-    end 
-    # pbMessage(_INTL("ultraPossible={1}", ultraPossible))
-    # pbMessage(_INTL("zMovePossible={1}", zMovePossible))
-    # pbMessage(_INTL("megaEvoPossible={1}", megaEvoPossible))
-    # pbMessage(_INTL("dynamaxPossible={1}", dynamaxPossible))
-    # pbMessage(_INTL("zodiacPossible={1}", zodiacPossible))
     cw.setIndexAndMode(moveIndex,(mechanicPossible) ? 1 : 0)
     needFullRefresh = true
     needRefresh = false
@@ -619,8 +773,8 @@ class PokeBattle_Scene
         if zMovePossible
           if cw.mode==2
             if !battler.pbCompatibleZMoveFromIndex?(cw.index)
-              @battle.pbDisplay(_INTL("{1} is not compatible with {2}!",PBMoves.getName(battler.moves[cw.index]),PBItems.getName(battler.item)))
-              #@lastmove[idxBattler]=cw.index
+              @battle.pbDisplay(_INTL("{1} is not compatible with {2}!",
+                PBMoves.getName(battler.moves[cw.index]),PBItems.getName(battler.item)))
               if battler.effects[PBEffects::ZMoveButton]
                 battler.effects[PBEffects::ZMoveButton] = false
                 battler.pbZDisplayOldMoves
@@ -746,12 +900,12 @@ end
 # Displays button graphics.
 #===============================================================================
 class FightMenuDisplay < BattleMenuBase
-  NoButton = -1 
-  MegaButton = 0
+  NoButton         =-1 
+  MegaButton       = 0
   UltraBurstButton = 1
-  ZMoveButton = 2
-  DynamaxButton = 3
-  ZodiacButton = 4 
+  ZMoveButton      = 2
+  DynamaxButton    = 3
+  ZodiacButton     = 4
   
   def initialize(viewport,z)
     super(viewport)
@@ -763,22 +917,24 @@ class FightMenuDisplay < BattleMenuBase
       @buttonBitmap  = AnimatedBitmap.new(_INTL("Graphics/Pictures/Battle/cursor_fight"))
       @typeBitmap    = AnimatedBitmap.new(_INTL("Graphics/Pictures/types"))
       @shiftBitmap   = AnimatedBitmap.new(_INTL("Graphics/Pictures/Battle/cursor_shift"))
-      # Load the buttons
+      #-------------------------------------------------------------------------
+      # Loads the correct button for battle mechanics.
+      #-------------------------------------------------------------------------
       @battleButtonBitmap = {}
       # Mega Evolution
-      @battleButtonBitmap[MegaButton] = AnimatedBitmap.new(_INTL("Graphics/Pictures/Battle/cursor_mega"))
+      @battleButtonBitmap[MegaButton]       = AnimatedBitmap.new(_INTL("Graphics/Pictures/Battle/cursor_mega"))
       # Ultra Burst
       @battleButtonBitmap[UltraBurstButton] = AnimatedBitmap.new(_INTL("Graphics/Pictures/Battle/cursor_ultra"))
       # Z-Moves
-      @battleButtonBitmap[ZMoveButton] = AnimatedBitmap.new(_INTL("Graphics/Pictures/Battle/cursor_zmove"))
+      @battleButtonBitmap[ZMoveButton]      = AnimatedBitmap.new(_INTL("Graphics/Pictures/Battle/cursor_zmove"))
       # Dynamax
-      @battleButtonBitmap[DynamaxButton] = AnimatedBitmap.new(_INTL("Graphics/Pictures/Dynamax/cursor_dynamax"))
-      @battleButtonBitmap[DynamaxButton] = AnimatedBitmap.new(_INTL("Graphics/Pictures/Dynamax/cursor_dynamax_2")) if DMAX_BUTTON_2
+      @battleButtonBitmap[DynamaxButton]    = AnimatedBitmap.new(_INTL("Graphics/Pictures/Battle/cursor_dynamax"))
+      @battleButtonBitmap[DynamaxButton]    = AnimatedBitmap.new(_INTL("Graphics/Pictures/Battle/cursor_dynamax_2")) if DMAX_BUTTON_2
       # Zodiac Powers
-      @battleButtonBitmap[ZodiacButton] = AnimatedBitmap.new(_INTL("Graphics/Pictures/Birthsigns/Other/battlezodiac"))
+      @battleButtonBitmap[ZodiacButton]     = AnimatedBitmap.new(_INTL("Graphics/Pictures/Birthsigns/Other/battlezodiac"))
       # Chosen button:
       @chosen_button = NoButton
-      
+      #-------------------------------------------------------------------------
       background = IconSprite.new(0,Graphics.height-96,viewport)
       background.setBitmap("Graphics/Pictures/Battle/overlay_fight")
       addSprite("background",background)
@@ -849,6 +1005,39 @@ class FightMenuDisplay < BattleMenuBase
     }
     #---------------------------------------------------------------------------
   end
+  #-----------------------------------------------------------------------------
+  # Updates the move name display.
+  #-----------------------------------------------------------------------------
+  def refreshButtonNames
+    moves = (@battler) ? @battler.moves : []
+    if !USE_GRAPHICS
+      # Fill in command window
+      commands = []
+      moves.each { |m| commands.push((m && m.id>0) ? m.short_name : "-") }
+      @cmdWindow.commands = commands
+      return
+    end
+    # Draw move names onto overlay
+    @overlay.bitmap.clear
+    textPos = []
+    moves.each_with_index do |m,i|
+      button = @buttons[i]
+      next if !@visibility["button_#{i}"]
+      x = button.x-self.x+button.src_rect.width/2
+      y = button.y-self.y+8
+      moveNameBase = TEXT_BASE_COLOR
+      if m.type>=0
+        # NOTE: This takes a colour from a particular pixel in the button
+        #       graphic and makes the move name's base colour that same colour.
+        #       The pixel is at coordinates 10,34 in the button box. If you
+        #       change the graphic, you may want to change/remove the below line
+        #       of code to ensure the font is an appropriate colour.
+        moveNameBase = button.bitmap.get_pixel(10,button.src_rect.y+34)
+      end
+      textPos.push([m.short_name,x,y,2,moveNameBase,TEXT_SHADOW_COLOR])
+    end
+    pbDrawTextPositions(@overlay.bitmap,textPos)
+  end
   
   #-----------------------------------------------------------------------------
   # Displays appropriate button for battle mechanics.
@@ -857,16 +1046,14 @@ class FightMenuDisplay < BattleMenuBase
     return if !USE_GRAPHICS
     if USE_GRAPHICS
       if @chosen_button != NoButton
-      # if @battler.battle.pbCanUseBattleMechanic?(@battler.index)
         @battleButton.bitmap = @battleButtonBitmap[@chosen_button].bitmap
         @battleButton.x      = self.x+146
         @battleButton.y      = self.y-@battleButtonBitmap[@chosen_button].height/2
         @battleButton.src_rect.height = @battleButtonBitmap[@chosen_button].height/2
         addSprite("battleButton",@battleButton)
-      # else 
-        # @chosen_button = -1
-      # end
-      end 
+      else 
+        @chosen_button = NoButton
+      end
     end
     if @battleButtonBitmap[@chosen_button]
       @battleButton.src_rect.y    = (@mode - 1) * @battleButtonBitmap[@chosen_button].height / 2
@@ -1098,15 +1285,10 @@ class PokemonDataBox < SpriteWrapper
     elsif @battler.primal?
       primalX = (@battler.opposes?) ? 208 : -28   # Foe's/player's
       if isConst?(@battler.pokemon.species,PBSpecies,:KYOGRE)
-        imagePos.push(["Graphics/Pictures/Battle/icon_primal_Kyogre",@spriteBaseX+primalX,4])
+        imagePos.push(["Graphics/Pictures/Battle/icon_primal_Kyogre",@spriteBaseX+primalX+16,34])
       elsif isConst?(@battler.pokemon.species,PBSpecies,:GROUDON)
-        imagePos.push(["Graphics/Pictures/Battle/icon_primal_Groudon",@spriteBaseX+primalX,4])
+        imagePos.push(["Graphics/Pictures/Battle/icon_primal_Groudon",@spriteBaseX+primalX+16,34])
       end
-    #---------------------------------------------------------------------------
-    # Draws Ultra Burst icon.
-    #---------------------------------------------------------------------------
-    #elsif pbZMovesInstalled && @battler.ultra?
-    #  imagePos.push(["Graphics/Pictures/Battle/icon_ultra",@spriteBaseX+8,34])
     #---------------------------------------------------------------------------
     # Draws Dynamax icon.
     #---------------------------------------------------------------------------
@@ -2458,4 +2640,151 @@ def pbCompileTrainers
   save_data(trainers,"Data/trainers.dat")
   MessageTypes.setMessagesAsHash(MessageTypes::TrainerNames,trainernames)
   MessageTypes.setMessagesAsHash(MessageTypes::TrainerLoseText,trainerlosetext)
+end
+
+
+################################################################################
+# SECTION 10 - OLD MOVE COMPATIBILITY
+#===============================================================================
+# Moves that fail to call or copy Z-Moves/Max Moves.
+#===============================================================================
+# Assist
+#-------------------------------------------------------------------------------
+class PokeBattle_Move_0B5 < PokeBattle_Move
+  def pbMoveFailed?(user,targets)
+    @assistMoves = []
+    @battle.pbParty(user.index).each_with_index do |pkmn,i|
+      next if !pkmn || i==user.pokemonIndex
+      next if NEWEST_BATTLE_MECHANICS && pkmn.egg?
+      pkmn.moves.each do |move|
+        next if !move || move.id<=0
+        flags = pbGetMoveData(move.id,MOVE_FLAGS)
+        next if flags.include?("x") || flags.include?("z") # Z-Move/Max Move flags
+        next if @moveBlacklist.include?(pbGetMoveData(move.id,MOVE_FUNCTION_CODE))
+        next if isConst?(move.type,PBTypes,:SHADOW)
+        @assistMoves.push(move.id)
+      end
+    end
+    if @assistMoves.length==0
+      @battle.pbDisplay(_INTL("But it failed!"))
+      return true
+    end
+    return false
+  end
+end
+
+#-------------------------------------------------------------------------------
+# Metronome
+#-------------------------------------------------------------------------------
+class PokeBattle_Move_0B6 < PokeBattle_Move
+  def pbMoveFailed?(user,targets)
+    movesData = pbLoadMovesData
+    @metronomeMove = 0
+    1000.times do
+      move = @battle.pbRandom(PBMoves.maxValue)+1
+      next if !movesData[move]
+      flags = movesData[move][MOVE_FLAGS]
+      next if flags.include?("x") || flags.include?("z") # Z-Move/Max Move flags
+      next if @moveBlacklist.include?(movesData[move][MOVE_FUNCTION_CODE])
+      blMove = false
+      @moveBlacklistSignatures.each do |m|
+        next if !isConst?(move,PBMoves,m)
+        blMove = true; break
+      end
+      next if blMove
+      next if isConst?(movesData[move][MOVE_TYPE],PBTypes,:SHADOW)
+      @metronomeMove = move
+      break
+    end
+    if @metronomeMove<=0
+      @battle.pbDisplay(_INTL("But it failed!"))
+      return true
+    end
+    return false
+  end
+end
+
+#-------------------------------------------------------------------------------
+# Mimic
+#-------------------------------------------------------------------------------
+class PokeBattle_Move_05C < PokeBattle_Move
+  def pbFailsAgainstTarget?(user,target)
+    lastMoveData = pbGetMoveData(target.lastRegularMoveUsed)
+    flags = lastMoveData[MOVE_FLAGS]
+    if target.lastRegularMoveUsed<=0 ||
+       flags.include?("x") || flags.include?("z") || # Z-Move/Max Move flags
+       user.pbHasMove?(target.lastRegularMoveUsed) ||
+       @moveBlacklist.include?(lastMoveData[MOVE_FUNCTION_CODE]) ||
+       isConst?(lastMoveData[MOVE_TYPE],PBTypes,:SHADOW)
+      @battle.pbDisplay(_INTL("But it failed!"))
+      return true
+    end
+    return false
+  end
+end
+
+#-------------------------------------------------------------------------------
+# Sketch
+#-------------------------------------------------------------------------------
+class PokeBattle_Move_05D < PokeBattle_Move
+  def pbFailsAgainstTarget?(user,target)
+    lastMoveData = pbGetMoveData(target.lastRegularMoveUsed)
+    oppMove = @battle.choices[target.index][2]
+    if target.lastRegularMoveUsed<=0 || 
+       oppMove.zMove? || oppMove.maxMove? || # Z-Move/Max Move flags
+       user.pbHasMove?(target.lastRegularMoveUsed) ||
+       @moveBlacklist.include?(lastMoveData[MOVE_FUNCTION_CODE]) ||
+       isConst?(lastMoveData[MOVE_TYPE],PBTypes,:SHADOW)
+      @battle.pbDisplay(_INTL("But it failed!"))
+      return true
+    end
+    return false
+  end
+end
+
+#-------------------------------------------------------------------------------
+# Me First
+#-------------------------------------------------------------------------------
+class PokeBattle_Move_0B0 < PokeBattle_Move
+  def pbFailsAgainstTarget?(user,target)
+    return true if pbMoveFailedTargetAlreadyMoved?(target)
+    oppMove = @battle.choices[target.index][2]
+    if !oppMove || oppMove.id<=0 || 
+       oppMove.zMove? || oppMove.maxMove? || # Z-Move/Max Move flags
+       oppMove.statusMove? || @moveBlacklist.include?(oppMove.function)
+      @battle.pbDisplay(_INTL("But it failed!"))
+      return true
+    end
+    return false
+  end
+end
+
+#-------------------------------------------------------------------------------
+# Copycat
+#-------------------------------------------------------------------------------
+class PokeBattle_Move_0AF < PokeBattle_Move
+  # Copies base move if the move is a Max Move.
+  def pbEffectGeneral(user)
+    @battle.eachBattler do |b|
+      next if @battle.lastMoveUsed!=b.lastMoveUsed
+      if b.dynamax?
+        movesel  = @battle.choices[b.index][1]
+        lastmove = b.pokemon.moves[movesel].id
+      else
+        lastmove = @battle.lastMoveUsed
+      end
+    end
+    user.pbUseMoveSimple(lastmove)
+  end
+  
+  # Always fails if copying Z-Move.
+  def pbMoveFailed?(user,targets)
+    if @battle.lastMoveUsed<=0 || 
+       flags.include?("z") || # Z-Move flag
+       @moveBlacklist.include?(pbGetMoveData(@battle.lastMoveUsed,MOVE_FUNCTION_CODE))
+      @battle.pbDisplay(_INTL("But it failed!"))
+      return true
+    end
+    return false
+  end
 end
