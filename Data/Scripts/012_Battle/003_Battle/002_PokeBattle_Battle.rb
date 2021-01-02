@@ -143,10 +143,6 @@ class PokeBattle_Battle
        [-1] * (@player ? @player.length : 1),
        [-1] * (@opponent ? @opponent.length : 1)
     ]
-    @zMove             = [
-       [-1] * (@player ? @player.length : 1),
-       [-1] * (@opponent ? @opponent.length : 1)
-    ]
     @initialItems      = [
        Array.new(@party1.length) { |i| (@party1[i]) ? @party1[i].item : 0 },
        Array.new(@party2.length) { |i| (@party2[i]) ? @party2[i].item : 0 }

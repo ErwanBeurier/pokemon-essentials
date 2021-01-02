@@ -310,7 +310,6 @@ SHINY_WILD_POKEMON_SWITCH = 31
 FATEFUL_ENCOUNTER_SWITCH  = 32
 NO_MONEY_LOSS             = 33
 NO_MEGA_EVOLUTION         = 34
-NO_Z_MOVE                 = 34 # Change to a new variable if needed. 
 
 #===============================================================================
 # * The ID of the common event that runs when the player starts fishing (runs

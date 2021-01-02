@@ -2,7 +2,7 @@ class PokeBattle_Move
   attr_reader   :battle
   attr_reader   :realMove
   attr_accessor :id
-  attr_accessor :name
+  attr_reader   :name
   attr_reader   :function
   attr_reader   :baseDamage
   attr_reader   :type
@@ -17,8 +17,6 @@ class PokeBattle_Move
   attr_accessor :calcType
   attr_accessor :powerBoost
   attr_accessor :snatched
-  attr_accessor :zmove # True if the player triggered the Z-Move
-  attr_accessor :is_zmove # True only if the move is an actual Z-Move. 
 
   def to_int; return @id; end
 
@@ -45,8 +43,6 @@ class PokeBattle_Move
     @calcType   = -1
     @powerBoost = false   # For Aerilate, Pixilate, Refrigerate, Galvanize
     @snatched   = false
-    @zmove      = false
-    @is_zmove      = false
   end
 
   # This is the code actually used to generate a PokeBattle_Move object. The

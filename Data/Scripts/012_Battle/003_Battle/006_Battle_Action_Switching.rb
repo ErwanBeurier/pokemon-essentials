@@ -361,13 +361,6 @@ class PokeBattle_Battle
       battler.eachMove { |m| m.pp = m.totalpp }
       @positions[battler.index].effects[PBEffects::LunarDance] = false
     end
-    # Z-Parting shot/Z-Memento 
-    if @positions[battler.index].effects[PBEffects::ZHeal] && battler.canHeal?
-      pbCommonAnimation("ZHeal",battler)
-      pbDisplay(_INTL("The Z-Power healed {1}!",battler.pbThis))
-      battler.pbRecoverHP(battler.totalhp)
-      @positions[battler.index].effects[PBEffects::ZHeal] = false
-    end
   end 
   
   
@@ -386,8 +379,8 @@ class PokeBattle_Battle
     end
     # Update battlers' participants (who will gain Exp/EVs when a battler faints)
     eachBattler { |b| b.pbUpdateParticipants }
-    # Healing Wish / Lunar Dance / Z-Parting shot/Z-Memento 
-    pbActivateHealingWish(battler)
+	# Healing Wish / Lunar Dance
+	pbActivateHealingWish(battler)
     # Entry hazards
     # Stealth Rock
     if battler.pbOwnSide.effects[PBEffects::StealthRock] && battler.takesIndirectDamage? &&

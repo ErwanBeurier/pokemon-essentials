@@ -18,7 +18,6 @@ class PokeBattle_Battle
     end
     # If idxBattler chose to Mega Evolve, cancel it
     pbUnregisterMegaEvolution(idxBattler)
-    pbUnregisterZMove(idxBattler)
     # Clear idxBattler's choice
     pbClearChoice(idxBattler)
   end
@@ -65,18 +64,14 @@ class PokeBattle_Battle
     return true if pbAutoFightMenu(idxBattler)
     # Regular move selection
     ret = false
-    canMegaEvolve = pbCanMegaEvolve?(idxBattler)
-    canZMove = pbCanZMove?(idxBattler)
-    @scene.pbFightMenu(idxBattler, canMegaEvolve, canZMove) { |cmd|
+    @scene.pbFightMenu(idxBattler,pbCanMegaEvolve?(idxBattler)) { |cmd|
       case cmd
       when -1   # Cancel
-      when -2   # Toggle Mega Evolution / Z-Move
-        pbToggleRegisteredMegaEvolution(idxBattler) if canMegaEvolve
-        pbToggleRegisteredZMove(idxBattler) if canZMove
+      when -2   # Toggle Mega Evolution
+        pbToggleRegisteredMegaEvolution(idxBattler)
         next false
       when -3   # Shift
         pbUnregisterMegaEvolution(idxBattler)
-        pbUnregisterZMove(idxBattler)
         pbRegisterShift(idxBattler)
         ret = true
       else      # Chose a move to use

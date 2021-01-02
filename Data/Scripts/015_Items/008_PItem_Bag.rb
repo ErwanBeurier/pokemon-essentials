@@ -128,9 +128,6 @@ class PokemonBag
 
   def pbStoreItem(item,qty=1)
     item = getID(PBItems,item)
-    if pbIsZCrystal?(item)
-      return true
-    end
     if !item || item<1
       raise ArgumentError.new(_INTL("Item number {1} is invalid.",item))
     end
