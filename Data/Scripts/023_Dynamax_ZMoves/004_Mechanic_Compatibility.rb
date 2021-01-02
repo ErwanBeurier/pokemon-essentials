@@ -138,7 +138,10 @@ class PokeBattle_AI
     #---------------------------------------------------------------------------
     if pbZMovesInstalled?
       @battle.pbRegisterUltraBurst(idxBattler) if pbEnemyShouldUltraBurst?(idxBattler)
-      pbChooseEnemyZMove(idxBattler) if pbEnemyShouldZMove?(idxBattler)
+      if pbEnemyShouldZMove?(idxBattler)
+        pbChooseEnemyZMove(idxBattler) 
+        return
+      end
     end
     #---------------------------------------------------------------------------
     # Dynamax
@@ -289,7 +292,7 @@ class PokeBattle_Battler
       #-------------------------------------------------------------------------
       # Base move is Multi-Attack and user has RKS System and held memory.
       #-------------------------------------------------------------------------
-      elsif basemove==getID(PBMoves,:MULTIATTACK) && hasActiveAbility?(:RKSSYSTEM)
+      elsif basemove.id==getID(PBMoves,:MULTIATTACK) && hasActiveAbility?(:RKSSYSTEM)
         itemtype  = true
         itemTypes = {
            :FIGHTINGMEMORY => :FIGHTING,
@@ -493,7 +496,8 @@ class PokeBattle_Battle
     pbUnregisterUltraBurst(idxBattler)  if pbZMovesInstalled?
     pbUnregisterZodiacPower(idxBattler) if pbZodiacInstalled?
     if pbDynamaxInstalled? && pbRegisteredDynamax?(idxBattler)
-      pbUnregisterDynamax(idxBattler)     
+      pbUnregisterDynamax(idxBattler)
+      @battlers[idxBattler].effects[PBEffects::DButton] = false
       @battlers[idxBattler].pbUnMaxMove
     end
     #---------------------------------------------------------------------------
@@ -597,6 +601,7 @@ class PokeBattle_Battle
     #---------------------------------------------------------------------------
     if pbZMovesInstalled?
       @battlers.each_with_index do |b,i|
+        next if !b || b.fainted?
         next if @choices[i][0]!=:UseMove
         side=(opposes?(i)) ? 1 : 0
         owner=pbGetOwnerIndexFromBattlerIndex(i)
@@ -666,7 +671,8 @@ class PokeBattle_Battle
         pbUnregisterUltraBurst(idxBattler)  if pbZMovesInstalled?
         pbUnregisterZodiacPower(idxBattler) if pbZodiacInstalled?
         if pbDynamaxInstalled? && pbRegisteredDynamax?(idxBattler)
-          pbUnregisterDynamax(idxBattler)     
+          pbUnregisterDynamax(idxBattler)
+          @battlers[idxBattler].effects[PBEffects::DButton] = false
           @battlers[idxBattler].pbUnMaxMove
         end
         #-----------------------------------------------------------------------
@@ -1005,19 +1011,18 @@ class FightMenuDisplay < BattleMenuBase
     }
     #---------------------------------------------------------------------------
   end
+  
   #-----------------------------------------------------------------------------
   # Updates the move name display.
   #-----------------------------------------------------------------------------
   def refreshButtonNames
     moves = (@battler) ? @battler.moves : []
     if !USE_GRAPHICS
-      # Fill in command window
       commands = []
       moves.each { |m| commands.push((m && m.id>0) ? m.short_name : "-") }
       @cmdWindow.commands = commands
       return
     end
-    # Draw move names onto overlay
     @overlay.bitmap.clear
     textPos = []
     moves.each_with_index do |m,i|
@@ -1027,11 +1032,6 @@ class FightMenuDisplay < BattleMenuBase
       y = button.y-self.y+8
       moveNameBase = TEXT_BASE_COLOR
       if m.type>=0
-        # NOTE: This takes a colour from a particular pixel in the button
-        #       graphic and makes the move name's base colour that same colour.
-        #       The pixel is at coordinates 10,34 in the button box. If you
-        #       change the graphic, you may want to change/remove the below line
-        #       of code to ensure the font is an appropriate colour.
         moveNameBase = button.bitmap.get_pixel(10,button.src_rect.y+34)
       end
       textPos.push([m.short_name,x,y,2,moveNameBase,TEXT_SHADOW_COLOR])
@@ -2765,13 +2765,12 @@ end
 class PokeBattle_Move_0AF < PokeBattle_Move
   # Copies base move if the move is a Max Move.
   def pbEffectGeneral(user)
+    lastmove = @battle.lastMoveUsed
     @battle.eachBattler do |b|
       next if @battle.lastMoveUsed!=b.lastMoveUsed
       if b.dynamax?
         movesel  = @battle.choices[b.index][1]
         lastmove = b.pokemon.moves[movesel].id
-      else
-        lastmove = @battle.lastMoveUsed
       end
     end
     user.pbUseMoveSimple(lastmove)
