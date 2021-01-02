@@ -678,6 +678,9 @@ class PokeBattle_ZMove < PokeBattle_Move
     if @status
       # Status moves remain status. 
       return 0
+    elsif oldmove.function == "070"
+      # One-hit KO moves. 
+      return 180 
     elsif @baseDamage != 1
       # Then the base damage is given in the moves.txt PBS file. 
       return @baseDamage
@@ -721,7 +724,7 @@ class PokeBattle_ZMove < PokeBattle_Move
       return 190
     elsif check<131
       return 195
-    elsif check>139
+    else
       return 200
     end
   end
