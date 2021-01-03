@@ -2181,16 +2181,11 @@ class PokeBattle_Move
     end
   end
 end
- 
-#===============================================================================
-# Changes Max Moves to a different type under certain conditions.
-#===============================================================================
-class PokeBattle_Battle
-  
   
 #===============================================================================
 # Handles the end of round effects of certain G-Max Moves.
 #===============================================================================
+class PokeBattle_Battle
   def pbEORMaxMoveEffects(priority) # Added to def pbEndOfRoundPhase
     priority.each do |b|
       b.effects[PBEffects::MaxGuard] = false

@@ -5,12 +5,14 @@
 #===============================================================================
 NO_Z_MOVE            = 35    # Switch for disabling Z-Moves.
 NO_ULTRA_BURST       = 36    # Switch for disabling Ultra Burst.
-INCLUDE_NEWEST_MOVES = true  # Gives Z-Move effects to Gen 8 status moves.
-Z_RINGS              = [:ZRING, :ZPOWERRING]
+INCLUDE_NEWEST_MOVES = true  # If true, gives Z-Move effects to Gen 8 status moves.
 SHORTEN_Z_MOVE_NAMES = true  # If true, Z-moves that have a long name will be 
-                          # shortened when displayed in the FightMenuDisplay 
-                          # (player choosing moves in battle). If false, Z-move 
-                          # names will use the default display.
+                             # shortened when displayed in the FightMenuDisplay 
+                             # (player choosing moves in battle). If false, Z-move 
+                             # names will use the default display.
+                          
+Z_RINGS              = [:ZRING, :ZPOWERRING]
+
 
 ################################################################################
 # SECTION 2 - EFFECTS
@@ -44,6 +46,7 @@ class PokeBattle_Battler
   end
 end 
 
+
 ################################################################################
 # SECTION 3 - Z-CRYSTAL ITEMS
 ################################################################################
@@ -53,7 +56,6 @@ def pbIsZCrystal?(item)
   ret = pbGetItemData(item,ITEM_TYPE)
   return ret && ret==14
 end
-
 
 def pbIsImportantItem?(item)
   itemData = pbLoadItemsData[getID(PBItems,item)]
@@ -68,41 +70,37 @@ end
 #===============================================================================
 # Equipping holdable Z-Crystals from key item.
 #===============================================================================
-ItemHandlers::UseOnPokemon.add(:BUGINIUMZ,proc{|item,pokemon,scene|
-  # Find the corresponding compatibility conditions 
+ItemHandlers::UseOnPokemon.add(:NORMALIUMZ,proc{|item,pokemon,scene|
+  # Find the corresponding compatibility conditions
   zcomp = pbGetZMoveDataIfCompatible(pokemon,item)
-  if zcomp
-    scene.pbDisplay(_INTL("The {1} will be given to {2} so that it can use its Z-Power!",PBItems.getName(item),pokemon.name))
-    if pokemon.item!=0
-      itemname=PBItems.getName(pokemon.item)
-      scene.pbDisplay(_INTL("{1} is already holding one {2}.\1",pokemon.name,itemname))
-      if scene.pbConfirm(_INTL("Would you like to switch the two items?"))   
-        if !$PokemonBag.pbStoreItem(pokemon.item)
-          scene.pbDisplay(_INTL("The Bag is full. The Pokémon's item could not be removed."))
-        else
-          pokemon.setItem(zcomp[PBZMove::ZCRYSTAL])
-          scene.pbDisplay(_INTL("The {1} was taken and replaced with the {2}.",itemname,PBItems.getName(item)))
-          next true
-        end
+  next false if !zcomp && !scene.pbConfirm(_INTL("This Pokémon currently can't use this crystal's Z-Power. Is that OK?"))
+  scene.pbDisplay(_INTL("The {1} will be given to the Pokémon so that the Pokémon can use its Z-Power!",PBItems.getName(item)))
+  if pokemon.item!=0
+    itemname = PBItems.getName(pokemon.item)
+    scene.pbDisplay(_INTL("{1} is already holding a {2}.\1",pokemon.name,itemname))
+    if scene.pbConfirm(_INTL("Would you like to switch the two items?"))   
+      if !$PokemonBag.pbStoreItem(pokemon.item)
+        scene.pbDisplay(_INTL("The Bag is full. The Pokémon's item could not be removed."))
+        next false
+      else
+        scene.pbDisplay(_INTL("You took the Pokémon's {1} and gave it the {2}.",itemname,PBItems.getName(item)))
       end
     else
-      pokemon.setItem(zcomp[PBZMove::ZCRYSTAL])
-      scene.pbDisplay(_INTL("{1} was given the {2} to hold.",pokemon.name,PBItems.getName(item)))
-      next true      
+      next false
     end
-  else       
-    scene.pbDisplay(_INTL("It had no effect."))
-    next false
   end
+  pokemon.setItem(item)
+  scene.pbDisplay(_INTL("Your Pokémon is now holding {1}!",PBItems.getName(item)))
+  next true
 })
 
-ItemHandlers::UseOnPokemon.copy(:BUGINIUMZ,:DARKINIUMZ,:DRAGONIUMZ,:ELECTRIUMZ,:FAIRIUMZ, 
-                                :FIGHTINIUMZ,:FIRIUMZ,:FLYINIUMZ,:GHOSTIUMZ,:GRASSIUMZ, 
-                                :GROUNDIUMZ,:ICIUMZ,:NORMALIUMZ,:POISONIUMZ,:PSYCHIUMZ, 
-                                :ROCKIUMZ,:STEELIUMZ,:WATERIUMZ,:ALORAICHIUMZ,:DECIDIUMZ, 
-                                :INCINIUMZ,:PRIMARIUMZ,:EEVIUMZ,:PIKANIUMZ,:SNORLIUMZ, 
-                                :MEWNIUMZ,:TAPUNIUMZ,:MARSHADIUMZ,:PIKASHUNIUMZ,:KOMMONIUMZ,
-                                :LYCANIUMZ,:MIMIKIUMZ,:LUNALIUMZ,:SOLGANIUMZ,:ULTRANECROZIUMZ)
+ItemHandlers::UseOnPokemon.copy(:NORMALIUMZ,  :FIRIUMZ,     :WATERIUMZ,  :ELECTRIUMZ,   :GRASSIUMZ,
+                                :ICIUMZ,      :FIGHTINIUMZ, :POISONIUMZ, :GROUNDIUMZ,   :FLYINIUMZ,  
+                                :PSYCHIUMZ,   :BUGINIUMZ,   :ROCKIUMZ,   :GHOSTIUMZ,    :DRAGONIUMZ,
+                                :DARKINIUMZ,  :STEELIUMZ,   :FAIRIUMZ,   :ALORAICHIUMZ, :DECIDIUMZ,
+                                :INCINIUMZ,   :PRIMARIUMZ,  :EEVIUMZ,    :PIKANIUMZ,    :SNORLIUMZ, 
+                                :MEWNIUMZ,    :TAPUNIUMZ,   :MARSHADIUMZ,:PIKASHUNIUMZ, :KOMMONIUMZ,
+                                :LYCANIUMZ,   :MIMIKIUMZ,   :LUNALIUMZ,  :SOLGANIUMZ,   :ULTRANECROZIUMZ)
 
 
 ################################################################################
@@ -815,7 +813,7 @@ class PokeBattle_ZMove < PokeBattle_Move
 # Z-Status Effect check
 #=============================================================================== 
   def pbZStatus(move,attacker)
-    cause = "Z-Power"
+    boost = ""
     #---------------------------------------------------------------------------
     # Z-Status moves that raise Attack.
     #---------------------------------------------------------------------------
@@ -840,7 +838,11 @@ class PokeBattle_ZMove < PokeBattle_Move
     atkStage = 3 if atkID3.include?(move)
     if atkStage
       if attacker.pbCanRaiseStatStage?(PBStats::ATTACK,attacker)
-        attacker.pbRaiseStatStageByCause(PBStats::ATTACK,atkStage,attacker,cause,true)
+        attacker.pbRaiseStatStageBasic(PBStats::ATTACK,atkStage)
+        @battle.pbCommonAnimation("StatUp",attacker)
+        boost = " sharply"     if atkStage==2
+        boost = " drastically" if atkStage==3
+        @battle.pbDisplayBrief(_INTL("{1} boosted its Attack{2} using its Z-Power!",attacker.pbThis,boost))
       end
     end
     #---------------------------------------------------------------------------
@@ -866,7 +868,11 @@ class PokeBattle_ZMove < PokeBattle_Move
     defStage = 3 if defID3.include?(move)
     if defStage
       if attacker.pbCanRaiseStatStage?(PBStats::DEFENSE,attacker)
-        attacker.pbRaiseStatStageByCause(PBStats::DEFENSE,defStage,attacker,cause,true)
+        attacker.pbRaiseStatStageBasic(PBStats::DEFENSE,defStage)
+        @battle.pbCommonAnimation("StatUp",attacker)
+        boost = " sharply"     if defStage==2
+        boost = " drastically" if defStage==3
+        @battle.pbDisplayBrief(_INTL("{1} boosted its Defense{2} using its Z-Power!",attacker.pbThis,boost))
       end
     end
     #---------------------------------------------------------------------------
@@ -890,7 +896,11 @@ class PokeBattle_ZMove < PokeBattle_Move
     spatkStage = 3 if spatkID3.include?(move)
     if spatkStage
       if attacker.pbCanRaiseStatStage?(PBStats::SPATK,attacker)
-        attacker.pbRaiseStatStageByCause(PBStats::SPATK,spatkStage,attacker,cause,true)
+        attacker.pbRaiseStatStageBasic(PBStats::SPATK,spatkStage)
+        @battle.pbCommonAnimation("StatUp",attacker)
+        boost = " sharply"     if spatkStage==2
+        boost = " drastically" if spatkStage==3
+        @battle.pbDisplayBrief(_INTL("{1} boosted its Sp. Atk{2} using its Z-Power!",attacker.pbThis,boost))
       end
     end
     #---------------------------------------------------------------------------
@@ -914,7 +924,11 @@ class PokeBattle_ZMove < PokeBattle_Move
     spdefStage = 3 if spdefID3.include?(move)
     if spdefStage
       if attacker.pbCanRaiseStatStage?(PBStats::SPDEF,attacker)
-        attacker.pbRaiseStatStageByCause(PBStats::SPDEF,spdefStage,attacker,cause,true)
+        attacker.pbRaiseStatStageBasic(PBStats::SPDEF,spdefStage)
+        @battle.pbCommonAnimation("StatUp",attacker)
+        boost = " sharply"     if spdefStage==2
+        boost = " drastically" if spdefStage==3
+        @battle.pbDisplayBrief(_INTL("{1} boosted its Sp. Def{2} using its Z-Power!",attacker.pbThis,boost))
       end
     end
     #---------------------------------------------------------------------------
@@ -939,7 +953,11 @@ class PokeBattle_ZMove < PokeBattle_Move
     speedStage = 3 if speedID3.include?(move)  
     if speedStage
       if attacker.pbCanRaiseStatStage?(PBStats::SPEED,attacker)
-        attacker.pbRaiseStatStageByCause(PBStats::SPEED,speedStage,attacker,cause,true)
+        attacker.pbRaiseStatStageBasic(PBStats::SPEED,speedStage)
+        @battle.pbCommonAnimation("StatUp",attacker)
+        boost = " sharply"     if speedStage==2
+        boost = " drastically" if speedStage==3
+        @battle.pbDisplayBrief(_INTL("{1} boosted its Speed{2} using its Z-Power!",attacker.pbThis,boost))
       end
     end
     #---------------------------------------------------------------------------
@@ -957,7 +975,11 @@ class PokeBattle_ZMove < PokeBattle_Move
     accStage = 3 if accID3.include?(move)
     if accStage
       if attacker.pbCanRaiseStatStage?(PBStats::ACCURACY,attacker)
-        attacker.pbRaiseStatStageByCause(PBStats::ACCURACY,accStage,attacker,cause,true)
+        attacker.pbRaiseStatStageBasic(PBStats::ACCURACY,accStage)
+        @battle.pbCommonAnimation("StatUp",attacker)
+        boost = " sharply"     if accStage==2
+        boost = " drastically" if accStage==3
+        @battle.pbDisplayBrief(_INTL("{1} boosted its Accuracy{2} using its Z-Power!",attacker.pbThis,boost))
       end
     end
     #---------------------------------------------------------------------------
@@ -976,7 +998,11 @@ class PokeBattle_ZMove < PokeBattle_Move
     evaStage = 3 if evaID3.include?(move)
     if evaStage
       if attacker.pbCanRaiseStatStage?(PBStats::EVASION,attacker)
-        attacker.pbRaiseStatStageByCause(PBStats::EVASION,evaStage,attacker,cause,true)
+        attacker.pbRaiseStatStageBasic(PBStats::EVASION,speedStage)
+        @battle.pbCommonAnimation("StatUp",attacker)
+        boost = " sharply"     if evaStage==2
+        boost = " drastically" if evaStage==3
+        @battle.pbDisplayBrief(_INTL("{1} boosted its Evasion{2} using its Z-Power!",attacker.pbThis,boost))
       end
     end
     #---------------------------------------------------------------------------
@@ -998,15 +1024,14 @@ class PokeBattle_ZMove < PokeBattle_Move
     statStage = 3 if statID3.include?(move)
     if statStage
       showAnim = true
-      msg = "boosted"             if statStage==1
-      msg = "sharply boosted"     if statStage==2
-      msg = "drastically boosted" if statStage==3
       for stat in [PBStats::ATTACK,PBStats::DEFENSE,PBStats::SPEED,PBStats::SPATK,PBStats::SPDEF]
         if attacker.pbCanRaiseStatStage?(stat,attacker)
           attacker.pbRaiseStatStageBasic(stat,statStage)
           if showAnim
             @battle.pbCommonAnimation("StatUp",attacker)
-            @battle.pbDisplayBrief(_INTL("{1}'s Z-Power {2} its stats!",attacker.pbThis,msg))
+            boost = " sharply"     if statStage==2
+            boost = " drastically" if statStage==3
+            @battle.pbDisplayBrief(_INTL("{1} boosted its stats{2} using its Z-Power!",attacker.pbThis,boost))
           end
           showAnim = false
         end
@@ -1029,13 +1054,17 @@ class PokeBattle_ZMove < PokeBattle_Move
     resetID = []
     for i in reset; resetID.push(getID(PBMoves,i)); end
     if resetID.include?(move)
+      showMsg = true
       for stat in [PBStats::ATTACK,PBStats::DEFENSE,PBStats::SPEED,PBStats::SPATK,
                    PBStats::SPDEF,PBStats::ACCURACY,PBStats::EVASION]
         if attacker.stages[stat]<0
           attacker.stages[stat]=0
+          if showMsg
+            @battle.pbDisplayBrief(_INTL("{1} returned its decreased stats to normal using its Z-Power!",attacker.pbThis))
+            showMsg = false
+          end
         end
       end
-      @battle.pbDisplayBrief(_INTL("{1}'s Z-Power returned its decreased stats to normal!",attacker.pbThis))
     end
     #---------------------------------------------------------------------------
     # Z-Status moves that heal HP.
@@ -1053,9 +1082,9 @@ class PokeBattle_ZMove < PokeBattle_Move
     if move==getID(PBMoves,:CURSE) && attacker.pbHasType?(:GHOST)
       healID1.push(move)
     end
-    if healID1.include?(move)
+    if healID1.include?(move) && attacker.hp<attacker.totalhp
       attacker.pbRecoverHP(attacker.totalhp,false)
-      @battle.pbDisplayBrief(_INTL("{1}'s Z-Power restored its health!",attacker.pbThis))
+      @battle.pbDisplayBrief(_INTL("{1} restored its HP using its Z-Power!",attacker.pbThis))
     end
     if healID2.include?(move)
       attacker.effects[PBEffects::ZHeal] = true
@@ -1069,7 +1098,7 @@ class PokeBattle_ZMove < PokeBattle_Move
     if critID.include?(move)
       if attacker.effects[PBEffects::FocusEnergy]<=0
         attacker.effects[PBEffects::FocusEnergy] = 2
-        @battle.pbDisplayBrief(_INTL("{1}'s Z-Power got it pumped!",attacker.pbThis))
+        @battle.pbDisplayBrief(_INTL("{1} boosted its critical hit ratio using its Z-Power!",attacker.pbThis))
       end
     end
     #---------------------------------------------------------------------------
@@ -1084,7 +1113,7 @@ class PokeBattle_ZMove < PokeBattle_Move
         b.effects[PBEffects::RagePowder] = false  
       end
       attacker.effects[PBEffects::FollowMe] = true
-      @battle.pbDisplayBrief(_INTL("{1}'s Z-Power made it the center of attention!",attacker.pbThis))
+      @battle.pbDisplayBrief(_INTL("{1} became the center of attention using its Z-Power!",attacker.pbThis))
     end
   end
 end
@@ -1304,11 +1333,11 @@ def pbCompileZMoveCompatibility
   pbCompilerEachPreppedLine("PBS/zmovescomp.txt") { |line,lineno|
     record = []
     lineRecord = pbGetCsvRecord(line,lineno,[0,"eEEEe",
-       PBItems, # Z-Crystal in the bag
-       PBTypes, # Move type required for the Z-Move 
-       PBMoves, # Specific move required for the Z-Move 
+       PBItems,   # Z-Crystal in the bag
+       PBTypes,   # Move type required for the Z-Move 
+       PBMoves,   # Specific move required for the Z-Move 
        PBSpecies, # Specific species required for the Z-Move
-       PBMoves]) # The Z-Move
+       PBMoves])  # The Z-Move
     if !lineRecord[PBZMove::REQ_TYPE] && !lineRecord[PBZMove::REQ_MOVE] && !lineRecord[PBZMove::REQ_SPECIES]
       raise _INTL("Z-Moves are specific to either a type of moves, or a pair of a required move and species (you need to specify a type, or a move + species).\r\n{1}",FileLineData.linereport)
     end
@@ -1404,4 +1433,3 @@ def pbGetZMoveDataIfCompatible(pokemon, zcrystal, basemove = nil)
   }
   return nil 
 end
-
