@@ -653,7 +653,6 @@ class PokeBattle_Move
 end
 
 class PokeBattle_ZMove < PokeBattle_Move
-  attr_reader(:thismove)
   attr_reader(:oldmove)
   attr_reader(:status)
   attr_reader(:oldname)
@@ -668,10 +667,10 @@ class PokeBattle_ZMove < PokeBattle_Move
     @oldname    = move.name
     if @status 
       @name     = "Z-" + move.name
+      @oldmove.name = @name
     end 
     @baseDamage = pbZMoveBaseDamage(move)
-    @thismove   = self
-    @short_name = @name[0..12] + "..." if @name.length > 15 && SHORTEN_Z_MOVE_NAMES
+    @short_name = (@name.length > 15 && SHORTEN_Z_MOVE_NAMES) ? @name[0..12] + "..." : @name
   end
   
   def pbZMoveBaseDamage(oldmove)
@@ -738,36 +737,16 @@ class PokeBattle_ZMove < PokeBattle_Move
     if simplechoice
       zchoice=simplechoice
     end    
-    ztargets=battler.pbFindTargets(zchoice,self,battler)
-    if ztargets.length==0
-      if @target==PBTargets::NearOther ||
-         @target==PBTargets::RandomNearFoe ||
-         @target==PBTargets::AllNearFoes ||
-         @target==PBTargets::AllNearOthers ||
-         @target==PBTargets::NearAlly ||
-         @target==PBTargets::UserOrNearAlly ||
-         @target==PBTargets::NearFoe ||
-         @target==PBTargets::UserAndAllies 
-        @battle.pbDisplay(_INTL("But there was no target..."))
-      else
-        #selftarget status moves here
-        pbZStatus(@oldmove.id,battler) if !specialUsage
-        zchoice[2] = @oldmove
-        battler.pbUseMove(zchoice)
-        @oldmove.name = @oldname
-      end      
+    if @status
+      #targeted status Z's here
+      pbZStatus(@oldmove.id,battler) if !specialUsage
+      zchoice[2] = @oldmove
+      battler.pbUseMove(zchoice)
+      @oldmove.name = @oldname
     else
-      if @status
-        #targeted status Z's here
-        pbZStatus(@oldmove.id,battler) if !specialUsage
-        zchoice[2] = @oldmove
-        battler.pbUseMove(zchoice)
-        @oldmove.name = @oldname
-      else
-        zchoice[2] = self
-        battler.pbUseMove(zchoice)
-        battler.pbReducePPOther(@oldmove)
-      end
+      zchoice[2] = self
+      battler.pbUseMove(zchoice)
+      battler.pbReducePPOther(@oldmove)
     end
   end 
   
@@ -776,7 +755,7 @@ class PokeBattle_ZMove < PokeBattle_Move
     # Load the Z-move data
     zmovedata = pbGetZMoveDataIfCompatible(battler.pokemon, crystal, move)
     pbmove = nil
-    if !zmovedata
+    if !zmovedata || move.statusMove?
       # We assume that the Z-Move is called only if it is valid. 
       # If zmovedata is empty, then it is a status move.
       # Z-status move keep the same effect. 
