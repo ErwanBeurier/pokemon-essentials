@@ -897,6 +897,11 @@ class PokeBattle_Battler
   #-----------------------------------------------------------------------------
   def pbEndTurn(_choice)
     @lastRoundMoved = @battle.turnCount   # Done something this round
+    if _choice[0] == :UseMove# For Copycat
+      @battle.lastMoveUsed = _choice[2].id 
+      # Copycat doesn't copy Z-moves. 
+      @battle.lastMoveUsed = -1 if _choice[2].zmove || _choice[2].zMove?
+    end 
     if @effects[PBEffects::Dynamax]<=0
       if @effects[PBEffects::ChoiceBand]<0 &&
          hasActiveItem?([:CHOICEBAND,:CHOICESPECS,:CHOICESCARF])
@@ -1440,11 +1445,11 @@ class PokeBattle_Battler
     return false if shadowPokemon?
     return false if mega? || hasMega?
     return false if primal? || hasPrimal?
-    return false if newpoke!=0 && (newpoke.mega? || newpoke.primal?)
+    return false if newpoke && (newpoke.mega? || newpoke.primal?)
     # Prevents Dynamax if Z-Crystal or Ultra Burst is present.
     if defined?(hasZMove?)
       return false if ultra? || hasUltra?
-      return false if newpoke!=0 && newpoke.ultra?
+      return false if newpoke && newpoke.ultra?
       return false if pbIsZCrystal?(self.item) || hasZMove?
     end
     return true

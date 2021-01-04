@@ -748,6 +748,7 @@ class PokeBattle_ZMove < PokeBattle_Move
       battler.pbUseMove(zchoice)
       battler.pbReducePPOther(@oldmove)
     end
+    battler.lastMoveUsedIsZMove = true
   end 
   
   def PokeBattle_ZMove.pbFromOldMoveAndCrystal(battle,battler,move,crystal)

@@ -2799,19 +2799,78 @@ class PokeBattle_Move_0AF < PokeBattle_Move
     end
     user.pbUseMoveSimple(lastmove)
   end
-  
-  # Always fails if copying Z-Move.
-  def pbMoveFailed?(user,targets)
-    if @battle.lastMoveUsed<=0 || 
-       @flags.include?("z") || # Z-Move flag
-       @moveBlacklist.include?(pbGetMoveData(@battle.lastMoveUsed,MOVE_FUNCTION_CODE))
+end
+
+
+#===============================================================================
+# For 4 rounds, the target must use the same move each round. (Encore)
+#===============================================================================
+class PokeBattle_Move_0BC < PokeBattle_Move
+  alias __compat__pbFailsAgainstTarget? pbFailsAgainstTarget?
+  def pbFailsAgainstTarget?(user,target)
+    if target.lastMoveUsedIsZMove
+      # The last move used by the target is a Z-move
       @battle.pbDisplay(_INTL("But it failed!"))
       return true
     end
-    return false
+    return __compat__pbFailsAgainstTarget?(user, target)
   end
 end
 
+class PokeBattle_Battler
+  attr_accessor :lastMoveUsedIsZMove
+  
+  alias __encore_pbInitEffects pbInitEffects 
+  def pbInitEffects(batonPass)
+    __encore_pbInitEffects(batonPass)
+    @lastMoveUsedIsZMove = false
+  end 
+  
+  alias __encore__pbUseMove pbUseMove
+  def pbUseMove(choice, specialUsage=false)
+    @lastMoveUsedIsZMove = false 
+    __encore__pbUseMove(choice, specialUsage)
+  end 
+end 
+class PokeBattle_Battle
+  #-----------------------------------------------------------------------------
+  # Encore prevents showing the fighting menu, unless the battler can Z-move. 
+  #-----------------------------------------------------------------------------
+  def pbCanShowFightMenu?(idxBattler)
+    battler = @battlers[idxBattler]
+    # Encore
+    return false if battler.effects[PBEffects::Encore]>0 && !pbCanZMove?(idxBattler)
+    # No moves that can be chosen (will Struggle instead)
+    usable = false
+    battler.eachMoveWithIndex do |_m,i|
+      next if !pbCanChooseMove?(idxBattler,i,false)
+      usable = true
+      break
+    end
+    return usable
+  end
+  #-----------------------------------------------------------------------------
+  # Encore should display a message when the menu is shown,, and the player 
+  # selects a move that is neither the "encored" move nor a Z-move. 
+  #-----------------------------------------------------------------------------
+  def pbCanChooseMove?(idxBattler,idxMove,showMessages,sleepTalk=false)
+    battler = @battlers[idxBattler]
+    move = battler.moves[idxMove]
+    return false unless move && move.id>0
+    if move.pp==0 && move.totalpp>0 && !sleepTalk
+      pbDisplayPaused(_INTL("There's no PP left for this move!")) if showMessages
+      return false
+    end
+    if battler.effects[PBEffects::Encore]>0
+      idxEncoredMove = battler.pbEncoredMoveIndex
+      if idxEncoredMove>=0 && idxMove!=idxEncoredMove && !move.zMove?
+        pbDisplayPaused(_INTL("Encore prevents using this move!")) if showMessages
+      return false 
+      end 
+    end
+    return battler.pbCanChooseMove?(move,true,showMessages,sleepTalk)
+  end
+end 
 
 
 ################################################################################
@@ -2840,3 +2899,4 @@ class PokeBattle_Battler
     @effects[PBEffects::TransformPokemon] = target.pokemon 
   end 
 end 
+
