@@ -41,7 +41,7 @@ class PokeBattle_Battler
   alias zmove_pbInitEffects pbInitEffects  
   def pbInitEffects(batonpass)
     zmove_pbInitEffects(batonpass)
-    @effects[PBEffects::UnZMoves]      = nil
+    @effects[PBEffects::UnZMoves]       = nil
     @effects[PBEffects::UsedZMoveIndex] = -1
   end
 end 
@@ -113,13 +113,18 @@ class PokeBattle_Battler
   def hasUltra?; return @pokemon && @pokemon.hasUltra?; end
 
   def hasZMove?
-    zmovedata = pbGetZMoveDataIfCompatible(self.pokemon, self.item)
-    return zmovedata != nil 
+    return pbCompatibleZMoveFromMove?(nil)
   end
-
+  
   def pbCompatibleZMoveFromMove?(move)
     return true if move.is_a?(PokeBattle_ZMove)
-    zmovedata = pbGetZMoveDataIfCompatible(self.pokemon, self.item, move)
+    pkmn = self.pokemon
+    if @effects[PBEffects::Transform]
+      pkmn = @effects[PBEffects::TransformPokemon] 
+      return false if pkmn.mega? || pkmn.primal?
+      return false if pkmn.ultra? && hasActiveItem?(:ULTRANECROZIUMZ)
+    end
+    zmovedata = pbGetZMoveDataIfCompatible(pkmn,self.item, move)
     return zmovedata != nil 
   end
   
@@ -166,9 +171,11 @@ class PokeBattle_Battler
     end
     for i in 0...4
       next if !@moves[i] || @moves[i].id == 0
-      comp = pbGetZMoveDataIfCompatible(self.pokemon, self.item, @moves[i])
+      item    = self.item
+      pokemon = @effects[PBEffects::Transform] ? @effects[PBEffects::TransformPokemon] : self.pokemon
+      comp    = pbGetZMoveDataIfCompatible(pokemon,item,@moves[i])
       next if !comp
-      @moves[i] = PokeBattle_ZMove.pbFromOldMoveAndCrystal(@battle, self, @moves[i], self.item)
+      @moves[i] = PokeBattle_ZMove.pbFromOldMoveAndCrystal(@battle, self, @moves[i],item)
       @moves[i].pp = 1
       @moves[i].totalpp = 1
     end 
@@ -186,7 +193,7 @@ class PokeBattle_Battler
     ]
     for i in 0...4
       next if !@moves[i] || @moves[i].id == 0
-      @moves[i].pp      -= 1 if i == @effects[PBEffects::UsedZMoveIndex]
+      @moves[i].pp-=1 if i==@effects[PBEffects::UsedZMoveIndex]
     end
   end 
   
@@ -502,7 +509,7 @@ class PokeBattle_Battle
     battler = @battlers[idxBattler]
     return if !battler || !battler.pokemon
     return if !battler.hasUltra? || battler.ultra?
-    pbDisplay(_INTL("Bright light is about to burst out of {1}!",battler.pbThis))    
+    pbDisplay(_INTL("Bright light is about to burst out of {1}!",battler.pbThis(true)))    
     pbCommonAnimation("UltraBurst",battler)
     battler.pokemon.makeUltra
     battler.form = battler.pokemon.form
@@ -536,53 +543,50 @@ end
 # Ultra Necrozma
 #===============================================================================
 MultipleForms.register(:NECROZMA,{
-"getUltraForm"=>proc{|pokemon|
-   next 3 if isConst?(pokemon.item,PBItems,:ULTRANECROZIUMZ) && pokemon.form==1
-   next 4 if isConst?(pokemon.item,PBItems,:ULTRANECROZIUMZ) && pokemon.form==2
-   next
-},
-"getUltraName"=>proc{|pokemon|
-   next _INTL("Ultra Necrozma") if pokemon.form==3
-   next _INTL("Ultra Necrozma") if pokemon.form==4
-   next
-},
-"getUnUltraForm"=>proc{|pokemon|
-   next pokemon.form-=2 if pokemon.form>2
-   next
-},
-"onSetForm"=>proc{|pokemon,form,oldForm|
-   pbSeenForm(pokemon)
-   moves=[
-      :CONFUSION,       # Normal
-      :SUNSTEELSTRIKE,  # Dusk Mane
-      :MOONGEISTBEAM,   # Dawn Wings
-   ]
-   if form<3
-     moves.each{|move|
-        pokemon.pbDeleteMove(getID(PBMoves,move))
-     }
-     pokemon.pbLearnMove(moves[form])
-   end
-}
+  "getUltraForm" => proc { |pkmn|
+     next 3 if pkmn.hasItem?(:ULTRANECROZIUMZ) && pkmn.form==1
+     next 4 if pkmn.hasItem?(:ULTRANECROZIUMZ) && pkmn.form==2
+     next
+  },
+  "getUltraName" => proc { |pkmn|
+     next _INTL("Ultra Necrozma") if pkmn.form==3
+     next _INTL("Ultra Necrozma") if pkmn.form==4
+     next
+  },
+  "getUnUltraForm" => proc { |pkmn|
+     next pkmn.form-=2 if pkmn.form>2
+     next
+  },
+  "onSetForm" => proc { |pkmn,form,oldForm|
+     pbSeenForm(pkmn)
+     moves=[
+        :CONFUSION,       # Normal
+        :SUNSTEELSTRIKE,  # Dusk Mane
+        :MOONGEISTBEAM,   # Dawn Wings
+     ]
+     if form<3
+       moves.each{|move|
+          pokemon.pbDeleteMove(getID(PBMoves,move))
+       }
+       pokemon.pbLearnMove(moves[form])
+     end
+  }
 })
 
 class PokeBattle_Pokemon
   def hasUltra?
-    v=MultipleForms.call("getUltraForm",self)
+    v = MultipleForms.call("getUltraForm",self)
     return v!=nil
   end  
 
   def ultra?
-    v=MultipleForms.call("getUltraForm",self)
+    v = MultipleForms.call("getUltraForm",self)
     return v!=nil && v==@form
   end
 
   def makeUltra
-    v=MultipleForms.call("getUltraForm",self)
-    if v!=nil
-      @startform=self.form
-      self.form=v 
-    end
+    v = MultipleForms.call("getUltraForm",self)
+    self.form = v if v!=nil
   end
 
   def makeUnUltra
@@ -596,11 +600,6 @@ class PokeBattle_Pokemon
     v=MultipleForms.call("getUltraName",self)
     return v if v!=nil
     return ""
-  end  
-
-  def formNoCall=(value)
-    @form=value
-    self.calcStats
   end
 end
 
@@ -669,6 +668,7 @@ class PokeBattle_ZMove < PokeBattle_Move
     end 
     @baseDamage = pbZMoveBaseDamage(move)
     @short_name = (@name.length > 15 && SHORTEN_Z_MOVE_NAMES) ? @name[0..12] + "..." : @name
+    @flags = (@flags[/z/] ? @flags : @flags + "z") # Just so that status Z-moves get flagged as such.
   end
   
   def pbZMoveBaseDamage(oldmove)
@@ -739,7 +739,9 @@ class PokeBattle_ZMove < PokeBattle_Move
       #targeted status Z's here
       pbZStatus(@oldmove.id,battler) if !specialUsage
       zchoice[2] = @oldmove
+      zchoice[2].zmove = true 
       battler.pbUseMove(zchoice)
+      zchoice[2].zmove = false
       @oldmove.name = @oldname
     else
       zchoice[2] = self
@@ -751,23 +753,21 @@ class PokeBattle_ZMove < PokeBattle_Move
   def PokeBattle_ZMove.pbFromOldMoveAndCrystal(battle,battler,move,crystal)
     return move if move.is_a?(PokeBattle_ZMove)
     # Load the Z-move data
-    zmovedata = pbGetZMoveDataIfCompatible(battler.pokemon, crystal, move)
-    pbmove = nil
+    pokemon   = battler.effects[PBEffects::Transform] ? battler.effects[PBEffects::TransformPokemon] : battler.pokemon
+    zmovedata = pbGetZMoveDataIfCompatible(pokemon,crystal,move)
+    pbmove    = nil
     if !zmovedata || move.statusMove?
       # We assume that the Z-Move is called only if it is valid. 
       # If zmovedata is empty, then it is a status move.
       # Z-status move keep the same effect. 
-      pbmove = PBMove.new(move.id)
+      pbmove    = PBMove.new(move.id)
       pbmove.pp = 1 
       return PokeBattle_ZMove.new(battle,move,pbmove)
     end 
-    
-    z_move_id = zmovedata[PBZMove::ZMOVE]
-    
-    pbmove = PBMove.new(z_move_id)
+    z_move_id    = zmovedata[PBZMove::ZMOVE]
+    pbmove       = PBMove.new(z_move_id)
     moveFunction = pbGetMoveData(pbmove.id,MOVE_FUNCTION_CODE) || "Z000"
-    className = sprintf("PokeBattle_Move_%s",moveFunction)
-    
+    className    = sprintf("PokeBattle_Move_%s",moveFunction)
     if Object.const_defined?(className)
       return Object.const_get(className).new(battle,move,pbmove)
     end
@@ -1388,12 +1388,10 @@ def pbGetZMoveDataIfCompatible(pokemon, zcrystal, basemove = nil)
   # basemove = the base move to be transformed. For use in battle.
   zmovecomps = pbLoadZMoveCompatibility
   return nil if !zmovecomps || !zmovecomps[zcrystal]
-  
   zmovecomps[zcrystal].each { |comp|
-    reqmove = false
-    reqtype = false
+    reqmove    = false
+    reqtype    = false
     reqspecies = false
-    
     if comp[PBZMove::REQ_TYPE]
       # If a type is required, then check if it has that type.
       if basemove

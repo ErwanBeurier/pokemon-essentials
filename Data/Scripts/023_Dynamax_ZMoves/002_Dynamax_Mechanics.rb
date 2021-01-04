@@ -878,7 +878,6 @@ class PokeBattle_Battler
   # Transformed Pokemon copy a Dynamax target's base moves.
   #-----------------------------------------------------------------------------
   def pbTransformDynamax(target) # Added to def pbTransform
-    @effects[PBEffects::TransformSpecies] = target.pokemon 
     @effects[PBEffects::NoDynamax] = target.effects[PBEffects::NoDynamax]
     if target.dynamax?
       @moves.clear
@@ -1431,18 +1430,23 @@ class PokeBattle_Battler
   
   # Checks the Pokemon for Dynamax eligibility.
   def hasDynamax?
+    newpoke    = @effects[PBEffects::TransformPokemon]
     powerspot  = $game_map && POWERSPOTS.include?($game_map.map_id)
     eternaspot = $game_map && ETERNASPOT.include?($game_map.map_id)
     return true if isConst?(species,PBSpecies,:ETERNATUS) && eternaspot
     return false if !@pokemon.dynamaxAble?
     return false if @effects[PBEffects::NoDynamax]
     return false if !powerspot && !DMAX_ANYMAP
+    return false if shadowPokemon?
     return false if mega? || hasMega?
     return false if primal? || hasPrimal?
-    # Prevents Dynamax if usable Z-Move or Ultra Burst is present.
-    return false if defined?(ultra?) && (ultra? || hasUltra?)
-    return false if defined?(hasZMove?) && hasZMove?
-    return false if shadowPokemon?
+    return false if newpoke!=0 && (newpoke.mega? || newpoke.primal?)
+    # Prevents Dynamax if Z-Crystal or Ultra Burst is present.
+    if defined?(hasZMove?)
+      return false if ultra? || hasUltra?
+      return false if newpoke!=0 && newpoke.ultra?
+      return false if pbIsZCrystal?(self.item) || hasZMove?
+    end
     return true
   end
   
@@ -1589,7 +1593,7 @@ class PokeBattle_Battle
     # Gets appropriate battler sprite if user was transformed prior to Dynamaxing.
     if battler.effects[PBEffects::Transform]
       back = !opposes?(idxBattler)
-      pkmn = battler.effects[PBEffects::TransformSpecies]
+      pkmn = battler.effects[PBEffects::TransformPokemon]
       @scene.sprites["pokemon_#{idxBattler}"].setPokemonBitmap(pkmn,back)
     end
     side  = battler.idxOwnSide
@@ -1700,7 +1704,7 @@ class PokeBattle_Scene
     # Reverts to initial sprite once Dynamax ends.
     if !battler.dynamax?
       if battler.effects[PBEffects::Transform]
-        pkmn = battler.effects[PBEffects::TransformSpecies]
+        pkmn = battler.effects[PBEffects::TransformPokemon]
         @sprites["pokemon_#{idxBattler}"].setPokemonBitmap(pkmn,back)
       end
       if ENLARGE_SPRITE

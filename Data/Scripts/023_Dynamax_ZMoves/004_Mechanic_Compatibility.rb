@@ -692,6 +692,30 @@ class PokeBattle_Battle
   end
 end
 
+
+class PokeBattle_Battler
+  alias __compat__pbCanChooseMove? pbCanChooseMove?
+  def pbCanChooseMove?(move,commandPhase,showMessages=true,specialUsage=false)
+    # Z-Moves are not blocked by usual "blocking" moves:
+    if move.zmove || move.zMove?
+      # If something actually blocks Z-moves, write this code here. 
+      # Gravity
+      if @battle.field.effects[PBEffects::Gravity]>0 && move.unusableInGravity?
+        if showMessages
+          msg = _INTL("{1} can't use {2} because of gravity!",pbThis,move.name)
+          (commandPhase) ? @battle.pbDisplayPaused(msg) : @battle.pbDisplay(msg)
+        end
+        return false
+      end
+      # Gorilla Tactics does not have effect on Max-Moves, so logically it 
+      # should not have effect on Z-moves. 
+      # Disable, Heal Block, Imprison, Throat Chop, Taunt, Torment don't have 
+      # effect on Z-moves.
+      return true 
+    end 
+    return __compat__pbCanChooseMove?(move,commandPhase,showMessages,specialUsage)
+  end
+end 
 #===============================================================================
 # Effects of button inputs for battle mechanics.
 #===============================================================================
@@ -2779,7 +2803,7 @@ class PokeBattle_Move_0AF < PokeBattle_Move
   # Always fails if copying Z-Move.
   def pbMoveFailed?(user,targets)
     if @battle.lastMoveUsed<=0 || 
-       flags.include?("z") || # Z-Move flag
+       @flags.include?("z") || # Z-Move flag
        @moveBlacklist.include?(pbGetMoveData(@battle.lastMoveUsed,MOVE_FUNCTION_CODE))
       @battle.pbDisplay(_INTL("But it failed!"))
       return true
@@ -2787,3 +2811,32 @@ class PokeBattle_Move_0AF < PokeBattle_Move
     return false
   end
 end
+
+
+
+################################################################################
+# SECTION 11 - TRANSFORM VS DYNAMAX 
+#===============================================================================
+# A few tweaks for the interaction between Transform and Dynamax
+#===============================================================================
+
+module PBEffects
+  #-----------------------------------------------------------------------------
+  # Additional data for the interaction between Transform and Dynamax
+  #-----------------------------------------------------------------------------
+  TransformPokemon = 216  # Contains the complete Pokemon transformed into.
+end 
+
+class PokeBattle_Battler
+  alias transform_pbInitEffects pbInitEffects  
+  def pbInitEffects(batonpass)
+    transform_pbInitEffects(batonpass)
+    @effects[PBEffects::TransformPokemon] = nil 
+  end
+  
+  alias transform_pbTransform pbTransform
+  def pbTransform(target)
+    transform_pbTransform(target)
+    @effects[PBEffects::TransformPokemon] = target.pokemon 
+  end 
+end 
