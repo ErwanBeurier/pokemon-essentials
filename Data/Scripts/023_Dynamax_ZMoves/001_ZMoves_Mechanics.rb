@@ -428,13 +428,8 @@ class PokeBattle_Battle
     battler = @battlers[idxBattler]
     return if !battler || !battler.pokemon
     return if !battler.hasZMove?
-    pbDisplay(_INTL("{1} surrounded itself with its Z-Power!",battler.pbThis))      
-    pbCommonAnimation("ZPower",battler,nil)
     zmove = PokeBattle_ZMove.pbFromOldMoveAndCrystal(self,battler,move,crystal)
     zmove.pbUse(battler, nil, false)
-    side  = battler.idxOwnSide
-    owner = pbGetOwnerIndexFromBattlerIndex(idxBattler)
-    @zMove[side][owner] = -2
   end
   
   def pbAttackPhaseZMoves
@@ -647,6 +642,19 @@ class PokeBattle_Move
     @zmove      = false
     @short_name = @name
   end
+  
+  alias zmove_pbDisplayUseMessage pbDisplayUseMessage
+  def pbDisplayUseMessage(user)
+    if @zmove || zMove?
+      @battle.pbDisplay(_INTL("{1} surrounded itself with its Z-Power!",user.pbThis))      
+      @battle.pbCommonAnimation("ZPower",user,nil)
+      if statusMove?
+        PokeBattle_ZMove.pbZStatus(@battle, @id, user)
+      end 
+      @battle.pbDisplayBrief(_INTL("{1} unleashed its full force Z-Move!",user.pbThis))
+    end 
+    zmove_pbDisplayUseMessage(user)
+  end 
 end
 
 class PokeBattle_ZMove < PokeBattle_Move
@@ -728,18 +736,15 @@ class PokeBattle_ZMove < PokeBattle_Move
   
   def pbUse(battler, simplechoice=nil, specialUsage=false)
     battler.pbBeginTurn(self)
-    if !@status
-      @battle.pbDisplayBrief(_INTL("{1} unleashed its full force Z-Move!",battler.pbThis))
-    end    
     zchoice=@battle.choices[battler.index] #[0,0,move,move.target]
     if simplechoice
       zchoice=simplechoice
     end    
     if @status
       #targeted status Z's here
-      pbZStatus(@oldmove.id,battler) if !specialUsage
+      # pbZStatus(@oldmove.id,battler) if !specialUsage
       zchoice[2] = @oldmove
-      zchoice[2].zmove = true 
+      zchoice[2].zmove = !specialUsage
       battler.pbUseMove(zchoice)
       zchoice[2].zmove = false
       @oldmove.name = @oldname
@@ -813,7 +818,7 @@ class PokeBattle_ZMove < PokeBattle_Move
 #===============================================================================
 # Z-Status Effect check
 #=============================================================================== 
-  def pbZStatus(move,attacker)
+  def PokeBattle_ZMove.pbZStatus(battle, move,attacker)
     boost = ""
     #---------------------------------------------------------------------------
     # Z-Status moves that raise Attack.
@@ -840,10 +845,10 @@ class PokeBattle_ZMove < PokeBattle_Move
     if atkStage
       if attacker.pbCanRaiseStatStage?(PBStats::ATTACK,attacker)
         attacker.pbRaiseStatStageBasic(PBStats::ATTACK,atkStage)
-        @battle.pbCommonAnimation("StatUp",attacker)
+        battle.pbCommonAnimation("StatUp",attacker)
         boost = " sharply"     if atkStage==2
         boost = " drastically" if atkStage==3
-        @battle.pbDisplayBrief(_INTL("{1} boosted its Attack{2} using its Z-Power!",attacker.pbThis,boost))
+        battle.pbDisplayBrief(_INTL("{1} boosted its Attack{2} using its Z-Power!",attacker.pbThis,boost))
       end
     end
     #---------------------------------------------------------------------------
@@ -870,10 +875,10 @@ class PokeBattle_ZMove < PokeBattle_Move
     if defStage
       if attacker.pbCanRaiseStatStage?(PBStats::DEFENSE,attacker)
         attacker.pbRaiseStatStageBasic(PBStats::DEFENSE,defStage)
-        @battle.pbCommonAnimation("StatUp",attacker)
+        battle.pbCommonAnimation("StatUp",attacker)
         boost = " sharply"     if defStage==2
         boost = " drastically" if defStage==3
-        @battle.pbDisplayBrief(_INTL("{1} boosted its Defense{2} using its Z-Power!",attacker.pbThis,boost))
+        battle.pbDisplayBrief(_INTL("{1} boosted its Defense{2} using its Z-Power!",attacker.pbThis,boost))
       end
     end
     #---------------------------------------------------------------------------
@@ -898,10 +903,10 @@ class PokeBattle_ZMove < PokeBattle_Move
     if spatkStage
       if attacker.pbCanRaiseStatStage?(PBStats::SPATK,attacker)
         attacker.pbRaiseStatStageBasic(PBStats::SPATK,spatkStage)
-        @battle.pbCommonAnimation("StatUp",attacker)
+        battle.pbCommonAnimation("StatUp",attacker)
         boost = " sharply"     if spatkStage==2
         boost = " drastically" if spatkStage==3
-        @battle.pbDisplayBrief(_INTL("{1} boosted its Sp. Atk{2} using its Z-Power!",attacker.pbThis,boost))
+        battle.pbDisplayBrief(_INTL("{1} boosted its Sp. Atk{2} using its Z-Power!",attacker.pbThis,boost))
       end
     end
     #---------------------------------------------------------------------------
@@ -926,10 +931,10 @@ class PokeBattle_ZMove < PokeBattle_Move
     if spdefStage
       if attacker.pbCanRaiseStatStage?(PBStats::SPDEF,attacker)
         attacker.pbRaiseStatStageBasic(PBStats::SPDEF,spdefStage)
-        @battle.pbCommonAnimation("StatUp",attacker)
+        battle.pbCommonAnimation("StatUp",attacker)
         boost = " sharply"     if spdefStage==2
         boost = " drastically" if spdefStage==3
-        @battle.pbDisplayBrief(_INTL("{1} boosted its Sp. Def{2} using its Z-Power!",attacker.pbThis,boost))
+        battle.pbDisplayBrief(_INTL("{1} boosted its Sp. Def{2} using its Z-Power!",attacker.pbThis,boost))
       end
     end
     #---------------------------------------------------------------------------
@@ -955,10 +960,10 @@ class PokeBattle_ZMove < PokeBattle_Move
     if speedStage
       if attacker.pbCanRaiseStatStage?(PBStats::SPEED,attacker)
         attacker.pbRaiseStatStageBasic(PBStats::SPEED,speedStage)
-        @battle.pbCommonAnimation("StatUp",attacker)
+        battle.pbCommonAnimation("StatUp",attacker)
         boost = " sharply"     if speedStage==2
         boost = " drastically" if speedStage==3
-        @battle.pbDisplayBrief(_INTL("{1} boosted its Speed{2} using its Z-Power!",attacker.pbThis,boost))
+        battle.pbDisplayBrief(_INTL("{1} boosted its Speed{2} using its Z-Power!",attacker.pbThis,boost))
       end
     end
     #---------------------------------------------------------------------------
@@ -977,10 +982,10 @@ class PokeBattle_ZMove < PokeBattle_Move
     if accStage
       if attacker.pbCanRaiseStatStage?(PBStats::ACCURACY,attacker)
         attacker.pbRaiseStatStageBasic(PBStats::ACCURACY,accStage)
-        @battle.pbCommonAnimation("StatUp",attacker)
+        battle.pbCommonAnimation("StatUp",attacker)
         boost = " sharply"     if accStage==2
         boost = " drastically" if accStage==3
-        @battle.pbDisplayBrief(_INTL("{1} boosted its Accuracy{2} using its Z-Power!",attacker.pbThis,boost))
+        battle.pbDisplayBrief(_INTL("{1} boosted its Accuracy{2} using its Z-Power!",attacker.pbThis,boost))
       end
     end
     #---------------------------------------------------------------------------
@@ -1000,10 +1005,10 @@ class PokeBattle_ZMove < PokeBattle_Move
     if evaStage
       if attacker.pbCanRaiseStatStage?(PBStats::EVASION,attacker)
         attacker.pbRaiseStatStageBasic(PBStats::EVASION,speedStage)
-        @battle.pbCommonAnimation("StatUp",attacker)
+        battle.pbCommonAnimation("StatUp",attacker)
         boost = " sharply"     if evaStage==2
         boost = " drastically" if evaStage==3
-        @battle.pbDisplayBrief(_INTL("{1} boosted its Evasion{2} using its Z-Power!",attacker.pbThis,boost))
+        battle.pbDisplayBrief(_INTL("{1} boosted its Evasion{2} using its Z-Power!",attacker.pbThis,boost))
       end
     end
     #---------------------------------------------------------------------------
@@ -1029,10 +1034,10 @@ class PokeBattle_ZMove < PokeBattle_Move
         if attacker.pbCanRaiseStatStage?(stat,attacker)
           attacker.pbRaiseStatStageBasic(stat,statStage)
           if showAnim
-            @battle.pbCommonAnimation("StatUp",attacker)
+            battle.pbCommonAnimation("StatUp",attacker)
             boost = " sharply"     if statStage==2
             boost = " drastically" if statStage==3
-            @battle.pbDisplayBrief(_INTL("{1} boosted its stats{2} using its Z-Power!",attacker.pbThis,boost))
+            battle.pbDisplayBrief(_INTL("{1} boosted its stats{2} using its Z-Power!",attacker.pbThis,boost))
           end
           showAnim = false
         end
@@ -1061,7 +1066,7 @@ class PokeBattle_ZMove < PokeBattle_Move
         if attacker.stages[stat]<0
           attacker.stages[stat]=0
           if showMsg
-            @battle.pbDisplayBrief(_INTL("{1} returned its decreased stats to normal using its Z-Power!",attacker.pbThis))
+            battle.pbDisplayBrief(_INTL("{1} returned its decreased stats to normal using its Z-Power!",attacker.pbThis))
             showMsg = false
           end
         end
@@ -1085,7 +1090,7 @@ class PokeBattle_ZMove < PokeBattle_Move
     end
     if healID1.include?(move) && attacker.hp<attacker.totalhp
       attacker.pbRecoverHP(attacker.totalhp,false)
-      @battle.pbDisplayBrief(_INTL("{1} restored its HP using its Z-Power!",attacker.pbThis))
+      battle.pbDisplayBrief(_INTL("{1} restored its HP using its Z-Power!",attacker.pbThis))
     end
     if healID2.include?(move)
       attacker.effects[PBEffects::ZHeal] = true
@@ -1099,7 +1104,7 @@ class PokeBattle_ZMove < PokeBattle_Move
     if critID.include?(move)
       if attacker.effects[PBEffects::FocusEnergy]<=0
         attacker.effects[PBEffects::FocusEnergy] = 2
-        @battle.pbDisplayBrief(_INTL("{1} boosted its critical hit ratio using its Z-Power!",attacker.pbThis))
+        battle.pbDisplayBrief(_INTL("{1} boosted its critical hit ratio using its Z-Power!",attacker.pbThis))
       end
     end
     #---------------------------------------------------------------------------
@@ -1109,12 +1114,12 @@ class PokeBattle_ZMove < PokeBattle_Move
     centerID = []
     for i in center; centerID.push(getID(PBMoves,i)); end
     if centerID.include?(move)
-      @battle.eachSameSideBattler do |b|
+      battle.eachSameSideBattler do |b|
         b.effects[PBEffects::FollowMe]   = false
         b.effects[PBEffects::RagePowder] = false  
       end
       attacker.effects[PBEffects::FollowMe] = true
-      @battle.pbDisplayBrief(_INTL("{1} became the center of attention using its Z-Power!",attacker.pbThis))
+      battle.pbDisplayBrief(_INTL("{1} became the center of attention using its Z-Power!",attacker.pbThis))
     end
   end
 end

@@ -2831,6 +2831,41 @@ class PokeBattle_Battler
     @lastMoveUsedIsZMove = false 
     __encore__pbUseMove(choice, specialUsage)
   end 
+  
+  alias __encore__pbTryUseMove pbTryUseMove 
+  def pbTryUseMove(choice,move,specialUsage,skipAccuracyCheck)
+    ret = __encore__pbTryUseMove(choice,move,specialUsage,skipAccuracyCheck)
+    if !ret && (move.zmove || move.zMove?)
+      # Then the battler couldn't use the Z-move.
+      @battle.lastMoveUsed = -2 
+    end 
+    return ret 
+  end 
+  
+  alias __encore__pbEndTurn pbEndTurn
+  def pbEndTurn(_choice)
+    if _choice[0] == :UseMove
+      if _choice[2].zmove || _choice[2].zMove?
+        if @battle.lastMoveUsed == -2
+          # Then the Z-move wasn't even tried (pbTryUseMove was false)
+          @battle.pbUnregisterZMove(self.index)
+          self.pbZDisplayOldMoves
+          self.effects[PBEffects::ZMoveButton] = false
+        else 
+          # Then the Z-move was used. 
+          side  = self.idxOwnSide
+          owner = @battle.pbGetOwnerIndexFromBattlerIndex(self.index)
+          @battle.zMove[side][owner] = -2
+        end 
+      end 
+      
+      # For Copycat: 
+      @battle.lastMoveUsed = _choice[2].id 
+      # Copycat doesn't copy Z-moves. 
+      @battle.lastMoveUsed = -1 if _choice[2].zmove || _choice[2].zMove?
+    end 
+    __encore__pbEndTurn(_choice)
+  end 
 end 
 class PokeBattle_Battle
   #-----------------------------------------------------------------------------
