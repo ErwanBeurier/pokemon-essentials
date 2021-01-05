@@ -631,8 +631,9 @@ end
 #===============================================================================
 class PokeBattle_Move
   attr_accessor :name
-  attr_accessor :zmove    # True if the player triggered the Z-Move
   attr_reader   :short_name
+  attr_accessor :zmove    # True if the player triggered the Z-Move; note that 
+                          # actual Z-moves should have "false" for this.
   
   def to_int; return @id; end
 
@@ -645,7 +646,7 @@ class PokeBattle_Move
   
   alias zmove_pbDisplayUseMessage pbDisplayUseMessage
   def pbDisplayUseMessage(user)
-    if @zmove || zMove?
+    if @zmove
       @battle.pbDisplay(_INTL("{1} surrounded itself with its Z-Power!",user.pbThis))      
       @battle.pbCommonAnimation("ZPower",user,nil)
       if statusMove?
@@ -742,15 +743,14 @@ class PokeBattle_ZMove < PokeBattle_Move
     end    
     if @status
       #targeted status Z's here
-      # pbZStatus(@oldmove.id,battler) if !specialUsage
       zchoice[2] = @oldmove
       zchoice[2].zmove = !specialUsage
-      battler.pbUseMove(zchoice)
+      battler.pbUseMove(zchoice, specialUsage)
       zchoice[2].zmove = false
       @oldmove.name = @oldname
     else
       zchoice[2] = self
-      battler.pbUseMove(zchoice)
+      battler.pbUseMove(zchoice, specialUsage)
       battler.pbReducePPOther(@oldmove)
     end
     battler.lastMoveUsedIsZMove = true

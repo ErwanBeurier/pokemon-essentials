@@ -692,7 +692,6 @@ class PokeBattle_Battle
   end
 end
 
-
 class PokeBattle_Battler
   alias __compat__pbCanChooseMove? pbCanChooseMove?
   def pbCanChooseMove?(move,commandPhase,showMessages=true,specialUsage=false)
@@ -716,6 +715,7 @@ class PokeBattle_Battler
     return __compat__pbCanChooseMove?(move,commandPhase,showMessages,specialUsage)
   end
 end 
+
 #===============================================================================
 # Effects of button inputs for battle mechanics.
 #===============================================================================
@@ -2801,7 +2801,6 @@ class PokeBattle_Move_0AF < PokeBattle_Move
   end
 end
 
-
 #===============================================================================
 # For 4 rounds, the target must use the same move each round. (Encore)
 #===============================================================================
@@ -2867,6 +2866,7 @@ class PokeBattle_Battler
     __encore__pbEndTurn(_choice)
   end 
 end 
+
 class PokeBattle_Battle
   #-----------------------------------------------------------------------------
   # Encore prevents showing the fighting menu, unless the battler can Z-move. 
@@ -2884,6 +2884,7 @@ class PokeBattle_Battle
     end
     return usable
   end
+  
   #-----------------------------------------------------------------------------
   # Encore should display a message when the menu is shown,, and the player 
   # selects a move that is neither the "encored" move nor a Z-move. 
@@ -2907,6 +2908,15 @@ class PokeBattle_Battle
   end
 end 
 
+#-------------------------------------------------------------------------------
+# Copycat
+#-------------------------------------------------------------------------------
+class PokeBattle_Move_0B4
+  def pbEffectGeneral(user)
+    choice = @sleepTalkMoves[@battle.pbRandom(@sleepTalkMoves.length)]
+    user.pbUseMoveSimple(user.moves[choice].id,user.pbDirectOpposing.index, choice)
+  end
+end
 
 ################################################################################
 # SECTION 11 - TRANSFORM VS DYNAMAX 
