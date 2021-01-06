@@ -358,7 +358,43 @@ class PokeBattle_Battler
       end
     end
   end
+  
+#===============================================================================
+# Determines effects that are ignored by Z-Moves/Max Moves.
+#===============================================================================
+  alias __compat__pbCanChooseMove? pbCanChooseMove?
+  def pbCanChooseMove?(move,commandPhase,showMessages=true,specialUsage=false)
+    # Z-Moves are not blocked by usual "blocking" moves:
+    if move.zmove || move.zMove?
+      # If something actually blocks Z-moves, write this code here. 
+      # Gravity
+      if @battle.field.effects[PBEffects::Gravity]>0 && move.unusableInGravity?
+        if showMessages
+          msg = _INTL("{1} can't use {2} because of gravity!",pbThis,move.name)
+          (commandPhase) ? @battle.pbDisplayPaused(msg) : @battle.pbDisplay(msg)
+        end
+        return false
+      end
+      # Gorilla Tactics does not have effect on Max-Moves, so logically it 
+      # should not have effect on Z-moves. 
+      # Disable, Heal Block, Imprison, Throat Chop, Taunt, Torment don't have 
+      # effect on Z-moves.
+      return true 
+    end 
+    return __compat__pbCanChooseMove?(move,commandPhase,showMessages,specialUsage)
+  end
 end
+
+#-------------------------------------------------------------------------------
+# Gorilla Tactics - Attack bonus not applied to Z-Moves/Max Moves.
+#-------------------------------------------------------------------------------
+BattleHandlers::DamageCalcUserAbility.add(:GORILLATACTICS,
+  proc { |ability,user,target,move,mults,baseDmg,type|
+  if move.physicalMove? && !move.zMove? && !move.maxMove?
+    mults[ATK_MULT] = (mults[ATK_MULT]*1.5).round
+  end
+  }
+)
 
 #===============================================================================
 # Determines actions that should be taken upon throwing a Poke Ball.
@@ -691,30 +727,6 @@ class PokeBattle_Battle
     return ret
   end
 end
-
-class PokeBattle_Battler
-  alias __compat__pbCanChooseMove? pbCanChooseMove?
-  def pbCanChooseMove?(move,commandPhase,showMessages=true,specialUsage=false)
-    # Z-Moves are not blocked by usual "blocking" moves:
-    if move.zmove || move.zMove?
-      # If something actually blocks Z-moves, write this code here. 
-      # Gravity
-      if @battle.field.effects[PBEffects::Gravity]>0 && move.unusableInGravity?
-        if showMessages
-          msg = _INTL("{1} can't use {2} because of gravity!",pbThis,move.name)
-          (commandPhase) ? @battle.pbDisplayPaused(msg) : @battle.pbDisplay(msg)
-        end
-        return false
-      end
-      # Gorilla Tactics does not have effect on Max-Moves, so logically it 
-      # should not have effect on Z-moves. 
-      # Disable, Heal Block, Imprison, Throat Chop, Taunt, Torment don't have 
-      # effect on Z-moves.
-      return true 
-    end 
-    return __compat__pbCanChooseMove?(move,commandPhase,showMessages,specialUsage)
-  end
-end 
 
 #===============================================================================
 # Effects of button inputs for battle mechanics.
@@ -2670,8 +2682,32 @@ end
 ################################################################################
 # SECTION 10 - OLD MOVE COMPATIBILITY
 #===============================================================================
-# Moves that fail to call or copy Z-Moves/Max Moves.
+# Moves that function differently when utilized with Z-Moves/Max Moves.
 #===============================================================================
+# Transform/Mimic (New effects)
+#-------------------------------------------------------------------------------
+module PBEffects
+  TransformPokemon = 216  # Contains the complete Pokemon transformed into.
+  MoveMimicked     = 217  # Records whether or not the user copied a move with Mimic.
+end 
+
+class PokeBattle_Battler
+  alias transform_pbInitEffects pbInitEffects  
+  def pbInitEffects(batonpass)
+    transform_pbInitEffects(batonpass)
+    @effects[PBEffects::TransformPokemon] = nil
+    @effects[PBEffects::MoveMimicked]     = false
+  end
+  
+  alias transform_pbTransform pbTransform
+  def pbTransform(target)
+    transform_pbTransform(target)
+    @effects[PBEffects::UnZMoves] = @moves
+    @effects[PBEffects::TransformPokemon] = target.pokemon
+  end 
+end
+
+#-------------------------------------------------------------------------------
 # Assist
 #-------------------------------------------------------------------------------
 class PokeBattle_Move_0B5 < PokeBattle_Move
@@ -2745,6 +2781,30 @@ class PokeBattle_Move_05C < PokeBattle_Move
     end
     return false
   end
+  
+  # Records the correct move to revert to after Z-Move/Dynamax.
+  def pbEffectAgainstTarget(user,target)
+    user.effects[PBEffects::UnZMoves]   = []
+    user.effects[PBEffects::UnMaxMoves] = []
+    for i in 0...4
+      battlemove = PokeBattle_Move.pbFromPBMove(@battle,user.pokemon.moves[i])
+      user.effects[PBEffects::UnZMoves].push(battlemove)
+      user.effects[PBEffects::UnMaxMoves].push(battlemove)
+    end
+    user.eachMoveWithIndex do |m,i|
+      next if m.id!=@id
+      newMove = PBMove.new(target.lastRegularMoveUsed)
+      newMove = PokeBattle_Move.pbFromPBMove(@battle,newMove)
+      user.moves[i] = newMove
+      @battle.pbDisplay(_INTL("{1} learned {2}!",user.pbThis,
+         PBMoves.getName(target.lastRegularMoveUsed)))
+      user.effects[PBEffects::MoveMimicked]  = true
+      user.effects[PBEffects::UnZMoves][i]   = newMove
+      user.effects[PBEffects::UnMaxMoves][i] = newMove
+      user.pbCheckFormOnMovesetChange
+      break
+    end
+  end
 end
 
 #-------------------------------------------------------------------------------
@@ -2800,22 +2860,21 @@ class PokeBattle_Move_0AF < PokeBattle_Move
     user.pbUseMoveSimple(lastmove)
   end
 end
-
-#===============================================================================
-# For 4 rounds, the target must use the same move each round. (Encore)
-#===============================================================================
-class PokeBattle_Move_0BC < PokeBattle_Move
-  alias __compat__pbFailsAgainstTarget? pbFailsAgainstTarget?
-  def pbFailsAgainstTarget?(user,target)
-    if target.lastMoveUsedIsZMove
-      # The last move used by the target is a Z-move
-      @battle.pbDisplay(_INTL("But it failed!"))
-      return true
-    end
-    return __compat__pbFailsAgainstTarget?(user, target)
+#-------------------------------------------------------------------------------
+# Sleep Talk
+#-------------------------------------------------------------------------------
+class PokeBattle_Move_0B4 < PokeBattle_Move
+  def pbEffectGeneral(user)
+    choice = @sleepTalkMoves[@battle.pbRandom(@sleepTalkMoves.length)]
+    user.pbUseMoveSimple(user.moves[choice].id,user.pbDirectOpposing.index, choice)
   end
 end
-
+#===============================================================================
+# Encore
+#===============================================================================
+# Battler needs a new attribute to store whether the last move was a Z-move, in 
+# order to prevent the use of Encore and Copycat on Z-moves.
+#-------------------------------------------------------------------------------
 class PokeBattle_Battler
   attr_accessor :lastMoveUsedIsZMove
   
@@ -2844,9 +2903,11 @@ class PokeBattle_Battler
   alias __encore__pbEndTurn pbEndTurn
   def pbEndTurn(_choice)
     if _choice[0] == :UseMove
+      # Z-move usage / non-usage. 
       if _choice[2].zmove || _choice[2].zMove?
         if @battle.lastMoveUsed == -2
           # Then the Z-move wasn't even tried (pbTryUseMove was false)
+          # Unregister so that the Z-move can be attempted next turn. 
           @battle.pbUnregisterZMove(self.index)
           self.pbZDisplayOldMoves
           self.effects[PBEffects::ZMoveButton] = false
@@ -2858,7 +2919,7 @@ class PokeBattle_Battler
         end 
       end 
       
-      # For Copycat: 
+      # Some work for Copycat, so that it doesn't copy Z-moves. 
       @battle.lastMoveUsed = _choice[2].id 
       # Copycat doesn't copy Z-moves. 
       @battle.lastMoveUsed = -1 if _choice[2].zmove || _choice[2].zMove?
@@ -2886,7 +2947,7 @@ class PokeBattle_Battle
   end
   
   #-----------------------------------------------------------------------------
-  # Encore should display a message when the menu is shown,, and the player 
+  # Encore should display a message when the menu is shown, and the player 
   # selects a move that is neither the "encored" move nor a Z-move. 
   #-----------------------------------------------------------------------------
   def pbCanChooseMove?(idxBattler,idxMove,showMessages,sleepTalk=false)
@@ -2907,41 +2968,17 @@ class PokeBattle_Battle
     return battler.pbCanChooseMove?(move,true,showMessages,sleepTalk)
   end
 end 
-
 #-------------------------------------------------------------------------------
-# Copycat
+# Encore 
 #-------------------------------------------------------------------------------
-class PokeBattle_Move_0B4
-  def pbEffectGeneral(user)
-    choice = @sleepTalkMoves[@battle.pbRandom(@sleepTalkMoves.length)]
-    user.pbUseMoveSimple(user.moves[choice].id,user.pbDirectOpposing.index, choice)
+class PokeBattle_Move_0BC < PokeBattle_Move
+  alias __compat__pbFailsAgainstTarget? pbFailsAgainstTarget?
+  def pbFailsAgainstTarget?(user,target)
+    if target.lastMoveUsedIsZMove
+      # The last move used by the target is a Z-move
+      @battle.pbDisplay(_INTL("But it failed!"))
+      return true
+    end
+    return __compat__pbFailsAgainstTarget?(user, target)
   end
 end
-
-################################################################################
-# SECTION 11 - TRANSFORM VS DYNAMAX 
-#===============================================================================
-# A few tweaks for the interaction between Transform and Dynamax
-#===============================================================================
-
-module PBEffects
-  #-----------------------------------------------------------------------------
-  # Additional data for the interaction between Transform and Dynamax
-  #-----------------------------------------------------------------------------
-  TransformPokemon = 216  # Contains the complete Pokemon transformed into.
-end 
-
-class PokeBattle_Battler
-  alias transform_pbInitEffects pbInitEffects  
-  def pbInitEffects(batonpass)
-    transform_pbInitEffects(batonpass)
-    @effects[PBEffects::TransformPokemon] = nil 
-  end
-  
-  alias transform_pbTransform pbTransform
-  def pbTransform(target)
-    transform_pbTransform(target)
-    @effects[PBEffects::TransformPokemon] = target.pokemon 
-  end 
-end 
-

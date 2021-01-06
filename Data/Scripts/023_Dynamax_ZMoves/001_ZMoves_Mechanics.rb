@@ -172,7 +172,8 @@ class PokeBattle_Battler
     for i in 0...4
       next if !@moves[i] || @moves[i].id == 0
       item    = self.item
-      pokemon = @effects[PBEffects::Transform] ? @effects[PBEffects::TransformPokemon] : self.pokemon
+      newpoke = @effects[PBEffects::TransformPokemon]
+      pokemon = @effects[PBEffects::Transform] ? newpoke : self.pokemon
       comp    = pbGetZMoveDataIfCompatible(pokemon,item,@moves[i])
       next if !comp
       @moves[i] = PokeBattle_ZMove.pbFromOldMoveAndCrystal(@battle, self, @moves[i],item)
@@ -182,9 +183,24 @@ class PokeBattle_Battler
   end 
   
   def pbZDisplayOldMoves
-    oldmoves = @pokemon.moves
-    # Gets a transformed Pokemon's copied moves from before the Z-move.
-    oldmoves = @effects[PBEffects::UnZMoves] if @effects[PBEffects::Transform] 
+    oldmoves    = []
+    basemoves   = @pokemon.moves
+    storedmoves = @effects[PBEffects::UnZMoves]
+    # Gets a Pokemon's copied moves from before the Z-Move.
+    if @effects[PBEffects::MoveMimicked]
+      for i in 0...@moves.length
+        next if !@moves[i] || @moves[i].id==0
+        if basemoves[i]==storedmoves[i]
+          oldmoves.push(basemoves[i])
+        else
+          oldmoves.push(storedmoves[i])
+        end
+      end
+    elsif @effects[PBEffects::Transform]
+      oldmoves = storedmoves
+    else
+      oldmoves = basemoves
+    end
     @moves  = [
      PokeBattle_Move.pbFromPBMove(@battle,oldmoves[0]),
      PokeBattle_Move.pbFromPBMove(@battle,oldmoves[1]),
@@ -759,7 +775,8 @@ class PokeBattle_ZMove < PokeBattle_Move
   def PokeBattle_ZMove.pbFromOldMoveAndCrystal(battle,battler,move,crystal)
     return move if move.is_a?(PokeBattle_ZMove)
     # Load the Z-move data
-    pokemon   = battler.effects[PBEffects::Transform] ? battler.effects[PBEffects::TransformPokemon] : battler.pokemon
+    newpoke   = battler.effects[PBEffects::TransformPokemon]
+    pokemon   = battler.effects[PBEffects::Transform] ? newpoke : battler.pokemon
     zmovedata = pbGetZMoveDataIfCompatible(pokemon,crystal,move)
     pbmove    = nil
     if !zmovedata || move.statusMove?
@@ -1371,7 +1388,7 @@ def pbSaveZMoveCompatibility
     f.write("\# "+_INTL("See the documentation on the wiki to learn how to edit this file."))
     f.write("\r\n")
     zmovecomps.each { |comp| 
-      f.write(sprintf("%s,%s,%s,%s,%s,%s",
+      f.write(sprintf("%s,%s,%s,%s,%s",
          getConstantName(PBItems,comp[PBZMove::ZCRYSTAL]),
          (comp[PBZMove::REQ_TYPE] ? getConstantName(PBTypes,comp[PBZMove::REQ_TYPE]) : ""),
          (comp[PBZMove::REQ_MOVE] ? getConstantName(PBMoves,comp[PBZMove::REQ_MOVE]) : ""),

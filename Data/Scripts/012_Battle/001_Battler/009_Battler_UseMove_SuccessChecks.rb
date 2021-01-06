@@ -66,10 +66,11 @@ class PokeBattle_Battler
     end
     # Gorilla Tactics
     if @effects[PBEffects::GorillaTactics]>=0
-      if hasActiveAbility?(:GORILLATACTICS)
+      if hasActiveAbility?(:GORILLATACTICS) &&
+         pbHasMove?(@effects[PBEffects::GorillaTactics])
         if move.id!=@effects[PBEffects::GorillaTactics]
           if showMessages
-            msg = _INTL("{1} allows the use of only {2} !",abilityName,PBMoves.getName(@effects[PBEffects::GorillaTactics]))
+            msg = _INTL("{1} allows the use of only {2}!",abilityName,PBMoves.getName(@effects[PBEffects::GorillaTactics]))
             (commandPhase) ? @battle.pbDisplayPaused(msg) : @battle.pbDisplay(msg)
           end
           return false

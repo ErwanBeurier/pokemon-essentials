@@ -787,7 +787,7 @@ class PokeBattle_Battler
     @effects[PBEffects::MaxGuard]      = false
     @effects[PBEffects::DButton]       = false
     @effects[PBEffects::Dynamax]       = 0
-    @effects[PBEffects::UnMaxMoves]    = 0
+    @effects[PBEffects::UnMaxMoves]    = nil
     @effects[PBEffects::MaxMovePP]     = [0,0,0,0]
     @effects[PBEffects::NoDynamax]     = self.dynamaxAble? ? false : true
     @effects[PBEffects::NonGMaxForm]   = self.form
@@ -893,16 +893,12 @@ class PokeBattle_Battler
   end
   
   #-----------------------------------------------------------------------------
-  # Held Choice Items don't lock move options while Dynamaxed.
+  # Choice Items/Gorilla Tactics don't lock move options while Dynamaxed.
   #-----------------------------------------------------------------------------
   def pbEndTurn(_choice)
     @lastRoundMoved = @battle.turnCount   # Done something this round
-    if _choice[0] == :UseMove# For Copycat
-      @battle.lastMoveUsed = _choice[2].id 
-      # Copycat doesn't copy Z-moves. 
-      @battle.lastMoveUsed = -1 if _choice[2].zmove || _choice[2].zMove?
-    end 
     if @effects[PBEffects::Dynamax]<=0
+      # Choice Items
       if @effects[PBEffects::ChoiceBand]<0 &&
          hasActiveItem?([:CHOICEBAND,:CHOICESPECS,:CHOICESCARF])
         if @lastMoveUsed>=0 && pbHasMove?(@lastMoveUsed)
@@ -911,8 +907,18 @@ class PokeBattle_Battler
           @effects[PBEffects::ChoiceBand] = @lastRegularMoveUsed
         end
       end
+      # Gorilla Tactics
+      if @effects[PBEffects::GorillaTactics]<0 && 
+         hasActiveAbility?(:GORILLATACTICS)
+        if @lastMoveUsed>=0 && pbHasMove?(@lastMoveUsed) 
+          @effects[PBEffects::GorillaTactics] = @lastMoveUsed
+        elsif @lastRegularMoveUsed>=0 && pbHasMove?(@lastRegularMoveUsed)
+          @effects[PBEffects::ChoiceBand] = @lastRegularMoveUsed
+        end
+      end
     else
-      @effects[PBEffects::ChoiceBand] = -1
+      @effects[PBEffects::ChoiceBand]     = -1
+      @effects[PBEffects::GorillaTactics] = -1
     end
     @effects[PBEffects::Charge]      = 0 if @effects[PBEffects::Charge]==1
     @effects[PBEffects::GemConsumed] = 0
@@ -949,6 +955,64 @@ BattleHandlers::TargetAbilityOnHit.add(:CURSEDBODY,
       user.pbItemStatusCureCheck
     end
     battle.pbHideAbilitySplash(target)
+  }
+)
+
+#-------------------------------------------------------------------------------
+# Wandering Spirit - Ability fails to trigger on Dynamax targets.
+#-------------------------------------------------------------------------------
+BattleHandlers::TargetAbilityOnHit.add(:WANDERINGSPIRIT,
+  proc { |ability,user,target,move,battle|
+    next if !move.pbContactMove?(user)
+    next if user.fainted? || user.dynamax?
+    abilityBlacklist = [
+       :DISGUISE,
+       :FLOWERGIFT,
+       :GULPMISSILE,
+       :ICEFACE,
+       :IMPOSTER,
+       :RECEIVER,
+       :RKSSYSTEM,
+       :SCHOOLING,
+       :STANCECHANGE,
+       :WONDERGUARD,
+       :ZENMODE,
+       # Abilities that are plain old blocked.
+       :NEUTRALIZINGGAS
+    ]
+    failed = false
+    abilityBlacklist.each do |abil|
+      next if !isConst?(user.ability,PBAbilities,abil)
+      failed = true
+      break
+    end
+    next if failed
+    oldAbil = -1
+    battle.pbShowAbilitySplash(target) if user.opposes?(target)
+    if user.affectedByContactEffect?(PokeBattle_SceneConstants::USE_ABILITY_SPLASH)
+      oldAbil = user.ability
+      battle.pbShowAbilitySplash(user,true,false) if user.opposes?(target)
+      user.ability = getConst(PBAbilities,:WANDERINGSPIRIT)
+      target.ability = oldAbil
+      if user.opposes?(target)
+        battle.pbReplaceAbilitySplash(user)
+        battle.pbReplaceAbilitySplash(target)
+      end
+      if PokeBattle_SceneConstants::USE_ABILITY_SPLASH
+        battle.pbDisplay(_INTL("{1}'s Ability became {2}!",user.pbThis,user.abilityName))
+      else
+        battle.pbDisplay(_INTL("{1}'s Ability became {2} because of {3}!",
+           user.pbThis,user.abilityName,target.pbThis(true)))
+      end
+
+      battle.pbHideAbilitySplash(user)
+    end
+    battle.pbHideAbilitySplash(target) if user.opposes?(target)
+    if oldAbil>=0
+      user.pbOnAbilityChanged(oldAbil)
+      target.pbOnAbilityChanged(getConst(PBAbilities,:WANDERINGSPIRIT))
+    end
+
   }
 )
 
@@ -1765,8 +1829,8 @@ class PokeBattle_Battler
         # Status moves become Max Guard.
         #-----------------------------------------------------------------------
         if @moves[i].statusMove?
-          # Transform doesn't become Max Guard, but only when used by Ditto.
-          if !(@moves[i].id==getID(PBMoves,:TRANSFORM) && isSpecies?(:DITTO))
+          # Transform doesn't become Max Guard, but only when used by raid Ditto.
+          if !(@moves[i].id==getID(PBMoves,:TRANSFORM) && isSpecies?(:DITTO) && @effects[PBEffects:MaxRaidBoss])
             @moves[i] = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(getConst(PBMoves,:MAXGUARD)))
           end
         else
@@ -1983,9 +2047,24 @@ class PokeBattle_Battler
   # Reverts Max Moves into base moves.
   #-----------------------------------------------------------------------------
   def pbUnMaxMove(unmax=false)
-    oldmoves = @pokemon.moves
-    # Gets a transformed Pokemon's copied moves from before they Dynamaxed.
-    oldmoves = @effects[PBEffects::UnMaxMoves] if @effects[PBEffects::Transform] 
+    oldmoves    = []
+    basemoves   = @pokemon.moves
+    storedmoves = @effects[PBEffects::UnMaxMoves]
+    # Gets a Pokemon's copied moves from before they Dynamaxed.
+    if @effects[PBEffects::MoveMimicked]
+      for i in 0...@moves.length
+        next if !@moves[i] || @moves[i].id==0
+        if basemoves[i]==storedmoves[i]
+          oldmoves.push(basemoves[i])
+        else
+          oldmoves.push(storedmoves[i])
+        end
+      end
+    elsif @effects[PBEffects::Transform]
+      oldmoves = storedmoves
+    else
+      oldmoves = basemoves
+    end
     @moves  = [
      PokeBattle_Move.pbFromPBMove(@battle,oldmoves[0]),
      PokeBattle_Move.pbFromPBMove(@battle,oldmoves[1]),
