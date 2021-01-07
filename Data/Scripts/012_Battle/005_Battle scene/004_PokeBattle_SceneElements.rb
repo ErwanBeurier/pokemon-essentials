@@ -98,7 +98,7 @@ class PokemonDataBox < SpriteWrapper
     # Create other bitmaps
     @numbersBitmap = AnimatedBitmap.new(_INTL("Graphics/Pictures/Battle/icon_numbers"))
     @expBarBitmap  = AnimatedBitmap.new(_INTL("Graphics/Pictures/Battle/overlay_exp"))
-    if @largeSideSize
+    if @largeSideSize # Side with more than 3 battlers. 
       @hpBarBitmap   = AnimatedBitmap.new(_INTL("Graphics/Pictures/Battle/overlay_hp_tiny"))
     else
       @hpBarBitmap   = AnimatedBitmap.new(_INTL("Graphics/Pictures/Battle/overlay_hp"))
@@ -148,8 +148,10 @@ class PokemonDataBox < SpriteWrapper
   def y=(value)
     super
     if @largeSideSize
-      @hpBar.y     = value+56 if @onPlayerSide
-      @hpBar.y     = value+32 if !@onPlayerSide
+      # @hpBar.y     = value+56 if @onPlayerSide
+      # @hpBar.y     = value+32 if !@onPlayerSide
+      @hpBar.y     = value+34 if @onPlayerSide
+      @hpBar.y     = value+6 if !@onPlayerSide
     else
       @hpBar.y     = value+40
     end 
@@ -261,14 +263,14 @@ class PokemonDataBox < SpriteWrapper
     if !@largeSideSize
       imagePos.push(["Graphics/Pictures/Battle/overlay_lv",@spriteBaseX+140,16])
       pbDrawNumber(@battler.level,self.bitmap,@spriteBaseX+162,16)
-    else 
-      if @onPlayerSide
-        imagePos.push(["Graphics/Pictures/Battle/overlay_lv",@spriteBaseX,32])
-        pbDrawNumber(@battler.level,self.bitmap,@spriteBaseX+22,32)
-      else 
-        imagePos.push(["Graphics/Pictures/Battle/overlay_lv",@spriteBaseX,8])
-        pbDrawNumber(@battler.level,self.bitmap,@spriteBaseX+22,8)
-      end 
+    # else 
+      # if @onPlayerSide
+        # imagePos.push(["Graphics/Pictures/Battle/overlay_lv",@spriteBaseX,32])
+        # pbDrawNumber(@battler.level,self.bitmap,@spriteBaseX+22,32)
+      # else 
+        # imagePos.push(["Graphics/Pictures/Battle/overlay_lv",@spriteBaseX,8])
+        # pbDrawNumber(@battler.level,self.bitmap,@spriteBaseX+22,8)
+      # end 
     end 
     if !@largeSideSize
       # Draw shiny icon
@@ -296,10 +298,18 @@ class PokemonDataBox < SpriteWrapper
     if @battler.status>0
       s = @battler.status
       s = 6 if s==PBStatuses::POISON && @battler.statusCount>0   # Badly poisoned
-      status_x = (@largeSideSize ? @spriteBaseX : @spriteBaseX+24)
-      status_y = (@largeSideSize ? 8 : 36)
-      imagePos.push(["Graphics/Pictures/Battle/icon_statuses",status_x,status_y,
-         0,(s-1)*STATUS_ICON_HEIGHT,-1,STATUS_ICON_HEIGHT])
+      
+      if @largeSideSize
+        status_x = 8
+        status_y = (@onPlayerSide ? 22 : 16)
+        imagePos.push(["Graphics/Pictures/Battle/icon_statuses_tiny",status_x,status_y,
+           0,(s-1)*10,-1,10])
+      else 
+        status_x = @spriteBaseX+24
+        status_y = 36
+        imagePos.push(["Graphics/Pictures/Battle/icon_statuses",status_x,status_y,
+           0,(s-1)*STATUS_ICON_HEIGHT,-1,STATUS_ICON_HEIGHT])
+      end 
     end
     pbDrawImagePositions(self.bitmap,imagePos)
     refreshHP

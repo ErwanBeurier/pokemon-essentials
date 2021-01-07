@@ -1,8 +1,7 @@
-#===============================================================================
-# * Attacks
 class PokeBattle_AI
   #=============================================================================
-  # Main move-choosing method
+  # Main move-choosing method (moves with higher scores are more likely to be
+  # chosen)
   #=============================================================================
   def pbChooseMoves(idxBattler)
     user        = @battle.battlers[idxBattler]
@@ -15,7 +14,7 @@ class PokeBattle_AI
     # NOTE: A move is only added to the choices array if it has a non-zero
     #       score.
     choices     = []
-    user.eachMoveWithIndex do |m,i|
+    user.eachMoveWithIndex do |_m,i|
       next if !@battle.pbCanChooseMove?(idxBattler,i,false)
       if wildBattler
         pbRegisterMoveWild(user,i,choices)
@@ -43,29 +42,12 @@ class PokeBattle_AI
     # Find any preferred moves and just choose from them
     if !wildBattler && skill>=PBTrainerAI.highSkill && maxScore>100
       stDev = pbStdDev(choices)
-      PBDebug.log("[AI] #{user.pbThis} (#{user.index}): std dev: #{stDev}")
-      if stDev>=40
+      if stDev>=40 && pbAIRandom(100)<90
         preferredMoves = []
         choices.each do |c|
           next if c[1]<200 && c[1]<maxScore*0.8
-          if user.moves[c[0]].priority != 0
-            preferredMoves.push(c)
-            preferredMoves.push(c) if user.hp <= (user.totalhp/3).floor
-          end
-          user.eachOpposing do |o|
-            # superEffective = (PurifyChamberSet.isSuperEffective(user.moves[c[0]],o) || PurifyChamberSet.isSuperEffective(c.type,o.type2))
-            superEffective = PBTypes.superEffective?(user.moves[c[0]].type,o.type1,o.type2)
-            if superEffective
-              preferredMoves.push(c)
-            end
-          end
-          # preferredMoves.push(c) No. Bad moves should not be added to possible moves
+          preferredMoves.push(c)
           preferredMoves.push(c) if c[1]==maxScore   # Doubly prefer the best move
-        end
-        if preferredMoves.length == 0
-          choices.each do |move|
-            preferredMoves.push(move) #choose rand move bc all bad
-          end
         end
         if preferredMoves.length>0
           m = preferredMoves[pbAIRandom(preferredMoves.length)]
@@ -76,21 +58,11 @@ class PokeBattle_AI
         end
       end
     end
-    # Remove useless moves. 
-    if skill>=PBTrainerAI.mediumSkill
-      choices2 = []
-      choices.each do |c|
-        if c[1] > maxScore / 2
-          choices2.push(c)
-        end 
-      end 
-      choices = choices2.clone 
-    end 
     # Decide whether all choices are bad, and if so, try switching instead
     if !wildBattler && skill>=PBTrainerAI.highSkill
       badMoves = false
       if (maxScore<=20 && user.turnCount>2) ||
-        (maxScore<=40 && user.turnCount>5)
+         (maxScore<=40 && user.turnCount>5)
         badMoves = true if pbAIRandom(100)<80
       end
       if !badMoves && totalScore<100 && user.turnCount>1
@@ -100,73 +72,51 @@ class PokeBattle_AI
           badMoves = false
           break
         end
-        badMoves = false if badMoves
+        badMoves = false if badMoves && pbAIRandom(100)<10
       end
       if badMoves && pbEnemyShouldWithdrawEx?(idxBattler,true)
         if $INTERNAL
-          PBDebug.log("[AI] #{user.pbThis} (#{user.index}) will switch due to terrible moves lol. you should have better moves tbh")
+          PBDebug.log("[AI] #{user.pbThis} (#{user.index}) will switch due to terrible moves")
         end
         return
       end
     end
-    battler = @battle.battlers[idxBattler]
-    $opposing = []
-    for i in @battle.battlers
-      if i != battler
-        if not(i.fainted?)
-          if i.opposes?
-            $opposing.push(i)
-          end
-        end
-      end
-    end
-    moves = battler.moves
-    battler.moves.each do |move|
-      for o in $opposing
-        baseDmg = pbMoveBaseDamage(move,battler,o,skill)
-        if pbRoughDamage(move,battler,o,skill,baseDmg) >= o.hp
-          $nextTarget = o
-          $nextMove = move
-          $nextQue = 1 
-        end
-      end
-    end
-    # Randomly choose a move to use
+    # If there are no calculated choices, pick one at random
     if choices.length==0
-      # If there are no calculated choices, use Struggle (or an Encored move)
-      @battle.pbAutoChooseMove(idxBattler)
-    else
-      # Randomly choose a move from the choices and register it
-      if !($nextQue == 1)
-        randNum = pbAIRandom(totalScore)
-        choices.each do |c|
-          randNum -= c[1]
-          next if randNum>=0
-          @battle.pbRegisterMove(idxBattler,c[0],false)
-          @battle.pbRegisterTarget(idxBattler,c[2]) if c[2]>=0
-          break
-        end
-      else
-        @battle.pbRegisterMove(idxBattler,$nextMove,false)
-        @battle.pbRegisterTarget(idxBattler,$nextTarget) if $nextTarget>=0
-        $nextQue = 0
+      PBDebug.log("[AI] #{user.pbThis} (#{user.index}) doesn't want to use any moves; picking one at random")
+      user.eachMoveWithIndex do |_m,i|
+        next if !@battle.pbCanChooseMove?(idxBattler,i,false)
+        choices.push([i,100,-1])   # Move index, score, target
       end
+      if choices.length==0   # No moves are physically possible to use
+        user.eachMoveWithIndex do |_m,i|
+          choices.push([i,100,-1])   # Move index, score, target
+        end
+      end
+    end
+    # Randomly choose a move from the choices and register it
+    randNum = pbAIRandom(totalScore)
+    choices.each do |c|
+      randNum -= c[1]
+      next if randNum>=0
+      @battle.pbRegisterMove(idxBattler,c[0],false)
+      @battle.pbRegisterTarget(idxBattler,c[2]) if c[2]>=0
+      break
     end
     # Log the result
     if @battle.choices[idxBattler][2]
-      PBDebug.log("[AI] #{user.pbThis} (#{user.index}) will use #{@battle.choices[user.index][2].name} boom boom you die")
+      PBDebug.log("[AI] #{user.pbThis} (#{user.index}) will use #{@battle.choices[user.index][2].name}")
     end
   end
-  
+
   #=============================================================================
   # Get scores for the given move against each possible target
   #=============================================================================
   # Wild Pokémon choose their moves randomly.
-  # If you dont want this and want wild battles to be hard tell me    
-  def pbRegisterMoveWild(user,idxMove,choices)
+  def pbRegisterMoveWild(_user,idxMove,choices)
     choices.push([idxMove,100,-1])   # Move index, score, target
   end
-  
+
   # Trainer Pokémon calculate how much they want to use each of their moves.
   def pbRegisterMoveTrainer(user,idxMove,choices,skill)
     move = user.moves[idxMove]
@@ -200,7 +150,7 @@ class PokeBattle_AI
       end
     end
   end
-  
+
   #=============================================================================
   # Get a score for the given move being used against the given target
   #=============================================================================
@@ -223,7 +173,7 @@ class PokeBattle_AI
       end
       # Don't prefer attacking the target if they'd be semi-invulnerable
       if skill>=PBTrainerAI.highSkill && move.accuracy>0 &&
-        (target.semiInvulnerable? || target.effects[PBEffects::SkyDrop]>=0)
+         (target.semiInvulnerable? || target.effects[PBEffects::SkyDrop]>=0)
         miss = true
         miss = false if user.hasActiveAbility?(:NOGUARD) || target.hasActiveAbility?(:NOGUARD)
         if miss && pbRoughStat(user,PBStats::SPEED,skill)>pbRoughStat(target,PBStats::SPEED,skill)
@@ -252,7 +202,6 @@ class PokeBattle_AI
       end
       # If user is asleep, prefer moves that are usable while asleep
       if user.status==PBStatuses::SLEEP && !move.usableWhenAsleep?
-        hasSleepMove = false
         user.eachMove do |m|
           next unless m.usableWhenAsleep?
           score -= 60
@@ -295,7 +244,7 @@ class PokeBattle_AI
     score = 0 if score<0
     return score
   end
-  
+
   #=============================================================================
   # Add to a move's score based on how much damage it will deal (as a percentage
   # of the target's current HP)
@@ -317,8 +266,8 @@ class PokeBattle_AI
     # flinching are dealt with in the function code part of score calculation)
     if skill>=PBTrainerAI.mediumSkill
       if !target.hasActiveAbility?(:INNERFOCUS) &&
-        !target.hasActiveAbility?(:SHIELDDUST) &&
-        target.effects[PBEffects::Substitute]==0
+          !target.hasActiveAbility?(:SHIELDDUST) &&
+          target.effects[PBEffects::Substitute]==0
         canFlinch = false
         if move.canKingsRock? && user.hasActiveItem?([:KINGSROCK,:RAZORFANG])
           canFlinch = true
@@ -332,7 +281,7 @@ class PokeBattle_AI
     # Convert damage to percentage of target's remaining HP
     damagePercentage = realDamage*100.0/target.hp
     # Don't prefer weak attacks
-    #    damagePercentage /= 2 if damagePercentage<20
+#    damagePercentage /= 2 if damagePercentage<20
     # Prefer damaging attack if level difference is significantly high
     damagePercentage *= 1.2 if user.level-10>target.level
     # Adjust score
@@ -342,12 +291,3 @@ class PokeBattle_AI
     return score
   end
 end
-#------------------------------------------------------------------------------#
-#                            Thanks for using!                                 #
-#------------------------------------------------------------------------------#  
-PluginManager.register({                                                 
-    :name    => "Better AI",                             
-    :version => "1.0",                                   
-    :link    => "https://pokecommunity.com",             
-    :credits => ["#Not Important"]
-})

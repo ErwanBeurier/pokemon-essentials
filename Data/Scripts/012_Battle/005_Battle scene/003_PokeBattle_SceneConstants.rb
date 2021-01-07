@@ -33,11 +33,13 @@ module PokeBattle_SceneConstants
       ret[1] += [  0,  0,  8, -8, 16, -16][index]
     when 4, 5, 6
       if (index&1)==0
+        # Player side 
         ret[0] = 75 * (index / 2 + 1) - 20
-        ret[1] -= 16
+        ret[1] -= 30
       else 
+        # Opponent side. 
         ret[0] = Graphics.width - 75 * ((index - 1) / 2 + 1)
-        # ret[1] -= 20
+        ret[1] -= 20
       end 
     end
     return ret
