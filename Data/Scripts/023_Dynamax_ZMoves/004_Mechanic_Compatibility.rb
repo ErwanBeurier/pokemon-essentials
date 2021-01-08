@@ -324,6 +324,7 @@ class PokeBattle_Battler
     end
     if newtype
       newtype = getID(PBTypes,newtype)
+      oldMove = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(basemove.id))
       #-------------------------------------------------------------------------
       # Z-Moves - Converts to a new Z-Move of a given type.
       #-------------------------------------------------------------------------
@@ -331,7 +332,6 @@ class PokeBattle_Battler
         crystal = [:NORMALIUMZ,:EEVIUMZ,:SNORLIUMZ]
         for i in crystal; newZMove = true if hasActiveItem?(i); end
         if newZMove || @effects[PBEffects::Electrify]
-          oldMove = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(basemove.id))
           zMove   = pbZMoveFromType(newtype)
           newMove = PBMove.new(zMove)
           newMove = PokeBattle_ZMove.new(@battle,oldMove,newMove)
@@ -343,17 +343,9 @@ class PokeBattle_Battler
       #-------------------------------------------------------------------------
       if thismove.maxMove?
         gmaxmove = pbGetGMaxMoveFromSpecies(@pokemon,newtype)
-        if gmaxFactor? && gmaxmove
-          maxMove = gmaxmove
-        else
-          maxMove = DYNAMAX_MOVES[newtype]
-        end
-        newMove = getConst(PBMoves,maxMove)
-        newMove = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(newMove))
-        newMove.makeSpecial if thismove.specialMove?(type)
-        if !pbIsSetGmaxMove?(maxMove)
-          newMove.pbSetMaxMovePower(PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(basemove.id)))
-        end
+        maxMove  = (gmaxmove && gmaxFactor?) ? gmaxmove : DYNAMAX_MOVES[newtype]
+        newMove  = (thismove.statusMove?) ? PBMove.new(:MAXGUARD) : PBMove.new(maxMove)
+        newMove  = PokeBattle_MaxMove.pbFromOldMove(@battle,oldMove,newMove)
         return newMove
       end
     end
@@ -528,14 +520,21 @@ class PokeBattle_Battle
     end
     pbUnregisterMegaEvolution(idxBattler)
     #---------------------------------------------------------------------------
-    pbUnregisterZMove(idxBattler)       if pbZMovesInstalled?
-    pbUnregisterUltraBurst(idxBattler)  if pbZMovesInstalled?
-    pbUnregisterZodiacPower(idxBattler) if pbZodiacInstalled?
+    # Cancels Z-Move/Dynamax and returns to base moves.
+    #---------------------------------------------------------------------------
+    if pbZMovesInstalled? && pbRegisteredZMove?(idxBattler)
+      pbUnregisterZMove(idxBattler)
+      @battlers[idxBattler].effects[PBEffects::ZMoveButton] = false
+      @battlers[idxBattler].pbZDisplayOldMoves
+    end
     if pbDynamaxInstalled? && pbRegisteredDynamax?(idxBattler)
       pbUnregisterDynamax(idxBattler)
       @battlers[idxBattler].effects[PBEffects::DButton] = false
       @battlers[idxBattler].pbUnMaxMove
     end
+    #---------------------------------------------------------------------------
+    pbUnregisterUltraBurst(idxBattler)  if pbZMovesInstalled?
+    pbUnregisterZodiacPower(idxBattler) if pbZodiacInstalled?
     #---------------------------------------------------------------------------
     pbClearChoice(idxBattler)
   end
@@ -703,14 +702,19 @@ class PokeBattle_Battle
         #-----------------------------------------------------------------------
         # Unregisters the appropriate battle mechanic.
         #-----------------------------------------------------------------------
-        pbUnregisterZMove(idxBattler)       if pbZMovesInstalled?
-        pbUnregisterUltraBurst(idxBattler)  if pbZMovesInstalled?
-        pbUnregisterZodiacPower(idxBattler) if pbZodiacInstalled?
+        if pbZMovesInstalled? && pbRegisteredZMove?(idxBattler)
+          pbUnregisterZMove(idxBattler)
+          @battlers[idxBattler].effects[PBEffects::ZMoveButton] = false
+          @battlers[idxBattler].pbZDisplayOldMoves
+        end
         if pbDynamaxInstalled? && pbRegisteredDynamax?(idxBattler)
           pbUnregisterDynamax(idxBattler)
           @battlers[idxBattler].effects[PBEffects::DButton] = false
           @battlers[idxBattler].pbUnMaxMove
         end
+        #-----------------------------------------------------------------------
+        pbUnregisterUltraBurst(idxBattler)  if pbZMovesInstalled?
+        pbUnregisterZodiacPower(idxBattler) if pbZodiacInstalled?
         #-----------------------------------------------------------------------
         pbRegisterShift(idxBattler)
         ret = true
@@ -2860,6 +2864,7 @@ class PokeBattle_Move_0AF < PokeBattle_Move
     user.pbUseMoveSimple(lastmove)
   end
 end
+
 #-------------------------------------------------------------------------------
 # Sleep Talk
 #-------------------------------------------------------------------------------
@@ -2869,6 +2874,7 @@ class PokeBattle_Move_0B4 < PokeBattle_Move
     user.pbUseMoveSimple(user.moves[choice].id,user.pbDirectOpposing.index, choice)
   end
 end
+
 #===============================================================================
 # Encore
 #===============================================================================
@@ -2922,7 +2928,7 @@ class PokeBattle_Battler
       # Some work for Copycat, so that it doesn't copy Z-moves. 
       @battle.lastMoveUsed = _choice[2].id 
       # Copycat doesn't copy Z-moves. 
-      @battle.lastMoveUsed = -1 if _choice[2].zmove || _choice[2].zMove?
+      @battle.lastMoveUsed = -1 if _choice[2].zMove? || _choice[2].zmove
     end 
     __encore__pbEndTurn(_choice)
   end 
@@ -2935,7 +2941,7 @@ class PokeBattle_Battle
   def pbCanShowFightMenu?(idxBattler)
     battler = @battlers[idxBattler]
     # Encore
-    return false if battler.effects[PBEffects::Encore]>0 && !pbCanZMove?(idxBattler)
+    return false if battler.effects[PBEffects::Encore]>0 && !pbCanUseBattleMechanic?(idxBattler)
     # No moves that can be chosen (will Struggle instead)
     usable = false
     battler.eachMoveWithIndex do |_m,i|
@@ -2960,14 +2966,15 @@ class PokeBattle_Battle
     end
     if battler.effects[PBEffects::Encore]>0
       idxEncoredMove = battler.pbEncoredMoveIndex
-      if idxEncoredMove>=0 && idxMove!=idxEncoredMove && !move.zMove?
+      if idxEncoredMove>=0 && idxMove!=idxEncoredMove && !move.zMove? && !move.maxMove?
         pbDisplayPaused(_INTL("Encore prevents using this move!")) if showMessages
       return false 
       end 
     end
     return battler.pbCanChooseMove?(move,true,showMessages,sleepTalk)
   end
-end 
+end
+
 #-------------------------------------------------------------------------------
 # Encore 
 #-------------------------------------------------------------------------------

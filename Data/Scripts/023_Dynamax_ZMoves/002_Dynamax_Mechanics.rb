@@ -84,9 +84,6 @@ DYNAMAX_MOVES  = [:MAXSTRIKE,:MAXKNUCKLE,:MAXAIRSTREAM,:MAXOOZE,:MAXQUAKE,
                   :MAXROCKFALL,:MAXFLUTTERBY,:MAXPHANTASM,:MAXSTEELSPIKE,
                   :MAXSTRIKE,:MAXFLARE,:MAXGEYSER,:MAXOVERGROWTH,:MAXLIGHTNING,
                   :MAXMINDSTORM,:MAXHAILSTORM,:MAXWYRMWIND,:MAXDARKNESS,:MAXSTARFALL]
-                  
-# List of G-Max Moves with a set base power that doesn't change.
-GMAX_SET_POWER = [:GMAXDRUMSOLO,:GMAXFIREBALL,:GMAXHYDROSNIPE]
 
 #-------------------------------------------------------------------------------
 # Species Arrays
@@ -710,8 +707,7 @@ class PokemonSummary_Scene
           maxMoveID = getID(PBMoves,(DYNAMAX_MOVES[movetype]))
         end
       end
-      basedamage = pbGetMoveData(maxMoveID,MOVE_BASE_DAMAGE)
-      basedamage = pbSetMaxMovePower(moveid,true) if !pbIsSetGmaxMove?(maxMoveID)
+      basedamage = pbMaxMoveBaseDamage(moveid,maxMoveID)
       basedamage = 0 if maxMoveID==getID(PBMoves,:MAXGUARD)
       accuracy   = 0
       moveid     = maxMoveID
@@ -1345,6 +1341,15 @@ class PokeBattle_Move
   end
 
   #-----------------------------------------------------------------------------
+  # Max Raid Pokemon take greatly reduced damage while shields are up.
+  #-----------------------------------------------------------------------------
+  def pbCalcDynamaxDamage(target,multipliers) # Added to def pbCalcDamageMultipliers
+    if target.effects[PBEffects::RaidShield]>0
+      multipliers[FINAL_DMG_MULT] /= 24
+    end
+  end
+  
+  #-----------------------------------------------------------------------------
   # Max Raid Pokemon immune to additional effects of moves when shields are up.
   #-----------------------------------------------------------------------------
   def pbAdditionalEffectChance(user,target,effectChance=0)
@@ -1819,228 +1824,16 @@ class PokeBattle_Battler
 # Converts base moves into Max Moves.
 #===============================================================================
   def pbMaxMove
+    newpoke  = @effects[PBEffects::TransformPokemon]
+    pokemon  = @effects[PBEffects::Transform] ? newpoke : self.pokemon
     oldmoves = [@moves[0],@moves[1],@moves[2],@moves[3]]
-    if !@effects[PBEffects::MaxRaidBoss]
-      @effects[PBEffects::UnMaxMoves] = oldmoves
-    end
+    @effects[PBEffects::UnMaxMoves] = oldmoves if !@effects[PBEffects::UnMaxMoves]
     for i in 0...4
-      if @moves[i].id>0
-        #-----------------------------------------------------------------------
-        # Status moves become Max Guard.
-        #-----------------------------------------------------------------------
-        if @moves[i].statusMove?
-          # Transform doesn't become Max Guard, but only when used by raid Ditto.
-          if !(@moves[i].id==getID(PBMoves,:TRANSFORM) && isSpecies?(:DITTO) && @effects[PBEffects:MaxRaidBoss])
-            @moves[i] = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(getConst(PBMoves,:MAXGUARD)))
-          end
-        else
-          #---------------------------------------------------------------------
-          # Normal-type Max Moves.
-          #---------------------------------------------------------------------
-          if @moves[i].type==0 # Normal
-            if isSpecies?(:MEOWTH) && gmaxFactor?
-              @moves[i] = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(getConst(PBMoves,:GMAXGOLDRUSH)))
-            elsif isSpecies?(:EEVEE) && gmaxFactor?
-              @moves[i] = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(getConst(PBMoves,:GMAXCUDDLE)))
-            elsif isSpecies?(:SNORLAX) && gmaxFactor?
-              @moves[i] = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(getConst(PBMoves,:GMAXREPLENISH)))
-            else
-              @moves[i] = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(getConst(PBMoves,:MAXSTRIKE)))
-            end
-          #---------------------------------------------------------------------
-          # Fighting-type Max Moves.
-          #---------------------------------------------------------------------
-          elsif @moves[i].type==1 # Fighting
-            if isSpecies?(:MACHAMP) && gmaxFactor?
-              @moves[i] = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(getConst(PBMoves,:GMAXCHISTRIKE)))
-            else
-              @moves[i] = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(getConst(PBMoves,:MAXKNUCKLE)))
-            end
-          #---------------------------------------------------------------------
-          # Flying-type Max Moves.
-          #---------------------------------------------------------------------
-          elsif @moves[i].type==2 # Flying
-            if isSpecies?(:CORVIKNIGHT) && gmaxFactor?
-              @moves[i] = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(getConst(PBMoves,:GMAXWINDRAGE)))
-            else
-              @moves[i] = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(getConst(PBMoves,:MAXAIRSTREAM)))
-            end
-          #---------------------------------------------------------------------
-          # Poison-type Max Moves.
-          #---------------------------------------------------------------------
-          elsif @moves[i].type==3 # Poison
-            if isSpecies?(:GARBODOR) && gmaxFactor?
-              @moves[i] = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(getConst(PBMoves,:GMAXMALODOR)))
-            else
-              @moves[i] = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(getConst(PBMoves,:MAXOOZE)))
-            end
-          #---------------------------------------------------------------------
-          # Ground-type Max Moves.
-          #---------------------------------------------------------------------
-          elsif @moves[i].type==4 # Ground
-            if isSpecies?(:SANDACONDA) && gmaxFactor?
-              @moves[i] = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(getConst(PBMoves,:GMAXSANDBLAST)))
-            else
-              @moves[i] = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(getConst(PBMoves,:MAXQUAKE)))
-            end
-          #---------------------------------------------------------------------
-          # Rock-type Max Moves.
-          #---------------------------------------------------------------------
-          elsif @moves[i].type==5 # Rock
-            if isSpecies?(:COALOSSAL) && gmaxFactor?
-              @moves[i] = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(getConst(PBMoves,:GMAXVOLCALITH)))
-            else
-              @moves[i] = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(getConst(PBMoves,:MAXROCKFALL)))
-            end
-          #---------------------------------------------------------------------
-          # Bug-type Max Moves.
-          #---------------------------------------------------------------------
-          elsif @moves[i].type==6 # Bug
-            if isSpecies?(:BUTTERFREE) && gmaxFactor?
-              @moves[i] = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(getConst(PBMoves,:GMAXBEFUDDLE)))
-            else
-              @moves[i] = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(getConst(PBMoves,:MAXFLUTTERBY)))
-            end
-          #---------------------------------------------------------------------
-          # Ghost-type Max Moves.
-          #---------------------------------------------------------------------
-          elsif @moves[i].type==7 # Ghost
-            if isSpecies?(:GENGAR) && gmaxFactor?
-              @moves[i] = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(getConst(PBMoves,:GMAXTERROR)))
-            else
-              @moves[i] = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(getConst(PBMoves,:MAXPHANTASM)))
-            end
-          #---------------------------------------------------------------------
-          # Steel-type Max Moves.
-          #---------------------------------------------------------------------
-          elsif @moves[i].type==8 # Steel
-            if isSpecies?(:MELMETAL) && gmaxFactor?
-              @moves[i] = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(getConst(PBMoves,:GMAXMELTDOWN)))
-            elsif isSpecies?(:COPPERAJAH)
-              @moves[i] = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(getConst(PBMoves,:GMAXSTEELSURGE)))
-            else
-              @moves[i] = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(getConst(PBMoves,:MAXSTEELSPIKE)))
-            end
-          #---------------------------------------------------------------------
-          # Fire-type Max Moves.
-          #---------------------------------------------------------------------
-          elsif @moves[i].type==10 # Fire
-            if isSpecies?(:CHARIZARD) && gmaxFactor?
-              @moves[i] = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(getConst(PBMoves,:GMAXWILDFIRE)))
-            elsif isSpecies?(:CINDERACE) && gmaxFactor?
-              @moves[i] = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(getConst(PBMoves,:GMAXFIREBALL)))
-            elsif isSpecies?(:CENTISCORCH) && gmaxFactor?
-              @moves[i] = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(getConst(PBMoves,:GMAXCENTIFERNO)))
-            else
-              @moves[i] = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(getConst(PBMoves,:MAXFLARE)))
-            end
-          #---------------------------------------------------------------------
-          # Water-type Max Moves.
-          #---------------------------------------------------------------------
-          elsif @moves[i].type==11 # Water
-            if isSpecies?(:BLASTOISE) && gmaxFactor?
-              @moves[i] = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(getConst(PBMoves,:GMAXCANNONADE)))
-            elsif isSpecies?(:KINGLER) && gmaxFactor?
-              @moves[i] = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(getConst(PBMoves,:GMAXFOAMBURST)))
-            elsif isSpecies?(:INTELEON) && gmaxFactor?
-              @moves[i] = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(getConst(PBMoves,:GMAXHYDROSNIPE)))
-            elsif isSpecies?(:DREADNAW) && gmaxFactor?
-              @moves[i] = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(getConst(PBMoves,:GMAXSTONESURGE)))
-            elsif isSpecies?(:URSHIFU) && gmaxFactor? && form==1
-              @moves[i] = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(getConst(PBMoves,:GMAXRAPIDFLOW)))
-            else
-              @moves[i] = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(getConst(PBMoves,:MAXGEYSER)))
-            end
-          #---------------------------------------------------------------------
-          # Grass-type Max Moves.
-          #---------------------------------------------------------------------
-          elsif @moves[i].type==12 # Grass
-            if isSpecies?(:VENUSAUR) && gmaxFactor?
-              @moves[i] = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(getConst(PBMoves,:GMAXVINELASH)))
-            elsif isSpecies?(:RILLABOOM) && gmaxFactor?
-              @moves[i] = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(getConst(PBMoves,:GMAXDRUMSOLO)))
-            elsif isSpecies?(:FLAPPLE) && gmaxFactor?
-              @moves[i] = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(getConst(PBMoves,:GMAXTARTNESS)))
-            elsif isSpecies?(:APPLETUN) && gmaxFactor?
-              @moves[i] = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(getConst(PBMoves,:GMAXSWEETNESS)))
-            else
-              @moves[i] = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(getConst(PBMoves,:MAXOVERGROWTH)))
-            end
-          #---------------------------------------------------------------------
-          # Electric-type Max Moves.
-          #---------------------------------------------------------------------
-          elsif @moves[i].type==13 # Electric
-            if isSpecies?(:PIKACHU) && gmaxFactor?
-              @moves[i] = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(getConst(PBMoves,:GMAXVOLTCRASH)))
-            elsif isSpecies?(:TOXTRICITY) && gmaxFactor?
-              @moves[i] = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(getConst(PBMoves,:GMAXSTUNSHOCK)))
-            else
-              @moves[i] = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(getConst(PBMoves,:MAXLIGHTNING)))
-            end
-          #---------------------------------------------------------------------
-          # Psychic-type Max Moves.
-          #---------------------------------------------------------------------
-          elsif @moves[i].type==14 # Psychic
-            if isSpecies?(:ORBEETLE) && gmaxFactor?
-              @moves[i] = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(getConst(PBMoves,:GMAXGRAVITAS)))
-            else
-              @moves[i] = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(getConst(PBMoves,:MAXMINDSTORM)))
-            end
-          #---------------------------------------------------------------------
-          # Ice-type Max Moves.
-          #---------------------------------------------------------------------
-          elsif @moves[i].type==15 # Ice
-            if isSpecies?(:LAPRAS) && gmaxFactor?
-              @moves[i] = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(getConst(PBMoves,:GMAXRESONANCE)))
-            else
-              @moves[i] = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(getConst(PBMoves,:MAXHAILSTORM)))
-            end
-          #---------------------------------------------------------------------
-          # Dragon-type Max Moves.
-          #---------------------------------------------------------------------
-          elsif @moves[i].type==16 # Dragon
-            if isSpecies?(:DURALUDON) && gmaxFactor?
-              @moves[i] = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(getConst(PBMoves,:GMAXDEPLETION)))
-            else
-              @moves[i] = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(getConst(PBMoves,:MAXWYRMWIND)))
-            end
-          #---------------------------------------------------------------------
-          # Dark-type Max Moves.
-          #---------------------------------------------------------------------
-          elsif @moves[i].type==17 # Dark
-            if isSpecies?(:GRIMMSNARL) && gmaxFactor?
-              @moves[i] = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(getConst(PBMoves,:GMAXSNOOZE)))
-            elsif isSpecies?(:URSHIFU) && gmaxFactor? && form==0
-              @moves[i] = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(getConst(PBMoves,:GMAXONEBLOW)))
-            else
-              @moves[i] = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(getConst(PBMoves,:MAXDARKNESS)))
-            end
-          #---------------------------------------------------------------------
-          # Fairy-type Max Moves.
-          #---------------------------------------------------------------------
-          elsif @moves[i].type==18 # Fairy
-            if isSpecies?(:HATTERENE) && gmaxFactor?
-              @moves[i] = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(getConst(PBMoves,:GMAXSMITE)))
-            elsif isSpecies?(:ALCREMIE) && gmaxFactor?
-              @moves[i] = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(getConst(PBMoves,:GMAXFINALE)))
-            else
-              @moves[i] = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(getConst(PBMoves,:MAXSTARFALL)))
-            end
-          end
-          #---------------------------------------------------------------------
-          # Converts Max Move Base Power to scale with base move's power.
-          #---------------------------------------------------------------------
-          @moves[i].pbSetMaxMovePower(oldmoves[i]) if !pbIsSetGmaxMove?(@moves[i])   # Base Damage
-        end
-      end
-      #-------------------------------------------------------------------------
-      # Converts base move's properties into equivalent Max Move properties.
-      #-------------------------------------------------------------------------
-      @moves[i].pp      = PokeBattle_Move.pbFromPBMove(@battle,oldmoves[i]).pp       # PP
-      @moves[i].totalpp = PokeBattle_Move.pbFromPBMove(@battle,oldmoves[i]).totalpp  # Total PP
-      @moves[i].makeSpecial if oldmoves[i].specialMove?(type)                        # Damage Category
+      next if !@moves[i] || @moves[i].id==0
+      @moves[i]         = PokeBattle_MaxMove.pbFromOldMove(@battle,self,@moves[i])
+      @moves[i].pp      = PokeBattle_Move.pbFromPBMove(@battle,oldmoves[i]).pp       
+      @moves[i].totalpp = PokeBattle_Move.pbFromPBMove(@battle,oldmoves[i]).totalpp
     end
-    return false
   end
   
   #-----------------------------------------------------------------------------
@@ -2085,191 +1878,737 @@ end
 #===============================================================================
 # Converts move's base power into Max Move power.
 #===============================================================================
-def pbSetMaxMovePower(oldmove,displayOnly=false)
+def pbMaxMoveBaseDamage(oldmove,displaymove=nil)
+  realmove  = true if oldmove.is_a?(PokeBattle_Move)
+  moveid    = realmove ? oldmove.id         : pbGetMoveData(oldmove,MOVE_ID)
+  movetype  = realmove ? oldmove.type       : pbGetMoveData(oldmove,MOVE_TYPE)
+  movepower = realmove ? oldmove.baseDamage : pbGetMoveData(oldmove,MOVE_BASE_DAMAGE)
+  function  = realmove ? oldmove.function   : pbGetMoveData(oldmove,MOVE_FUNCTION_CODE)
+  #-----------------------------------------------------------------------------
+  # Max Moves with a set BP in moves.txt PBS file.
+  #-----------------------------------------------------------------------------
+  if displaymove
+    displaypower = pbGetMoveData(displaymove,MOVE_BASE_DAMAGE)
+    return displaypower if displaypower>1
+  end
+  #-----------------------------------------------------------------------------
+  # Becomes Max Move with 130 BP. (OHKO Moves)
+  #-----------------------------------------------------------------------------
+  if function=="070"
+    return 130
+  end
+  case moveid
   #-----------------------------------------------------------------------------
   # Becomes Max Move with 70 BP.
   #-----------------------------------------------------------------------------
-  if oldmove==getID(PBMoves,:ARMTHRUST)
-    basedamage = 70
+  when getID(PBMoves,:ARMTHRUST)
+    return 70
   #-----------------------------------------------------------------------------
   # Becomes Max Move with 75 BP.
   #-----------------------------------------------------------------------------
-  elsif oldmove==getID(PBMoves,:SEISMICTOSS) ||
-        oldmove==getID(PBMoves,:COUNTER)
-    basedamage = 75
+  when getID(PBMoves,:SEISMICTOSS) ||
+       getID(PBMoves,:COUNTER)
+    return 75
   #-----------------------------------------------------------------------------
   # Becomes Max Move with 80 BP.
   #-----------------------------------------------------------------------------
-  elsif oldmove==getID(PBMoves,:DOUBLEKICK) ||
-        oldmove==getID(PBMoves,:TRIPLEKICK)
-    basedamage = 80
+  when getID(PBMoves,:DOUBLEKICK) ||
+       getID(PBMoves,:TRIPLEKICK)
+    return 80
   #-----------------------------------------------------------------------------
   # Becomes Max Move with 100 BP.
   #-----------------------------------------------------------------------------
-  elsif oldmove==getID(PBMoves,:FURYSWIPES) ||
-        oldmove==getID(PBMoves,:NIGHTSHADE) ||
-        oldmove==getID(PBMoves,:FINALGAMBIT) ||
-        oldmove==getID(PBMoves,:METALBURST) ||
-        oldmove==getID(PBMoves,:MIRRORCOAT) ||
-        oldmove==getID(PBMoves,:SUPERFANG) ||
-        oldmove==getID(PBMoves,:BEATUP) ||
-        oldmove==getID(PBMoves,:FLING) ||
-        oldmove==getID(PBMoves,:LOWKICK) ||
-        oldmove==getID(PBMoves,:PRESENT) ||
-        oldmove==getID(PBMoves,:REVERSAL) ||
-        oldmove==getID(PBMoves,:SPITUP)
-    basedamage = 100
+  when getID(PBMoves,:FURYSWIPES) ||
+       getID(PBMoves,:NIGHTSHADE) ||
+       getID(PBMoves,:FINALGAMBIT) ||
+       getID(PBMoves,:METALBURST) ||
+       getID(PBMoves,:MIRRORCOAT) ||
+       getID(PBMoves,:SUPERFANG) ||
+       getID(PBMoves,:BEATUP) ||
+       getID(PBMoves,:FLING) ||
+       getID(PBMoves,:LOWKICK) ||
+       getID(PBMoves,:PRESENT) ||
+       getID(PBMoves,:REVERSAL) ||
+       getID(PBMoves,:SPITUP)
+    return 100
   #-----------------------------------------------------------------------------
   # Becomes Max Move with 120 BP.
   #-----------------------------------------------------------------------------
-  elsif oldmove==getID(PBMoves,:DOUBLEHIT)
-    basedamage = 120
+  when getID(PBMoves,:DOUBLEHIT)
+    return 120
   #-----------------------------------------------------------------------------
   # Becomes Max Move with 130 BP.
   #-----------------------------------------------------------------------------
-  elsif oldmove==getID(PBMoves,:BULLETSEED) ||
-        oldmove==getID(PBMoves,:BONERUSH) ||
-        oldmove==getID(PBMoves,:ICICLESPEAR) ||
-        oldmove==getID(PBMoves,:PINMISSILE) ||
-        oldmove==getID(PBMoves,:ROCKBLAST) ||
-        oldmove==getID(PBMoves,:TAILSLAP) ||
-        oldmove==getID(PBMoves,:BONEMERANG) ||
-        oldmove==getID(PBMoves,:DRAGONDARTS) ||
-        oldmove==getID(PBMoves,:GEARGRIND) ||
-        oldmove==getID(PBMoves,:SURGINGSTRIKES) ||
-        oldmove==getID(PBMoves,:ENDEAVOR) ||
-        oldmove==getID(PBMoves,:ELECTROBALL) ||
-        oldmove==getID(PBMoves,:FLAIL) ||
-        oldmove==getID(PBMoves,:GRASSKNOT) ||
-        oldmove==getID(PBMoves,:GYROBALL) ||
-        oldmove==getID(PBMoves,:HEATCRASH) ||
-        oldmove==getID(PBMoves,:HEAVYSLAM) ||
-        oldmove==getID(PBMoves,:POWERTRIP) ||
-        oldmove==getID(PBMoves,:STOREDPOWER)
-    basedamage = 130
+  when getID(PBMoves,:BULLETSEED) ||
+       getID(PBMoves,:BONERUSH) ||
+       getID(PBMoves,:ICICLESPEAR) ||
+       getID(PBMoves,:PINMISSILE) ||
+       getID(PBMoves,:ROCKBLAST) ||
+       getID(PBMoves,:TAILSLAP) ||
+       getID(PBMoves,:BONEMERANG) ||
+       getID(PBMoves,:DRAGONDARTS) ||
+       getID(PBMoves,:GEARGRIND) ||
+       getID(PBMoves,:SURGINGSTRIKES) ||
+       getID(PBMoves,:ENDEAVOR) ||
+       getID(PBMoves,:ELECTROBALL) ||
+       getID(PBMoves,:FLAIL) ||
+       getID(PBMoves,:GRASSKNOT) ||
+       getID(PBMoves,:GYROBALL) ||
+       getID(PBMoves,:HEATCRASH) ||
+       getID(PBMoves,:HEAVYSLAM) ||
+       getID(PBMoves,:POWERTRIP) ||
+       getID(PBMoves,:STOREDPOWER)
+    return 130
   #-----------------------------------------------------------------------------
   # Becomes Max Move with 140 BP.
   #-----------------------------------------------------------------------------
-  elsif oldmove==getID(PBMoves,:DOUBLEIRONBASH) ||
-        oldmove==getID(PBMoves,:CRUSHGRIP)
-    basedamage = 140
+  when getID(PBMoves,:DOUBLEIRONBASH) ||
+       getID(PBMoves,:CRUSHGRIP)
+    return 140
   #-----------------------------------------------------------------------------
   # Becomes Max Move with 150 BP.
   #-----------------------------------------------------------------------------
-  elsif oldmove==getID(PBMoves,:ERUPTION) ||
-        oldmove==getID(PBMoves,:WATERSPOUT)
-    basedamage = 150
+  when getID(PBMoves,:ERUPTION) ||
+       getID(PBMoves,:WATERSPOUT)
+    return 150
+  end
   #-----------------------------------------------------------------------------
   # All other moves scale based on their BP.
   #-----------------------------------------------------------------------------
-  else  
-    moveType      = pbGetMoveData(oldmove,MOVE_TYPE)
-    moveBasePower = pbGetMoveData(oldmove,MOVE_BASE_DAMAGE)
-    if moveBasePower<45
-      basedamage = 90
-      reduce = 20
-    elsif moveBasePower<55
-      basedamage = 100
-      reduce = 25
-    elsif moveBasePower<65
-      basedamage = 110
-      reduce = 30
-    elsif moveBasePower<75
-      basedamage = 120
-      reduce = 35
-    elsif moveBasePower<110
-      basedamage = 130
-      reduce = 40
-    elsif moveBasePower<150
-      basedamage = 140
-      reduce = 45
-    elsif moveBasePower>=150
-      basedamage = 150
-      reduce = 50
+  if movepower <45
+    basedamage = 90
+    reduce     = 20
+  elsif movepower <55
+    basedamage = 100
+    reduce     = 25
+  elsif movepower <65
+    basedamage = 110
+    reduce     = 30
+  elsif movepower <75
+    basedamage = 120
+    reduce     = 35
+  elsif movepower <110
+    basedamage = 130
+    reduce     = 40
+  elsif movepower <150
+    basedamage = 140
+    reduce     = 45
+  elsif movepower >=150
+    basedamage = 150
+    reduce     = 50
+  end
+  #-------------------------------------------------------------------------
+  # Fighting/Poison moves have reduced BP.
+  #-------------------------------------------------------------------------
+  if movetype==1 || movetype==3
+    basedamage -= reduce
+  end
+  return basedamage
+end
+
+#===============================================================================
+# Move class for handling Max Moves.
+#===============================================================================
+class PokeBattle_MaxMove < PokeBattle_Move
+  attr_reader(:oldmove)
+  attr_reader(:status)
+  attr_reader(:oldname)
+  
+  def initialize(battle,move,pbmove)
+    super(battle,pbmove)
+    @category   = move.category
+    @oldmove    = move
+    @oldname    = move.name
+    @baseDamage = pbMaxMoveBaseDamage(@oldmove) if @baseDamage==1
+    @short_name = (@name.length>15 && SHORTEN_MOVE_NAMES) ? @name[0..12] + "..." : @name
+  end
+  
+  def pbUse(battler,simplechoice=nil,specialUsage=false)
+    battler.pbBeginTurn(self)  
+    dchoice = @battle.choices[battler.index] #[0,0,move,move.target]
+    if simplechoice
+      dchoice = simplechoice
+    end    
+    dchoice[2] = self
+    battler.pbUseMove(dchoice)
+    battler.pbReducePPOther(@oldmove)
+  end 
+  
+  def PokeBattle_MaxMove.pbFromOldMove(battle,battler,move)
+    return move if move.is_a?(PokeBattle_MaxMove)
+    pbmove       = nil
+    newpoke      = battler.effects[PBEffects::TransformPokemon]
+    pokemon      = battler.effects[PBEffects::Transform] ? newpoke : battler.pokemon
+    comp1        = DYNAMAX_MOVES[move.type]
+    comp2        = pbGetGMaxMoveFromSpecies(pokemon,move.type)
+    maxmove_id   = getID(PBMoves,comp1)
+    maxmove_id   = getID(PBMoves,comp2) if comp2 && battler.gmaxFactor?
+    maxmove_id   = getID(PBMoves,:MAXGUARD) if move.statusMove?
+    pbmove       = PBMove.new(maxmove_id)
+    moveFunction = pbGetMoveData(pbmove.id,MOVE_FUNCTION_CODE) || "D000"
+    className    = sprintf("PokeBattle_Move_%s",moveFunction)
+    if Object.const_defined?(className)
+      return Object.const_get(className).new(battle,pbmove) if moveFunction=="D001"
+      return Object.const_get(className).new(battle,move,pbmove)
     end
-    #-------------------------------------------------------------------------
-    # Fighting/Poison moves have reduced BP.
-    #-------------------------------------------------------------------------
-    if moveType==1 || moveType==3
-      basedamage = (basedamage-reduce)
+    return PokeBattle_MaxMove.new(battle,move,pbmove)
+  end
+  
+  def pbModifyDamage(damagemult,attacker,opponent)
+    # Max Moves that ignore Protect don't have their damage reduced.
+    if isConst?(@id,PBMoves,:GMAXONEBLOW) || 
+       isConst?(@id,PBMoves,:GMAXRAPIDFLOW)
+      return damagemult 
+    end
+    # Protect fails to fully protect against Max Moves.
+    if opponent.effects[PBEffects::Protect] || 
+       opponent.effects[PBEffects::Obstruct] ||
+       opponent.effects[PBEffects::KingsShield] ||
+       opponent.effects[PBEffects::SpikyShield] ||
+       opponent.effects[PBEffects::BanefulBunker] ||
+       opponent.pbOwnSide.effects[PBEffects::MatBlock]
+      @battle.pbDisplay(_INTL("{1} couldn't fully protect itself!",opponent.pbThis))
+      return damagemult/4
+    else      
+      return damagemult
     end
   end
-  if displayOnly
-    return basedamage
-  else
-    @baseDamage = basedamage
+end
+
+
+################################################################################
+# SECTION 8 - MAX MOVE EFFECTS
+#===============================================================================
+# Generic move classes. 
+#===============================================================================
+# Raise stat of all ally Pokemon.
+#-------------------------------------------------------------------------------
+class PokeBattle_MaxMove_StatUp < PokeBattle_MaxMove
+  def pbEffectGeneral(user)
+    @battle.eachBattler do |b|
+      next if b.opposes?(user)
+      b.pbRaiseStatStage(@statUp[0],@statUp[1],b)
+    end
   end
 end
 
 #-------------------------------------------------------------------------------
-# Checks if a G-Max move has a set base power or not.
+# Lower stat of all opposing Pokemon.
 #-------------------------------------------------------------------------------
-def pbIsSetGmaxMove?(move)
-  gmaxmoves = []
-  move = getID(PBMoves,move)
-  for i in GMAX_SET_POWER; gmaxmoves.push(getID(PBMoves,i)); end
-  for i in gmaxmoves; return true if move==i; end
-  return false
+class PokeBattle_MaxMove_TargetStatDown < PokeBattle_MaxMove
+  def pbEffectAgainstTarget(user,target)
+    user.eachOpposing do |b|
+      b.pbLowerStatStage(@statDown[0],@statDown[1],b)
+    end
+  end
+end
+
+#-------------------------------------------------------------------------------
+# Sets up weather on use.
+#-------------------------------------------------------------------------------
+class PokeBattle_MaxMove_Weather < PokeBattle_MaxMove
+  def initialize(battle,move,pbmove)
+    super
+    @weatherType = PBWeather::None
+  end
+  
+  def pbEffectGeneral(user)
+    if @battle.field.weather!=PBWeather::HarshSun &&
+       @battle.field.weather!=PBWeather::HeavyRain &&
+       @battle.field.weather!=PBWeather::StrongWinds &&
+       @battle.field.weather!=@weatherType
+      @battle.pbStartWeather(user,@weatherType,true,false)
+    end
+  end
+end
+
+#-------------------------------------------------------------------------------
+# Sets up battle terrain on use.
+#-------------------------------------------------------------------------------
+class PokeBattle_MaxMove_Terrain < PokeBattle_MaxMove
+  def initialize(battle,move,pbmove)
+    super
+    @terrainType = PBBattleTerrains::None
+  end
+
+  def pbEffectGeneral(user)
+    if @battle.field.terrain!=@terrainType
+      @battle.pbStartTerrain(user,@terrainType)
+    end
+  end
+end
+
+#-------------------------------------------------------------------------------
+# Applies one of multiple statuses on all opposing Pokemon.
+#-------------------------------------------------------------------------------
+class PokeBattle_MaxMove_Status < PokeBattle_MaxMove
+  def pbEffectAgainstTarget(user,target)
+    user.eachOpposing do |b|
+      randstatus = @statuses[@battle.pbRandom(@statuses.length)]
+      if b.pbCanInflictStatus?(randstatus,b,false)
+        b.pbInflictStatus(randstatus)
+      end
+    end
+  end
+end
+
+#-------------------------------------------------------------------------------
+# Confuses all opposing Pokemon.
+#-------------------------------------------------------------------------------
+class PokeBattle_MaxMove_Confusion < PokeBattle_MaxMove
+  def pbEffectAgainstTarget(user,target)
+    user.eachOpposing do |b|
+      b.pbConfuse if b.pbCanConfuse?(user,false)
+    end
+  end
 end
 
 #===============================================================================
-# Max Move properties.
+# G-Max One Blow, G-Max Rapid Flow.
 #===============================================================================
-class PokeBattle_Move
-  # Used to convert a Max Move's damage category to special.
-  def makeSpecial
-    @category=1
+# Class used for Max Moves with no effects. (Protection bypass handled elsewhere)
+#-------------------------------------------------------------------------------
+class PokeBattle_Move_D000 < PokeBattle_MaxMove
+end
+
+#===============================================================================
+# Max Guard.
+#===============================================================================
+# Guards the user from all attacks, including Z-Moves/Max Moves.
+#-------------------------------------------------------------------------------
+class PokeBattle_Move_D001 < PokeBattle_ProtectMove
+  def initialize(battle,move)
+    super
+    @effect = PBEffects::MaxGuard
   end
-  
-  # Effect for Ability-ignoring G-Max Moves.
-  def pbIgnoreAbilities?; return false; end
-    
-  def pbImmunityByAbility(user,target)
-    return false if @battle.moldBreaker
-    return false if pbIgnoreAbilities?
-    ret = false
-    if target.abilityActive?
-      ret = BattleHandlers.triggerMoveImmunityTargetAbility(target.ability,
-         user,target,self,@calcType,@battle)
-    end
-    return ret
-  end  
-    
+end
+
 #===============================================================================
-# Calculates final damage dealt under certain Dynamax conditions.
+# Max Knuckle, Max Steelspike, Max Ooze, Max Quake, Max Airstream.
 #===============================================================================
-  def pbCalcDynamaxDamage(target,multipliers) # Added to def pbCalcDamageMultipliers
-    #---------------------------------------------------------------------------
-    # Reduces damage from Max Moves while protected.
-    #---------------------------------------------------------------------------
-    if (target.effects[PBEffects::Protect] || 
-        target.effects[PBEffects::KingsShield] ||
-        target.effects[PBEffects::SpikyShield] ||
-        target.effects[PBEffects::BanefulBunker] ||
-        target.pbOwnSide.effects[PBEffects::MatBlock]) && maxMove?
-      if !isConst?(@id,PBMoves,:GMAXONEBLOW) &&
-         !isConst?(@id,PBMoves,:GMAXRAPIDFLOW)
-        multipliers[FINAL_DMG_MULT] /= 0.75
-      end
+# Increases a stat of all ally Pokemon.
+#-------------------------------------------------------------------------------
+class PokeBattle_Move_D002 < PokeBattle_MaxMove_StatUp
+  def initialize(battle,move,pbmove)
+    super
+    @statUp = [PBStats::ATTACK,1]  if isConst?(@id,PBMoves,:MAXKNUCKLE)
+    @statUp = [PBStats::DEFENSE,1] if isConst?(@id,PBMoves,:MAXSTEELSPIKE)
+    @statUp = [PBStats::SPATK,1]   if isConst?(@id,PBMoves,:MAXOOZE)
+    @statUp = [PBStats::SPDEF,1]   if isConst?(@id,PBMoves,:MAXQUAKE)
+    @statUp = [PBStats::SPEED,1]   if isConst?(@id,PBMoves,:MAXAIRSTREAM)
+  end
+end
+
+
+#===============================================================================
+# Max Wyrmwind, Max Phantasm, Max Flutterby, Max Darkness, Max Strike.
+# G-Max Foamburst, G-Max Tartness.
+#===============================================================================
+# Decreases a stat of all opposing Pokemon.
+#-------------------------------------------------------------------------------
+class PokeBattle_Move_D003 < PokeBattle_MaxMove_TargetStatDown
+  def initialize(battle,move,pbmove)
+    super
+    @statDown = [PBStats::ATTACK,1]  if isConst?(@id,PBMoves,:MAXWYRMWIND)
+    @statDown = [PBStats::DEFENSE,1] if isConst?(@id,PBMoves,:MAXPHANTASM)
+    @statDown = [PBStats::SPATK,1]   if isConst?(@id,PBMoves,:MAXFLUTTERBY)
+    @statDown = [PBStats::SPDEF,1]   if isConst?(@id,PBMoves,:MAXDARKNESS)
+    @statDown = [PBStats::SPEED,1]   if isConst?(@id,PBMoves,:MAXSTRIKE)
+    @statDown = [PBStats::SPEED,2]   if isConst?(@id,PBMoves,:GMAXFOAMBURST)
+    @statDown = [PBStats::EVASION,1] if isConst?(@id,PBMoves,:GMAXTARTNESS)
+  end
+end
+
+#===============================================================================
+# Max Flare, Max Gyser, Max Hailstorm, Max Rockfall.
+#===============================================================================
+# Sets up weather effect on the field.
+#-------------------------------------------------------------------------------
+class PokeBattle_Move_D004 < PokeBattle_MaxMove_Weather
+  def initialize(battle,move,pbmove)
+    super
+    @weatherType = PBWeather::Sun       if isConst?(@id,PBMoves,:MAXFLARE)
+    @weatherType = PBWeather::Rain      if isConst?(@id,PBMoves,:MAXGEYSER)
+    @weatherType = PBWeather::Hail      if isConst?(@id,PBMoves,:MAXHAILSTORM)
+    @weatherType = PBWeather::Sandstorm if isConst?(@id,PBMoves,:MAXROCKFALL)
+  end
+end
+
+#===============================================================================
+# Max Overgrowth, Max Lightning, Max Starfall, Max Mindstorm.
+#===============================================================================
+# Sets up battle terrain on the field.
+#-------------------------------------------------------------------------------
+class PokeBattle_Move_D005 < PokeBattle_MaxMove_Terrain
+  def initialize(battle,move,pbmove)
+    super
+    @terrainType = PBBattleTerrains::Electric if isConst?(@id,PBMoves,:MAXLIGHTNING)
+    @terrainType = PBBattleTerrains::Grassy   if isConst?(@id,PBMoves,:MAXOVERGROWTH)
+    @terrainType = PBBattleTerrains::Misty    if isConst?(@id,PBMoves,:MAXSTARFALL)
+    @terrainType = PBBattleTerrains::Psychic  if isConst?(@id,PBMoves,:MAXMINDSTORM)
+  end
+end
+
+#===============================================================================
+# G-Max Vine Lash, G-Max Wildfire, G-Max Cannonade, G-Max Volcalith.
+#===============================================================================
+# Damages all Pokemon on the opposing field for 4 turns.
+#-------------------------------------------------------------------------------
+class PokeBattle_Move_D006 < PokeBattle_MaxMove
+  def pbEffectGeneral(user)
+    if isConst?(@id,PBMoves,:GMAXVINELASH) &&
+       user.pbOpposingSide.effects[PBEffects::VineLash]==0
+      user.pbOpposingSide.effects[PBEffects::VineLash]=4
+      @battle.pbDisplay(_INTL("{1} got trapped with vines!",user.pbOpposingTeam))
     end
-    #---------------------------------------------------------------------------
-    # Doubles damage vs Dynamax targets with specified moves.
-    #---------------------------------------------------------------------------
-    if target.effects[PBEffects::Dynamax]>0 && !target.isSpecies?(:ETERNATUS)
-      antiDynamax = [:BEHEMOTHBLADE,:BEHEMOTHBASH,:DYNAMAXCANNON]
-      for i in antiDynamax
-        multipliers[FINAL_DMG_MULT] *= 2 if isConst?(@id,PBMoves,i)
-      end
+    if isConst?(@id,PBMoves,:GMAXWILDFIRE) &&
+       user.pbOpposingSide.effects[PBEffects::Wildfire]==0
+      user.pbOpposingSide.effects[PBEffects::Wildfire]=4
+      @battle.pbDisplay(_INTL("{1} were surrounded by fire!",user.pbOpposingTeam))
     end
-    #---------------------------------------------------------------------------
-    # Greatly reduces damage taken while behind a Raid Shield.
-    #---------------------------------------------------------------------------
-    if target.effects[PBEffects::RaidShield]>0
-      multipliers[FINAL_DMG_MULT] /= 24
+    if isConst?(@id,PBMoves,:GMAXCANNONADE) &&
+       user.pbOpposingSide.effects[PBEffects::Cannonade]==0
+      user.pbOpposingSide.effects[PBEffects::Cannonade]=4
+      @battle.pbDisplay(_INTL("{1} got caught in a vortex of water!",user.pbOpposingTeam))
+    end
+    if isConst?(@id,PBMoves,:GMAXVOLCALITH) &&
+       user.pbOpposingSide.effects[PBEffects::Volcalith]==0
+      user.pbOpposingSide.effects[PBEffects::Volcalith]=4
+      @battle.pbDisplay(_INTL("{1} became surrounded by rocks!",user.pbOpposingTeam))
     end
   end
 end
-  
+
+#===============================================================================
+# G-Max Drum Solo, G-Max Fireball, G-Max Hydrosnipe.
+#===============================================================================
+# Bypasses target's abilities that would reduce or ignore damage.
+#-------------------------------------------------------------------------------
+class PokeBattle_Move_D007 < PokeBattle_MaxMove
+  def pbChangeUsageCounters(user,specialUsage)
+    super
+    @battle.moldBreaker = true if !specialUsage
+  end
+end
+
+#===============================================================================
+# G-Max Malador, G-Max Volt Crash, G-Max Stun Shock, G-Max Befuddle.
+#===============================================================================
+# Applies status effects on all opposing Pokemon.
+#-------------------------------------------------------------------------------
+class PokeBattle_Move_D008 < PokeBattle_MaxMove_Status
+  def initialize(battle,move,pbmove)
+    super
+    if isConst?(@id,PBMoves,:GMAXMALODOR)
+      @statuses = [PBStatuses::POISON]
+    end
+    if isConst?(@id,PBMoves,:GMAXVOLTCRASH)
+      @statuses = [PBStatuses::PARALYSIS]
+    end
+    if isConst?(@id,PBMoves,:GMAXSTUNSHOCK)
+      @statuses = [PBStatuses::POISON,PBStatuses::PARALYSIS]
+    end
+    if isConst?(@id,PBMoves,:GMAXBEFUDDLE)
+      @statuses = [PBStatuses::POISON,PBStatuses::PARALYSIS,PBStatuses::SLEEP]
+    end
+  end
+end
+
+#===============================================================================
+# G-Max Smite, G-Max Gold Rush.
+#===============================================================================
+# Confuses all opposing Pokemon.
+#-------------------------------------------------------------------------------
+class PokeBattle_Move_D009 < PokeBattle_MaxMove_Confusion
+  def pbEffectGeneral(user)
+    if isConst?(@id,PBMoves,:GMAXGOLDRUSH) && user.pbOwnedByPlayer?
+      @battle.field.effects[PBEffects::PayDay] += 100*user.level
+      @battle.pbDisplay(_INTL("Coins were scattered everywhere!"))
+    end
+  end
+end
+
+#===============================================================================
+# G-Max Stonesurge, G-Max Steelsurge.
+#===============================================================================
+# Sets up entry hazard on the opposing side's field.
+#-------------------------------------------------------------------------------
+class PokeBattle_Move_D010 < PokeBattle_MaxMove
+  def pbEffectGeneral(user)
+    if isConst?(@id,PBMoves,:GMAXSTONESURGE) &&
+       !user.pbOpposingSide.effects[PBEffects::StealthRock]
+      user.pbOpposingSide.effects[PBEffects::StealthRock] = true
+      @battle.pbDisplay(_INTL("Pointed stones float in the air around {1}!",
+         user.pbOpposingTeam(true)))
+    end
+    if isConst?(@id,PBMoves,:GMAXSTEELSURGE) &&
+       !user.pbOpposingSide.effects[PBEffects::Steelsurge]
+      user.pbOpposingSide.effects[PBEffects::Steelsurge] = true
+      @battle.pbDisplay(_INTL("Sharp-pointed pieces of steel started floating around {1}!",
+         user.pbOpposingTeam(true)))
+    end   
+  end
+end
+
+#===============================================================================
+# G-Max Centiferno, G-Max Sand Blast.
+#===============================================================================
+# Traps all opposing Pokemon in a vortex for multiple turns.
+#-------------------------------------------------------------------------------
+class PokeBattle_Move_D011 < PokeBattle_MaxMove
+  def pbEffectAgainstTarget(user,target)
+    moveid = getID(PBMoves,:FIRESPIN) if isConst?(@id,PBMoves,:GMAXCENTIFERNO)
+    moveid = getID(PBMoves,:SANDTOMB) if isConst?(@id,PBMoves,:GMAXSANDBLAST)
+    user.eachOpposing do |b|    
+      next if b.damageState.substitute
+      next if b.effects[PBEffects::Trapping]>0
+      if user.hasActiveItem?(:GRIPCLAW)
+        b.effects[PBEffects::Trapping] = (NEWEST_BATTLE_MECHANICS) ? 8 : 6
+      else
+        b.effects[PBEffects::Trapping] = 5+@battle.pbRandom(2)
+      end
+      b.effects[PBEffects::TrappingMove] = moveid
+      b.effects[PBEffects::TrappingUser] = user.index
+      msg = _INTL("{1} was trapped in the vortex!",b.pbThis)
+      if isConst?(@id,PBMoves,:GMAXCENTIFERNO)
+        msg = _INTL("{1} was trapped in the fiery vortex!",b.pbThis)
+      elsif isConst?(@id,PBMoves,:GMAXSANDBLAST)
+        msg = _INTL("{1} became trapped by Sand Tomb!",b.pbThis)
+      end
+      @battle.pbDisplay(msg)
+    end
+  end
+end
+
+#===============================================================================
+# G-Max Wind Rage.
+#===============================================================================
+# Blows away effects hazards and opponent side's effects.
+#-------------------------------------------------------------------------------
+class PokeBattle_Move_D012 < PokeBattle_MaxMove
+  def pbEffectAgainstTarget(user,target)
+    @battle.field.terrain = PBBattleTerrains::None
+    target.pbOwnSide.effects[PBEffects::AuroraVeil]    = 0
+    target.pbOwnSide.effects[PBEffects::LightScreen]   = 0
+    target.pbOwnSide.effects[PBEffects::Reflect]       = 0
+    target.pbOwnSide.effects[PBEffects::Mist]          = 0
+    target.pbOwnSide.effects[PBEffects::Safeguard]     = 0
+    target.pbOwnSide.effects[PBEffects::Spikes]        = 0
+    target.pbOwnSide.effects[PBEffects::ToxicSpikes]   = 0
+    target.pbOwnSide.effects[PBEffects::StickyWeb]     = false
+    target.pbOwnSide.effects[PBEffects::StealthRock]   = false
+    target.pbOwnSide.effects[PBEffects::Steelsurge]    = false
+    user.pbOwnSide.effects[PBEffects::Spikes]          = 0
+    user.pbOwnSide.effects[PBEffects::ToxicSpikes]     = 0
+    user.pbOwnSide.effects[PBEffects::StickyWeb]       = false
+    user.pbOwnSide.effects[PBEffects::StealthRock]     = false
+    user.pbOwnSide.effects[PBEffects::Steelsurge]      = false
+  end
+end
+
+#===============================================================================
+# G-Max Gravitas.
+#===============================================================================
+# Increases gravity on the field for 5 rounds.
+#-------------------------------------------------------------------------------
+class PokeBattle_Move_D013 < PokeBattle_MaxMove
+  def pbEffectGeneral(user)
+    if @battle.field.effects[PBEffects::Gravity]==0
+      @battle.field.effects[PBEffects::Gravity] = 5
+      @battle.pbDisplay(_INTL("Gravity intensified!"))
+      @battle.eachBattler do |b|
+        showMessage = false
+        if b.inTwoTurnAttack?("0C9","0CC","0CE")
+          b.effects[PBEffects::TwoTurnAttack] = 0
+          @battle.pbClearChoice(b.index) if !b.movedThisRound?
+          showMessage = true
+        end
+        if b.effects[PBEffects::MagnetRise]>0 ||
+           b.effects[PBEffects::Telekinesis]>0 ||
+           b.effects[PBEffects::SkyDrop]>=0
+          b.effects[PBEffects::MagnetRise]  = 0
+          b.effects[PBEffects::Telekinesis] = 0
+          b.effects[PBEffects::SkyDrop]     = -1
+          showMessage = true
+        end
+        @battle.pbDisplay(_INTL("{1} couldn't stay airborne because of gravity!",
+           b.pbThis)) if showMessage
+      end
+    end
+  end
+end
+
+#===============================================================================
+# G-Max Finale.
+#===============================================================================
+# Heals all ally Pokemon by 1/6th their max HP.
+#-------------------------------------------------------------------------------
+class PokeBattle_Move_D014 < PokeBattle_MaxMove
+  def healingMove?; return true; end
+
+  def pbEffectGeneral(user)
+    @battle.eachBattler do |b|
+      next if b.opposes?(user)
+      next if b.hp == b.totalhp
+      next if b.effects[PBEffects::HealBlock]>0
+      hpGain = (b.totalhp/6.0).round
+      b.pbRecoverHP(hpGain)
+    end
+  end
+end
+
+#===============================================================================
+# G-Max Sweetness.
+#===============================================================================
+# Cures any status conditions of all ally Pokemon.
+#-------------------------------------------------------------------------------
+class PokeBattle_Move_D015 < PokeBattle_MaxMove
+  def pbEffectGeneral(user)
+    @battle.eachBattler do |b|
+      next if b.opposes?(user)
+      t = b.status
+      b.pbCureStatus(false)
+      case t
+      when PBStatuses::BURN
+        @battle.pbDisplay(_INTL("{1} was healed of its burn!",b.pbThis))  
+      when PBStatuses::POISON
+        @battle.pbDisplay(_INTL("{1} was cured of its poison!",b.pbThis))  
+      when PBStatuses::PARALYSIS
+        @battle.pbDisplay(_INTL("{1} was cured of its paralysis!",b.pbThis))
+      when PBStatuses::SLEEP
+        @battle.pbDisplay(_INTL("{1} woke up!",b.pbThis)) 
+      when PBStatuses::FROZEN
+        @battle.pbDisplay(_INTL("{1} thawed out!",b.pbThis)) 
+      end
+    end
+  end
+end
+
+#===============================================================================
+# G-Max Replenish.
+#===============================================================================
+# User has a 50% chance to recover its last consumed item.
+#-------------------------------------------------------------------------------
+class PokeBattle_Move_D016 < PokeBattle_MaxMove
+  def pbEffectGeneral(user)
+    if @battle.pbRandom(10)<5
+      item = user.recycleItem
+      user.item = item
+      user.setInitialItem(item) if @battle.wildBattle? && user.initialItem==0
+      user.setRecycleItem(0)
+      user.effects[PBEffects::PickupItem] = 0
+      user.effects[PBEffects::PickupUse]  = 0
+      itemName = PBItems.getName(item)
+      if itemName.starts_with_vowel?
+        @battle.pbDisplay(_INTL("{1} found an {2}!",user.pbThis,itemName))
+      else
+        @battle.pbDisplay(_INTL("{1} found a {2}!",user.pbThis,itemName))
+      end
+      user.pbHeldItemTriggerCheck
+    end
+  end
+end
+
+#===============================================================================
+# G-Max Depletion.
+#===============================================================================
+# The target's last used move loses 2 PP.
+#-------------------------------------------------------------------------------
+class PokeBattle_Move_D017 < PokeBattle_MaxMove
+  def pbEffectAgainstTarget(user,target)
+    target.eachMove do |m|
+      next if m.id!=target.lastRegularMoveUsed
+      reduction = [2,m.pp].min
+      target.pbSetPP(m,m.pp-reduction)
+      break
+    end
+  end
+end
+
+#===============================================================================
+# G-Max Resonance.
+#===============================================================================
+# Sets up Aurora Veil for the party for 5 turns.
+#-------------------------------------------------------------------------------
+class PokeBattle_Move_D018 < PokeBattle_MaxMove
+  def pbEffectGeneral(user)
+    user.pbOwnSide.effects[PBEffects::AuroraVeil] = 5
+    user.pbOwnSide.effects[PBEffects::AuroraVeil] = 8 if user.hasActiveItem?(:LIGHTCLAY)
+    @battle.pbDisplay(_INTL("{1} made {2} stronger against physical and special moves!",
+       @name,user.pbTeam(true)))
+  end
+end
+
+#===============================================================================
+# G-Max Chi Strike.
+#===============================================================================
+# Increases the critical hit rate of all ally Pokemon.
+#-------------------------------------------------------------------------------
+class PokeBattle_Move_D019 < PokeBattle_MaxMove
+  def pbEffectGeneral(user)
+    @battle.eachBattler do |b|
+      next if b.opposes?(user)
+      next if b.effects[PBEffects::FocusEnergy] > 2
+      b.effects[PBEffects::FocusEnergy] = 2
+      @battle.pbDisplay(_INTL("{1} is getting pumped!",b.pbThis))
+    end
+  end
+end
+
+#===============================================================================
+# G-Max Terror.
+#===============================================================================
+# Prevents all opposing Pokemon from switching.
+#-------------------------------------------------------------------------------
+class PokeBattle_Move_D020 < PokeBattle_MaxMove
+  def pbEffectAgainstTarget(user,target)
+    user.eachOpposing do |b|
+      b.effects[PBEffects::MeanLook] = user.index
+    end
+  end
+end
+
+#===============================================================================
+# G-Max Snooze.
+#===============================================================================
+# Has a 50% chance of making the target drowsy.
+#-------------------------------------------------------------------------------
+class PokeBattle_Move_D021 < PokeBattle_MaxMove
+  def pbEffectAgainstTarget(user,target)
+    if target.effects[PBEffects::Yawn]==0 && @battle.pbRandom(10)<5
+      target.effects[PBEffects::Yawn] = 2
+      @battle.pbDisplay(_INTL("{1} made {2} drowsy!",user.pbThis,target.pbThis(true)))
+    end
+  end
+end
+
+#===============================================================================
+# G-Max Cuddle.
+#===============================================================================
+# Infatuates all opposing Pokemon.
+#-------------------------------------------------------------------------------
+class PokeBattle_Move_D022 < PokeBattle_MaxMove
+  def pbEffectAgainstTarget(user,target)
+    user.eachOpposing do |b|
+      b.pbAttract(user) if b.pbCanAttract?(user)
+    end
+  end
+end
+
+#===============================================================================
+# G-Max Meltdown.
+#===============================================================================
+# Torments all opposing Pokemon.
+#-------------------------------------------------------------------------------
+class PokeBattle_Move_D023 < PokeBattle_MaxMove
+  def pbEffectAgainstTarget(user,target)
+    user.eachOpposing do |b|
+      b.effects[PBEffects::Torment] = true
+      b.pbItemStatusCureCheck
+    end
+  end
+end
+
 #===============================================================================
 # Handles the end of round effects of certain G-Max Moves.
 #===============================================================================
@@ -2386,539 +2725,9 @@ end
 
 
 ################################################################################
-# SECTION 8 - MAX MOVE EFFECTS
-#===============================================================================
-# Generic move classes. 
-#===============================================================================
-# Raise stat of all ally Pokemon.
-#-------------------------------------------------------------------------------
-class PokeBattle_StatUpMaxMove < PokeBattle_Move
-  def pbEffectGeneral(user)
-    @battle.eachBattler do |b|
-      next if b.opposes?(user)
-      b.pbRaiseStatStage(@statUp[0],@statUp[1],b)
-    end
-  end
-end
-
-#-------------------------------------------------------------------------------
-# Lower stat of all opposing Pokemon.
-#-------------------------------------------------------------------------------
-class PokeBattle_TargetStatDownMaxMove < PokeBattle_Move
-  def pbEffectAgainstTarget(user,target)
-    user.eachOpposing do |b|
-      b.pbLowerStatStage(@statDown[0],@statDown[1],b)
-    end
-  end
-end
-
-#-------------------------------------------------------------------------------
-# Sets up weather on use.
-#-------------------------------------------------------------------------------
-class PokeBattle_WeatherMaxMove < PokeBattle_Move
-  def initialize(battle,move)
-    super
-    @weatherType = PBWeather::None
-  end
-  
-  def pbEffectGeneral(user)
-    if @battle.field.weather!=PBWeather::HarshSun &&
-       @battle.field.weather!=PBWeather::HeavyRain &&
-       @battle.field.weather!=PBWeather::StrongWinds &&
-       @battle.field.weather!=@weatherType
-      @battle.pbStartWeather(user,@weatherType,true,false)
-    end
-  end
-end
-
-#-------------------------------------------------------------------------------
-# Sets up battle terrain on use.
-#-------------------------------------------------------------------------------
-class PokeBattle_TerrainMaxMove < PokeBattle_Move
-  def initialize(battle,move)
-    super
-    @terrainType = PBBattleTerrains::None
-  end
-
-  def pbEffectGeneral(user)
-    if @battle.field.terrain!=@terrainType
-      @battle.pbStartTerrain(user,@terrainType)
-    end
-  end
-end
-
-#-------------------------------------------------------------------------------
-# Applies one of multiple statuses on all opposing Pokemon.
-#-------------------------------------------------------------------------------
-class PokeBattle_StatusMaxMove < PokeBattle_Move
-  def pbEffectAgainstTarget(user,target)
-    user.eachOpposing do |b|
-      randstatus = @statuses[@battle.pbRandom(@statuses.length)]
-      if b.pbCanInflictStatus?(randstatus,b,false)
-        b.pbInflictStatus(randstatus)
-      end
-    end
-  end
-end
-
-#-------------------------------------------------------------------------------
-# Confuses all opposing Pokemon.
-#-------------------------------------------------------------------------------
-class PokeBattle_ConfusionMaxMove < PokeBattle_Move
-  def pbEffectAgainstTarget(user,target)
-    user.eachOpposing do |b|
-      b.pbConfuse if b.pbCanConfuse?(user,false)
-    end
-  end
-end
-
-#===============================================================================
-# Max Guard.
-#===============================================================================
-# Guards the user from all attacks, including Max Moves.
-#-------------------------------------------------------------------------------
-class PokeBattle_Move_D000 < PokeBattle_ProtectMove
-  def initialize(battle,move)
-    super
-    @effect = PBEffects::MaxGuard
-  end
-end
-
-#===============================================================================
-# Max Knuckle, Max Steelspike, Max Ooze, Max Quake, Max Airstream.
-#===============================================================================
-# Increases a stat of all ally Pokemon.
-#-------------------------------------------------------------------------------
-class PokeBattle_Move_D001 < PokeBattle_StatUpMaxMove
-  def initialize(battle,move)
-    super
-    @statUp = [PBStats::ATTACK,1]  if isConst?(@id,PBMoves,:MAXKNUCKLE)
-    @statUp = [PBStats::DEFENSE,1] if isConst?(@id,PBMoves,:MAXSTEELSPIKE)
-    @statUp = [PBStats::SPATK,1]   if isConst?(@id,PBMoves,:MAXOOZE)
-    @statUp = [PBStats::SPDEF,1]   if isConst?(@id,PBMoves,:MAXQUAKE)
-    @statUp = [PBStats::SPEED,1]   if isConst?(@id,PBMoves,:MAXAIRSTREAM)
-  end
-end
-
-
-#===============================================================================
-# Max Wyrmwind, Max Phantasm, Max Flutterby, Max Darkness, Max Strike.
-# G-Max Foamburst, G-Max Tartness.
-#===============================================================================
-# Decreases a stat of all opposing Pokemon.
-#-------------------------------------------------------------------------------
-class PokeBattle_Move_D002 < PokeBattle_TargetStatDownMaxMove
-  def initialize(battle,move)
-    super
-    @statDown = [PBStats::ATTACK,1]  if isConst?(@id,PBMoves,:MAXWYRMWIND)
-    @statDown = [PBStats::DEFENSE,1] if isConst?(@id,PBMoves,:MAXPHANTASM)
-    @statDown = [PBStats::SPATK,1]   if isConst?(@id,PBMoves,:MAXFLUTTERBY)
-    @statDown = [PBStats::SPDEF,1]   if isConst?(@id,PBMoves,:MAXDARKNESS)
-    @statDown = [PBStats::SPEED,1]   if isConst?(@id,PBMoves,:MAXSTRIKE)
-    @statDown = [PBStats::SPEED,2]   if isConst?(@id,PBMoves,:GMAXFOAMBURST)
-    @statDown = [PBStats::EVASION,1] if isConst?(@id,PBMoves,:GMAXTARTNESS)
-  end
-end
-
-#===============================================================================
-# Max Flare, Max Gyser, Max Hailstorm, Max Rockfall.
-#===============================================================================
-# Sets up weather effect on the field.
-#-------------------------------------------------------------------------------
-class PokeBattle_Move_D003 < PokeBattle_WeatherMaxMove
-  def initialize(battle,move)
-    super
-    @weatherType = PBWeather::Sun       if isConst?(@id,PBMoves,:MAXFLARE)
-    @weatherType = PBWeather::Rain      if isConst?(@id,PBMoves,:MAXGEYSER)
-    @weatherType = PBWeather::Hail      if isConst?(@id,PBMoves,:MAXHAILSTORM)
-    @weatherType = PBWeather::Sandstorm if isConst?(@id,PBMoves,:MAXROCKFALL)
-  end
-end
-
-#===============================================================================
-# Max Overgrowth, Max Lightning, Max Starfall, Max Mindstorm.
-#===============================================================================
-# Sets up battle terrain on the field.
-#-------------------------------------------------------------------------------
-class PokeBattle_Move_D004 < PokeBattle_TerrainMaxMove
-  def initialize(battle,move)
-    super
-    @terrainType = PBBattleTerrains::Electric if isConst?(@id,PBMoves,:MAXLIGHTNING)
-    @terrainType = PBBattleTerrains::Grassy   if isConst?(@id,PBMoves,:MAXOVERGROWTH)
-    @terrainType = PBBattleTerrains::Misty    if isConst?(@id,PBMoves,:MAXSTARFALL)
-    @terrainType = PBBattleTerrains::Psychic  if isConst?(@id,PBMoves,:MAXMINDSTORM)
-  end
-end
-
-#===============================================================================
-# G-Max Vine Lash, G-Max Wildfire, G-Max Cannonade, G-Max Volcalith.
-#===============================================================================
-# Damages all Pokemon on the opposing field for 4 turns.
-#-------------------------------------------------------------------------------
-class PokeBattle_Move_D005 < PokeBattle_Move
-  def pbEffectGeneral(user)
-    if isConst?(@id,PBMoves,:GMAXVINELASH) &&
-       user.pbOpposingSide.effects[PBEffects::VineLash]==0
-      user.pbOpposingSide.effects[PBEffects::VineLash]=4
-      @battle.pbDisplay(_INTL("{1} got trapped with vines!",user.pbOpposingTeam))
-    end
-    if isConst?(@id,PBMoves,:GMAXWILDFIRE) &&
-       user.pbOpposingSide.effects[PBEffects::Wildfire]==0
-      user.pbOpposingSide.effects[PBEffects::Wildfire]=4
-      @battle.pbDisplay(_INTL("{1} were surrounded by fire!",user.pbOpposingTeam))
-    end
-    if isConst?(@id,PBMoves,:GMAXCANNONADE) &&
-       user.pbOpposingSide.effects[PBEffects::Cannonade]==0
-      user.pbOpposingSide.effects[PBEffects::Cannonade]=4
-      @battle.pbDisplay(_INTL("{1} got caught in a vortex of water!",user.pbOpposingTeam))
-    end
-    if isConst?(@id,PBMoves,:GMAXVOLCALITH) &&
-       user.pbOpposingSide.effects[PBEffects::Volcalith]==0
-      user.pbOpposingSide.effects[PBEffects::Volcalith]=4
-      @battle.pbDisplay(_INTL("{1} became surrounded by rocks!",user.pbOpposingTeam))
-    end
-  end
-end
-
-#===============================================================================
-# G-Max Drum Solo, G-Max Fireball, G-Max Hydrosnipe.
-#===============================================================================
-# Bypasses target's abilities that would reduce or ignore damage.
-#-------------------------------------------------------------------------------
-class PokeBattle_Move_D006 < PokeBattle_Move
-  def pbIgnoreAbilities?; return true; end
-end
-
-#===============================================================================
-# G-Max Malador, G-Max Volt Crash, G-Max Stun Shock, G-Max Befuddle.
-#===============================================================================
-# Applies status effects on all opposing Pokemon.
-#-------------------------------------------------------------------------------
-class PokeBattle_Move_D007 < PokeBattle_StatusMaxMove
-  def initialize(battle,move)
-    super
-    if isConst?(@id,PBMoves,:GMAXMALODOR)
-      @statuses = [PBStatuses::POISON]
-    end
-    if isConst?(@id,PBMoves,:GMAXVOLTCRASH)
-      @statuses = [PBStatuses::PARALYSIS]
-    end
-    if isConst?(@id,PBMoves,:GMAXSTUNSHOCK)
-      @statuses = [PBStatuses::POISON,PBStatuses::PARALYSIS]
-    end
-    if isConst?(@id,PBMoves,:GMAXBEFUDDLE)
-      @statuses = [PBStatuses::POISON,PBStatuses::PARALYSIS,PBStatuses::SLEEP]
-    end
-  end
-end
-
-#===============================================================================
-# G-Max Smite, G-Max Gold Rush.
-#===============================================================================
-# Confuses all opposing Pokemon.
-#-------------------------------------------------------------------------------
-class PokeBattle_Move_D008 < PokeBattle_ConfusionMaxMove
-  def pbEffectGeneral(user)
-    if isConst?(@id,PBMoves,:GMAXGOLDRUSH) && user.pbOwnedByPlayer?
-      @battle.field.effects[PBEffects::PayDay] += 100*user.level
-      @battle.pbDisplay(_INTL("Coins were scattered everywhere!"))
-    end
-  end
-end
-
-#===============================================================================
-# G-Max Stonesurge, G-Max Steelsurge.
-#===============================================================================
-# Sets up entry hazard on the opposing side's field.
-#-------------------------------------------------------------------------------
-class PokeBattle_Move_D009 < PokeBattle_Move
-  def pbEffectGeneral(user)
-    if isConst?(@id,PBMoves,:GMAXSTONESURGE) &&
-       !user.pbOpposingSide.effects[PBEffects::StealthRock]
-      user.pbOpposingSide.effects[PBEffects::StealthRock] = true
-      @battle.pbDisplay(_INTL("Pointed stones float in the air around {1}!",
-         user.pbOpposingTeam(true)))
-    end
-    if isConst?(@id,PBMoves,:GMAXSTEELSURGE) &&
-       !user.pbOpposingSide.effects[PBEffects::Steelsurge]
-      user.pbOpposingSide.effects[PBEffects::Steelsurge] = true
-      @battle.pbDisplay(_INTL("Sharp-pointed pieces of steel started floating around {1}!",
-         user.pbOpposingTeam(true)))
-    end   
-  end
-end
-
-#===============================================================================
-# G-Max Centiferno, G-Max Sand Blast.
-#===============================================================================
-# Traps all opposing Pokemon in a vortex for multiple turns.
-#-------------------------------------------------------------------------------
-class PokeBattle_Move_D010 < PokeBattle_Move
-  def pbEffectAgainstTarget(user,target)
-    moveid = getID(PBMoves,:FIRESPIN) if isConst?(@id,PBMoves,:GMAXCENTIFERNO)
-    moveid = getID(PBMoves,:SANDTOMB) if isConst?(@id,PBMoves,:GMAXSANDBLAST)
-    user.eachOpposing do |b|    
-      next if b.damageState.substitute
-      next if b.effects[PBEffects::Trapping]>0
-      if user.hasActiveItem?(:GRIPCLAW)
-        b.effects[PBEffects::Trapping] = (NEWEST_BATTLE_MECHANICS) ? 8 : 6
-      else
-        b.effects[PBEffects::Trapping] = 5+@battle.pbRandom(2)
-      end
-      b.effects[PBEffects::TrappingMove] = moveid
-      b.effects[PBEffects::TrappingUser] = user.index
-      msg = _INTL("{1} was trapped in the vortex!",b.pbThis)
-      if isConst?(@id,PBMoves,:GMAXCENTIFERNO)
-        msg = _INTL("{1} was trapped in the fiery vortex!",b.pbThis)
-      elsif isConst?(@id,PBMoves,:GMAXSANDBLAST)
-        msg = _INTL("{1} became trapped by Sand Tomb!",b.pbThis)
-      end
-      @battle.pbDisplay(msg)
-    end
-  end
-end
-
-#===============================================================================
-# G-Max Wind Rage.
-#===============================================================================
-# Blows away effects hazards and opponent side's effects.
-#-------------------------------------------------------------------------------
-class PokeBattle_Move_D011 < PokeBattle_Move
-  def pbEffectAgainstTarget(user,target)
-    @battle.field.terrain = PBBattleTerrains::None
-    target.pbOwnSide.effects[PBEffects::AuroraVeil]    = 0
-    target.pbOwnSide.effects[PBEffects::LightScreen]   = 0
-    target.pbOwnSide.effects[PBEffects::Reflect]       = 0
-    target.pbOwnSide.effects[PBEffects::Mist]          = 0
-    target.pbOwnSide.effects[PBEffects::Safeguard]     = 0
-    target.pbOwnSide.effects[PBEffects::Spikes]        = 0
-    target.pbOwnSide.effects[PBEffects::ToxicSpikes]   = 0
-    target.pbOwnSide.effects[PBEffects::StickyWeb]     = false
-    target.pbOwnSide.effects[PBEffects::StealthRock]   = false
-    target.pbOwnSide.effects[PBEffects::Steelsurge]    = false
-    user.pbOwnSide.effects[PBEffects::Spikes]          = 0
-    user.pbOwnSide.effects[PBEffects::ToxicSpikes]     = 0
-    user.pbOwnSide.effects[PBEffects::StickyWeb]       = false
-    user.pbOwnSide.effects[PBEffects::StealthRock]     = false
-    user.pbOwnSide.effects[PBEffects::Steelsurge]      = false
-  end
-end
-
-#===============================================================================
-# G-Max Gravitas.
-#===============================================================================
-# Increases gravity on the field for 5 rounds.
-#-------------------------------------------------------------------------------
-class PokeBattle_Move_D012 < PokeBattle_Move
-  def pbEffectGeneral(user)
-    if @battle.field.effects[PBEffects::Gravity]==0
-      @battle.field.effects[PBEffects::Gravity] = 5
-      @battle.pbDisplay(_INTL("Gravity intensified!"))
-      @battle.eachBattler do |b|
-        showMessage = false
-        if b.inTwoTurnAttack?("0C9","0CC","0CE")
-          b.effects[PBEffects::TwoTurnAttack] = 0
-          @battle.pbClearChoice(b.index) if !b.movedThisRound?
-          showMessage = true
-        end
-        if b.effects[PBEffects::MagnetRise]>0 ||
-           b.effects[PBEffects::Telekinesis]>0 ||
-           b.effects[PBEffects::SkyDrop]>=0
-          b.effects[PBEffects::MagnetRise]  = 0
-          b.effects[PBEffects::Telekinesis] = 0
-          b.effects[PBEffects::SkyDrop]     = -1
-          showMessage = true
-        end
-        @battle.pbDisplay(_INTL("{1} couldn't stay airborne because of gravity!",
-           b.pbThis)) if showMessage
-      end
-    end
-  end
-end
-
-#===============================================================================
-# G-Max Finale.
-#===============================================================================
-# Heals all ally Pokemon by 1/6th their max HP.
-#-------------------------------------------------------------------------------
-class PokeBattle_Move_D013 < PokeBattle_Move
-  def healingMove?; return true; end
-
-  def pbEffectGeneral(user)
-    @battle.eachBattler do |b|
-      next if b.opposes?(user)
-      next if b.hp == b.totalhp
-      next if b.effects[PBEffects::HealBlock]>0
-      hpGain = (b.totalhp/6.0).round
-      b.pbRecoverHP(hpGain)
-    end
-  end
-end
-
-#===============================================================================
-# G-Max Sweetness.
-#===============================================================================
-# Cures any status conditions of all ally Pokemon.
-#-------------------------------------------------------------------------------
-class PokeBattle_Move_D014 < PokeBattle_Move
-  def pbEffectGeneral(user)
-    @battle.eachBattler do |b|
-      next if b.opposes?(user)
-      t = b.status
-      b.pbCureStatus(false)
-      case t
-      when PBStatuses::BURN
-        @battle.pbDisplay(_INTL("{1} was healed of its burn!",b.pbThis))  
-      when PBStatuses::POISON
-        @battle.pbDisplay(_INTL("{1} was cured of its poison!",b.pbThis))  
-      when PBStatuses::PARALYSIS
-        @battle.pbDisplay(_INTL("{1} was cured of its paralysis!",b.pbThis))
-      when PBStatuses::SLEEP
-        @battle.pbDisplay(_INTL("{1} woke up!",b.pbThis)) 
-      when PBStatuses::FROZEN
-        @battle.pbDisplay(_INTL("{1} thawed out!",b.pbThis)) 
-      end
-    end
-  end
-end
-
-#===============================================================================
-# G-Max Replenish.
-#===============================================================================
-# User has a 50% chance to recover its last consumed item.
-#-------------------------------------------------------------------------------
-class PokeBattle_Move_D015 < PokeBattle_Move
-  def pbEffectGeneral(user)
-    if @battle.pbRandom(10)<5
-      item = user.recycleItem
-      user.item = item
-      user.setInitialItem(item) if @battle.wildBattle? && user.initialItem==0
-      user.setRecycleItem(0)
-      user.effects[PBEffects::PickupItem] = 0
-      user.effects[PBEffects::PickupUse]  = 0
-      itemName = PBItems.getName(item)
-      if itemName.starts_with_vowel?
-        @battle.pbDisplay(_INTL("{1} found an {2}!",user.pbThis,itemName))
-      else
-        @battle.pbDisplay(_INTL("{1} found a {2}!",user.pbThis,itemName))
-      end
-      user.pbHeldItemTriggerCheck
-    end
-  end
-end
-
-#===============================================================================
-# G-Max Depletion.
-#===============================================================================
-# The target's last used move loses 2 PP.
-#-------------------------------------------------------------------------------
-class PokeBattle_Move_D016 < PokeBattle_Move
-  def pbEffectAgainstTarget(user,target)
-    target.eachMove do |m|
-      next if m.id!=target.lastRegularMoveUsed
-      reduction = [2,m.pp].min
-      target.pbSetPP(m,m.pp-reduction)
-      break
-    end
-  end
-end
-
-#===============================================================================
-# G-Max Resonance.
-#===============================================================================
-# Sets up Aurora Veil for the party for 5 turns.
-#-------------------------------------------------------------------------------
-class PokeBattle_Move_D017 < PokeBattle_Move
-  def pbEffectGeneral(user)
-    user.pbOwnSide.effects[PBEffects::AuroraVeil] = 5
-    user.pbOwnSide.effects[PBEffects::AuroraVeil] = 8 if user.hasActiveItem?(:LIGHTCLAY)
-    @battle.pbDisplay(_INTL("{1} made {2} stronger against physical and special moves!",
-       @name,user.pbTeam(true)))
-  end
-end
-
-#===============================================================================
-# G-Max Chi Strike.
-#===============================================================================
-# Increases the critical hit rate of all ally Pokemon.
-#-------------------------------------------------------------------------------
-class PokeBattle_Move_D018 < PokeBattle_Move
-  def pbEffectGeneral(user)
-    @battle.eachBattler do |b|
-      next if b.opposes?(user)
-      next if b.effects[PBEffects::FocusEnergy] > 2
-      b.effects[PBEffects::FocusEnergy] = 2
-      @battle.pbDisplay(_INTL("{1} is getting pumped!",b.pbThis))
-    end
-  end
-end
-
-#===============================================================================
-# G-Max Terror.
-#===============================================================================
-# Prevents all opposing Pokemon from switching.
-#-------------------------------------------------------------------------------
-class PokeBattle_Move_D019 < PokeBattle_Move
-  def pbEffectAgainstTarget(user,target)
-    user.eachOpposing do |b|
-      b.effects[PBEffects::MeanLook] = user.index
-    end
-  end
-end
-
-#===============================================================================
-# G-Max Snooze.
-#===============================================================================
-# Has a 50% chance of making the target drowsy.
-#-------------------------------------------------------------------------------
-class PokeBattle_Move_D020 < PokeBattle_Move
-  def pbEffectAgainstTarget(user,target)
-    if target.effects[PBEffects::Yawn]==0 && @battle.pbRandom(10)<5
-      target.effects[PBEffects::Yawn] = 2
-      @battle.pbDisplay(_INTL("{1} made {2} drowsy!",user.pbThis,target.pbThis(true)))
-    end
-  end
-end
-
-#===============================================================================
-# G-Max Cuddle.
-#===============================================================================
-# Infatuates all opposing Pokemon.
-#-------------------------------------------------------------------------------
-class PokeBattle_Move_D021 < PokeBattle_Move
-  def pbEffectAgainstTarget(user,target)
-    user.eachOpposing do |b|
-      b.pbAttract(user) if b.pbCanAttract?(user)
-    end
-  end
-end
-
-#===============================================================================
-# G-Max Meltdown.
-#===============================================================================
-# Torments all opposing Pokemon.
-#-------------------------------------------------------------------------------
-class PokeBattle_Move_D022 < PokeBattle_Move
-  def pbEffectAgainstTarget(user,target)
-    user.eachOpposing do |b|
-      b.effects[PBEffects::Torment] = true
-      b.pbItemStatusCureCheck
-    end
-  end
-end
-
-#===============================================================================
-# G-Max One Blow, G-Max Rapid Flow.
-#===============================================================================
-# Ignores the effects of the opponent's protect moves, including Max Guard.
-#-------------------------------------------------------------------------------
-# These moves use function code 000. Effects are handled elsewhere.
-
-
-################################################################################
 # SECTION 9 - MOVE CHANGES
 #===============================================================================
-# Alters effects of old moves to make them suitable for Dynamax/Max Raids.
+# Alters effects of existing moves to make them suitable for Dynamax/Max Raids.
 #===============================================================================
 # Max Raid Pokemon skip charge turn of semi-invulnerable moves. (Fly, Dig, etc.)
 #-------------------------------------------------------------------------------
@@ -3167,5 +2976,21 @@ class PokeBattle_Move_0EA < PokeBattle_Move
       return true
     end
     return false
+  end
+end
+
+#===============================================================================
+# New moves with effects related to Dynamax.
+#===============================================================================
+# Behemoth Blade, Behemoth Bash
+#-------------------------------------------------------------------------------
+# Deals double damage vs Dynamax targets, except Eternamax Eternatus.
+#-------------------------------------------------------------------------------
+class PokeBattle_Move_199 < PokeBattle_Move
+  def pbBaseDamage(baseDmg,user,target)
+    if target.dynamax? && !target.isSpecies?(:ETERNATUS)
+      baseDmg *= 2
+    end
+    return baseDmg
   end
 end

@@ -6,7 +6,7 @@
 NO_Z_MOVE            = 35    # Switch for disabling Z-Moves.
 NO_ULTRA_BURST       = 36    # Switch for disabling Ultra Burst.
 INCLUDE_NEWEST_MOVES = true  # If true, gives Z-Move effects to Gen 8 status moves.
-SHORTEN_Z_MOVE_NAMES = true  # If true, Z-moves that have a long name will be 
+SHORTEN_MOVE_NAMES   = true  # If true, Z-moves that have a long name will be 
                              # shortened when displayed in the FightMenuDisplay 
                              # (player choosing moves in battle). If false, Z-move 
                              # names will use the default display.
@@ -111,7 +111,7 @@ ItemHandlers::UseOnPokemon.copy(:NORMALIUMZ,  :FIRIUMZ,     :WATERIUMZ,  :ELECTR
 class PokeBattle_Battler
   def ultra?;    return @pokemon && @pokemon.ultra?;    end
   def hasUltra?; return @pokemon && @pokemon.hasUltra?; end
-
+    
   def hasZMove?
     return pbCompatibleZMoveFromMove?(nil)
   end
@@ -165,15 +165,13 @@ class PokeBattle_Battler
   # Displaying Z-moves/normal moves.
   #-----------------------------------------------------------------------------
   def pbZDisplayZMoves
+    item     = self.item
+    newpoke  = @effects[PBEffects::TransformPokemon]
+    pokemon  = @effects[PBEffects::Transform] ? newpoke : self.pokemon
     oldmoves = [@moves[0],@moves[1],@moves[2],@moves[3]]
-    if !@effects[PBEffects::UnZMoves]
-      @effects[PBEffects::UnZMoves] = oldmoves
-    end
+    @effects[PBEffects::UnZMoves] = oldmoves if !@effects[PBEffects::UnZMoves]
     for i in 0...4
       next if !@moves[i] || @moves[i].id == 0
-      item    = self.item
-      newpoke = @effects[PBEffects::TransformPokemon]
-      pokemon = @effects[PBEffects::Transform] ? newpoke : self.pokemon
       comp    = pbGetZMoveDataIfCompatible(pokemon,item,@moves[i])
       next if !comp
       @moves[i] = PokeBattle_ZMove.pbFromOldMoveAndCrystal(@battle, self, @moves[i],item)
@@ -262,7 +260,7 @@ class PokeBattle_Battler
       @battle.pbJudge
       return false
     end
-    if choice[2].zmove 
+    if choice[2].zmove
       # Use Z-Moves 
       choice[2].zmove = false
       @battle.pbUseZMove(self.index,choice[2],self.item)
@@ -294,8 +292,8 @@ class PokeBattle_Battler
     owner=@battle.pbGetOwnerIndexFromBattlerIndex(self.index)
     if @battle.zMove[side][owner]==self.index
       crystal = pbZCrystalFromType(choice[2].type)
-      zmove = PokeBattle_ZMove.pbFromOldMoveAndCrystal(@battle,self,choice[2],crystal)
-      zmove.pbUse(self, choice, specialUsage)
+      the_zmove = PokeBattle_ZMove.pbFromOldMoveAndCrystal(@battle,self,choice[2],crystal)
+      the_zmove.pbUse(self, choice, specialUsage)
     else
       pbUseMove(choice,specialUsage)
     end
@@ -404,7 +402,6 @@ class PokeBattle_Battle
     return false if battler.effects[PBEffects::SkyDrop]>=0
     return @zMove[side][owner]==-1
   end
-
   
   #-----------------------------------------------------------------------------
   # Registering the use of a Z-Move.
@@ -444,8 +441,8 @@ class PokeBattle_Battle
     battler = @battlers[idxBattler]
     return if !battler || !battler.pokemon
     return if !battler.hasZMove?
-    zmove = PokeBattle_ZMove.pbFromOldMoveAndCrystal(self,battler,move,crystal)
-    zmove.pbUse(battler, nil, false)
+    the_zmove = PokeBattle_ZMove.pbFromOldMoveAndCrystal(self,battler,move,crystal)
+    the_zmove.pbUse(battler, nil, false)
   end
   
   def pbAttackPhaseZMoves
@@ -662,12 +659,10 @@ class PokeBattle_Move
   
   alias zmove_pbDisplayUseMessage pbDisplayUseMessage
   def pbDisplayUseMessage(user)
-    if @zmove
-      @battle.pbDisplay(_INTL("{1} surrounded itself with its Z-Power!",user.pbThis))      
+    if @zmove || zMove?
+      @battle.pbDisplay(_INTL("{1} surrounded itself with its Z-Power!",user.pbThis)) if !statusMove?      
       @battle.pbCommonAnimation("ZPower",user,nil)
-      if statusMove?
-        PokeBattle_ZMove.pbZStatus(@battle, @id, user)
-      end 
+      PokeBattle_ZMove.pbZStatus(@battle, @id, user) if statusMove?
       @battle.pbDisplayBrief(_INTL("{1} unleashed its full force Z-Move!",user.pbThis))
     end 
     zmove_pbDisplayUseMessage(user)
@@ -692,7 +687,7 @@ class PokeBattle_ZMove < PokeBattle_Move
       @oldmove.name = @name
     end 
     @baseDamage = pbZMoveBaseDamage(move)
-    @short_name = (@name.length > 15 && SHORTEN_Z_MOVE_NAMES) ? @name[0..12] + "..." : @name
+    @short_name = (@name.length > 15 && SHORTEN_MOVE_NAMES) ? @name[0..12] + "..." : @name
     @flags = (@flags[/z/] ? @flags : @flags + "z") # Just so that status Z-moves get flagged as such.
   end
   
@@ -818,13 +813,12 @@ class PokeBattle_ZMove < PokeBattle_Move
   end  
   
   def pbModifyDamage(damagemult,attacker,opponent)
-    if opponent.pbOwnSide.effects[PBEffects::QuickGuard] || 
-        opponent.effects[PBEffects::Protect] || 
-        opponent.effects[PBEffects::Obstruct] ||
-        opponent.effects[PBEffects::KingsShield] ||
-        opponent.effects[PBEffects::SpikyShield] ||
-        opponent.effects[PBEffects::BanefulBunker] ||
-        opponent.effects[PBEffects::MatBlock]
+    if opponent.effects[PBEffects::Protect] || 
+       opponent.effects[PBEffects::Obstruct] ||
+       opponent.effects[PBEffects::KingsShield] ||
+       opponent.effects[PBEffects::SpikyShield] ||
+       opponent.effects[PBEffects::BanefulBunker] ||
+       opponent.effects[PBEffects::MatBlock]
       @battle.pbDisplay(_INTL("{1} couldn't fully protect itself!",opponent.pbThis))
       return damagemult/4
     else      
@@ -1341,11 +1335,11 @@ end
 module PBZMove
   # Z Moves compatibility
   
-  ZCRYSTAL = 0
-  REQ_TYPE = 1
-  REQ_MOVE = 2
+  ZCRYSTAL    = 0
+  REQ_TYPE    = 1
+  REQ_MOVE    = 2
   REQ_SPECIES = 3
-  ZMOVE = 4
+  ZMOVE       = 4
 end 
 
 
