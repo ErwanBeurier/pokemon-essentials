@@ -644,22 +644,25 @@ end
 #===============================================================================
 class PokeBattle_Move
   attr_accessor :name
+  attr_accessor :flags
   attr_reader   :short_name
   attr_accessor :zmove    # True if the player triggered the Z-Move; note that 
                           # actual Z-moves should have "false" for this.
+  attr_reader(:specialUseZMove) # True only for Z-moves that are not called by other moves. 
   
   def to_int; return @id; end
 
   alias zmove_initialize initialize
   def initialize(battle,move)
     zmove_initialize(battle,move)
-    @zmove      = false
-    @short_name = @name
+    @zmove            = false
+    @short_name       = @name
+    @specialUseZMove  = false
   end
   
   alias zmove_pbDisplayUseMessage pbDisplayUseMessage
   def pbDisplayUseMessage(user)
-    if @zmove || zMove?
+    if zMove? && !@specialUseZMove
       @battle.pbDisplay(_INTL("{1} surrounded itself with its Z-Power!",user.pbThis)) if !statusMove?      
       @battle.pbCommonAnimation("ZPower",user,nil)
       PokeBattle_ZMove.pbZStatus(@battle, @id, user) if statusMove?
@@ -751,13 +754,15 @@ class PokeBattle_ZMove < PokeBattle_Move
     zchoice=@battle.choices[battler.index] #[0,0,move,move.target]
     if simplechoice
       zchoice=simplechoice
-    end    
+    end
+    @specialUseZMove = specialUsage
     if @status
       #targeted status Z's here
       zchoice[2] = @oldmove
-      zchoice[2].zmove = !specialUsage
+      oldflags = zchoice[2].flags
+      zchoice[2].flags = oldflags + "z"
       battler.pbUseMove(zchoice, specialUsage)
-      zchoice[2].zmove = false
+      zchoice[2].flags = oldflags
       @oldmove.name = @oldname
     else
       zchoice[2] = self
@@ -1379,8 +1384,15 @@ def pbSaveZMoveCompatibility
   return if !zmovecomps
   
   File.open("PBS/zmovescomp.txt","wb") { |f|
-    f.write("\# "+_INTL("See the documentation on the wiki to learn how to edit this file."))
-    f.write("\r\n")
+    f.write("# This is part of the Z-Move plugin for Essentials v18.dev.\r\n")
+    f.write("# \r\n")
+    f.write("# This file is NOT officially an Essentials PBS file.\r\n")
+    f.write("# If you want to add a new Z-move, check the README provided with this plugin.\r\n")
+    f.write("# zcrystal,type,specificmove,specificfspecies,zmoveid\r\n")
+    f.write("#-------------------------------\r\n")
+    f.write("# Specific Z-Compatibility\r\n")
+    f.write("#-------------------------------\r\n")
+
     zmovecomps.each { |comp| 
       f.write(sprintf("%s,%s,%s,%s,%s",
          getConstantName(PBItems,comp[PBZMove::ZCRYSTAL]),

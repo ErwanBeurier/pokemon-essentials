@@ -1150,6 +1150,9 @@ def pbCompileAllData(mustCompile)
     # Depends on PBSpecies, PBMoves, PBItems
     yield(_INTL("Compiling Z-Moves compatibility data"))
     pbCompileZMoveCompatibility
+    # Depends on PBSpecies, PBMoves, PBItems
+    yield(_INTL("Compiling Gigantamax data"))
+    pbCompileGigantamaxData
     # Depends on PBSpecies, PBMoves
     yield(_INTL("Compiling machine data"))
     pbCompileMachines
@@ -1215,7 +1218,8 @@ def pbCompiler
        "trainers.dat",
        "types.dat",
        "Constants.rxdata",
-       "zmovescomp.dat"
+       "zmovescomp.dat",
+       "gmaxforms.dat"
     ]
     textFiles = [
        "abilities.txt",
@@ -1235,7 +1239,8 @@ def pbCompiler
        "trainers.txt",
        "trainertypes.txt",
        "types.txt",
-       "zmovescomp.txt"
+       "zmovescomp.txt", 
+       "gmaxforms.txt"
     ]
     latestDataTime = 0
     latestTextTime = 0

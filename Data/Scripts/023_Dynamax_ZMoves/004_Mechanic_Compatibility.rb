@@ -357,7 +357,7 @@ class PokeBattle_Battler
   alias __compat__pbCanChooseMove? pbCanChooseMove?
   def pbCanChooseMove?(move,commandPhase,showMessages=true,specialUsage=false)
     # Z-Moves are not blocked by usual "blocking" moves:
-    if move.zmove || move.zMove?
+    if move.zMove?
       # If something actually blocks Z-moves, write this code here. 
       # Gravity
       if @battle.field.effects[PBEffects::Gravity]>0 && move.unusableInGravity?
@@ -2899,7 +2899,7 @@ class PokeBattle_Battler
   alias __encore__pbTryUseMove pbTryUseMove 
   def pbTryUseMove(choice,move,specialUsage,skipAccuracyCheck)
     ret = __encore__pbTryUseMove(choice,move,specialUsage,skipAccuracyCheck)
-    if !ret && (move.zmove || move.zMove?)
+    if !ret && move.zMove?
       # Then the battler couldn't use the Z-move.
       @battle.lastMoveUsed = -2 
     end 
@@ -2910,7 +2910,7 @@ class PokeBattle_Battler
   def pbEndTurn(_choice)
     if _choice[0] == :UseMove
       # Z-move usage / non-usage. 
-      if _choice[2].zmove || _choice[2].zMove?
+      if _choice[2].zMove?
         if @battle.lastMoveUsed == -2
           # Then the Z-move wasn't even tried (pbTryUseMove was false)
           # Unregister so that the Z-move can be attempted next turn. 
@@ -2928,7 +2928,7 @@ class PokeBattle_Battler
       # Some work for Copycat, so that it doesn't copy Z-moves. 
       @battle.lastMoveUsed = _choice[2].id 
       # Copycat doesn't copy Z-moves. 
-      @battle.lastMoveUsed = -1 if _choice[2].zMove? || _choice[2].zmove
+      @battle.lastMoveUsed = -1 if _choice[2].zMove?
     end 
     __encore__pbEndTurn(_choice)
   end 

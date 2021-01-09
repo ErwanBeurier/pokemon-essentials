@@ -182,7 +182,7 @@ class PokeBattle_Battler
       choice[2] = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(@currentMove))
       specialUsage = true
     elsif @effects[PBEffects::Encore]>0 && choice[1]>=0 &&
-       @battle.pbCanShowCommands?(@index) && !choice[2].zMove? && !choice[2].zmove
+       @battle.pbCanShowCommands?(@index) && !choice[2].zMove?
       idxEncoredMove = pbEncoredMoveIndex
       if idxEncoredMove>=0 && @battle.pbCanChooseMove?(@index,idxEncoredMove,false)
         if choice[1]!=idxEncoredMove   # Change move if battler was Encored mid-round
