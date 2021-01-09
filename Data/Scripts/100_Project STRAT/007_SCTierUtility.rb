@@ -11,14 +11,6 @@
 ###############################################################################
 
 
-# Index of the game_variables that contains the tier. 
-TIER_VARIABLE = 51 
-# Stores whether the tier is forced for narrative reasons. 
-FORCED_TIER_SWITCH = 81
-# Contains the tier first intended for the team the player has. 
-TIER_OF_TEAM_VARIABLE = 66
-
-
 
 def scSetTier(tier, forced)
 	all_tiers = scLoadTierData
@@ -27,8 +19,8 @@ def scSetTier(tier, forced)
 		raise _INTL("Given tier \"{1}\" was set but does not exist.", tier)
 	end 
 	
-  $game_variables[TIER_VARIABLE] = tier 
-  $game_switches[FORCED_TIER_SWITCH] = forced
+  $game_variables[SCVar::Tier] = tier 
+  $game_switches[SCSwitch::ForcedTier] = forced
 end 
 
 
@@ -36,29 +28,29 @@ end
 def scUnforceTier()
 	# The tier is not forced anymore. 
   # The player can battle random players or take clients. 
-  $game_switches[FORCED_TIER_SWITCH] = false
+  $game_switches[SCSwitch::ForcedTier] = false
 end 
 
 
 
 def scGetTier(simple = true)
-  $game_variables[TIER_VARIABLE] = "FE" if !$game_variables[TIER_VARIABLE] || $game_variables[TIER_VARIABLE] == 0
+  $game_variables[SCVar::Tier] = "FE" if !$game_variables[SCVar::Tier] || $game_variables[SCVar::Tier] == 0
   
-  return $game_variables[TIER_VARIABLE] if simple 
+  return $game_variables[SCVar::Tier] if simple 
 	# Current tier ID + is it forced (for narrative reasons)
-	return [$game_variables[TIER_VARIABLE], $game_switches[FORCED_TIER_SWITCH]]
+	return [$game_variables[SCVar::Tier], $game_switches[SCSwitch::ForcedTier]]
 end 
 
 
 
 def scGetTierOfTeam()
-  return $game_variables[TIER_OF_TEAM_VARIABLE]
+  return $game_variables[SCVar::TierOfTeam]
 end 
 
 
 
 def scSetTierOfTeam(tier)
-  $game_variables[TIER_OF_TEAM_VARIABLE] = tier
+  $game_variables[SCVar::TierOfTeam] = tier
 end
 
 
@@ -67,22 +59,20 @@ end
 # Management of nuzzlocke
 #===============================================================================
 
-# Stores whether the player is doing a nuzzlocke challenge.
-NUZZLOCKE_SWITCH = 82
 
 
 def scIsNuzzlocke()
-  return ($game_switches[NUZZLOCKE_SWITCH] != nil && $game_switches[NUZZLOCKE_SWITCH])
+  return ($game_switches[SCSwitch::IsNuzzlocke] != nil && $game_switches[SCSwitch::IsNuzzlocke])
 end 
 
 
 def scSetNuzzlocke()
-  $game_switches[NUZZLOCKE_SWITCH] = true 
+  $game_switches[SCSwitch::IsNuzzlocke] = true 
 end 
 
 
 def scUnsetNuzzlocke()
-  $game_switches[NUZZLOCKE_SWITCH] = false 
+  $game_switches[SCSwitch::IsNuzzlocke] = false 
 end 
 
 

@@ -317,14 +317,14 @@ module SCClientBattles
   
   
   def self.hypedTier
-    return nil if !$game_variables[60].is_a?(String)
-    return $game_variables[60]
+    return nil if !$game_variables[SCVar::HypedTier].is_a?(String)
+    return $game_variables[SCVar::HypedTier]
   end 
   
   
   
   def self.setHypedTier(tier)
-    $game_variables[60] = tier
+    $game_variables[SCVar::HypedTier] = tier
   end 
   
   
@@ -700,7 +700,7 @@ class SCClientBattlesGenerator
     
     @player_map = nil 
     @player_stadium = nil 
-    $game_switches[78] = false 
+    $game_switches[SCSwitch::RandBattleDone] = false 
   end 
   
   
@@ -800,7 +800,7 @@ class SCClientBattlesGenerator
     pbHealAll
     
     # Rand battle is done
-    $game_switches[78] = true 
+    $game_switches[SCSwitch::RandBattleDone] = true 
     
     return res 
   end 
@@ -808,7 +808,7 @@ class SCClientBattlesGenerator
   
   
   def battleIsDone
-    return $game_switches[78]
+    return $game_switches[SCSwitch::RandBattleDone]
   end 
   
   

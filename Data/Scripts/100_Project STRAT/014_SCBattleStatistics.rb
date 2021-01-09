@@ -103,12 +103,12 @@ def scRequireClients(num, next_switch)
 	# num = minimum number of clients to fight.
 	# next_switch = the ID of the switch that, when set to "true", will trigger the next event in the story. 
 	
-	$game_variables[62] = num # Required number of clients 
-	$game_variables[63] = 0 # reset the number of clients alread fought. 
-	$game_variables[64] = next_switch
+	$game_variables[SCVar::ClientBattlesRequired] = num # Required number of clients 
+	$game_variables[SCVar::ClientBattlesDone] = 0 # reset the number of clients alread fought. 
+	$game_variables[SCVar::NextSwitch] = next_switch
 	
 	# Show Manager.
-	$game_switches[79] = true 
+	$game_switches[SCSwitch::ShowManager] = true 
 	
 end 
 
@@ -116,14 +116,14 @@ end
 
 
 def scLogClientBattleResult()
-	$game_variables[63] += 1
+	$game_variables[SCVar::ClientBattlesDone] += 1
 	
-	if $game_variables[62] <= $game_variables[63]
+	if $game_variables[SCVar::ClientBattlesRequired] <= $game_variables[SCVar::ClientBattlesDone]
 		# if True, then the next event in the story should start. 
-		i = $game_variables[64]
+		i = $game_variables[SCVar::NextSwitch]
 		$game_switches[i] = true 
 		
 		# Remove Manager. 
-		$game_switches[79] = false 
+		$game_switches[SCSwitch::ShowManager] = false 
 	end
 end 
