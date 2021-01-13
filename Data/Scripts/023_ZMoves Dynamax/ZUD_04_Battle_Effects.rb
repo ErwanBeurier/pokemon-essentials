@@ -546,10 +546,8 @@ class PokeBattle_Battler
           owner = @battle.pbGetOwnerIndexFromBattlerIndex(self.index)
           @battle.zMove[side][owner] = -2
         end 
+        @battle.lastMoveUsed = -1
       end 
-      @battle.lastMoveUsed = _choice[2].id 
-      @battle.lastMoveUsed = -1 if _choice[2].zMove?
-    end 
     _ZUD_pbEndTurn(_choice)
   end 
   

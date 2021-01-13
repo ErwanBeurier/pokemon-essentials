@@ -435,9 +435,9 @@ end
 #-------------------------------------------------------------------------------
 class PokeBattle_Move_0AF < PokeBattle_Move
   def pbEffectGeneral(user)
-    lastmove = @battle.lastMoveUsed
+    lastmove = @copied_move
     @battle.eachBattler do |b|
-      next if @battle.lastMoveUsed!=b.lastMoveUsed
+      next if @copied_move!=b.lastMoveUsed
       if b.dynamax?
         movesel  = @battle.choices[b.index][1]
         lastmove = b.pokemon.moves[movesel].id
