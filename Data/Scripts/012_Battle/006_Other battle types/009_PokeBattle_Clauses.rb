@@ -99,7 +99,7 @@ end
 
 
 
-class PokeBattle_Move_022   # Double Team
+class PokeBattle_Move_022 < PokeBattle_StatUpMove   # Double Team
   alias __clauses__pbMoveFailed? pbMoveFailed?
 
   def pbMoveFailed?(user,targets)

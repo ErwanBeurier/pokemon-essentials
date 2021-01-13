@@ -112,6 +112,8 @@ module PokeBattle_BattleCommon
       pbDisplay(_INTL("The Trainer blocked your Poké Ball! Don't be a thief!"))
       return
     end
+    # Max Raids - Prevents capture of Raid Pokemon until it's defeated. (ZUD)
+    pbRaidCaptureFail(battler,ball)
     # Calculate the number of shakes (4=capture)
     pkmn = battler.pokemon
     @criticalCapture = false
@@ -161,6 +163,8 @@ module PokeBattle_BattleCommon
       pkmn.ballused = pbGetBallType(ball)
       pkmn.makeUnmega if pkmn.mega?
       pkmn.makeUnprimal
+      pkmn.makeUnUltra         # Reverts Ultra Burst (ZUD)
+      pbResetRaidPokemon(pkmn) # Reverts Max Raid Boss (ZUD)
       pkmn.pbUpdateShadowMoves if pkmn.shadowPokemon?
       pkmn.pbRecordFirstMoves
       # Reset form

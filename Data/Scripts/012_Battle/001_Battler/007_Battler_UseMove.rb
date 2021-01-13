@@ -174,12 +174,15 @@ class PokeBattle_Battler
     skipAccuracyCheck = (specialUsage && choice[2]!=@battle.struggle)
     # Start using the move
     pbBeginTurn(choice)
+    # Changes Z-Move/Max Moves under certain conditions. (ZUD)
+    ret = pbChangePowerMove(choice)
+    choice[2] = ret if ret
     # Force the use of certain moves if they're already being used
     if usingMultiTurnAttack?
       choice[2] = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(@currentMove))
       specialUsage = true
     elsif @effects[PBEffects::Encore]>0 && choice[1]>=0 &&
-       @battle.pbCanShowCommands?(@index)
+       @battle.pbCanShowCommands?(@index) && !choice[2].zMove? # Added for Z-Moves (ZUD)
       idxEncoredMove = pbEncoredMoveIndex
       if idxEncoredMove>=0 && @battle.pbCanChooseMove?(@index,idxEncoredMove,false)
         if choice[1]!=idxEncoredMove   # Change move if battler was Encored mid-round
@@ -431,6 +434,8 @@ class PokeBattle_Battler
       realNumHits = 0
       for i in 0...numHits
         break if magicCoater>=0 || magicBouncer>=0
+        # Max Raids - Ends multi-hit moves early when boss is defeated. (ZUD)
+        break if pbBreakRaidMultiHits(targets,i)
         success = pbProcessMoveHit(move,user,targets,i,skipAccuracyCheck)
         if !success
           if i==0 && targets.length>0
@@ -715,6 +720,8 @@ class PokeBattle_Battler
         next if b.damageState.unaffected
         move.pbEndureKOMessage(b)
       end
+      # Max Raids - Effects when target is a Max Raid Pokemon. (ZUD)
+      pbProcessRaidEffectsOnHit(move,user,targets,hitNum)
       # HP-healing held items (checks all battlers rather than just targets
       # because Flame Burst's splash damage affects non-targets)
       @battle.pbPriority(true).each { |b| b.pbItemHPHealCheck }
@@ -731,6 +738,8 @@ class PokeBattle_Battler
     move.pbEffectGeneral(user)
     targets.each { |b| b.pbFaint if b && b.fainted? }
     user.pbFaint if user.fainted?
+    # Max Raids - Effects when user is a Max Raid Pokemon. (ZUD)
+    pbProcessRaidEffectsOnHit2(move,user,targets)
     # Additional effect
     if !user.hasActiveAbility?(:SHEERFORCE)
       targets.each do |b|
