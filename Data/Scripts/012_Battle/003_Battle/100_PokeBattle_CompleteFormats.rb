@@ -774,6 +774,7 @@ class PokeBattle_Battle
   end 
   
   def pbEORShiftDistantBattlers
+    # Makes each side compact when a Pokémon is KO and not replaced. 
     return if singleBattle?
     for side in 0..1
       next if pbSideSize(side) == 1
@@ -798,10 +799,7 @@ class PokeBattle_Battle
       # Reduce the side size accordingly. 
       
       i = 0
-      debug_i = 0
       while i < @battlers.length
-        debug_i += 1
-        
         b1 = @battlers[i]
         if !b1 || b1.opposes?(side) || !b1.fainted?
           i += 1
@@ -823,7 +821,6 @@ class PokeBattle_Battle
           pbSwapBattlers(b1.index, b2.index)
         end 
         
-        pbMessage("Gladys je veux te lécher les pieds à t'en donner des orgasmes") if debug_i > 100
         if some_right_alive
           if !@battlers[i].fainted?
             i += 1
@@ -863,5 +860,64 @@ class PokeBattle_Scene
     @sprites["targetWindow"] = TargetMenuDisplay.new(@viewport,200,@battle.sideSizes)
     pbRefresh
   end 
+end 
+
+
+class PokeBattle_Battle
+  #=============================================================================
+  # Shifting a battler to another position in a battle larger than double.
+  # Ask which side. 
+  #=============================================================================
+  
+  def pbAskShift(idxBattler)
+    return nil if pbSideSize(idxBattler) <= 3
+    
+    maxIndex = nil 
+    
+    case pbSideSize(idxBattler)
+    when 4 
+      # 4v4
+      #    7 - 5 - 3 - 1
+      #    0 - 2 - 4 - 6
+      maxIndex = 6 + (idxBattler % 2)
+    when 5
+      # 5v5 
+      #    9 - 7 - 5 - 3 - 1
+      #    0 - 2 - 4 - 6 - 8
+      maxIndex = 8 + (idxBattler % 2)
+    when 6 
+      # 6v6
+      #    11 - 9 - 7 - 5 - 3 - 1
+      #    0  - 2 - 4 - 6 - 8 - 10
+      maxIndex = 10 + (idxBattler % 2)
+    end 
+    
+    left = (idxBattler < 2 ? nil : idxBattler - 2)
+    right = (maxIndex == idxBattler ? nil : idxBattler + 2)
+    
+    if left && right
+      # Can choose a side. 
+      ret = @scene.pbShowCommands("Shift left or right?", ["Left", "Right"],-1)
+      
+      case ret 
+      when 0 
+        return left 
+      when 1
+        return right 
+      else 
+        return -1
+      end 
+    end 
+    return nil 
+  end 
+  
+  def pbRegisterShift(idxBattler)
+    idxOther = pbAskShift(idxBattler)
+    return false if idxOther == -1 # Asked left or right, and chose "Cancel"
+    @choices[idxBattler][0] = :Shift
+    @choices[idxBattler][1] = 0
+    @choices[idxBattler][2] = idxOther
+    return true
+  end
 end 
 

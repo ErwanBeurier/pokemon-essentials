@@ -33,7 +33,7 @@ module SCClientBattles
     # else
       # filename=sprintf("%03d_%d",species[0],species[1]) # These do not necessarily exist, even if the form exists, because Mega-evolutions are not supposed to be seen overworld.
     # end 
-    bitmap=AnimatedBitmap.new("Graphics/Characters/" + filename)
+    bitmap=AnimatedBitmap.new("Graphics/Characters/Following/" + filename)
     bitmap.dispose
     event.character_name=filename
 	end 

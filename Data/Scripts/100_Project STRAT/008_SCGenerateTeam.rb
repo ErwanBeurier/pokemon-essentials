@@ -137,7 +137,10 @@ def scGenerateTeamRand(trainer, type_of_team = -1, type1 = -1, type2 = -1, tieri
       end 
     else 
       wanted_types = [type1, type2]
-      wanted_types = tier.findTypes(trainer.party) if type1 != nil && type1 < 0 &&type2 != nil && type2 < 0
+      if type1 == -1 && type2 == -1
+        result = tier.findTypes(trainer.party) 
+        wanted_types = result if result
+      end 
       result_generation = tier.randTeamSpecies(wanted_types[0], wanted_types[1], type_of_team)
     end 
     

@@ -598,7 +598,7 @@ class SCMonotypeTier < SCTier
 		list_species = []
 		
 		for pkmn in party_list
-      sp = pbGetFSpeciesFromForm(pkmn[SCMonotypeTier::SPECIES], pkmn[SCMonotypeTier::FORM])
+      sp = pbGetFSpeciesFromForm(pkmn[SCMovesetsData::SPECIES], pkmn[SCMovesetsData::FORM])
 			list_species.push(sp)
 		end 
 		
@@ -1055,7 +1055,7 @@ class SCBitypeTier < SCTier
 		list_species = []
 		
 		for pkmn in party
-      sp = pbGetFSpeciesFromForm(pkmn[SCMovesetsData::BASESPECIES], pkmn[SCMonotypeTier::FORM])
+      sp = pbGetFSpeciesFromForm(pkmn[SCMovesetsData::BASESPECIES], pkmn[SCMovesetsData::FORM])
 			list_species.push(sp)
 		end 
 		

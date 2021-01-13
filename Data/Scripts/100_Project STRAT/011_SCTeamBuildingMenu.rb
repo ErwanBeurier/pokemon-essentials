@@ -991,7 +991,7 @@ class SCTeamViewer
 						
 						team_type -= 1 
 						# Generate random team for the current tier. 
-						rand_party = scGenerateTeamRand($Trainer, team_type, -1, -1, tier_choice)
+						rand_party = scGenerateTeamRand($Trainer, team_type, nil, nil, tier_choice)
 						rand_party = convertPartyToList(rand_party)
 						
 						scTeamStorage.modifyTeam(team_index, "Empty", rand_party, tier_choice)
@@ -2461,7 +2461,7 @@ class SCWantedDataComplete
           end
           
           msg = "Choose a Letter."
-          c2 = pbMessage(msg, commands2, 0, nil, 1)
+          c2 = pbMessage(msg, commands2, -1, nil, 1)
           
           if c2 == 0 
             break 

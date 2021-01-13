@@ -16,7 +16,7 @@ class PokeBattle_Battler
     end
     # Shift with the battler next to this one
     if choice[0]==:Shift
-      idxOther = -1
+      idxOther = (choice[2] == nil ? -1 : choice[2])
       case @battle.pbSideSize(@index)
       when 2
         idxOther = (@index+2)%4
@@ -32,6 +32,8 @@ class PokeBattle_Battler
           @battle.pbDisplay(_INTL("{1} moved across!",pbThis))
         when 3
           @battle.pbDisplay(_INTL("{1} moved to the center!",pbThis))
+        else
+          @battle.pbDisplay(_INTL("{1} and {2} swapped places!",pbThis, @battle.battlers[idxOther].pbThis))
         end
       end
       pbBeginTurn(choice)
