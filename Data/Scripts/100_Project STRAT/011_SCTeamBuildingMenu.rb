@@ -372,6 +372,8 @@ module SCTB
 		
 		personal_items = self.personalItems(speciesid)
 		
+    zcrystals = scGetFittingZCrystals(pokemon, false)
+    
 		# The list of item names (for the menu). 
 		useful_items_cmds = []
 		berries_cmds = []
@@ -379,6 +381,7 @@ module SCTB
 		other_items_cmds = []
 		personal_items_cmds = []
 		sc_normal_type_items_cmds = [] 
+    zcrystals_cmds = []
 		
 		for i in useful_items
 			useful_items_cmds.push("#{PBItems.getName(i)}")
@@ -398,10 +401,13 @@ module SCTB
 		for i in sc_normal_type_items
 			sc_normal_type_items_cmds.push("#{PBItems.getName(i)}")
 		end 
+		for i in zcrystals_cmds
+			zcrystals_cmds.push("#{PBItems.getName(i)}")
+		end 
 		
 		
 		# Then generate the first menu (choose the category of items). 
-		options = ["Useful items", "Berries", "Arceus plates", "Other", "Normal-type items"]
+		options = ["Useful items", "Berries", "Arceus plates", "Other", "Normal-type items", "Z-Crystals"]
 		
 		if not personal_items.empty?
 			options.push("Personal items")
@@ -431,6 +437,9 @@ module SCTB
 				# Normal-type items 
 				it = pbMessage("What item?",sc_normal_type_items_cmds, -1, nil, 0)
 			when 5
+				# Z-Crystals 
+				it = pbMessage("What crystal?",zcrystals_cmds, -1, nil, 0)
+			when 6
 				# Personal items
 				if not personal_items.empty?
 					it = pbMessage("What item?",personal_items_cmds, -1, nil, 0)
@@ -454,6 +463,8 @@ module SCTB
 				when 4
 					return sc_normal_type_items[it]
 				when 5
+					return zcrystals[it]
+				when 6
 					return personal_items[it]
 				end 
 			end 
