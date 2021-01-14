@@ -110,9 +110,6 @@ class PokeBattle_Battler
 
   def pbEndTurn(_choice)
     @lastRoundMoved = @battle.turnCount   # Done something this round
-    if _choice[0] == :UseMove
-      @battle.lastMoveUsed = _choice[2].id   # For Copycat
-    end 
     # Gorilla Tactics
     if @effects[PBEffects::GorillaTactics]<0 && @lastMoveUsed>=0 && hasActiveAbility?(:GORILLATACTICS)
       @effects[PBEffects::GorillaTactics]=@lastMoveUsed
@@ -263,7 +260,7 @@ class PokeBattle_Battler
       @lastRegularMoveTarget = choice[3]   # For Instruct (remembering original target is fine)
       @movesUsed.push(move.id) if !@movesUsed.include?(move.id)   # For Last Resort
     end
-    # @battle.lastMoveUsed = move.id   # For Copycat
+    @battle.lastMoveUsed = move.id   # For Copycat
     @battle.lastMoveUser = @index   # For "self KO" battle clause to avoid draws
     @battle.successStates[@index].useState = 1   # Battle Arena - assume failure
     # Find the default user (self or Snatcher) and target(s)
