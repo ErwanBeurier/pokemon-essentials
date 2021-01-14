@@ -123,8 +123,8 @@ class PokeBattle_Battler
   #-----------------------------------------------------------------------------
   # Checks various Dynamax conditions.
   #-----------------------------------------------------------------------------
-  def dynamaxBoost; return @pokemon && @pokemon.dynamaxBoost; end
   def dynamaxAble?; return @pokemon && @pokemon.dynamaxAble?; end
+  def dynamaxBoost; return @pokemon && @pokemon.dynamaxBoost; end
   def gmaxFactor?;  return @pokemon && @pokemon.gmaxFactor?;  end
   
   #-----------------------------------------------------------------------------
@@ -436,7 +436,7 @@ class PokeBattle_Battle
     if battler.effects[PBEffects::Transform]
       back = !opposes?(idxBattler)
       pkmn = battler.effects[PBEffects::TransformPokemon]
-      @scene.sprites["pokemon_#{idxBattler}"].setPokemonBitmap(pkmn,back)
+      @scene.sprites["pokemon_#{idxBattler}"].setPokemonBitmap(pkmn,back,battler)
     end
     side  = battler.idxOwnSide
     owner = pbGetOwnerIndexFromBattlerIndex(idxBattler)
@@ -637,12 +637,14 @@ class PokeBattle_Scene
   # Reverts enlarged Pokemon sprites to normal size.
   #-----------------------------------------------------------------------------
   def pbChangePokemon(idxBattler,pkmn)
-    idxBattler = idxBattler.index if idxBattler.respond_to?("index")
-    battler    = @battle.battlers[idxBattler]
+    idxBattler   = idxBattler.index if idxBattler.respond_to?("index")
     pkmnSprite   = @sprites["pokemon_#{idxBattler}"]
     shadowSprite = @sprites["shadow_#{idxBattler}"]
-    back = !@battle.opposes?(idxBattler)
-    pkmnSprite.setPokemonBitmap(pkmn,back)
+    back         = !@battle.opposes?(idxBattler)
+    # Ensures transformed Pokemon copy the correct sprites vs Dynamax targets.
+    battler      = @battle.battlers[idxBattler]
+    changepkmn   = battler.effects[PBEffects::Transform] ? battler : nil
+    pkmnSprite.setPokemonBitmap(pkmn,back,battler)
     shadowSprite.setPokemonBitmap(pkmn)
     if shadowSprite && !back
       shadowSprite.visible = showShadow?(pkmn.fSpecies)
@@ -651,7 +653,7 @@ class PokeBattle_Scene
     if !battler.dynamax?
       if battler.effects[PBEffects::Transform]
         pkmn = battler.effects[PBEffects::TransformPokemon]
-        @sprites["pokemon_#{idxBattler}"].setPokemonBitmap(pkmn,back)
+        pkmnSprite.setPokemonBitmap(pkmn,back,battler)
       end
       if DYNAMAX_SIZE
         pkmnSprite.zoom_x   = 1

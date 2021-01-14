@@ -420,7 +420,7 @@ class PokeBattle_Move_05C < PokeBattle_Move
       @battle.pbDisplay(_INTL("{1} learned {2}!",user.pbThis,
          PBMoves.getName(target.lastRegularMoveUsed)))
       user.effects[PBEffects::MoveMimicked]  = true
-      user.effects[PBEffects::BaseMoves][i]   = newMove
+      user.effects[PBEffects::BaseMoves][i]  = newMove
       user.pbCheckFormOnMovesetChange
       break
     end
@@ -489,7 +489,7 @@ class PokeBattle_Move_069 < PokeBattle_Move
       @battle.pbDisplay(_INTL("But it failed!"))
       return true
     end
-    if user.effects[PBEffects::Dynamax]>0 && !target.dynamaxAble?
+    if user.dynamax? && !target.dynamaxAble?
       @battle.pbDisplay(_INTL("But it failed!"))
       return true
     end

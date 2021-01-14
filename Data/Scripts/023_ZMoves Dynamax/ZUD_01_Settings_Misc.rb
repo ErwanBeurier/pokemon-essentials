@@ -374,6 +374,13 @@ class PokeBattle_Pokemon
     @speed   = stats[PBStats::SPEED]
   end
   
+  alias _ZUD_baseStats baseStats
+  def baseStats
+    v = MultipleForms.call("baseStats",self)
+    return v if v!=nil
+    return self._ZUD_baseStats
+  end
+  
   alias _ZUD_initialize initialize  
   def initialize(*args)
     _ZUD_initialize(*args)
@@ -389,8 +396,10 @@ end
 ################################################################################
 # SECTION 4 - MISCELLANEOUS
 #===============================================================================
-# Ultra Necrozma Forms
+# Sets up form data for Necrozma and Eternatus.
 #===============================================================================
+
+# Ultra Necrozma
 MultipleForms.register(:NECROZMA,{
   "getUltraForm" => proc { |pkmn|
      next 3 if pkmn.hasItem?(:ULTRANECROZIUMZ) && pkmn.form==1
@@ -398,8 +407,7 @@ MultipleForms.register(:NECROZMA,{
      next
   },
   "getUltraName" => proc { |pkmn|
-     next _INTL("Ultra Necrozma") if pkmn.form==3
-     next _INTL("Ultra Necrozma") if pkmn.form==4
+     next _INTL("Ultra Necrozma") if pkmn.form>2
      next
   },
   "getUnUltraForm" => proc { |pkmn|
@@ -422,6 +430,18 @@ MultipleForms.register(:NECROZMA,{
   }
 })
 
+# Eternamax Eternatus
+MultipleForms.register(:ETERNATUS,{
+  "baseStats"=>proc{|pokemon|
+    next if !(pokemon.isSpecies?(:ETERNATUS) && pokemon.gmax?)
+    next [255,115,250,130,125,250]
+  },
+  "onSetForm"=>proc{|pokemon,form,oldForm|
+    pbSeenForm(pokemon)
+  }
+})
+
+# Reverts Ultra Burst after battle.
 def pbAfterBattle(decision,canLose)
   $Trainer.party.each do |pkmn|
     pkmn.statusCount = 0 if pkmn.status==PBStatuses::POISON
