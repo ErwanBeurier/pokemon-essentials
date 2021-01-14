@@ -548,6 +548,7 @@ class PokeBattle_Battler
         end 
         @battle.lastMoveUsed = -1
       end 
+    end 
     _ZUD_pbEndTurn(_choice)
   end 
   
@@ -720,4 +721,4 @@ class PokeBattle_Battle
       end
     end
   end
-end
+end 

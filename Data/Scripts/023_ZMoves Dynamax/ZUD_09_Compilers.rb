@@ -381,6 +381,7 @@ def pbLoadTrainer(trainerid,trainername,partyid=0)
     end
     trainerid = getID(PBTrainers,trainerid)
   end
+  return scLoadRandomTrainer(trainerid, trainername) if partyid < 0 # For random teams
   success = false
   items = []
   party = []

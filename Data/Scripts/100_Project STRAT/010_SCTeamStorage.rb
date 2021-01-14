@@ -193,7 +193,7 @@ class SCTeamStorage
       s += scConvertMovesetToString(pklist, true, false)
     end 
     
-    File.open("PBS/scmovesets.txt","a") { |f|
+    File.open("PBS/trainers.txt","a") { |f|
       f.write(s)
     }
     pbMessage(_INTL("Your team {1} is exported.", @content[index]["Name"]))
