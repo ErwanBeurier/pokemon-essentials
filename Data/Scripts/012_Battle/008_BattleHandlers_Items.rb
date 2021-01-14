@@ -1208,6 +1208,7 @@ BattleHandlers::TargetItemOnHitPositiveBerry.add(:ENIGMABERRY,
 
 BattleHandlers::TargetItemOnHitPositiveBerry.add(:KEEBERRY,
   proc { |item,battler,battle,forced|
+    increment=1
     next false if !forced && !battler.canConsumeBerry?
     next false if !battler.pbCanRaiseStatStage?(PBStats::DEFENSE,battler)
     itemName = PBItems.getName(item)
@@ -1225,6 +1226,7 @@ BattleHandlers::TargetItemOnHitPositiveBerry.add(:KEEBERRY,
 
 BattleHandlers::TargetItemOnHitPositiveBerry.add(:MARANGABERRY,
   proc { |item,battler,battle,forced|
+    increment=1
     next false if !forced && !battler.canConsumeBerry?
     next false if !battler.pbCanRaiseStatStage?(PBStats::SPDEF,battler)
     itemName = PBItems.getName(item)
