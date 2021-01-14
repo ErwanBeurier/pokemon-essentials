@@ -85,6 +85,7 @@ class PokeBattle_Battle
   def pbCanMegaEvolve?(idxBattler)
     return false if $game_switches[NO_MEGA_EVOLUTION]
     return false if !@battlers[idxBattler].hasMega?
+    return false if pbCanZMove?(idxBattler) # Added for Z-Moves (ZUD)
     return false if wildBattle? && opposes?(idxBattler)
     return true if $DEBUG && Input.press?(Input::CTRL)
     return false if @battlers[idxBattler].effects[PBEffects::SkyDrop]>=0

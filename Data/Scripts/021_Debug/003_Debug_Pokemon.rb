@@ -12,6 +12,8 @@ module PokemonDebugMixin
       commands.add("levelstats","setlevel",_INTL("Set level"))
       commands.add("levelstats","setexp",_INTL("Set Exp"))
       commands.add("levelstats","hiddenvalues",_INTL("EV/IV/pID..."))
+      # Dynamax options. (ZUD)
+      commands.add("levelstats","dynamax",_INTL("Dynamax...")) 
       commands.add("levelstats","sethappiness",_INTL("Set happiness"))
       commands.add("levelstats","conteststats",_INTL("Contest stats..."))
         commands.add("conteststats","setbeauty",_INTL("Set Beauty"))
@@ -304,6 +306,88 @@ module PokemonDebugMixin
           pkmn.personalID |= rand(256)<<16
           pkmn.personalID |= rand(256)<<24
           pkmn.calcStats
+          pbRefreshSingle(pkmnid)
+        end
+      end
+    #===========================================================================
+    # Dynamax Values (ZUD)
+    #===========================================================================
+    when "dynamax"
+      cmd = 0
+      if pkmn.egg? || pkmn.shadowPokemon? || !pkmn.dynamaxAble?
+        pbDisplay(_INTL("Can't edit Dynamax values on that Pokémon."))
+        pkmn.dynamax_lvl = 0
+        pkmn.gmaxfactor = false
+        if pkmn.dynamax?
+          pkmn.makeUndynamax
+          pkmn.calcStats
+          pkmn.pbReversion(false)
+        end
+        return
+      end
+      loop do
+        dlvl = pkmn.dynamax_lvl
+        gmax = "No"
+        gmax = "Yes" if pkmn.gmaxFactor?
+        dmax = "No"
+        dmax = "Yes" if pkmn.dynamax?
+        cmd = @scene.pbShowCommands(_INTL("Dynamax Level: {1}\nG-Max Factor: {2}\nDynamaxed: {3}",dlvl,gmax,dmax),[
+             _INTL("Set Dynamax Level"),
+             _INTL("Set G-Max Factor"),
+             _INTL("Set Dynamax"),
+             _INTL("Reset All")],cmd)
+        break if cmd<0
+        case cmd
+        when 0   # Set Dynamax Level
+          params = ChooseNumberParams.new
+          params.setRange(0,10)
+          params.setDefaultValue(pkmn.dynamax_lvl)
+          params.setCancelValue(pkmn.dynamax_lvl)
+          f = Kernel.pbMessageChooseNumber(_INTL("Set {1}'s Dynamax level (max. 10).",
+             pkmn.name),params) { @scene.update }
+          if f!=pkmn.dynamax_lvl
+            pkmn.dynamax_lvl = f
+            pbRefreshSingle(pkmnid)
+          end
+        when 1   # Set G-Max Factor
+          if pkmn.gmaxFactor?
+            pkmn.removeGMaxFactor
+            pbDisplay(_INTL("Gigantamax factor was removed from {1}.",pkmn.name))
+          else
+            if pkmn.hasGmax? 
+              pkmn.giveGMaxFactor
+              pbDisplay(_INTL("Gigantamax factor was given to {1}.",pkmn.name))
+            else
+              pbDisplay(_INTL("{1} doesn't have a Gigantamax form.",pkmn.name))
+              if pbConfirm(_INTL("Give it Gigantamax factor anyway?"))
+                pkmn.giveGMaxFactor
+                pbDisplay(_INTL("Gigantamax factor was given to {1}.",pkmn.name))
+              end
+            end
+          end
+          pbRefreshSingle(pkmnid)
+        when 2   # Set Dynamax
+          if pkmn.dynamax?
+            pkmn.makeUndynamax
+            pkmn.calcStats
+            pkmn.pbReversion(false)
+            pbDisplay(_INTL("{1} is no longer dynamaxed.",pkmn.name))
+          else
+            pkmn.makeDynamax
+            pkmn.calcStats
+            pkmn.pbReversion(true)
+            pbDisplay(_INTL("{1} is dynamaxed.",pkmn.name))
+          end
+          pbRefreshSingle(pkmnid)
+        when 3   # Reset All
+          pkmn.setDynamaxLvl(0)
+          pkmn.removeGMaxFactor
+          if pkmn.dynamax?
+            pkmn.makeUndynamax
+            pkmn.calcStats
+            pkmn.pbReversion(false)
+          end
+          pbDisplay(_INTL("All dynamax settings restored to default."))
           pbRefreshSingle(pkmnid)
         end
       end

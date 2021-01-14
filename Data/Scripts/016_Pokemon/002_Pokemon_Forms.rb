@@ -334,6 +334,9 @@ MultipleForms.register(:ROTOM,{
        :AIRSLASH,    # Fan
        :LEAFSTORM    # Mow, Lawnmower
     ]
+    # Max Raids - Allows Rotom forms to properly spawn in Max Raids. (ZUD)
+    moveKnown = true if pkmn.form>0 && pkmn.hasMove?(formMoves[pkmn.form-1])
+    break if moveKnown
     idxMoveToReplace = -1
     pkmn.moves.each_with_index do |move,i|
       next if !move

@@ -1147,6 +1147,13 @@ def pbCompileAllData(mustCompile)
     # Depends on PBSpecies, PBMoves
     yield(_INTL("Compiling Pokémon forms data"))
     pbCompilePokemonForms
+    # Compiles data for Z-Moves and Dynamax. (ZUD)
+    # Depends on PBSpecies, PBMoves, PBItems
+    yield(_INTL("Compiling Z-Moves compatibility data"))
+    pbCompileZMoveCompatibility
+    # Depends on PBSpecies, PBMoves, PBItems
+    yield(_INTL("Compiling Gigantamax data"))
+    pbCompileGigantamaxData
     # Depends on PBSpecies, PBMoves
     yield(_INTL("Compiling machine data"))
     pbCompileMachines
@@ -1223,6 +1230,10 @@ def pbCompiler
        "trainers.dat",
        "types.dat",
        "Constants.rxdata",
+       # Z-Moves/Dynamax Data (ZUD)
+       "ZUD_zmoves.dat",
+       "ZUD_dynamax.dat",
+       # STRAT additions 
        "scmovesets.dat",
        "sclearned.dat",
        "sctiers.dat",
@@ -1246,6 +1257,10 @@ def pbCompiler
        "trainers.txt",
        "trainertypes.txt",
        "types.txt",
+       # Z-Moves/Dynamax Data (ZUD)
+       "ZUD_zmoves.txt",
+       "ZUD_dynamax.txt",
+       # STRAT additions 
        "scmovesets.txt",
        "sclearned.txt",
        "sctiers.txt",

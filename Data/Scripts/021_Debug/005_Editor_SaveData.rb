@@ -1479,9 +1479,13 @@ def pbSaveAllData
   pbSavePokemonData;      Graphics.update
   pbSavePokemonFormsData; Graphics.update
   pbSaveShadowMoves;      Graphics.update
+  # Z-Move/Dynamax Data (ZUD)
+  pbSaveZMoveCompatibility; Graphics.update
+  pbSaveGigantamaxData;   Graphics.update
+  # STRAT additional compilers
   scSaveMovesets;         Graphics.update
   scSaveLearnedMoves;     Graphics.update
-  scSaveTier;            Graphics.update
+  scSaveTier;             Graphics.update
   scSavePersonalItems;    Graphics.update
   scSavePatterns;         Graphics.update
 end

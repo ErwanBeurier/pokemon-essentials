@@ -484,6 +484,8 @@ class PokeBattle_Move
     multipliers[BASE_DMG_MULT] = pbBaseDamageMultiplier(multipliers[BASE_DMG_MULT],user,target)
     # Move-specific final damage modifiers
     multipliers[FINAL_DMG_MULT] = pbModifyDamage(multipliers[FINAL_DMG_MULT],user,target)
+    # Max Raids - Reduces damage while behind a Raid Shield. (ZUD)
+    pbCalcRaidShieldDamage(target,multipliers)
   end
 
   #=============================================================================

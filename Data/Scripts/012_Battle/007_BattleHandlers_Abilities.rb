@@ -77,6 +77,7 @@ BattleHandlers::WeightCalcAbility.add(:LIGHTMETAL,
 BattleHandlers::AbilityOnHPDroppedBelowHalf.add(:EMERGENCYEXIT,
   proc { |ability,battler,battle|
     next false if battler.effects[PBEffects::SkyDrop]>=0 || battler.inTwoTurnAttack?("0CE")   # Sky Drop
+    next false if battler.effects[PBEffects::MaxRaidBoss] # For Max Raids (ZUD)
     # In wild battles
     if battle.wildBattle?
       next false if battler.opposes? && battle.pbSideBattlerCount(battler.index)>1
