@@ -97,7 +97,7 @@ BattleHandlers::HPHealItem.add(:IAPAPABERRY,
 
 BattleHandlers::HPHealItem.add(:LANSATBERRY,
   proc { |item,battler,battle,forced|
-    next false if !forced && !battler.pbCanConsumeBerry?(item)
+    next false if !forced && !battler.canConsumePinchBerry?(item)
     next false if battler.effects[PBEffects::FocusEnergy]>=2
     battle.pbCommonAnimation("EatBerry",battler) if !forced
     battler.effects[PBEffects::FocusEnergy] = 2
@@ -126,7 +126,7 @@ BattleHandlers::HPHealItem.add(:MAGOBERRY,
 
 BattleHandlers::HPHealItem.add(:MICLEBERRY,
   proc { |item,battler,battle,forced|
-    next false if !forced && !battler.pbCanConsumeBerry?(item)
+    next false if !forced && !battler.canConsumePinchBerry?(item)
     next false if !battler.effects[PBEffects::MicleBerry]
     battle.pbCommonAnimation("EatBerry",battler) if !forced
     battler.effects[PBEffects::MicleBerry] = true
@@ -145,7 +145,7 @@ BattleHandlers::HPHealItem.add(:MICLEBERRY,
 BattleHandlers::HPHealItem.add(:ORANBERRY,
   proc { |item,battler,battle,forced|
     next false if !battler.canHeal?
-    next false if !forced && battler.isUnnerved?
+    next false if !forced && !battler.canConsumeBerry?
     next false if !forced && battler.hp>battler.totalhp/2
     battle.pbCommonAnimation("EatBerry",battler) if !forced
     if battler.hasActiveAbility?(:RIPEN)
@@ -179,7 +179,7 @@ BattleHandlers::HPHealItem.add(:SALACBERRY,
 BattleHandlers::HPHealItem.add(:SITRUSBERRY,
   proc { |item,battler,battle,forced|
     next false if !battler.canHeal?
-    next false if !forced && battler.isUnnerved?
+    next false if !forced && !battler.canConsumeBerry?
     next false if !forced && battler.hp>battler.totalhp/2
     battle.pbCommonAnimation("EatBerry",battler) if !forced
     if battler.hasActiveAbility?(:RIPEN)
@@ -225,7 +225,7 @@ BattleHandlers::HPHealItem.add(:WIKIBERRY,
 
 BattleHandlers::StatusCureItem.add(:ASPEARBERRY,
   proc { |item,battler,battle,forced|
-    next false if !forced && battler.isUnnerved?
+    next false if !forced && !battler.canConsumeBerry?
     next false if battler.status!=PBStatuses::FROZEN
     itemName = PBItems.getName(item)
     PBDebug.log("[Item triggered] #{battler.pbThis}'s #{itemName}") if forced
@@ -238,7 +238,7 @@ BattleHandlers::StatusCureItem.add(:ASPEARBERRY,
 
 BattleHandlers::StatusCureItem.add(:CHERIBERRY,
   proc { |item,battler,battle,forced|
-    next false if !forced && battler.isUnnerved?
+    next false if !forced && !battler.canConsumeBerry?
     next false if battler.status!=PBStatuses::PARALYSIS
     itemName = PBItems.getName(item)
     PBDebug.log("[Item triggered] #{battler.pbThis}'s #{itemName}") if forced
@@ -251,7 +251,7 @@ BattleHandlers::StatusCureItem.add(:CHERIBERRY,
 
 BattleHandlers::StatusCureItem.add(:CHESTOBERRY,
   proc { |item,battler,battle,forced|
-    next false if !forced && battler.isUnnerved?
+    next false if !forced && !battler.canConsumeBerry?
     next false if battler.status!=PBStatuses::SLEEP
     itemName = PBItems.getName(item)
     PBDebug.log("[Item triggered] #{battler.pbThis}'s #{itemName}") if forced
@@ -264,7 +264,7 @@ BattleHandlers::StatusCureItem.add(:CHESTOBERRY,
 
 BattleHandlers::StatusCureItem.add(:LUMBERRY,
   proc { |item,battler,battle,forced|
-    next false if !forced && battler.isUnnerved?
+    next false if !forced && !battler.canConsumeBerry?
     next false if battler.status==PBStatuses::NONE &&
                   battler.effects[PBEffects::Confusion]==0
     itemName = PBItems.getName(item)
@@ -334,7 +334,7 @@ BattleHandlers::StatusCureItem.add(:MENTALHERB,
 
 BattleHandlers::StatusCureItem.add(:PECHABERRY,
   proc { |item,battler,battle,forced|
-    next false if !forced && battler.isUnnerved?
+    next false if !forced && !battler.canConsumeBerry?
     next false if battler.status!=PBStatuses::POISON
     itemName = PBItems.getName(item)
     PBDebug.log("[Item triggered] #{battler.pbThis}'s #{itemName}") if forced
@@ -347,7 +347,7 @@ BattleHandlers::StatusCureItem.add(:PECHABERRY,
 
 BattleHandlers::StatusCureItem.add(:PERSIMBERRY,
   proc { |item,battler,battle,forced|
-    next false if !forced && battler.isUnnerved?
+    next false if !forced && !battler.canConsumeBerry?
     next false if battler.effects[PBEffects::Confusion]==0
     itemName = PBItems.getName(item)
     PBDebug.log("[Item triggered] #{battler.pbThis}'s #{itemName}") if forced
@@ -365,7 +365,7 @@ BattleHandlers::StatusCureItem.add(:PERSIMBERRY,
 
 BattleHandlers::StatusCureItem.add(:RAWSTBERRY,
   proc { |item,battler,battle,forced|
-    next false if !forced && battler.isUnnerved?
+    next false if !forced && !battler.canConsumeBerry?
     next false if battler.status!=PBStatuses::BURN
     itemName = PBItems.getName(item)
     PBDebug.log("[Item triggered] #{battler.pbThis}'s #{itemName}") if forced
@@ -382,7 +382,7 @@ BattleHandlers::StatusCureItem.add(:RAWSTBERRY,
 
 BattleHandlers::PriorityBracketChangeItem.add(:CUSTAPBERRY,
   proc { |item,battler,subPri,battle|
-    next if !battler.pbCanConsumeBerry?(item)
+    next if !battler.canConsumePinchBerry?(item)
     next 1 if subPri<1
   }
 )
@@ -1049,7 +1049,7 @@ BattleHandlers::TargetItemOnHit.add(:ENIGMABERRY,
 
 BattleHandlers::TargetItemOnHit.add(:JABOCABERRY,
   proc { |item,user,target,move,battle|
-    next if battle.pbCheckOpposingAbility(:UNNERVE,target.index)
+    next if !target.canConsumeBerry?
     next if !move.physicalMove?
     next if !user.takesIndirectDamage?
     battle.pbCommonAnimation("EatBerry",target)
@@ -1115,7 +1115,7 @@ BattleHandlers::TargetItemOnHit.add(:ROCKYHELMET,
 
 BattleHandlers::TargetItemOnHit.add(:ROWAPBERRY,
   proc { |item,user,target,move,battle|
-    next if battle.pbCheckOpposingAbility(:UNNERVE,target.index)
+    next if !target.canConsumeBerry?
     next if !move.specialMove?
     next if !user.takesIndirectDamage?
     battle.pbCommonAnimation("EatBerry",target)
@@ -1187,7 +1187,7 @@ BattleHandlers::TargetItemOnHit.add(:WEAKNESSPOLICY,
 BattleHandlers::TargetItemOnHitPositiveBerry.add(:ENIGMABERRY,
   proc { |item,battler,battle,forced|
     next false if !battler.canHeal?
-    next false if !forced && battler.isUnnerved?
+    next false if !forced && !battler.canConsumeBerry?
     itemName = PBItems.getName(item)
     PBDebug.log("[Item triggered] #{battler.pbThis}'s #{itemName}") if forced
     battle.pbCommonAnimation("EatBerry",battler) if !forced
@@ -1209,7 +1209,7 @@ BattleHandlers::TargetItemOnHitPositiveBerry.add(:ENIGMABERRY,
 BattleHandlers::TargetItemOnHitPositiveBerry.add(:KEEBERRY,
   proc { |item,battler,battle,forced|
     increment=1
-    next false if !forced && battler.isUnnerved?
+    next false if !forced && !battler.canConsumeBerry?
     next false if !battler.pbCanRaiseStatStage?(PBStats::DEFENSE,battler)
     itemName = PBItems.getName(item)
     if battler.hasActiveAbility?(:RIPEN)
@@ -1227,7 +1227,7 @@ BattleHandlers::TargetItemOnHitPositiveBerry.add(:KEEBERRY,
 BattleHandlers::TargetItemOnHitPositiveBerry.add(:MARANGABERRY,
   proc { |item,battler,battle,forced|
     increment=1
-    next false if !forced && battler.isUnnerved?
+    next false if !forced && !battler.canConsumeBerry?
     next false if !battler.pbCanRaiseStatStage?(PBStats::SPDEF,battler)
     itemName = PBItems.getName(item)
     if battler.hasActiveAbility?(:RIPEN)
@@ -1270,7 +1270,7 @@ BattleHandlers::TargetItemAfterMoveUse.add(:REDCARD,
     battle.pbDisplay(_INTL("{1} held up its {2} against {3}!",
        battler.pbThis,battler.itemName,user.pbThis(true)))
     battler.pbConsumeItem
-    battle.pbRecallAndReplace(user.index,newPkmn)
+    battle.pbRecallAndReplace(user.index, newPkmn, true)
     battle.pbDisplay(_INTL("{1} was dragged out!",user.pbThis))
     battle.pbClearChoice(user.index)   # Replacement Pokémon does nothing this round
     switched.push(user.index)
@@ -1328,7 +1328,7 @@ BattleHandlers::UserItemAfterMoveUse.add(:THROATSPRAY,
 
 BattleHandlers::EndOfMoveItem.add(:LEPPABERRY,
   proc { |item,battler,battle,forced|
-    next false if !forced && battler.isUnnerved?
+    next false if !forced && !battler.canConsumeBerry?
     found = []
     battler.pokemon.moves.each_with_index do |m,i|
       next if !m || m.id==0
