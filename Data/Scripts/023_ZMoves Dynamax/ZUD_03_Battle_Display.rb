@@ -700,9 +700,9 @@ class PokemonDataBox < SpriteWrapper
     textPos.push([@battler.name,@spriteBaseX+8-nameOffset,6,false,NAME_BASE_COLOR,NAME_SHADOW_COLOR])
     case @battler.displayGender
     when 0   # Male
-      textPos.push([_INTL("â™‚"),@spriteBaseX+126,6,false,MALE_BASE_COLOR,MALE_SHADOW_COLOR])
+      textPos.push([_INTL("♂"),@spriteBaseX+126,6,false,MALE_BASE_COLOR,MALE_SHADOW_COLOR])
     when 1   # Female
-      textPos.push([_INTL("â™€"),@spriteBaseX+126,6,false,FEMALE_BASE_COLOR,FEMALE_SHADOW_COLOR])
+      textPos.push([_INTL("♀"),@spriteBaseX+126,6,false,FEMALE_BASE_COLOR,FEMALE_SHADOW_COLOR])
     end
     pbDrawTextPositions(self.bitmap,textPos)
     imagePos.push(["Graphics/Pictures/Battle/overlay_lv",@spriteBaseX+140,16])

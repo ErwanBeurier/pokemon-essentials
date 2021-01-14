@@ -23,19 +23,25 @@
 ################################################################################
 # SECTION 1 - BATTLER SPRITES
 #===============================================================================
-# Enlarges Pokémon battler sprites when Dynamaxed, if installed.
+# Enlarges/colors Pokémon battler sprites when Dynamaxed.
 #-------------------------------------------------------------------------------
 class PokemonBattlerSprite < RPG::Sprite
-  def setPokemonBitmap(pkmn,back=false)
-    @pkmn = pkmn
+  def setPokemonBitmap(pkmn,back=false,oldpkmn=nil)
+    @pkmn    = pkmn
     @_iconBitmap.dispose if @_iconBitmap
-    @_iconBitmap = pbLoadPokemonBitmap(@pkmn,back)
+    @_iconBitmap = pbLoadPokemonBitmap(@pkmn,back,oldpkmn)
     self.bitmap = (@_iconBitmap) ? @_iconBitmap.bitmap : nil
     pbSetPosition
     #---------------------------------------------------------------------------
     # Enlarges and/or colors Dynamax sprites
     #---------------------------------------------------------------------------
-    if @pkmn.dynamax?
+    @dynamax = false
+    if oldpkmn
+      @dynamax = true if oldpkmn.dynamax?
+    else
+      @dynamax = true if @pkmn.dynamax?
+    end
+    if @dynamax
       if DYNAMAX_SIZE
         self.zoom_x = 1.5
         self.zoom_y = 1.5
@@ -58,7 +64,7 @@ class PokemonBattlerSprite < RPG::Sprite
     # Deepens Dynamax cries.
     #---------------------------------------------------------------------------
     if cry
-      if @pkmn.dynamax?
+      if @dynamax
         pbSEPlay(cry,100,60)
       else
         pbSEPlay(cry)
@@ -84,7 +90,7 @@ class PokemonBattlerSprite < RPG::Sprite
     #---------------------------------------------------------------------------
     # Enlarges and/or colors Dynamax sprites.
     #---------------------------------------------------------------------------
-    if @pkmn.dynamax?
+    if @dynamax
       if DYNAMAX_SIZE
         self.zoom_x = 1.5
         self.zoom_y = 1.5
@@ -228,7 +234,11 @@ end
 #-------------------------------------------------------------------------------
 # Used for defined Pokemon.
 #-------------------------------------------------------------------------------
-def pbLoadPokemonBitmapSpecies(pokemon,species,back=false)
+def pbLoadPokemonBitmap(pokemon,back=false,oldpkmn=nil)
+  return pbLoadPokemonBitmapSpecies(pokemon,pokemon.species,back,oldpkmn)
+end
+
+def pbLoadPokemonBitmapSpecies(pokemon,species,back=false,oldpkmn=nil)
   ret = nil
   if pokemon.egg?
     bitmapFileName = sprintf("Graphics/Battlers/%segg_%d",getConstantName(PBSpecies,species),pokemon.form) rescue nil
@@ -246,8 +256,15 @@ def pbLoadPokemonBitmapSpecies(pokemon,species,back=false)
     end
     bitmapFileName = pbResolveBitmap(bitmapFileName)
   else
+    # Loads the correct sprite for Pokemon using Transform on a Gigantamax Pokemon.
+    gmax = false
+    if oldpkmn
+      gmax = true if pokemon.gmax? && oldpkmn.dynamax? && oldpkmn.gmaxFactor?
+    else
+      gmax = true if pokemon.gmax?
+    end
     bitmapFileName = pbCheckPokemonBitmapFiles([species,back,(pokemon.female?),
-       pokemon.shiny?,(pokemon.form rescue 0),pokemon.shadowPokemon?,pokemon.gmax?])
+       pokemon.shiny?,(pokemon.form rescue 0),pokemon.shadowPokemon?,gmax])
     alterBitmap = (MultipleForms.getFunction(species,"alterBitmap") rescue nil)
   end
   if bitmapFileName && alterBitmap

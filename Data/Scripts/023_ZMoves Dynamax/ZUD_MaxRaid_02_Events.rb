@@ -947,7 +947,7 @@ class MaxRaidScene
     battletext  = _INTL("Battle ends in {1} turns, or after {2} knock outs.",turns,kocount)
     pbSetSmallFont(@overlay)
     pbDrawTextPositions(@overlay,textPos)
-    drawTextEx(@overlay,287,275,220,2,battletext,BASE,SHADOW)
+    drawTextEx(@overlay,287,270,220,2,battletext,BASE,SHADOW)
     #---------------------------------------------------------------------------
     # Raid Pokemon type display.
     #---------------------------------------------------------------------------
@@ -1150,7 +1150,7 @@ class MaxRaidScene
             setBattleRule("base",base)        if base && !openSpace
             setBattleRule("backdrop",bg)      if bg && !openSpace
             $PokemonGlobal.nextBattleBGM = (rank==6) ? "Max Raid Battle (Legendary)" : "Max Raid Battle"
-            pbMessage(_INTL("\\me[Max Raid Intro]You ventured into the den...\\wt[34] ...\\wt[34] ...\\wt[60]!\\wtnp[8]"))
+            pbMessage(_INTL("\\me[Max Raid Intro]You ventured into the den...\\wt[34] ...\\wt[34] ...\\wt[60]!\\wtnp[8]")) if !$DEBUG
             $game_switches[MAXRAID_SWITCH] = true
             pbWildBattleCore(bosspoke,bosslevel)
             pbWait(20)
@@ -1448,7 +1448,7 @@ class MaxRaidScene
     return rewards
   end
 end
-  
+
 #===============================================================================
 # Used to call a Max Raid Den in an event script.
 #===============================================================================
@@ -1460,6 +1460,11 @@ def pbMaxRaid(size=nil,rank=nil,pkmn=nil,loot=nil,field=nil,gmax=false,hard=fals
   $game_switches[HARDMODE_RAID]  = false
   if DMAX_ANYMAP || ($game_map && POWERSPOTS.include?(thisMap))
     pbSetEventTime
+    # Forces a manual Raid Reset while holding CTRL in Debug.
+    if ($DEBUG && Input.press?(Input::CTRL))
+      $game_variables[storedPkmn] = 0
+      pbSetSelfSwitch(thisEvent,"B",false) 
+    end
     # Resets a Max Raid Den via Wishing Pieces.
     if $game_self_switches[[thisMap,thisEvent,"B"]]
       if $game_variables[storedPkmn]==1
@@ -1502,14 +1507,32 @@ class MaxRaidScreen
 end
 
 #===============================================================================
-# Used to reset a Max Raid Den after the alotted time has passed.
+# Used for resetting a Max Raid Den.
 #===============================================================================
+# Naturally resets after an alotted amount of time has passed.
 def pbMaxRaidTime
   thisEvent  = pbMapInterpreter.get_character(0).id
   storedPkmn = thisEvent + MAXRAID_PKMN
   $game_variables[storedPkmn] = 0
   pbSetSelfSwitch(thisEvent,"A",false)
   pbSetSelfSwitch(thisEvent,"B",false)
+end
+
+# When afterLoss=false, forces the raid to reset only once its been cleared.
+# When afterLoss=true, forces the raid to reset every time, even after a loss.
+def pbForcedRaidReset(afterLoss=false)
+  thisMap    = $game_map.map_id
+  thisEvent  = pbMapInterpreter.get_character(0).id
+  storedPkmn = thisEvent + MAXRAID_PKMN
+  if afterLoss
+    $game_variables[storedPkmn] = 0
+    pbSetSelfSwitch(thisEvent,"B",false)
+  else
+    if $game_self_switches[[thisMap,thisEvent,"B"]]
+      $game_variables[storedPkmn] = 0
+      pbSetSelfSwitch(thisEvent,"B",false)
+    end
+  end
 end
   
 

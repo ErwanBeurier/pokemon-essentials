@@ -94,9 +94,7 @@ class PokeBattle_Battler
     newpoke  = @effects[PBEffects::TransformPokemon]
     pokemon  = @effects[PBEffects::Transform] ? newpoke : self.pokemon
     oldmoves = [@moves[0],@moves[1],@moves[2],@moves[3]]
-    if !@effects[PBEffects::MaxRaidBoss]
-      @effects[PBEffects::BaseMoves] = oldmoves
-    end
+    @effects[PBEffects::BaseMoves] = oldmoves if !@effects[PBEffects::MaxRaidBoss]
     for i in 0...4
       next if !@moves[i] || @moves[i].id==0
       # Z-Moves
@@ -147,18 +145,21 @@ class PokeBattle_Battler
       oldmoves = basemoves
     end
     #---------------------------------------------------------------------------
-    @moves  = [
-     PokeBattle_Move.pbFromPBMove(@battle,oldmoves[0]),
-     PokeBattle_Move.pbFromPBMove(@battle,oldmoves[1]),
-     PokeBattle_Move.pbFromPBMove(@battle,oldmoves[2]),
-     PokeBattle_Move.pbFromPBMove(@battle,oldmoves[3])
+    @moves = [
+      PokeBattle_Move.pbFromPBMove(@battle,oldmoves[0]),
+      PokeBattle_Move.pbFromPBMove(@battle,oldmoves[1]),
+      PokeBattle_Move.pbFromPBMove(@battle,oldmoves[2]),
+      PokeBattle_Move.pbFromPBMove(@battle,oldmoves[3])
     ]
     for i in 0...4
       next if !@moves[i] || @moves[i].id == 0
-      # Z-Moves
-      @moves[i].pp -= 1 if i==@effects[PBEffects::UsedZMoveIndex] && mode==1
-      # Max Moves
-      @moves[i].pp -= @effects[PBEffects::MaxMovePP][i] if mode==2
+      if @effects[PBEffects::Transform]
+        @moves[i].pp -= 1 if i==@effects[PBEffects::UsedZMoveIndex] && mode==1
+        @moves[i].pp -= @effects[PBEffects::MaxMovePP][i] if mode==2
+      else
+        @pokemon.moves[i].pp -= 1 if i==@effects[PBEffects::UsedZMoveIndex] && mode==1
+        @pokemon.moves[i].pp -= @effects[PBEffects::MaxMovePP][i] if mode==2
+      end
     end
     @effects[PBEffects::BaseMoves] = nil if !@effects[PBEffects::MaxRaidBoss]
   end
@@ -453,35 +454,90 @@ class PokeBattle_Battler
   # Transform
   #=============================================================================
   # -Stores base moves of the Transform target as user's new base moves.
-  # -Inherits inability to Dynamax from species that cannot Dynamax.
   # -Stores the Pokemon data of the Transform target.
   # -Copies the base moves of a Dynamaxed Transform target.
   # -Gets the correct Max Moves if the user is Dynamaxed prior to transforming.
   #-----------------------------------------------------------------------------
-  alias _ZUD_pbTransform pbTransform
   def pbTransform(target)
-    _ZUD_pbTransform(target)
-    @effects[PBEffects::BaseMoves]        = @moves
-    @effects[PBEffects::TransformPokemon] = target.pokemon
-    if target.dynamax?
-      @moves.clear
-      target.pokemon.moves.each_with_index do |m,i|
+    oldAbil = @ability
+    @effects[PBEffects::Transform]        = true
+    @effects[PBEffects::TransformSpecies] = target.species
+    @effects[PBEffects::TransformPokemon] = target.pokemon # Stores the entire PokeBattle_Pokemon
+    pbChangeTypes(target)
+    @ability = target.ability
+    @attack  = target.attack
+    @defense = target.defense
+    @spatk   = target.spatk
+    @spdef   = target.spdef
+    @speed   = target.speed
+    PBStats.eachBattleStat { |s| @stages[s] = target.stages[s] }
+    if NEWEST_BATTLE_MECHANICS
+      @effects[PBEffects::FocusEnergy] = target.effects[PBEffects::FocusEnergy]
+      @effects[PBEffects::LaserFocus]  = target.effects[PBEffects::LaserFocus]
+    end
+    @moves.clear
+    target.moves.each_with_index do |m,i|
+      if target.dynamax?
+        basemove  = target.effects[PBEffects::BaseMoves][i].id
+        @moves[i] = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(basemove))
+      else
         @moves[i] = PokeBattle_Move.pbFromPBMove(@battle,PBMove.new(m.id))
-        @moves[i].pp      = 5
-        @moves[i].totalpp = 5
       end
-    end
-    if @pokemon.dynamax?
-      pbDisplayPowerMoves(2)
-    end
+      @moves[i].pp      = 5
+      @moves[i].totalpp = 5
+    end 
+    @effects[PBEffects::Disable]      = 0
+    @effects[PBEffects::DisableMove]  = 0
+    @effects[PBEffects::WeightChange] = target.effects[PBEffects::WeightChange]
+    @effects[PBEffects::BaseMoves]    = target.effects[PBEffects::BaseMoves]
+    pbDisplayPowerMoves(2) if @pokemon.dynamax? # Converts new moves to Max Moves if Dynamaxed.
+    @battle.scene.pbRefreshOne(@index)
+    @battle.pbDisplay(_INTL("{1} transformed into {2}!",pbThis,target.pbThis(true)))
+    pbOnAbilityChanged(oldAbil)
   end
   
   #=============================================================================
-  # Choice Items/Gorilla Tactics
+  # Encore/Copycat 
   #=============================================================================
-  # Move options aren't locked while the user is Dynamaxed.
+  # Records if last used move was a Z-Move to prevent the move being copied.
   #-----------------------------------------------------------------------------
+  attr_accessor :lastMoveUsedIsZMove
+  
+  alias _ZUD_pbUseMove pbUseMove
+  def pbUseMove(choice, specialUsage=false)
+    @lastMoveUsedIsZMove = false 
+    _ZUD_pbUseMove(choice, specialUsage)
+  end 
+  
+  alias _ZUD_pbTryUseMove pbTryUseMove 
+  def pbTryUseMove(choice,move,specialUsage,skipAccuracyCheck)
+    ret = _ZUD_pbTryUseMove(choice,move,specialUsage,skipAccuracyCheck)
+    if !ret && move.zMove?
+      @battle.lastMoveUsed = -2 
+    end 
+    return ret 
+  end
+  
   def pbEndTurn(_choice)
+    if _choice[0] == :UseMove
+      if _choice[2].zMove?
+        if @battle.lastMoveUsed == -2
+          @battle.pbUnregisterZMove(self.index)
+          self.pbDisplayBaseMoves(1)
+          self.effects[PBEffects::PowerMovesButton] = false
+        else 
+          side  = self.idxOwnSide
+          owner = @battle.pbGetOwnerIndexFromBattlerIndex(self.index)
+          @battle.zMove[side][owner] = -2
+        end 
+        @battle.lastMoveUsed = -1
+      end
+    end
+    #===========================================================================
+    # Choice Items/Gorilla Tactics
+    #===========================================================================
+    # Move options aren't locked while the user is Dynamaxed.
+    #---------------------------------------------------------------------------
     @lastRoundMoved = @battle.turnCount
     if @effects[PBEffects::Dynamax]<=0
       # Choice Items
@@ -510,47 +566,6 @@ class PokeBattle_Battler
     @effects[PBEffects::GemConsumed] = 0
     @battle.eachBattler { |b| b.pbContinualAbilityChecks }
   end
-  
-  #=============================================================================
-  # Encore/Copycat 
-  #=============================================================================
-  # Records if last used move was a Z-Move to prevent the move being copied.
-  #-----------------------------------------------------------------------------
-  attr_accessor :lastMoveUsedIsZMove
-  
-  alias _ZUD_pbUseMove pbUseMove
-  def pbUseMove(choice, specialUsage=false)
-    @lastMoveUsedIsZMove = false 
-    _ZUD_pbUseMove(choice, specialUsage)
-  end 
-  
-  alias _ZUD_pbTryUseMove pbTryUseMove 
-  def pbTryUseMove(choice,move,specialUsage,skipAccuracyCheck)
-    ret = _ZUD_pbTryUseMove(choice,move,specialUsage,skipAccuracyCheck)
-    if !ret && move.zMove?
-      @battle.lastMoveUsed = -2 
-    end 
-    return ret 
-  end 
-  
-  alias _ZUD_pbEndTurn pbEndTurn
-  def pbEndTurn(_choice)
-    if _choice[0] == :UseMove
-      if _choice[2].zMove?
-        if @battle.lastMoveUsed == -2
-          @battle.pbUnregisterZMove(self.index)
-          self.pbDisplayBaseMoves(1)
-          self.effects[PBEffects::PowerMovesButton] = false
-        else 
-          side  = self.idxOwnSide
-          owner = @battle.pbGetOwnerIndexFromBattlerIndex(self.index)
-          @battle.zMove[side][owner] = -2
-        end 
-        @battle.lastMoveUsed = -1
-      end 
-    end 
-    _ZUD_pbEndTurn(_choice)
-  end 
   
   #=============================================================================
   # Dynamax Immunities
@@ -696,7 +711,7 @@ class PokeBattle_Battle
           b.pbFaint if b.fainted?
         end
         pbEORCountDownSideEffect(side,PBEffects::Volcalith,
-          _INTL("Rocks stopped being thrown out by G-Max Volcalith on {1}!",@battlers[side].pbTeam))
+          _INTL("Rocks stopped being thrown out by G-Max Volcalith on {1}!",@battlers[side].pbTeam(true)))
       end
     end
   end
@@ -713,7 +728,7 @@ class PokeBattle_Battle
         eff = eff.to_f/PBTypeEffectiveness::NORMAL_EFFECTIVE
         oldHP = battler.hp
         battler.pbReduceHP(battler.totalhp*eff/8,false)
-        pbDisplay(_INTL("The sharp steel bit into {1}!",battler.pbThis))
+        pbDisplay(_INTL("The sharp steel bit into {1}!",battler.pbThis(true)))
         battler.pbItemHPHealCheck
         if battler.pbAbilitiesOnDamageTaken(oldHP)
           return pbOnActiveOne(battler) 
