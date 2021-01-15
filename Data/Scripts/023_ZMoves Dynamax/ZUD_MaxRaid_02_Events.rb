@@ -128,35 +128,24 @@
 ################################################################################
 # SECTION 1 - SPECIES SETTINGS
 #===============================================================================
+# Numbers associated with different regions. Regional forms will spawn in 
+# raids instead if on a map position that matches a number below.
+#-------------------------------------------------------------------------------
 ALOLA_REGION   = 1     # The region number designated as the Alola Region.
 GALAR_REGION   = 2     # The region number designated as the Galar Region.
 #-------------------------------------------------------------------------------
 # List of species banned from appearing in Max Raid battles.
 # Note: Eternatus may appear in raids, but it won't be randomly generated.
 #-------------------------------------------------------------------------------
-RAID_BANLIST   = [:UNOWN,:SMEARGLE,:SHEDINJA,:TYPENULL,:COSMOG,:COSMOEM,:POIPOLE,
-                  :MELTAN,:ZACIAN,:ZAMAZENTA,:KUBFU]
+RAID_BANLIST       = [] # List of banned species and forms. 
+RAID_RANDOM_FORMS  = {} # Hash species -> list of allowed forms, to be chosen 
+                        # randomly in the pbGetMaxRaidForm function.
+# Initialised below pbInitRaidBanlist
 #-------------------------------------------------------------------------------
 # List of default species generated for Max Raids if no species can be found.
 # Note: Default species is randomized if more are added.
 #-------------------------------------------------------------------------------
 RAID_DEFAULT   = [:DITTO]
-#-------------------------------------------------------------------------------
-# List of Alolan form species.
-#-------------------------------------------------------------------------------
-ALOLANFORM     = [:RATTATA,:RATICATE,:RAICHU,:SANDSHREW,:SANDSLASH,:VULPIX,:NINETALES,
-                  :DIGLETT,:DUGTRIO,:MEOWTH,:PERSIAN,:GEODUDE,:GRAVELER,:GOLEM,:GRIMER,
-                  :MUK,:EXEGGUTOR,:MAROWAK]
-#-------------------------------------------------------------------------------              
-# List of Galarian form species that use Form 1.
-#-------------------------------------------------------------------------------
-GALARIANFORM1  = [:PONYTA,:RAPIDASH,:SLOWPOKE,:SLOWBRO,:FARFETCHD,:WEEZING,:MRMIME,
-                  :ARTICUNO,:ZAPDOS,:MOLTRES,:SLOWKING,:CORSOLA,:ZIGZAGOON,:LINOONE,
-                  :YAMASK,:DARUMAKA,:DARMANITAN,:STUNFISK]
-#-------------------------------------------------------------------------------
-# List of Galarian form species that use Form 2.
-#-------------------------------------------------------------------------------
-GALARIANFORM2  = [:MEOWTH]
 
 
 #===============================================================================
@@ -218,25 +207,162 @@ def pbResetRaidSettings
   $game_variables[REWARD_BONUSES] = [MAXRAID_TIMER,true,true] # Timer, Perfect, Fairness
 end
 
+def pbInitRaidBanlist
+  # Hard-coded: 
+  raid_banlist = [PBSpecies::UNOWN,
+                  PBSpecies::SMEARGLE,
+                  PBSpecies::SHEDINJA,
+                  PBSpecies::TYPENULL,
+                  PBSpecies::COSMOG,
+                  PBSpecies::COSMOEM,
+                  PBSpecies::POIPOLE,
+                  PBSpecies::MELTAN,
+                  PBSpecies::ZACIAN,
+                  PBSpecies::ZAMAZENTA,
+                  PBSpecies::KUBFU,
+                  # Primal/Mega
+                  PBSpecies::GROUDON_1, 
+                  PBSpecies::KYOGRE_1, 
+                  PBSpecies::RAYQUAZA_1,
+                  # Forms that make sense only in battle. 
+                  PBSpecies::CHERRIM_1, 
+                  PBSpecies::DARMANITAN_2, 
+                  PBSpecies::DARMANITAN_3, 
+                  PBSpecies::MELOETTA_1, 
+                  PBSpecies::AEGISLASH_1, 
+                  PBSpecies::MIMIKYU_1, 
+                  PBSpecies::EISCUE_1, 
+                  PBSpecies::MORPEKO_1, 
+                  PBSpecies::ZYGARDE_2, 
+                  PBSpecies::ZYGARDE_3, 
+                  # Other banned forms.
+                  PBSpecies::XERNEAS_1,
+                  PBSpecies::FLOETTE_5, 
+                  PBSpecies::ZACIAN_1, 
+                  PBSpecies::ZAMAZENTA_1, 
+                  PBSpecies::CALYREX_1, 
+                  PBSpecies::CALYREX_2]
+  
+  # Random forms that are handled elsewhere (in pbGetMaxRaidForm)
+  random_forms = {}
+  random_species = [PBSpecies::DEOXYS, 
+                    PBSpecies::SHELLOS, 
+                    PBSpecies::GASTRODON, 
+                    PBSpecies::ROTOM, 
+                    PBSpecies::SHAYMIN, 
+                    PBSpecies::BASCULIN, 
+                    PBSpecies::DEERLING, 
+                    PBSpecies::SAWSBUCK, 
+                    PBSpecies::VIVILLON, 
+                    PBSpecies::FLABEBE, 
+                    PBSpecies::FLOETTE, 
+                    PBSpecies::FLORGES, 
+                    PBSpecies::FURFROU, 
+                    PBSpecies::MEOWSTIC, 
+                    PBSpecies::PUMPKABOO, 
+                    PBSpecies::GOURGEIST, 
+                    PBSpecies::ORICORIO, 
+                    PBSpecies::LYCANROC, 
+                    PBSpecies::WISHIWASHI, 
+                    PBSpecies::TOXTRICITY, 
+                    PBSpecies::ALCREMIE, 
+                    PBSpecies::SINISTEA, 
+                    PBSpecies::POLTEAGEIST, 
+                    PBSpecies::INDEEDEE, 
+                    PBSpecies::URSHIFU, 
+                    PBSpecies::GIRATINA, 
+                    PBSpecies::TORNADUS, 
+                    PBSpecies::THUNDURUS, 
+                    PBSpecies::LANDORUS]
+
+  for rdsp in random_species
+    random_forms[rdsp] = []
+    random_forms[rdsp] = [rdsp] if !raid_banlist.include?(rdsp)
+  end 
+  debug_try = true 
+  for i in PBSpecies.maxValue..PBSpecies.maxValueF
+    species = pbGetSpeciesFromFSpecies(i)
+    
+    # Mega-Evolutions:
+    megaStone = pbGetSpeciesData(species[0],species[1],SpeciesMegaStone)
+    raid_banlist.push(i) if megaStone && megaStone > 0
+    
+    megaMove = pbGetSpeciesData(species[0],species[1],SpeciesMegaMove)
+    raid_banlist.push(i) if megaMove && megaMove > 0
+    
+    # Forms that are purely cosmetic:
+    raid_banlist.push(i) if species[0] == PBSpecies::PIKACHU # Cosplay Pikachu
+    raid_banlist.push(i) if species[0] == PBSpecies::CUBONE # Alolan
+    raid_banlist.push(i) if species[0] == PBSpecies::PICHU # Spiky-Eared
+    raid_banlist.push(i) if species[0] == PBSpecies::UNOWN
+    
+    # Forms that make sense only in battle:
+    raid_banlist.push(i) if species[0] == PBSpecies::CASTFORM
+    
+    # Forms that require items: 
+    raid_banlist.push(i) if species[0] == PBSpecies::ARCEUS
+    raid_banlist.push(i) if species[0] == PBSpecies::SILVALLY
+    raid_banlist.push(i) if species[0] == PBSpecies::GENESECT
+    
+    # Forms that require fusion of Pokémons:
+    raid_banlist.push(i) if species[0] == PBSpecies::KYUREM
+    raid_banlist.push(i) if species[0] == PBSpecies::NECROZMA
+    
+    # Ability forms:
+    raid_banlist.push(i) if species[0] == PBSpecies::GRENINJA
+    raid_banlist.push(i) if species[0] == PBSpecies::MINIOR
+    raid_banlist.push(i) if species[0] == PBSpecies::CRAMORANT # Gulping/Gorging forms
+    
+    # Galarian and Alolan forms will be chosen at random:
+    formname = pbGetMessage(MessageTypes::FormNames,i)
+    # Forms must be named "Alolan" or "Galarian" in PBS data to qualify.
+    if (formname=="Alolan" || formname=="Galarian")
+      # pbMessage(_INTL("formname={1}", formname))
+      random_species.push(species[0]) if !random_species.include?(species[0])
+      random_forms[species[0]] = [] if !random_forms[species[0]]
+      random_forms[species[0]].push(species[0])
+    end 
+    
+    # Random forms that are handled elsewhere:
+    if random_species.include?(species[0]) && !raid_banlist.include?(i)
+      random_forms[species[0]].push(i)
+    end 
+  end 
+  return raid_banlist, random_forms
+end 
+
+RAID_BANLIST, RAID_RANDOM_FORMS = pbInitRaidBanlist
+
 #===============================================================================
 # Used to obtain an eligible Pokemon for a Max Raid Den event.
 #===============================================================================
 def pbGetMaxRaidSpecies(poke,rank,env)
-  rank1 = [] # Contains Pokemon excluding legendaries with >=365 BST
-  rank2 = [] # Contains Pokemon excluding legendaries between 365-478 BST
-  rank3 = [] # Contains Pokemon excluding legendaries between 480-535 BST
-  rank4 = [] # Contains Pokemon excluding legendaries between 535-600 BST
-  rank5 = [] # Contains all fully evolved legendaries, Silvally & Ultra Beasts
-  ditto = [] # Contains default species.
-  banned= []
+  rank1      = [] # Contains Pokemon excluding legendaries with >=365 BST
+  rank2      = [] # Contains Pokemon excluding legendaries between 365-478 BST
+  rank3      = [] # Contains Pokemon excluding legendaries between 480-535 BST
+  rank4      = [] # Contains Pokemon excluding legendaries between 535-600 BST
+  rank5      = [] # Contains all fully evolved legendaries, Silvally & Ultra Beasts
+  ditto      = [] # Contains default species.
+  banned     = []
+  poke_val   = (poke.is_a?(Numeric) || poke.is_a?(Symbol)) ? poke : nil 
+  poke_dat   = nil # Contains the data for the pokemon defined in "poke". 
   randGender = rand(10)
   env = env ? env : pbGetEnvironment
+  rtype     = getID(PBTypes,poke[0]) if poke.is_a?(Array) && poke[0]
   for i in RAID_BANLIST; banned.push(getID(PBSpecies,i)); end
   banned.push(getID(PBSpecies,:ETERNATUS)) if poke.is_a?(Array)
-  for i in 1..PBSpecies.maxValue
-    next if banned.include?(i)   
-    rtype     = getID(PBTypes,poke[0]) if poke.is_a?(Array) && poke[0]
-    f,g       = pbGetMaxRaidForm(i,randGender,env,rtype)
+  # If "poke" is a form that is banned, then we will try with the base form.
+  # If this base form is also banned, then take a Pokémon from the right rank. 
+  poke_base   = poke_val ? pbGetSpeciesFromFSpecies(poke_val)[0] : nil
+  poke_val   = (poke_val && banned.include?(poke_val)) ? poke_base : poke_val
+  # Get the data from all species. 
+  for i in 1..PBSpecies.maxValueF
+    next if banned.include?(i)
+    base,f,g  = pbGetMaxRaidForm(i,randGender,env,rtype)
+    # Forms are chosen randomly in pbGetMaxRaidForm, so avoid repeating forms: 
+    next if i > PBSpecies.maxValue && RAID_RANDOM_FORMS.keys.include?(base) && 
+          poke_val && poke_base != base && poke_val != i 
+    # Note that RAID_RANDOM_FORMS includes Galarian and Alolan forms.
     bst       = pbBaseStatTotalForm(i,f)
     type1     = pbGetSpeciesData(i,f,SpeciesType1)
     type2     = pbGetSpeciesData(i,f,SpeciesType2)
@@ -251,18 +377,19 @@ def pbGetMaxRaidSpecies(poke,rank,env)
     next if rtype && (type1!=rtype && type2!=rtype)
     next if poke.is_a?(Array) && poke[1] && habitat!=poke[1]
     next if poke.is_a?(Array) && poke[2] && !pbAllRegionalSpecies(poke[2]).include?(i)
-    rank1.push([i,f,g]) if bst<=365 && !banRank1
-    rank2.push([i,f,g]) if (bst<480 && bst>365) && !banRank2
-    rank3.push([i,f,g]) if (bst<=535 && bst>=480) && !banRank3
-    rank4.push([i,f,g]) if (bst<=600 && bst>535) && !legendary && !banRank4
-    rank4.push([i,f,g]) if i==getID(PBSpecies,:SLAKING)
-    rank4.push([i,f,g]) if i==getID(PBSpecies,:ROTOM) && f==0
-    rank4.push([i,f,g]) if i==getID(PBSpecies,:WISHIWASHI)
-    rank5.push([i,f,g]) if bst>=570 && legendary
-    rank5.push([i,f,g]) if i==getID(PBSpecies,:MANAPHY)
-    rank5.push([i,f,g]) if i==getID(PBSpecies,:NAGANADEL)
-    rank5.push([i,f,g]) if i==getID(PBSpecies,:URSHIFU)
-    rank5.push([i,f,g]) if i==getID(PBSpecies,:CALYREX)
+    rank1.push([base,f,g]) if bst<=365 && !banRank1
+    rank2.push([base,f,g]) if (bst<480 && bst>365) && !banRank2
+    rank3.push([base,f,g]) if (bst<=535 && bst>=480) && !banRank3
+    rank4.push([base,f,g]) if (bst<=600 && bst>535) && !legendary && !banRank4
+    rank4.push([base,f,g]) if i==getID(PBSpecies,:SLAKING)
+    rank4.push([base,f,g]) if i==getID(PBSpecies,:ROTOM) && f==0
+    rank4.push([base,f,g]) if i==getID(PBSpecies,:WISHIWASHI)
+    rank5.push([base,f,g]) if bst>=570 && legendary
+    rank5.push([base,f,g]) if i==getID(PBSpecies,:MANAPHY)
+    rank5.push([base,f,g]) if i==getID(PBSpecies,:NAGANADEL)
+    rank5.push([base,f,g]) if i==getID(PBSpecies,:URSHIFU)
+    rank5.push([base,f,g]) if i==getID(PBSpecies,:CALYREX)
+    poke_dat = [base,f,g]  if poke_val && i == poke_val
   end
   #-----------------------------------------------------------------------------
   # Gets an array of filtered Pokemon based on the inputted raid level.
@@ -275,28 +402,39 @@ def pbGetMaxRaidSpecies(poke,rank,env)
   specieslist = metarank2 if rank==3
   specieslist = metarank3 if rank==4 || rank==5
   specieslist = rank5 if rank>=6
-  #-----------------------------------------------------------------------------
+  #--------------------------------------------------------------------------
   # Gets default species if no eligible species can be found.
-  #-----------------------------------------------------------------------------
+  #--------------------------------------------------------------------------
   species = ditto[rand(ditto.length)]
-  #-----------------------------------------------------------------------------
-  # Gets randomized eligible species if "poke" is an array.
-  #-----------------------------------------------------------------------------
-  if poke.is_a?(Array)
+  
+  if poke_dat
+    #--------------------------------------------------------------------------
+    # Gets specific species if "poke" is name/number.
+    #--------------------------------------------------------------------------
+    species = poke_dat
+    pbMessage(_INTL("poke_dat={1}, poke={2},{3}", poke_dat, poke.class.name, poke))
+  elsif poke.is_a?(Array)
+    #--------------------------------------------------------------------------
+    # Gets randomized eligible species if "poke" is an array.
+    #--------------------------------------------------------------------------
     if specieslist.length>0
       species = specieslist[rand(specieslist.length)]
     end
-  #-----------------------------------------------------------------------------
-  # Gets specific species if "poke" is name/number.
-  #-----------------------------------------------------------------------------
-  else
-    poke = getID(PBSpecies,poke)
-    for i in 0...specieslist.length
-      if poke==specieslist[i][0]
-        species = specieslist[i]
-      end
-    end
+    pbMessage("poke.is_a?(Array)")
+  elsif specieslist.length>0
+    #--------------------------------------------------------------------------
+    # If the filtering yielded species, use them:
+    #--------------------------------------------------------------------------
+    species = specieslist[rand(specieslist.length)]
+    pbMessage("specieslist")
   end
+    # poke = getID(PBSpecies,poke)
+    # for i in 0...specieslist.length
+      # if poke==specieslist[i][0]
+        # species = specieslist[i]
+      # end
+    # end
+  # end
   return species
 end
 
@@ -304,36 +442,72 @@ end
 # Returns the form and gender of specific species.
 #-------------------------------------------------------------------------------
 def pbGetMaxRaidForm(species,odds,env=nil,rtype=nil)
-  trash  = true if env==0
-  sandy  = true if env==7 || env==8 || env==9
-  fd     = pbLoadFormToSpecies
-  region = pbGetCurrentRegion
-  random = [:DEOXYS,:SHELLOS,:GASTRODON,:ROTOM,:BASCULIN,:TORNADUS,:THUNDURUS,
-            :LANDORUS,:PUMPKABOO,:GOURGEIST,:HOOPA,:ORICORIO,:URSHIFU]
-  gender = [:PIKACHU,:RAICHU,:SCYTHER,:SCIZOR,:HERACROSS,:SNEASEL,:UNFEZANT,
-            :FRILLISH,:JELLICENT,:MEOWSTIC,:INDEEDEE]
-  enviro = [:BURMY,:WORMADAM]
-  season = [:DEERLING,:SAWSBUCK]
-  f = 0   # Form
+  # species = getID(PBSpecies, species)
   g = nil # Gender
-  # Gets regional forms.
-  for p in ALOLANFORM;     f = 1 if species==getID(PBSpecies,p) && region==ALOLA_REGION; end
-  for p in GALARIANFORM1;  f = 1 if species==getID(PBSpecies,p) && region==GALAR_REGION; end
-  for p in GALARIANFORM2;  f = 2 if species==getID(PBSpecies,p) && region==GALAR_REGION; end
-  # Gets environmental forms.
-  for p in enviro; f = 1 if species==getID(PBSpecies,p) && sandy;     end # Burmy, Wormadam
-  for p in enviro; f = 2 if species==getID(PBSpecies,p) && trash;     end # Burmy, Wormadam
-  for p in season; f = pbGetSeason if species==getID(PBSpecies,p);    end # Deerling, Sawsbuck
+  wanted_species = pbGetSpeciesFromFSpecies(species)
+  f = wanted_species[1] # Init form. 
+  base_species = wanted_species[0]
+  
+  if f > 0
+    # Then the form is specified in the species variable. 
+    if base_species==getID(PBSpecies,:MEOWSTIC); g = (f==1) ? 1 : 0;  end  # Meowstic Female/Male
+    if base_species==getID(PBSpecies,:INDEEDEE); g = (f==1) ? 1 : 0;  end  # Indeedee Female/Male
+    return base_species, f, g
+  end 
+  
+  # From here, we are handling the case where species does not specify a form.
+  # (species < PBSpecies.maxValue)
+  # We choose the right species depending on context, and allow for random 
+  # species to be chosen if applicable.
+  enviro   = [PBSpecies::BURMY,PBSpecies::WORMADAM]
+  season   = [PBSpecies::DEERLING,PBSpecies::SAWSBUCK]
+  gender   = [PBSpecies::PIKACHU,#PBSpecies::RAICHU,
+              PBSpecies::SCYTHER,PBSpecies::SCIZOR,
+              PBSpecies::HERACROSS,PBSpecies::SNEASEL,
+              PBSpecies::UNFEZANT,PBSpecies::PYROAR,
+              PBSpecies::FRILLISH,PBSpecies::JELLICENT,
+              PBSpecies::MEOWSTIC,PBSpecies::INDEEDEE]
+  
+  if gender.include?(species)
+    # "Shadows" are different
+    for p in gender; g = (odds<5 ? 1 : 0) if species==getID(PBSpecies,p); end
+    if species==PBSpecies::PYROAR;   g = odds<9 ? 1 : 0; end  # Pyroar   Female/Male
+    if species==PBSpecies::MEOWSTIC; f = (g==1) ? 1 : 0;  end  # Meowstic Female/Male
+    if species==PBSpecies::INDEEDEE; f = (g==1) ? 1 : 0;  end  # Indeedee Female/Male
+    
+  elsif season.include?(species)
+    # Seasonal Forms
+    for p in season; f = pbGetSeason if species==getID(PBSpecies,p); end
+  
+  elsif enviro.include?(species)
+    # Gets environmental forms.
+    sandy = (env==7 || env==8 || env==9)
+    for p in enviro; f = 1 if species==getID(PBSpecies,p) && sandy;  end # Sandy Cloak
+    for p in enviro; f = 2 if species==getID(PBSpecies,p) && env==0; end # Trash Cloak
+  
+  elsif RAID_RANDOM_FORMS[species]
+    # Randomized form. Also handles Alolan / Galarian forms. 
+    rd_sp = RAID_RANDOM_FORMS[species] # List of allowed forms of the given species. 
+    rd_sp = rd_sp[rand(rd_sp.length)]
+    f = pbGetSpeciesFromFSpecies(rd_sp)[1]
+  end 
+  
   # Gets time of day forms.
   f = 1 if PBDayNight.isDay? && species==getID(PBSpecies,:SHAYMIN)        # Sky Forme
   f = 1 if PBDayNight.isNight? && species==getID(PBSpecies,:LYCANROC)     # Midnight Form
   f = 2 if PBDayNight.isEvening? && species==getID(PBSpecies,:LYCANROC)   # Dusk Form
-  # Gets randomized forms.
-  for p in random; f = rand(fd[species].length) if species==getID(PBSpecies,p); end
-  for p in gender; g = (odds<5 ? 1 : 0) if species==getID(PBSpecies,p); end
-  if species==getID(PBSpecies,:PYROAR);   g = odds<9 ? 1 : 0; end         # Pyroar   Female/Male
-  if species==getID(PBSpecies,:MEOWSTIC); f = (g==1) ? 1: 0;  end         # Meowstic Female/Male
-  if species==getID(PBSpecies,:INDEEDEE); f = (g==1) ? 1: 0;  end         # Indeedee Female/Male
+  
+  # # Gets regional forms.
+  # if formdata[species]
+    # for i in 0...formdata[species].length
+      # fSpecies = pbGetFSpeciesFromForm(species,i)
+      # formname = pbGetMessage(MessageTypes::FormNames,fSpecies)
+      # # Forms must be named "Alolan" or "Galarian" in PBS data to qualify.
+      # f = i if formname=="Alolan"   && region==ALOLA_REGION
+      # f = i if formname=="Galarian" && region==GALAR_REGION
+    # end
+  # end
+  
   # Gets forms with different typings when searching by type.
   if rtype
     f = 1 if species==getID(PBSpecies,:ROTOM)    && rtype==getID(PBTypes,:FIRE)
@@ -348,7 +522,8 @@ def pbGetMaxRaidForm(species,odds,env=nil,rtype=nil)
     f = 3 if species==getID(PBSpecies,:ORICORIO) && rtype==getID(PBTypes,:GHOST)
     f = 1 if species==getID(PBSpecies,:URSHIFU)  && rtype==getID(PBTypes,:WATER)
   end
-  return f,g
+  
+  return species, f,g
 end
 
 #===============================================================================
@@ -360,13 +535,15 @@ def pbGetMaxRaidSpecies2(filters,starlvl)
   rank3  = [] # Contains Pokemon excluding legendaries between 480-535 BST
   rank4  = [] # Contains Pokemon excluding legendaries between 535-600 BST
   rank5  = [] # Contains all fully evolved legendaries, Silvally & Ultra Beasts
-  form1  = [:SHELLOS,:GASTRODON,:SHAYMIN,:BASCULIN,:TORNADUS,:THUNDURUS,
-            :LANDORUS,:MEOWSTIC,:HOOPA,:INDEEDEE,:TOXTRICITY,:URSHIFU]
   #-----------------------------------------------------------------------------
   # Creates array of all species and their eligible forms.
   #-----------------------------------------------------------------------------
-  species = []
-  banned  = []
+  species   = []
+  banned    = []
+  formdata  = pbLoadFormToSpecies
+  multforms = [:DEOXYS,:BURMY,:WORMADAM,:SHELLOS,:GASTRODON,:ROTOM,:SHAYMIN,
+               :BASCULIN,:TORNADUS,:THUNDURUS,:LANDORUS,:MEOWSTIC,:HOOPA,
+               :ORICORIO,:LYCANROC,:INDEEDEE,:TOXTRICITY,:URSHIFU]
   for i in RAID_BANLIST; banned.push(getID(PBSpecies,i)); end
   for i in 1..PBSpecies.maxValue
     if i==getID(PBSpecies,:DEERLING) || i==getID(PBSpecies,:SAWSBUCK)
@@ -374,16 +551,16 @@ def pbGetMaxRaidSpecies2(filters,starlvl)
     else
       species.push([i,0])
     end
-    for p in ALOLANFORM;    species.push([i,1]) if i==getID(PBSpecies,p); end
-    for p in GALARIANFORM1; species.push([i,1]) if i==getID(PBSpecies,p); end
-    for p in GALARIANFORM2; species.push([i,2]) if i==getID(PBSpecies,p); end
-    for p in form1;  species.push([i,1]) if i==getID(PBSpecies,p); end
-    for f in 1...4;  species.push([i,f]) if i==getID(PBSpecies,:DEOXYS); end
-    for f in 1...3;  species.push([i,f]) if i==getID(PBSpecies,:BURMY); end
-    for f in 1...3;  species.push([i,f]) if i==getID(PBSpecies,:WORMADAM); end
-    for f in 1...6;  species.push([i,f]) if i==getID(PBSpecies,:ROTOM); end
-    for f in 1...4;  species.push([i,f]) if i==getID(PBSpecies,:ORICORIO); end
-    for f in 1...3;  species.push([i,f]) if i==getID(PBSpecies,:LYCANROC); end
+    if formdata[i]
+      for f in 1...formdata[i].length
+        fSpecies = pbGetFSpeciesFromForm(i,f)
+        formname = pbGetMessage(MessageTypes::FormNames,fSpecies)
+        # Forms must be named "Alolan" or "Galarian" in PBS data to qualify.
+        species.push([i,f]) if formname=="Alolan"
+        species.push([i,f]) if formname=="Galarian"
+        for p in multforms; species.push([i,f]) if i==getID(PBSpecies,p); end
+      end
+    end
   end
   for i in species
     p = i[0]
@@ -451,6 +628,7 @@ def pbGetMaxRaidSpecies2(filters,starlvl)
     return rank5 if starlvl==6
   end
 end
+
 
 #===============================================================================
 # Determines compatible moves to build a Max Raid Pokemon's moveset.
@@ -819,8 +997,8 @@ class MaxRaidScene
         if enctype>0 || $PokemonEncounters.pbMapHasEncounter?($game_map.map_id,enctype)
           encounter = $PokemonEncounters.pbMapEncounter($game_map.map_id,enctype)
           pkmn = encounter[0]
-        else
-          pkmn = getID(PBSpecies,RAID_DEFAULT[rand(RAID_DEFAULT.length)])
+        # else, let the rank decide.
+          # pkmn = getID(PBSpecies,RAID_DEFAULT[rand(RAID_DEFAULT.length)])
         end
         species = pbGetMaxRaidSpecies(pkmn,rank,@environ)
       end
@@ -851,31 +1029,34 @@ class MaxRaidScene
       end
       pbMaxRaidEntry(rank,storedPkmn)
     else
-      if pbConfirmMessage(_INTL("You must save the game before entering a new raid den. Is this ok?"))
-        if safeExists?(RTP.getSaveFileName("Game.rxdata"))
-          if $PokemonTemp.begunNewGame
-            pbMessage(_INTL("WARNING!"))
-            pbMessage(_INTL("There is a different game file that is already saved."))
-            pbMessage(_INTL("If you save now, the other file's adventure, including items and Pokémon, will be entirely lost."))
-            if !pbConfirmMessageSerious(
-               _INTL("Are you sure you want to save now and overwrite the other save file?"))
-              pbSEPlay("GUI save choice")
-            else
-              $game_variables[storedPkmn] = [poke,form,gender,level,makegmax]
-              pbSave
-              pbSEPlay("GUI save choice")
-              pbMessage(_INTL("\\se[]{1} saved the game.\\me[GUI save game]\\wtnp[30]",$Trainer.name))
-              pbMaxRaidEntry(rank,storedPkmn)
-            end
-          else
-            $game_variables[storedPkmn] = [poke,form,gender,level,makegmax]
-            pbSave
-            pbSEPlay("GUI save choice")
-            pbMessage(_INTL("\\se[]{1} saved the game.\\me[GUI save game]\\wtnp[30]",$Trainer.name))
-            pbMaxRaidEntry(rank,storedPkmn)
-          end
-        end
-      end
+      # DEBUG 
+      $game_variables[storedPkmn] = [poke,form,gender,level,makegmax]
+      pbMaxRaidEntry(rank,storedPkmn)
+      # if pbConfirmMessage(_INTL("You must save the game before entering a new raid den. Is this ok?"))
+        # if safeExists?(RTP.getSaveFileName("Game.rxdata"))
+          # if $PokemonTemp.begunNewGame
+            # pbMessage(_INTL("WARNING!"))
+            # pbMessage(_INTL("There is a different game file that is already saved."))
+            # pbMessage(_INTL("If you save now, the other file's adventure, including items and Pokémon, will be entirely lost."))
+            # if !pbConfirmMessageSerious(
+               # _INTL("Are you sure you want to save now and overwrite the other save file?"))
+              # pbSEPlay("GUI save choice")
+            # else
+              # $game_variables[storedPkmn] = [poke,form,gender,level,makegmax]
+              # pbSave
+              # pbSEPlay("GUI save choice")
+              # pbMessage(_INTL("\\se[]{1} saved the game.\\me[GUI save game]\\wtnp[30]",$Trainer.name))
+              # pbMaxRaidEntry(rank,storedPkmn)
+            # end
+          # else
+            # $game_variables[storedPkmn] = [poke,form,gender,level,makegmax]
+            # pbSave
+            # pbSEPlay("GUI save choice")
+            # pbMessage(_INTL("\\se[]{1} saved the game.\\me[GUI save game]\\wtnp[30]",$Trainer.name))
+            # pbMaxRaidEntry(rank,storedPkmn)
+          # end
+        # end
+      # end
     end
   end
 
