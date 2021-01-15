@@ -1242,8 +1242,8 @@ def pbCompiler
        "trainertypes.txt",
 	     "types.txt",
        # Z-Moves/Dynamax Data (ZUD)
-       "ZUD_zmoves.dat",
-       "ZUD_dynamax.dat"
+       "ZUD_zmoves.txt",
+       "ZUD_dynamax.txt"
     ]
     latestDataTime = 0
     latestTextTime = 0
