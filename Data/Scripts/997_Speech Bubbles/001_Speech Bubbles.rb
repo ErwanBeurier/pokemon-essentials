@@ -70,7 +70,7 @@ def pbRepositionMessageWindow(msgwindow, linecount=2)
   msgwindow.height=32*linecount+msgwindow.borderY
   msgwindow.y=(Graphics.height)-(msgwindow.height)
   if $game_temp && $game_temp.in_battle && !$scene.respond_to?("update_basic")
-    msgwindow.y=0
+    msgwindow.y=(Graphics.height)-(msgwindow.height)
   elsif $game_system && $game_system.respond_to?("message_position")
     case $game_system.message_position
     when 0  # up

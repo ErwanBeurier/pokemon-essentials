@@ -66,8 +66,51 @@ $SpeechFrames = [
   "speech hgss 18",
   "speech hgss 19",
   "speech hgss 20",
-  "speech pl 18"
+  "speech pl 18",
+  "speech dp 1.png",
+  "speech dp 2.png",
+  "speech dp 3.png",
+  "speech dp 4.png",
+  "speech dp 5.png",
+  "speech dp 6.png",
+  "speech dp 7.png",
+  "speech dp 8.png",
+  "speech dp 9.png",
+  "speech dp 10.png",
+  "speech dp 11.png",
+  "speech dp 12.png",
+  "speech dp 13.png",
+  "speech dp 14.png",
+  "speech dp 15.png",
+  "speech dp 16.png",
+  "speech dp 17.png",
+  "speech dp 18.png",
+  "speech dp 19.png",
+  "speech dp 20.png",
+  "speech pl 1.png",
+  "speech pl 2.png",
+  "speech pl 3.png",
+  "speech pl 4.png",
+  "speech pl 5.png",
+  "speech pl 6.png",
+  "speech pl 7.png",
+  "speech pl 8.png",
+  "speech pl 9.png",
+  "speech pl 10.png",
+  "speech pl 11.png",
+  "speech pl 12.png",
+  "speech pl 13.png",
+  "speech pl 14.png",
+  "speech pl 15.png",
+  "speech pl 16.png",
+  "speech pl 17.png",
+  "speech pl 18.png",
+  "speech pl 19.png",
+  "speech pl 20.png"
 ]
+
+
+
 
 $TextFrames = [
   "Graphics/Windowskins/"+MessageConfig::ChoiceSkinName,   # Default: choice 1

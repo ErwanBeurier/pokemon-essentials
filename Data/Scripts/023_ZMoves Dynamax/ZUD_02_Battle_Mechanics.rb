@@ -701,12 +701,13 @@ class PokeBattle_AI
   end
 
   def pbChooseEnemyZMove(index) #Put specific cases for trainers using status Z-Moves
-    chosenmove  = false
+    chosenmove  = nil
     chosenindex =-1
     attacker = @battle.battlers[index]
     # Choose the move
-    for i in 0..4
+    for i in 0...4
       move = attacker.moves[i]
+      next if !move
       if attacker.pbCompatibleZMoveFromMove?(move)
         if !chosenmove
           chosenindex = i

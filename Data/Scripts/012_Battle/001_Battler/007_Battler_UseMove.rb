@@ -606,9 +606,9 @@ class PokeBattle_Battler
     # Count a hit for Parental Bond (if it applies)
     user.effects[PBEffects::ParentalBond] -= 1 if user.effects[PBEffects::ParentalBond]>0
     # Redirect Dragon Darts other hits
-	if move.function=="17C" && @battle.pbSideSize(targets[0].index)>1 && hitNum>0
-	  targets=pbChangeTargets(move,user,targets,1)
-	end
+    if move.function=="17C" && @battle.pbSideSize(targets[0].index)>1 && hitNum>0
+      targets=pbChangeTargets(move,user,targets,1)
+    end
     targets.each { |b| b.damageState.resetPerHit }
     # Accuracy check (accuracy/evasion calc)
     if hitNum==0 || move.successCheckPerHit?

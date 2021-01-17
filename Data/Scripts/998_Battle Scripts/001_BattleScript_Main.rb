@@ -44,7 +44,9 @@
 #                          CUSTOMIZABLE OPTIONS                                #
 #==============================================================================#
 
-
+#------------------------------------------------------------------------------#
+# Adding a few extra battler realed properties
+#------------------------------------------------------------------------------#
 class PokeBattle_DamageState
   attr_accessor :bigDamage   # For Big DMG Dialogue
   attr_accessor :smlDamage   # For Small Dmg Dialogue
@@ -74,6 +76,9 @@ class PokeBattle_DamageState
   end
 end
 
+#------------------------------------------------------------------------------#
+# Edits to the entire battle system to include Dialogue
+#------------------------------------------------------------------------------#
 class PokeBattle_Battle
 # For Turn Based Messages
   def pbBattleLoop
@@ -197,92 +202,6 @@ class PokeBattle_Battle
                foeParty[1].name,foeParty[2].name))
           end
         end
-      when 4
-        case TrainerDialogue.eval("battleStart")
-        when -1
-          pbDisplayPaused(_INTL("Oh! A wild {1}, {2}, {3} and {4} appeared!",
-              foeParty[0].name,foeParty[1].name,
-              foeParty[2].name,foeParty[3].name))
-        when 0
-          battleStart= TrainerDialogue.get("battleStart")
-          pbDisplayPaused(_INTL(battleStartfoeParty[0].name,
-             foeParty[1].name,foeParty[2].name,foeParty[3].name))
-        when 1
-          battleStart= TrainerDialogue.get("battleStart")
-          pbBGMPlay(battleStart["bgm"])
-          pbDisplayPaused(_INTL(battleStart,foeParty[0].name,
-             foeParty[1].name,foeParty[2].name,foeParty[3].name))
-        when 2
-          battleStart= TrainerDialogue.get("battleStart")
-          battleStart.call(self)
-        when 3
-          battleStart= TrainerDialogue.get("battleStart")
-          for i in 0...battleStart.length
-            pbDisplayPaused(_INTL(battleStart[i],foeParty[0].name,
-               foeParty[1].name,foeParty[2].name,foeParty[3].name))
-          end
-        end
-      when 5
-        case TrainerDialogue.eval("battleStart")
-        when -1
-          pbDisplayPaused(_INTL("Oh! A wild {1}, {2}, {3}, {4} and {5} appeared!",
-              foeParty[0].name, foeParty[1].name,
-              foeParty[2].name, foeParty[3].name,
-              foeParty[4].name))
-        when 0
-          battleStart= TrainerDialogue.get("battleStart")
-          pbDisplayPaused(_INTL(battleStartfoeParty[0].name,
-             foeParty[1].name,foeParty[2].name,
-             foeParty[3].name,foeParty[4].name))
-        when 1
-          battleStart= TrainerDialogue.get("battleStart")
-          pbBGMPlay(battleStart["bgm"])
-          pbDisplayPaused(_INTL(battleStart,foeParty[0].name,
-             foeParty[1].name,foeParty[2].name,
-             foeParty[3].name,foeParty[4].name))
-        when 2
-          battleStart= TrainerDialogue.get("battleStart")
-          battleStart.call(self)
-        when 3
-          battleStart= TrainerDialogue.get("battleStart")
-          for i in 0...battleStart.length
-            pbDisplayPaused(_INTL(battleStart[i],foeParty[0].name,
-             foeParty[1].name,foeParty[2].name,
-             foeParty[3].name,foeParty[4].name))
-          end
-        end
-      when 6
-        case TrainerDialogue.eval("battleStart")
-        when -1
-          pbDisplayPaused(_INTL("Oh! A wild {1}, {2}, {3}, {4}, {5} and {6} appeared!",
-              foeParty[0].name, foeParty[1].name,
-              foeParty[2].name, foeParty[3].name,
-              foeParty[4].name, foeParty[5].name))
-        when 0
-          battleStart= TrainerDialogue.get("battleStart")
-          pbDisplayPaused(_INTL(battleStartfoeParty[0].name,
-             foeParty[1].name,foeParty[2].name,
-             foeParty[3].name,foeParty[4].name,
-             foeParty[5].name))
-        when 1
-          battleStart= TrainerDialogue.get("battleStart")
-          pbBGMPlay(battleStart["bgm"])
-          pbDisplayPaused(_INTL(battleStart,foeParty[0].name,
-             foeParty[1].name,foeParty[2].name,
-             foeParty[3].name,foeParty[4].name,
-             foeParty[5].name))
-        when 2
-          battleStart= TrainerDialogue.get("battleStart")
-          battleStart.call(self)
-        when 3
-          battleStart= TrainerDialogue.get("battleStart")
-          for i in 0...battleStart.length
-            pbDisplayPaused(_INTL(battleStart[i],foeParty[0].name,
-             foeParty[1].name,foeParty[2].name,
-             foeParty[3].name,foeParty[4].name,
-             foeParty[5].name))
-          end
-        end
       end
     else   # Trainer battle
       case @opponent.length
@@ -370,20 +289,6 @@ class PokeBattle_Battle
         when 3
           msg += _INTL("{1} sent out {2}, {3} and {4}!",t.fullname,
              @battlers[sent[0]].name,@battlers[sent[1]].name,@battlers[sent[2]].name)
-        when 4
-          msg += _INTL("{1} sent out {2}, {3}, {4} and {5}!",t.fullname,
-             @battlers[sent[0]].name,@battlers[sent[1]].name,
-             @battlers[sent[2]].name,@battlers[sent[3]].name)
-        when 5
-          msg += _INTL("{1} sent out {2}, {3}, {4}, {5} and {6}!",t.fullname,
-             @battlers[sent[0]].name,@battlers[sent[1]].name,
-             @battlers[sent[2]].name,@battlers[sent[3]].name,
-             @battlers[sent[4]].name)
-        when 6
-          msg += _INTL("{1} sent out {2}, {3}, {4}, {5}, {6} and {7}!",t.fullname,
-             @battlers[sent[0]].name,@battlers[sent[1]].name,
-             @battlers[sent[2]].name,@battlers[sent[3]].name,
-             @battlers[sent[4]].name,@battlers[sent[5]].name)
         end
         toSendOut.concat(sent)
       end
@@ -399,19 +304,6 @@ class PokeBattle_Battle
         when 3
           msg += _INTL("Go! {1}, {2} and {3}!",@battlers[sent[0]].name,
              @battlers[sent[1]].name,@battlers[sent[2]].name)
-        when 4
-          msg += _INTL("Go! {1}, {2}, {3} and {4}!",@battlers[sent[0]].name,
-             @battlers[sent[1]].name,@battlers[sent[2]].name,
-             @battlers[sent[3]].name)
-        when 5
-          msg += _INTL("Go! {1}, {2}, {3}, {4} and {5}!",@battlers[sent[0]].name,
-             @battlers[sent[1]].name,@battlers[sent[2]].name,
-             @battlers[sent[3]].name,@battlers[sent[4]].name)
-        when 6
-          msg += _INTL("Go! {1}, {2}, {3}, {4}, {5} and {6}!",@battlers[sent[0]].name,
-             @battlers[sent[1]].name,@battlers[sent[2]].name,
-             @battlers[sent[3]].name,@battlers[sent[4]].name,
-             @battlers[sent[5]].name)
         end
         toSendOut.concat(sent)
       end
@@ -536,6 +428,7 @@ class PokeBattle_Battle
     # Trigger ability
     battler.pbEffectsOnSwitchIn
   end
+
 # Switch in Dialogue
   def pbPartyScreen(idxBattler,checkLaxOnly=false,canCancel=false,shouldRegister=false)
     ret = -1
@@ -584,8 +477,8 @@ class PokeBattle_Battle
           #       Pokémon when an opponent replaces a fainted Pokémon in single
           #       battles. In double battles, etc. there is no such offer.
           if @internalBattle && @switchStyle && trainerBattle? && pbSideSize(0)==1 &&
-             opposes?(idxBattler) && !@battlers[0].fainted? && pbCanChooseNonActive?(0) &&
-             @battlers[0].effects[PBEffects::Outrage]==0
+             opposes?(idxBattler) && !@battlers[0].fainted? && !switched.include?(0) &&
+             pbCanChooseNonActive?(0) && @battlers[0].effects[PBEffects::Outrage]==0
             idxPartyForName = idxPartyNew
             enemyParty = pbParty(idxBattler)
             if isConst?(enemyParty[idxPartyNew].ability,PBAbilities,:ILLUSION)
@@ -746,39 +639,12 @@ end
 
 class PokeBattle_Battler
 # Faint Dialogue
+  alias dialogue_faint pbFaint
+
   def pbFaint(showMessage=true)
-    if !fainted?
-      PBDebug.log("!!!***Can't faint with HP greater than 0")
-      return
-    end
     return if @fainted   # Has already fainted properly
-    @battle.pbDisplayBrief(_INTL("{1} fainted!",pbThis)) if showMessage
-    PBDebug.log("[Pokémon fainted] #{pbThis} (#{@index})") if !showMessage
-    @battle.scene.pbFaintBattler(self)
-    pbInitEffects(false)
-    # Reset status
-    self.status      = PBStatuses::NONE
-    self.statusCount = 0
-    # Lose happiness
-    if @pokemon && @battle.internalBattle
-      badLoss = false
-      @battle.eachOtherSideBattler(@index) do |b|
-        badLoss = true if b.level>=self.level+30
-      end
-      @pokemon.changeHappiness((badLoss) ? "faintbad" : "faint")
-    end
-    # Reset form
-    @battle.peer.pbOnLeavingBattle(@battle,@pokemon,@battle.usedInBattle[idxOwnSide][@index/2])
-    @pokemon.makeUnmega if mega?
-    @pokemon.makeUnprimal if primal?
-	  @pokemon.yamaskhp = 0 # Yamask
-    # Do other things
-    @battle.pbClearChoice(@index)   # Reset choice
-    pbOwnSide.effects[PBEffects::LastRoundFainted] = @battle.turnCount
-    # Check other battlers' abilities that trigger upon a battler fainting
-    pbAbilitiesOnFainting
-    # Check for end of primordial weather
-    @battle.pbEndPrimordialWeather
+    dialogue_faint(showMessage)
+    return if !fainted? # Just in case dialogue_faint stops for this reason. 
     if !opposes?
       TrainerDialogue.display("fainted",@battle,@battle.scene)
     else
@@ -816,55 +682,6 @@ class PokeBattle_Battler
     end
     return amt
   end
-=begin
-  def pbRaiseStatStageBasic(stat,increment,ignoreContrary=false)
-    if !@battle.moldBreaker
-      # Contrary
-      if hasActiveAbility?(:CONTRARY) && !ignoreContrary
-        return pbLowerStatStageBasic(stat,increment,true)
-      end
-      # Simple
-      increment *= 2 if hasActiveAbility?(:SIMPLE)
-    end
-    # Change the stat stage
-    increment = [increment,6-@stages[stat]].min
-    if increment>0
-      s = PBStats.getName(stat); new = @stages[stat]+increment
-      PBDebug.log("[Stat change] #{pbThis}'s #{s}: #{@stages[stat]} -> #{new} (+#{increment})")
-      @stages[stat] += increment
-    end
-    if !opposes?
-      TrainerDialogue.display("raiseStat",@battle,@battle.scene)
-    else
-      TrainerDialogue.display("raiseStatOpp",@battle,@battle.scene)
-    end
-    return increment
-  end
-
-  def pbLowerStatStageBasic(stat,increment,ignoreContrary=false)
-    if !@battle.moldBreaker
-      # Contrary
-      if hasActiveAbility?(:CONTRARY) && !ignoreContrary
-        return pbRaiseStatStageBasic(stat,increment,true)
-      end
-      # Simple
-      increment *= 2 if hasActiveAbility?(:SIMPLE)
-    end
-    # Change the stat stage
-    increment = [increment,6+@stages[stat]].min
-    if increment>0
-      s = PBStats.getName(stat); new = @stages[stat]-increment
-      PBDebug.log("[Stat change] #{pbThis}'s #{s}: #{@stages[stat]} -> #{new} (-#{increment})")
-      @stages[stat] -= increment
-    end
-    if !opposes?
-      TrainerDialogue.display("lowerStat",@battle,@battle.scene)
-    else
-      TrainerDialogue.display("lowerStatOpp",@battle,@battle.scene)
-    end
-    return increment
-  end
-=end
 end
 
 class PokeBattle_Move
@@ -884,7 +701,6 @@ class PokeBattle_Move
 # Super Effective Dialogue
   def pbEffectivenessMessage(user,target,numTargets=1)
     return if target.damageState.disguise
-    return if target.damageState.iceface
     if PBTypes.superEffective?(target.damageState.typeMod)
       if numTargets>1
         @battle.pbDisplay(_INTL("It's super effective on {1}!",target.pbThis(true)))
@@ -929,8 +745,6 @@ class PokeBattle_Move
     end
     # Disguise takes the damage
     return if target.damageState.disguise
-    # Ice Face takes the damage
-    return if target.damageState.iceface
     # Target takes the damage
     if damage>=target.hp
       damage = target.hp
@@ -976,7 +790,7 @@ class PokeBattle_Move
       @battle.pbHideAbilitySplash(target)
       target.pbChangeForm(1,_INTL("{1}'s disguise was busted!",target.pbThis))
       target.pbReduceHP(target.totalhp/8)
-    elsif target.damageState.iceface
+    elsif defined?(target.damageState.iceface) && target.damageState.iceface
       @battle.pbShowAbilitySplash(target)
       target.pbChangeForm(1,_INTL("{1} transformed!",target.pbThis))
       @battle.pbHideAbilitySplash(target)
@@ -1094,6 +908,7 @@ class PokeBattle_Scene
       next if !@battle.showAnims || !@battle.battlers[b[0]].shiny?
       pbCommonAnimation("Shiny",@battle.battlers[b[0]])
     end
+    sendTriggers = []
     sendOuts.each do |b|
       len =  @battle.pbAbleCount(b[0])
       len1 = (@battle.pbParty(b[0]).length > 6) ? 7 : (@battle.pbParty(b[0]).length + 1)
@@ -1108,102 +923,101 @@ class PokeBattle_Scene
         TrainerDialogue.forceSet("superEff#{side[b[0]]},#{len2-1}")
         TrainerDialogue.forceSet("notEff#{side[b[0]]},#{len2-1}")
       end
-      next if @battle.pbAbleCount(b[0]) == 1
-      TrainerDialogue.display("sendout#{len2}#{side[b[0]]}",@battle,self)
+      if @battle.pbAbleCount(b[0]) != 1
+        sendTriggers.push(["sendout",len2,side[b[0]]])
+      elsif @battle.pbAbleCount(b[0]) == 1
+        sendTriggers.push(["last","",side[b[0]]]) if !startBattle
+      end
     end
-    if !startBattle
-      if @battle.pbAbleCount(1)==1 #&& @battle.pbParty(1).length !=
-        TrainerDialogue.display("lastOpp",@battle,self)
-      end
-      if @battle.pbAbleCount(0)==1# && ((@battle.pbParty(0) && @battle.pbParty(0).length !=1) || ($Trainer.party.length != 1))
-        TrainerDialogue.display("last",@battle,self)
-      end
+    sendTriggers.each do |a|
+      TrainerDialogue.display("#{a[0]}#{a[1]}#{a[2]}",@battle,self)
     end
   end
 end
 
+
+#------------------------------------------------------------------------------#
+# Main Trainer Dialogue Module
+#------------------------------------------------------------------------------#
 module TrainerDialogue
 
   def self.set(param,data)
- #   BossBattleData.resetAll
-    $DialogueData[:DIAL]=true
-    $DialogueData[param]=data
-    $DialogueDone[param]=2
+    $PokemonTemp.dialogueData[:DIAL]=true
+    $PokemonTemp.dialogueData[param]=data
+    $PokemonTemp.dialogueDone[param]=2
     parCheck=param.split(",")
     int=parCheck[1].to_i
     int=1 if !int || !int.is_a?(Numeric)
-    $DialogueInstances[parCheck[0]] = 1# if !$DialogueInstances[parCheck[0]]  || ($DialogueInstances[parCheck[0]] && $DialogueInstances[parCheck[0]]<int)
+    $PokemonTemp.dialogueInstances[parCheck[0]] = 1
   end
 
   def self.copy(param,toCopy)
-    $DialogueData[:DIAL]=true
-    $DialogueData[param]=$DialogueData[toCopy]
-    $DialogueDone[param]=2
+    $PokemonTemp.dialogueData[:DIAL]=true
+    $PokemonTemp.dialogueData[param]=$PokemonTemp.dialogueData[toCopy]
+    $PokemonTemp.dialogueDone[param]=2
     parCheck=param.split(",")
     int=parCheck[1].to_i
     int=1 if !int || !int.is_a?(Numeric)
-    $DialogueInstances[parCheck[0]] = 1# if !$DialogueInstances[parCheck[0]]  || ($DialogueInstances[parCheck[0]] && $DialogueInstances[parCheck[0]]<int)
+    $PokemonTemp.dialogueInstances[parCheck[0]] = 1
   end
 
   def self.resetAll
-    $DialogueData={:DIAL=>false}
-    $DialogueDone={}
-    $DialogueInstances={}
+    $PokemonTemp.dialogueData={:DIAL=>false}
+    $PokemonTemp.dialogueDone={}
+    $PokemonTemp.dialogueInstances={}
   end
 
   def self.hasData?
-    return $DialogueData[:DIAL]
+    return $PokemonTemp.dialogueData[:DIAL]
   end
 
   def self.setDone(param)
-    $DialogueDone[param]=1
+    $PokemonTemp.dialogueDone[param] = 1 if !param.include?("rand")
   end
 
   def self.setFinal
-    for key in $DialogueDone.keys
-      if $DialogueDone[key]==1
-        $DialogueDone[key]=0
-        $DialogueData[key]=nil
+    for key in $PokemonTemp.dialogueDone.keys
+      if $PokemonTemp.dialogueDone[key]==1
+        $PokemonTemp.dialogueDone[key]=0
+        $PokemonTemp.dialogueData[key]=nil
       end
     end
   end
 
   def self.get(param=nil)
     return false if !self.hasData?
-    return $DialogueData[param] if param
-    return $DialogueData
+    return $PokemonTemp.dialogueData[param] if param
+    return $PokemonTemp.dialogueData
   end
 
   def self.forceSet(parameter)
-    $DialogueDone[parameter]=1
+    $PokemonTemp.dialogueDone[parameter]=1
     param=parameter.split(",")
-    $DialogueInstances[param[0]] = (param[1].to_i + 1)
+    $PokemonTemp.dialogueInstances[param[0]] = (param[1].to_i + 1)
   end
-
-
 
   def self.eval(parameter,noPri=false)
     param=parameter
     return -1 if !self.hasData?
-    return -1 if !$DialogueDone[param]
-    return -1 if $DialogueDone[param] && ($DialogueDone[param]==0 || $DialogueDone[param]==1)
-    if $DialogueData[param].is_a?(String)
+    return -1 if !$PokemonTemp.dialogueDone[param]
+    return -1 if $PokemonTemp.dialogueDone[param] && ($PokemonTemp.dialogueDone[param]==0 || $PokemonTemp.dialogueDone[param]==1)
+    if $PokemonTemp.dialogueData[param].is_a?(String)
       return 0
     end
-    if $DialogueData[param].is_a?(Hash)
+    if $PokemonTemp.dialogueData[param].is_a?(Hash)
       return 1
     end
-    if $DialogueData[param].is_a?(Proc)
+    if $PokemonTemp.dialogueData[param].is_a?(Proc)
       return 2
     end
-    if $DialogueData[param].is_a?(Array)
+    if $PokemonTemp.dialogueData[param].is_a?(Array)
       return 3
     end
   end
 
   def self.display(parameter,battle=nil,scene=nil,noPri=false)
-    if $DialogueInstances[parameter].is_a?(Numeric) && $DialogueInstances[parameter]>1
-      param="#{parameter},#{$DialogueInstances[parameter]}"
+    if $PokemonTemp.dialogueInstances[parameter].is_a?(Numeric) && $PokemonTemp.dialogueInstances[parameter]>1
+      param="#{parameter},#{$PokemonTemp.dialogueInstances[parameter]}"
     else
       param=parameter
     end
@@ -1307,13 +1121,18 @@ module TrainerDialogue
   end
 
   def self.setInstance(parameter)
-    $DialogueInstances[parameter] += 1 if !["lowHP","lowHPOpp","halfHP","halfHPOpp",
-        	                                 "bigDamage","bigDamageOpp","smlDamage",
-                                           "smlDamageOpp","attack","attackOpp",
-                                           "superEff","superEffOpp","notEff","notEffOpp"].include?(parameter)
+    noIncrement = ["lowHP","lowHPOpp","halfHP","halfHPOpp","bigDamage","bigDamageOpp","smlDamage",
+      "smlDamageOpp","attack","attackOpp","superEff","superEffOpp","notEff","notEffOpp"]
+    return if parameter.include?("rand")
+    if !noIncrement.include?(parameter)
+       $PokemonTemp.dialogueInstances[parameter] += 1
+    end
   end
 end
 
+#------------------------------------------------------------------------------#
+# Copy of the Trainer Dialogue Module with a new name
+#------------------------------------------------------------------------------#
 module BattleScripting
   def self.set(param,data)
     TrainerDialogue.set(param,data)
@@ -1331,7 +1150,9 @@ module BattleScripting
   end
 end
 
-
+#------------------------------------------------------------------------------#
+# New Graphics stuff added by the script
+#------------------------------------------------------------------------------#
 class PokeBattle_Scene
   alias mbd_initSprites pbInitSprites
 
@@ -1424,9 +1245,10 @@ class TrainerDisappearAnimation < PokeBattle_Animation
 end
 
 class DataboxFadeAnimation < PokeBattle_Animation
-  def initialize(sprites,viewport,battlers,delay=nil)
+  def initialize(sprites,viewport,battlers,delay=nil,specific=nil)
     @battlers = battlers
-    @delay= delay
+    @delay = delay
+    @specific = specific
     super(sprites,viewport)
   end
 
@@ -1435,6 +1257,7 @@ class DataboxFadeAnimation < PokeBattle_Animation
     boxes = []
     for i in 0...@battlers
       if @sprites["dataBox_#{i}"]
+        next if @specific.is_a?(Array) && !@specific.include?(i)
         boxes[i]= addSprite(@sprites["dataBox_#{i}"])
         boxes[i].moveOpacity(delay,3,0)
       end
@@ -1443,9 +1266,10 @@ class DataboxFadeAnimation < PokeBattle_Animation
 end
 
 class DataboxUnfadeAnimation < PokeBattle_Animation
-  def initialize(sprites,viewport,battlers,delay=nil)
+  def initialize(sprites,viewport,battlers,delay=nil,specific=nil)
     @battlers = battlers
-    @delay= delay
+    @delay = delay
+    @specific = specific
     super(sprites,viewport)
   end
 
@@ -1454,6 +1278,7 @@ class DataboxUnfadeAnimation < PokeBattle_Animation
     boxes = []
     for i in 0...@battlers
       if @sprites["dataBox_#{i}"]
+        next if @specific.is_a?(Array) && !@specific.include?(i)
         boxes[i]= addSprite(@sprites["dataBox_#{i}"])
         boxes[i].setOpacity(delay,0)
         boxes[i].moveOpacity(delay,3,255)
@@ -1520,15 +1345,34 @@ class BlackBarDisappearAnimation < PokeBattle_Animation
 end
 
 
-$DialogueData={:DIAL=>false}
-$DialogueDone={}
-$DialogueInstances={}
+#------------------------------------------------------------------------------#
+# Main Dialogue Data Storage
+#------------------------------------------------------------------------------#
+class PokemonTemp
+  attr_accessor :dialogueData
+  attr_accessor :dialogueDone
+  attr_accessor :dialogueInstances
 
+  def dialogueData
+    @dialogueData = {:DIAL=>false} if !@dialogueData
+    return @dialogueData
+  end
+
+  def dialogueDone
+    @dialogueDone = {} if !@dialogueDone
+    return @dialogueDone
+  end
+
+  def dialogueInstances
+    @dialogueInstances = {} if !@dialogueInstances
+    return @dialogueInstances
+  end
+end
 $ShiftSwitch=false
 
 PluginManager.register({
   :name => "Mid Battle Dialogue",
-  :version => "1.0",
+  :version => "1.5.1",
   :credits => ["Golisopod User","Luka SJ"],
   :link => "https://reliccastle.com/resources/483/"
 })

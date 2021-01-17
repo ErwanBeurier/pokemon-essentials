@@ -84,62 +84,6 @@ class PokeBattle_Battle
   
 end 
 
-class PokeBattle_Battler
-# Faint Dialogue
-  def pbFaint(showMessage=true)
-    #---------------------------------------------------------------------------
-    # Initiates capture sequence on Raid Boss when KO'd.
-    #---------------------------------------------------------------------------
-    if defined?(MAXRAID_SWITCH) && $game_switches[MAXRAID_SWITCH] && @effects[PBEffects::MaxRaidBoss]
-      self.hp += 1
-      pbCatchRaidPokemon(self)
-    #---------------------------------------------------------------------------
-    else
-      if !fainted?
-        PBDebug.log("!!!***Can't faint with HP greater than 0")
-        return
-      end
-      return if @fainted
-      @battle.pbDisplayBrief(_INTL("{1} fainted!",pbThis)) if showMessage
-      PBDebug.log("[Pokémon fainted] #{pbThis} (#{@index})") if !showMessage
-      @battle.scene.pbFaintBattler(self)
-      pbInitEffects(false)
-      self.status      = PBStatuses::NONE
-      self.statusCount = 0
-      if @pokemon && @battle.internalBattle
-        badLoss = false
-        @battle.eachOtherSideBattler(@index) do |b|
-          badLoss = true if b.level>=self.level+30
-        end
-        @pokemon.changeHappiness((badLoss) ? "faintbad" : "faint")
-      end
-      @battle.peer.pbOnLeavingBattle(@battle,@pokemon,@battle.usedInBattle[idxOwnSide][@index/2])
-      @pokemon.makeUnmega   if mega?
-      @pokemon.makeUnprimal if primal?
-      #-------------------------------------------------------------------------
-      @pokemon.makeUnUltra  if ultra?    # Reverts Ultra Burst upon fainting.
-      @pokemon.unmax        if dynamax?  # Reverts Dynamax upon fainting.
-      #-------------------------------------------------------------------------
-      @battle.pbClearChoice(@index)
-      pbOwnSide.effects[PBEffects::LastRoundFainted] = @battle.turnCount
-      pbAbilitiesOnFainting
-      @battle.pbEndPrimordialWeather
-      #-------------------------------------------------------------------------
-      # Reduces the KO counter in Max Raid battles if your Pokemon are KO'd.
-      #-------------------------------------------------------------------------
-      if defined?(MAXRAID_SWITCH) && $game_switches[MAXRAID_SWITCH]
-        pbRaidKOCounter(self.pbDirectOpposing)
-      end
-      #-------------------------------------------------------------------------
-      if !opposes?
-        TrainerDialogue.display("fainted",@battle,@battle.scene)
-      else
-        TrainerDialogue.display("faintedOpp",@battle,@battle.scene)
-      end
-    end
-  end
-end 
-
 
 
 
@@ -220,15 +164,13 @@ end
 
 module TrainerDialogue
   def self.setInstance(parameter)
-    $DialogueInstances[parameter] += 1 if !["lowHP","lowHPOpp","halfHP","halfHPOpp",
-        	                                 "bigDamage","bigDamageOpp","smlDamage",
-                                           "smlDamageOpp","attack","attackOpp",
-                                           "superEff","superEffOpp","notEff",
-                                           "notEffOpp","maxMove", "maxMoveOpp",
-                                           "zmove", "zmoveOpp", 
-                                           "dynamaxBefore", "dynamaxBeforeOpp", 
-                                           "dynamaxAfter", "dynamaxAfterOpp", 
-                                           "gmaxBefore", "gmaxBeforeOpp",
-                                           "gmaxAfter", "gmaxAfterOpp"].include?(parameter)
+    noIncrement = ["lowHP","lowHPOpp","halfHP","halfHPOpp","bigDamage","bigDamageOpp","smlDamage",
+      "smlDamageOpp","attack","attackOpp","superEff","superEffOpp","notEff","notEffOpp",
+      "maxMove", "maxMoveOpp", "zmove", "zmoveOpp", "dynamaxBefore", "dynamaxBeforeOpp", 
+      "dynamaxAfter", "dynamaxAfterOpp", "gmaxBefore", "gmaxBeforeOpp", "gmaxAfter", "gmaxAfterOpp"]
+    return if parameter.include?("rand")
+    if !noIncrement.include?(parameter)
+       $PokemonTemp.dialogueInstances[parameter] += 1
+    end
   end
 end 
