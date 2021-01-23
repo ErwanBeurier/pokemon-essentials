@@ -71,7 +71,7 @@
 #           [0]==Type, [1]==Habitat, [2]==Regional Dex
 #           Set any of the above as nil to ignore it while randomizing.
 #       -Species defaults to a species in the RAID_DEFAULT array if none can be found.
-#       -Species found in the $RAID_BANLIST array do not appear.
+#       -Species defined in the pbInitRaidBanlist do not appear.
 #
 # Loot: A custom bonus reward that is added to the raid's loot table.
 #       -No bonus reward is added when nil.
@@ -137,10 +137,6 @@ GALAR_REGION   = 2     # The region number designated as the Galar Region.
 # List of species banned from appearing in Max Raid battles.
 # Note: Eternatus may appear in raids, but it won't be randomly generated.
 #-------------------------------------------------------------------------------
-$RAID_BANLIST      = [] # List of banned species and forms. 
-$RAID_RANDOM_FORMS = {} # Hash species -> list of allowed forms, to be chosen 
-                        # randomly in the pbGetMaxRaidForm function.
-                        # Initialised on first use. 
 ALLOW_RANDOM_FORMS_IN_RAIDS = true # If set to true, then specifying a PBSpecies does 
                           # not specify the form. For example, a Max Raid with 
                           # Deoxys might become, in game, a Max Raid with one 
@@ -338,19 +334,23 @@ def pbInitRaidBanlist
   return raid_banlist, random_forms
 end 
 
+class PokemonTemp
+  attr_accessor :raidBanlist
+  attr_accessor :raidRandomForms
+end
 
 def pbGetMaxRaidBanlist 
-  if $RAID_BANLIST.length == 0 || $RAID_RANDOM_FORMS.keys.length == 0
-    $RAID_BANLIST, $RAID_RANDOM_FORMS = pbInitRaidBanlist
+  if !$PokemonTemp.raidBanlist || !$PokemonTemp.raidRandomForms
+    $PokemonTemp.raidBanlist, $PokemonTemp.raidRandomForms = pbInitRaidBanlist
   end 
-  return $RAID_BANLIST
+  return $PokemonTemp.raidBanlist
 end 
 
 def pbGetMaxRaidRandomForms
-  if $RAID_BANLIST.length == 0 || $RAID_RANDOM_FORMS.keys.length == 0
-    $RAID_BANLIST, $RAID_RANDOM_FORMS = pbInitRaidBanlist
+  if !$PokemonTemp.raidBanlist || !$PokemonTemp.raidRandomForms
+    $PokemonTemp.raidBanlist, $PokemonTemp.raidRandomForms = pbInitRaidBanlist
   end 
-  return $RAID_RANDOM_FORMS
+  return $PokemonTemp.raidRandomForms
 end 
 
 #===============================================================================
@@ -387,7 +387,7 @@ def pbGetMaxRaidSpeciesLists(poke,env)
     base,f,g  = pbGetMaxRaidForm(i,randGender,env,rtype)
     # Forms are chosen randomly in pbGetMaxRaidForm, so avoid repeating forms: 
     next if i > PBSpecies.maxValue && pbGetMaxRaidRandomForms.keys.include?(base) && 
-          poke_val && poke_base != base && poke_val != i 
+          (!poke_val || (poke_val && poke_base != base && poke_val != i))
     # Note that pbGetMaxRaidRandomForms includes Galarian and Alolan forms.
     bst       = pbBaseStatTotalForm(i,f)
     type1     = pbGetSpeciesData(i,f,SpeciesType1)

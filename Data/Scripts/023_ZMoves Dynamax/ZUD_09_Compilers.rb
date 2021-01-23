@@ -20,12 +20,18 @@
 # This section compiles data so that it may be read from the ZUD_dynamax PBS file.
 # All Gigantamax compatibility and other relevant data is obtained from this file.
 #===============================================================================
-# SECTION 3 - NPC DATA REWRITES
+# SECTION 3 - DATA LOADERS
+#-------------------------------------------------------------------------------
+# Data loaders, stored in PokemonTemp, for one load per savegame. 
+#===============================================================================
+# SECTION 4 - NPC DATA REWRITES
 #-------------------------------------------------------------------------------
 # This section rewrites code related to NPC Trainer metadata, as well as code 
 # associated with compiling trainer data. This is done to allow for NPC's to
 # utilize Dynamax mechanics.
 #===============================================================================
+
+
 
 ################################################################################
 # SECTION 1 - Z-MOVE COMPILER
@@ -93,10 +99,6 @@ def pbSaveZMoveCompatibility
       f.write("\r\n")
     }
   }
-end 
-
-def pbLoadZMoveCompatibility
-  return load_data("Data/ZUD_zmoves.dat")
 end 
 
 #-------------------------------------------------------------------------------
@@ -292,13 +294,6 @@ def pbSaveGigantamaxData
   }
 end
 
-$GMaxDatabase = nil 
-def pbLoadGmaxData
-  if !$GMaxDatabase
-    $GMaxDatabase = load_data("Data/ZUD_dynamax.dat")
-  end 
-  return $GMaxDatabase
-end
 
 #-------------------------------------------------------------------------------
 # Get Gigantamax compatibility data.
@@ -318,7 +313,42 @@ end
 
 
 ################################################################################
-# SECTION 3 - NPC DATA REWRITES
+# SECTION 3 - DATA LOADERS
+#===============================================================================
+# Data loaders, stored in PokemonTemp, for one load per savegame. 
+#===============================================================================
+
+class PokemonTemp
+  attr_accessor :zmovecomps
+  attr_accessor :gmaxData
+end
+
+def pbLoadGmaxData
+  $PokemonTemp = PokemonTemp.new if !$PokemonTemp
+  if !$PokemonTemp.gmaxData
+    if pbRgssExists?("Data/ZUD_dynamax.dat")
+      $PokemonTemp.gmaxData = load_data("Data/ZUD_dynamax.dat")
+    else
+      $PokemonTemp.gmaxData = []
+    end
+  end
+  return $PokemonTemp.gmaxData
+end
+
+def pbLoadZMoveCompatibility
+  $PokemonTemp = PokemonTemp.new if !$PokemonTemp
+  if !$PokemonTemp.zmovecomps
+    if pbRgssExists?("Data/ZUD_zmoves.dat")
+      $PokemonTemp.zmovecomps = load_data("Data/ZUD_zmoves.dat")
+    else
+      $PokemonTemp.zmovecomps = []
+    end
+  end
+  return $PokemonTemp.zmovecomps
+end
+
+################################################################################
+# SECTION 4 - NPC DATA REWRITES
 #===============================================================================
 # Adds Dynamax properties to existing data structures for compatibility.
 #===============================================================================
