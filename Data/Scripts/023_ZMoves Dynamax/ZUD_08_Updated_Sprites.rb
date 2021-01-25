@@ -379,8 +379,20 @@ class PokemonPartyPanel < SpriteWrapper
   def pbDynamaxColor
     if DYNAMAX_COLOR
       if @pokemon.dynamax?
-        @pkmnsprite.color = Color.new(217,29,71,128)
-        @pkmnsprite.color = Color.new(56,160,193,128) if @pokemon.isSpecies?(:CALYREX)
+        alpha_div = (1.0 - self.color.alpha.to_f / 255.0)
+        r_base = 217
+        g_base = 29
+        b_base = 71
+        if @pokemon.isSpecies?(:CALYREX)
+          r_base = 56
+          g_base = 160
+          b_base = 193
+        end 
+        r = (r_base.to_f * alpha_div).floor
+        g = (g_base.to_f * alpha_div).floor 
+        b = (b_base.to_f * alpha_div).floor 
+        a = 128 + self.color.alpha / 2
+        @pkmnsprite.color = Color.new(r,g,b,a)
       else
         @pkmnsprite.color = self.color
       end

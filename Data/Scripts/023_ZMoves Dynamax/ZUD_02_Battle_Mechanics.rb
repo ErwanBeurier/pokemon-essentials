@@ -356,7 +356,8 @@ class PokeBattle_Battle
     return true if $DEBUG && Input.press?(Input::CTRL)        # Allows Dynamax with CTRL in Debug.
     return false if battler.effects[PBEffects::SkyDrop]>=0    # No Dynamax if in Sky Drop.
     return false if @dynamax[side][owner]!=-1                 # No Dynamax if used this battle.
-    return false if wildBattle? && !CAN_DMAX_WILD             # No Dynamax in normal wild battles, unless enabled.
+    return false if wildBattle? && !CAN_DMAX_WILD && 
+                   !$game_switches[MAXRAID_SWITCH]            # No Dynamax in normal wild battles, unless enabled.
     return false if !pbHasDynamaxBand?(idxBattler)            # No Dynamax if no Dynamax Band.
     return @dynamax[side][owner]==-1
   end
@@ -601,10 +602,11 @@ class PokeBattle_Battle
     pbReplace(idxBattler,idxParty,batonPass)
   end
   
+  alias _ZUD_pbSwitchInBetween pbSwitchInBetween
   def pbSwitchInBetween(idxBattler,checkLaxOnly=false,canCancel=false)
-    @battlers[idxBattler].unmax if @battlers[idxBattler].dynamax?
-    return pbPartyScreen(idxBattler,checkLaxOnly,canCancel) if pbOwnedByPlayer?(idxBattler)
-    return @battleAI.pbDefaultChooseNewEnemy(idxBattler,pbParty(idxBattler))
+    ret = _ZUD_pbSwitchInBetween(idxBattler,checkLaxOnly,canCancel)
+    @battlers[idxBattler].unmax if @battlers[idxBattler].dynamax? && ret > 0
+    return ret 
   end
   
   #-----------------------------------------------------------------------------
