@@ -477,6 +477,25 @@ class PokeBattle_Move_0B4 < PokeBattle_Move
 end
 
 #===============================================================================
+# Spite
+#===============================================================================
+# Reduced PP of Max Moves is properly applied to the base move as well.
+#-------------------------------------------------------------------------------
+class PokeBattle_Move_10E < PokeBattle_Move
+  def pbEffectAgainstTarget(user,target)
+    target.eachMoveWithIndex do |m,i|
+      next if m.id!=target.lastRegularMoveUsed
+      reduction = [4,m.pp].min
+      target.pbSetPP(m,m.pp-reduction)
+      target.effects[PBEffects::MaxMovePP][i] +=4 if target.dynamax?
+      @battle.pbDisplay(_INTL("It reduced the PP of {1}'s {2} by {3}!",
+         target.pbThis(true),m.name,reduction))
+      break
+    end
+  end
+end
+
+#===============================================================================
 # Transform
 #===============================================================================
 # Move fails if the user is Dynamaxed and attempts to Transform into a species

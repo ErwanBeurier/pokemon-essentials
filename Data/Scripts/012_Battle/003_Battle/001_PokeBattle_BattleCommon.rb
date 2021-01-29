@@ -113,7 +113,7 @@ module PokeBattle_BattleCommon
       return
     end
     # Max Raids - Prevents capture of Raid Pokemon until it's defeated. (ZUD)
-    pbRaidCaptureFail(battler,ball)
+    return if pbRaidCaptureFail(battler,ball)
     # Calculate the number of shakes (4=capture)
     pkmn = battler.pokemon
     @criticalCapture = false

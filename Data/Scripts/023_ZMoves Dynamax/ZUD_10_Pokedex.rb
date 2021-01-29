@@ -10,7 +10,8 @@
 # SECTION 1 - POKEDEX
 #-------------------------------------------------------------------------------
 # This section rewrites the Pokédex code to add Gigantamax forms to the Form 
-# Dex, and display some info (height, dex entry). #===============================================================================
+# Dex, and display some info (height, dex entry). 
+#===============================================================================
 
 
 ################################################################################
@@ -103,7 +104,7 @@ class PokemonPokedexInfo_Scene
       @sprites["formback"].y += (pbLoadSpeciesMetrics[MetricBattlerPlayerY][fSpecies] || 0)*2
     end
     if @sprites["formicon"]
-      @sprites["formicon"].pbSetParams(@species,@gender,@form)
+      @sprites["formicon"].pbSetParams(@species,@gender,@form,false,@gmax)
     end
   end
   
@@ -210,16 +211,25 @@ class PokemonPokedexInfo_Scene
       height = speciesData[SpeciesHeight] || 1
       weight = speciesData[SpeciesWeight] || 1
       if @gmax
-        height = pbGetGmaxData(fSpecies,GMaxData::Height) rescue pbGetGmaxData(@species,GMaxData::Height) rescue height
+        gmaxheight = pbGetGmaxData(fSpecies,GMaxData::Height)
+        height = gmaxheight rescue pbGetGmaxData(@species,GMaxData::Height) rescue height
       end 
       if pbGetCountry==0xF4   # If the user is in the United States
         inches = (height/0.254).round
         pounds = (weight/0.45359).round
         textpos.push([_ISPRINTF("{1:d}'{2:02d}\"",inches/12,inches%12),460,158,1,base,shadow])
-        textpos.push([_ISPRINTF("{1:4.1f} lbs.",pounds/10.0),494,190,1,base,shadow])
+        if @gmax
+          textpos.push([_ISPRINTF("????.? lbs."),494,190,1,base,shadow])
+        else
+          textpos.push([_ISPRINTF("{1:4.1f} lbs.",pounds/10.0),494,190,1,base,shadow])
+        end
       else
         textpos.push([_ISPRINTF("{1:.1f} m",height/10.0),470,158,1,base,shadow])
-        textpos.push([_ISPRINTF("{1:.1f} kg",weight/10.0),482,190,1,base,shadow])
+        if @gmax
+          textpos.push([_ISPRINTF("????.? kg"),482,190,1,base,shadow])
+        else
+          textpos.push([_ISPRINTF("{1:.1f} kg",weight/10.0),482,190,1,base,shadow])
+        end 
       end
       # Draw the Pokédex entry text
       message_dex_index = (@gmax ? MessageTypes::GMaxPokedex : MessageTypes::Entries)

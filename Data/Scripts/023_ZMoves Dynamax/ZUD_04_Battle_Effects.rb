@@ -153,12 +153,13 @@ class PokeBattle_Battler
     ]
     for i in 0...4
       next if !@moves[i] || @moves[i].id == 0
-      if @effects[PBEffects::Transform]
-        @moves[i].pp -= 1 if i==@effects[PBEffects::UsedZMoveIndex] && mode==1
-        @moves[i].pp -= @effects[PBEffects::MaxMovePP][i] if mode==2
-      else
+      @moves[i].pp -= 1 if i==@effects[PBEffects::UsedZMoveIndex] && mode==1
+      @moves[i].pp -= @effects[PBEffects::MaxMovePP][i] if mode==2
+      @moves[i].pp = 0 if @moves[i].pp<0
+      if !@effects[PBEffects::Transform]
         @pokemon.moves[i].pp -= 1 if i==@effects[PBEffects::UsedZMoveIndex] && mode==1
         @pokemon.moves[i].pp -= @effects[PBEffects::MaxMovePP][i] if mode==2
+        @pokemon.moves[i].pp = 0 if @pokemon.moves[i].pp<0
       end
     end
     @effects[PBEffects::BaseMoves] = nil if !@effects[PBEffects::MaxRaidBoss]

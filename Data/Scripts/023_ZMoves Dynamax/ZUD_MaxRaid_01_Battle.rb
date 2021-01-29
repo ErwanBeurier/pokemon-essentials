@@ -372,7 +372,7 @@ module PokeBattle_BattleCommon
          battler.effects[PBEffects::MaxRaidBoss]
         @scene.pbThrowAndDeflect(ball,1)
         pbDisplay(_INTL("The ball was repelled by a burst of Dynamax energy!"))
-        return
+        return true
       end
     end
   end
@@ -467,6 +467,18 @@ class PokeBattle_Battle
       @expGain           = false
       @moneyGain         = false
     end
+  end
+  
+  #-----------------------------------------------------------------------------
+  # Prevents switching during a Max Raid battle.
+  #-----------------------------------------------------------------------------
+  alias _MaxRaid_pbCanSwitch? pbCanSwitch?
+  def pbCanSwitch?(idxBattler,idxParty=-1,partyScene=nil)
+    if $game_switches[MAXRAID_SWITCH] && !@battlers[idxBattler].fainted?
+      partyScene.pbDisplay(_INTL("Intense waves of Dynamax Energy prevents switching!")) if partyScene
+      return false
+    end
+    _MaxRaid_pbCanSwitch?(idxBattler,idxParty,partyScene)
   end
   
 #===============================================================================
@@ -615,6 +627,270 @@ class PokeBattle_Battle
       boss.pbDisplayPowerMoves(2)
     end
   end
+  
+#===============================================================================
+# Replaces the "Run" command with "Cheer" during Max Raid battles.
+#===============================================================================
+  def pbRegisterCheer(idxBattler)
+    @choices[idxBattler][0] = :Cheer
+    @choices[idxBattler][1] = 0
+    @choices[idxBattler][2] = nil
+    return true
+  end
+  
+  def pbCheerMenu(idxBattler)
+    return pbRegisterCheer(idxBattler)
+  end
+  
+  def pbAttackPhaseCheer
+    pbPriority.each do |b|
+      next unless @choices[b.index][0]==:Cheer && !b.fainted?
+      b.lastMoveFailed = false # Counts as a successful move for Stomping Tantrum
+      pbCheer(b.index)
+    end
+  end
+  
+  #-----------------------------------------------------------------------------
+  # The effects for the Cheer command used in battle.
+  #-----------------------------------------------------------------------------
+  def pbCheer(idxBattler)
+    battler     = @battlers[idxBattler]
+    boss        = battler.pbDirectOpposing(true)
+    side        = battler.idxOwnSide
+    owner       = pbGetOwnerIndexFromBattlerIndex(idxBattler)
+    trainerName = pbGetOwnerName(idxBattler)
+    dmaxInUse   = false
+    eachSameSideBattler(battler) do |b|
+      dmaxInUse = true if b.dynamax?
+    end
+    #---------------------------------------------------------------------------
+    # Builds a list of eligible Cheer effects and determines which to use.
+    #---------------------------------------------------------------------------
+    cheerEffects     = []
+    cheerNoEffect    = 0
+    cheerStatBoost   = 1
+    cheerReflect     = 2
+    cheerLightScreen = 3
+    cheerHealParty   = 4
+    cheerShieldBreak = 5
+    cheerDynamax     = 6
+    if $game_variables[REWARD_BONUSES][1]==false
+      cheered = 0
+      eachSameSideBattler(battler) do |b|
+        next if @choices[b.index][0] != :Cheer
+        cheered += 1
+      end
+      #-------------------------------------------------------------------------
+      # Effects for a single Cheer.
+      #-------------------------------------------------------------------------
+      if cheered==1
+        cheerEffects.push(cheerStatBoost)
+        cheerEffects.push(cheerReflect)     if battler.pbOwnSide.effects[PBEffects::Reflect]==0
+        cheerEffects.push(cheerLightScreen) if battler.pbOwnSide.effects[PBEffects::LightScreen]==0
+        if boss.effects[PBEffects::KnockOutCount]<2 || boss.effects[PBEffects::Dynamax]<5
+          if cheered==pbPlayerBattlerCount
+            cheerEffects.push(cheerHealHP)      if b.hp < b.totalhp/2
+            cheerEffects.push(cheerShieldBreak) if boss.effects[PBEffects::RaidShield]>0
+            cheerEffects.push(cheerDynamax)     if !dmaxInUse && @dynamax[side][owner]!=-1
+          end
+        else
+          cheerEffects.push(cheerNoEffect)
+        end
+      #-------------------------------------------------------------------------
+      # Effects for a double Cheer.
+      #-------------------------------------------------------------------------
+      elsif cheered==2
+        eachSameSideBattler(battler) do |b|
+          cheerEffects.push(cheerHealHP) if b.hp < b.totalhp/2
+        end
+        if cheered==pbPlayerBattlerCount
+          if boss.effects[PBEffects::KnockOutCount]<2 || boss.effects[PBEffects::Dynamax]<5
+            cheerEffects.push(cheerShieldBreak) if boss.effects[PBEffects::RaidShield]>0
+            cheerEffects.push(cheerDynamax)     if !dmaxInUse && @dynamax[side][owner]!=-1
+          end
+        end
+        cheerEffects.push(cheerStatBoost) if cheerEffects.length==0
+      #-------------------------------------------------------------------------
+      # Effects for a triple Cheer or more.
+      #-------------------------------------------------------------------------
+      elsif cheered>=3
+        if !dmaxInUse && @dynamax[side][owner]!=-1
+          cheerEffects.push(cheerDynamax)
+        elsif boss.effects[PBEffects::RaidShield]>0
+          cheerEffects.push(cheerShieldBreak)
+        end
+        cheerEffects.push(cheerStatBoost) if cheerEffects.length==0
+      end
+      #-------------------------------------------------------------------------
+    else
+      cheerEffects.push(cheerNoEffect)
+    end
+    partyPriority = []
+    pbPriority.each do |b|
+      next if b.opposes?
+      next if @choices[b.index][0] != :Cheer
+      partyPriority.push(b)
+    end
+    randeffect = cheerEffects[rand(cheerEffects.length)]
+    pbDisplay(_INTL("{1} cheered for {2}!",trainerName,battler.pbThis(true)))
+    if randeffect!=cheerNoEffect
+      msgD1 = _INTL("{1}'s Dynamax Band absorbed a little of the surrounding Dynamax Energy!",trainerName)
+      msgD2 = _INTL("{1}'s Dynamax Band absorbed even more of the surrounding Dynamax Energy!",trainerName)
+      msgE1 = _INTL("{1}'s cheering was powered up by all the Dynamax Energy!",trainerName)
+      msgE2 = _INTL("{1}'s continuous cheering grew in power!",trainerName)
+      if battler==partyPriority.first
+        pbDisplay(msgD1) if randeffect==cheerDynamax
+        pbDisplay(msgE1) if randeffect!=cheerDynamax
+      else
+        pbDisplay(msgD2) if randeffect==cheerDynamax
+        pbDisplay(msgE2) if randeffect!=cheerDynamax
+      end
+    end
+    case randeffect
+    #---------------------------------------------------------------------------
+    # Cheer Effect: No effect.
+    #---------------------------------------------------------------------------
+    when cheerNoEffect
+      pbDisplay(_INTL("The cheer echoed feebly around the area..."))
+    #---------------------------------------------------------------------------
+    # Cheer Effect: Applies Reflect on the user's side.
+    #---------------------------------------------------------------------------
+    when cheerReflect
+      pbAnimation(getID(PBMoves,:REFLECT),battler,battler)
+      battler.pbOwnSide.effects[PBEffects::Reflect] = 5
+      pbDisplay(_INTL("Reflect raised {1}'s Defense!",battler.pbTeam(true)))
+    #---------------------------------------------------------------------------
+    # Cheer Effect: Applies Light Screen to the user's side.
+    #---------------------------------------------------------------------------
+    when cheerLightScreen
+      pbAnimation(getID(PBMoves,:LIGHTSCREEN),battler,battler)
+      battler.pbOwnSide.effects[PBEffects::LightScreen] = 5
+      pbDisplay(_INTL("Light Screen raised {1}'s Special Defense!",battler.pbTeam(true)))
+    #---------------------------------------------------------------------------
+    # Cheer Effect: Restores the HP and status of each ally Pokemon.
+    # Only eligible when at least one party member is below 50% HP.
+    #---------------------------------------------------------------------------
+    when cheerHealParty
+      if battler==partyPriority.last
+        eachSameSideBattler(battler) do |b|
+          if b.hp < b.totalhp
+            b.pbRecoverHP((b.totalhp/2).floor)
+            pbDisplay(_INTL("{1}'s HP was restored.",b.pbThis))
+          end
+          status = b.status
+          b.pbCureStatus(false)
+          case status
+          when PBStatuses::BURN
+            pbDisplay(_INTL("{1} was healed of its burn!",b.pbThis))  
+          when PBStatuses::POISON
+            pbDisplay(_INTL("{1} was cured of its poison!",b.pbThis))  
+          when PBStatuses::PARALYSIS
+            pbDisplay(_INTL("{1} was cured of its paralysis!",b.pbThis))
+          when PBStatuses::SLEEP
+            pbDisplay(_INTL("{1} woke up!",b.pbThis)) 
+          when PBStatuses::FROZEN
+            pbDisplay(_INTL("{1} thawed out!",b.pbThis)) 
+          end
+        end
+      end
+    #---------------------------------------------------------------------------
+    # Cheer Effect: Raises a random stat for each ally Pokemon.
+    # The number of stages raised is based on how many Cheers were used.
+    #---------------------------------------------------------------------------
+    when cheerStatBoost
+      if battler==partyPriority.last
+        eachSameSideBattler(battler) do |b|
+          stats = [PBStats::ATTACK,PBStats::DEFENSE,PBStats::SPEED,PBStats::SPATK,
+                   PBStats::SPDEF,PBStats::ACCURACY,PBStats::EVASION]
+          stat  = stats[rand(stats.length)]
+          if b.pbCanRaiseStatStage?(stat,b,nil,true)
+            b.pbRaiseStatStage(stat,cheered,b)
+          end
+        end
+      end
+    #---------------------------------------------------------------------------
+    # Cheer Effect: Removes the Raid Pokemon's shield.
+    # Only eligible when the Raid Timer or KO Counter is low.
+    #---------------------------------------------------------------------------
+    when cheerShieldBreak
+      if battler==partyPriority.last
+        @scene.pbDamageAnimation(boss)
+        boss.effects[PBEffects::RaidShield] = 0
+        @scene.pbRefresh
+        pbDisplay(_INTL("The mysterious barrier disappeared!"))
+        oldhp = boss.hp
+        boss.hp -= boss.totalhp/8
+        boss.hp  =1 if boss.hp<=1
+        @scene.pbHPChanged(boss,oldhp)
+        if boss.hp>1
+          boss.pbLowerStatStage(PBStats::DEFENSE,2,false) 
+          boss.pbLowerStatStage(PBStats::SPDEF,2,false)
+        end
+      end
+    #---------------------------------------------------------------------------
+    # Cheer Effect: Replenishes the player's ability to Dynamax.
+    # Only eligible when the Raid Timer or KO Counter is low.
+    #---------------------------------------------------------------------------
+    when cheerDynamax
+      if battler==partyPriority.last
+        @dynamax[side][owner] = -1
+        pbSEPlay(sprintf("Anim/Lucky Chant"))
+        pbWait(10)
+        pbDisplay(_INTL("{1}'s Dynamax Band was fully recharged!\nDynamax is now usable again!",trainerName))
+        pbWait(10)
+      end
+    end
+  end
+end
+
+#-------------------------------------------------------------------------------
+# Gets the correct Fight Menu buttons during Max Raid battles.
+#-------------------------------------------------------------------------------
+class CommandMenuDisplay < BattleMenuBase
+  MODES = [
+     [0,2,1,3],   # 0 = Regular battle
+     [0,2,1,9],   # 1 = Regular battle with "Cancel" instead of "Run"
+     [0,2,1,4],   # 2 = Regular battle with "Call" instead of "Run"
+     [5,7,6,3],   # 3 = Safari Zone
+     [0,8,1,3],   # 4 = Bug Catching Contest
+     [0,2,1,10]   # 5 = Max Raid Battle with "Cheer" instead of "Run"
+  ]
+end
+
+class TargetMenuDisplay < BattleMenuBase
+  MODES = [
+     [0,2,1,3],   # 0 = Regular battle
+     [0,2,1,9],   # 1 = Regular battle with "Cancel" instead of "Run"
+     [0,2,1,4],   # 2 = Regular battle with "Call" instead of "Run"
+     [5,7,6,3],   # 3 = Safari Zone
+     [0,8,1,3],   # 4 = Bug Catching Contest
+     [0,2,1,10]   # 5 = Max Raid Battle with "Cheer" instead of "Run"
+  ]
+end
+
+class PokeBattle_Scene
+  def pbCommandMenu(idxBattler,firstAction)
+    shadowTrainer = (hasConst?(PBTypes,:SHADOW) && @battle.trainerBattle?)
+    maxRaidBattle = $game_switches[MAXRAID_SWITCH]
+    varCommand, mode = _INTL("Run"),    0 if firstAction
+    varCommand, mode = _INTL("Cancel"), 1 if !firstAction
+    varCommand, mode = _INTL("Call"),   2 if shadowTrainer
+    varCommand, mode = _INTL("Cheer"),  5 if maxRaidBattle
+    cmds = [
+       _INTL("What will\n{1} do?",@battle.battlers[idxBattler].name),
+       _INTL("Fight"),
+       _INTL("Bag"),
+       _INTL("Pokémon"),
+       varCommand
+    ]
+    ret = pbCommandMenuEx(idxBattler,cmds,mode)
+    ret = 4 if ret==3 && shadowTrainer     # Convert "Run" to "Call"
+    if !($DEBUG && Input.press?(Input::CTRL))
+      ret = 5 if ret==3 && maxRaidBattle   # Convert "Run" to "Cheer"
+    end
+    ret = -1 if ret==3 && !firstAction     # Convert "Run" to "Cancel"
+    return ret
+  end
 end
 
 
@@ -665,13 +941,34 @@ class PokemonDataBox < SpriteWrapper
       @spriteY = 36
       @spriteBaseX = 16
     end
-    case sideSize
-    when 2
-      @spriteX += [-12,  12,  0,  0][@battler.index]
-      @spriteY += [-20, -34, 34, 20][@battler.index]
-    when 3
-      @spriteX += [-12,  12, -6,  6,  0,  0][@battler.index]
-      @spriteY += [-42, -46,  4,  0, 50, 46][@battler.index]
+    #---------------------------------------------------------------------------
+    # Compatibility with Modular Battle Scene.
+    #---------------------------------------------------------------------------
+    if defined?(PCV)
+      case sideSize
+      when 2
+        @spriteX += [  0,   0,  0,  0][@battler.index]
+        @spriteY += [-20, -34, 34, 20][@battler.index]
+      when 3
+        @spriteX += [  0,   0,  0,  0,  0,  0][@battler.index]
+        @spriteY += [-42, -46,  4,  0, 50, 46][@battler.index]
+      when 4
+        @spriteX += [  0,  0,  0,  0,  0,   0,  0,  0][@battler.index]
+        @spriteY += [-88,-46,-42,  0,  4,  46, 50, 92][@battler.index]
+      when 5
+        @spriteX += [   0,  0,  0,  0,  0,  0,  0,  0,  0,  0][@battler.index]
+        @spriteY += [-134,-46,-88,  0,-42, 46,  4, 92, 50,138][@battler.index]
+      end
+    #---------------------------------------------------------------------------
+    else
+      case sideSize
+      when 2
+        @spriteX += [-12,  12,  0,  0][@battler.index]
+        @spriteY += [-20, -34, 34, 20][@battler.index]
+      when 3
+        @spriteX += [-12,  12, -6,  6,  0,  0][@battler.index]
+        @spriteY += [-42, -46,  4,  0, 50, 46][@battler.index]
+      end
     end
   end
   

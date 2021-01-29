@@ -293,6 +293,7 @@ class PokeBattle_Battle
   #-----------------------------------------------------------------------------
   def pbRaidUpdate(boss); end
   def pbRaidBossMoves(boss); end
+  def pbAttackPhaseCheer; end
   def pbAttackPhaseRaidBoss; end
   
   #-----------------------------------------------------------------------------

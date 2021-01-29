@@ -193,6 +193,7 @@ class PokeBattle_Battle
     #pbAttackPhase<InsertCustomMechanic>
     #---------------------------------------------------------------------------
     pbAttackPhaseRaidBoss
+    pbAttackPhaseCheer
     pbAttackPhaseMoves
   end
 
@@ -395,7 +396,9 @@ class PokeBattle_Scene
         # Dynamax - Gets Max Move PP usage.
         #-----------------------------------------------------------------------
         if battler.effects[PBEffects::PowerMovesButton]
-          battler.effects[PBEffects::MaxMovePP][cw.index] += 1
+          pressure = true if @battle.pbCheckOpposingAbility(:PRESSURE,battler)
+          ppusage  = (pressure) ? 2 : 1
+          battler.effects[PBEffects::MaxMovePP][cw.index] += ppusage
         end
         #-----------------------------------------------------------------------
         pbPlayDecisionSE

@@ -231,6 +231,9 @@ class PokeBattle_Battle
           end
         when 4    # Call
           break if pbCallMenu(idxBattler)
+        when 5    # Cheer
+          # Max Raids - Replaces the Run command with Cheer during raids. (ZUD)
+          break if pbCheerMenu(idxBattler)
         when -2   # Debug
           pbDebugMenu
           next

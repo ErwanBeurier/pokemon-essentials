@@ -680,8 +680,6 @@ end
 # Heals all ally Pokemon by 1/6th their max HP.
 #-------------------------------------------------------------------------------
 class PokeBattle_Move_D014 < PokeBattle_MaxMove
-  def healingMove?; return true; end
-
   def pbEffectGeneral(user)
     @battle.eachBattler do |b|
       next if b.opposes?(user)
@@ -753,10 +751,11 @@ end
 class PokeBattle_Move_D017 < PokeBattle_MaxMove
   def pbEffectAgainstTarget(user,target)
     user.eachOpposing do |b|
-      b.eachMove do |m|
-        next if m.id!=b.lastRegularMoveUsed
+      b.eachMoveWithIndex do |m,i|
+        next if m.id!=b.lastRegularMoveUsed || m.pp==0 || m.totalpp<=0
         reduction = [2,m.pp].min
-        target.pbSetPP(m,m.pp-reduction)
+        b.pbSetPP(m,m.pp-reduction)
+        b.effects[PBEffects::MaxMovePP][i] +=4 if b.dynamax?
         @battle.pbDisplay(_INTL("{1}'s PP was reduced!",b.pbThis))
         break
       end

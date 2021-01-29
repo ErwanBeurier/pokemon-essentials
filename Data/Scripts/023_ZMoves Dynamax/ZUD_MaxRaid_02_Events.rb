@@ -961,8 +961,8 @@ class MaxRaidScene
     @sprites["pokeicon"]   = PokemonSpeciesIconSprite.new(bosspoke,@viewport)
     @sprites["pokeicon"].pbSetParams(bosspoke,bossgender,bossform,false,gmax)
     @sprites["pokeicon"].x = 95
-    @sprites["pokeicon"].y = 130
-    if gmax
+    @sprites["pokeicon"].y = 132
+    if gmax && GMAX_XL_ICONS
       @sprites["pokeicon"].x -= 12
       @sprites["pokeicon"].y -= 12
     else
@@ -989,20 +989,18 @@ class MaxRaidScene
     #---------------------------------------------------------------------------
     # Party display.
     #---------------------------------------------------------------------------
-    @sprites["partybg1"] = IconSprite.new(-100,252)
-    @sprites["partybg1"].setBitmap("Graphics/Pictures/Dynamax/raid_party_bg")
-    @sprites["partybg2"] = IconSprite.new(-100,252)
-    @sprites["partybg2"].setBitmap("Graphics/Pictures/Dynamax/raid_party_bg")
-    @sprites["partybg3"] = IconSprite.new(-100,252)
-    @sprites["partybg3"].setBitmap("Graphics/Pictures/Dynamax/raid_party_bg")
-    @sprites["partybg4"] = IconSprite.new(-100,252)
-    @sprites["partybg4"].setBitmap("Graphics/Pictures/Dynamax/raid_party_bg")
     party = 0
+    icons = 0
     for i in $Trainer.ablePokemonParty; party += 1; end
+    @size = 4 if party<5 && @size>=5
     @size = 3 if party<4 && @size>=4
+    @size = 3 if @size>3 && !defined?(PCV)
     @size = 2 if party<3 && @size>=3
     @size = 1 if party<2 && @size>=2
-    icons = 0
+    for i in 0...party
+      @sprites["partybg#{i}"] = IconSprite.new(-100,252)
+      @sprites["partybg#{i}"].setBitmap("Graphics/Pictures/Dynamax/raid_party_bg")
+    end
     for i in 0...$Trainer.party.length
       next if $Trainer.party[i].egg? || $Trainer.party[i].fainted?
       species = $Trainer.party[i].species
@@ -1017,40 +1015,11 @@ class MaxRaidScene
       icons += 1
       break if icons==@size
     end
-    if @size==1
-      @sprites["partybg1"].x = 108
-      @sprites["pkmnsprite#{0}"].x       = 110
-      @sprites["pkmnsprite#{0}"].visible = true
-    elsif @size==2
-      @sprites["partybg1"].x = 89
-      @sprites["pkmnsprite#{0}"].x       = 91
-      @sprites["pkmnsprite#{0}"].visible = true
-      @sprites["partybg2"].x = 126
-      @sprites["pkmnsprite#{1}"].x       = 129
-      @sprites["pkmnsprite#{1}"].visible = true
-    elsif @size==3
-      @sprites["partybg1"].x = 70
-      @sprites["pkmnsprite#{0}"].x       = 72
-      @sprites["pkmnsprite#{0}"].visible = true
-      @sprites["partybg2"].x = 107
-      @sprites["pkmnsprite#{1}"].x       = 110
-      @sprites["pkmnsprite#{1}"].visible = true
-      @sprites["partybg3"].x = 144
-      @sprites["pkmnsprite#{2}"].x       = 148
-      @sprites["pkmnsprite#{2}"].visible = true
-    elsif @size==4
-      @sprites["partybg1"].x = 52
-      @sprites["pkmnsprite#{0}"].x       = 54
-      @sprites["pkmnsprite#{0}"].visible = true
-      @sprites["partybg2"].x = 89
-      @sprites["pkmnsprite#{1}"].x       = 91
-      @sprites["pkmnsprite#{1}"].visible = true
-      @sprites["partybg3"].x = 126
-      @sprites["pkmnsprite#{2}"].x       = 129
-      @sprites["pkmnsprite#{2}"].visible = true
-      @sprites["partybg4"].x = 163
-      @sprites["pkmnsprite#{3}"].x       = 166
-      @sprites["pkmnsprite#{3}"].visible = true
+    partyX = 127-(19*@size)
+    for i in 0...@size
+      @sprites["partybg#{i}"].x          = partyX+(37*i)
+      @sprites["pkmnsprite#{i}"].x       = @sprites["partybg#{i}"].x+2
+      @sprites["pkmnsprite#{i}"].visible = true
     end
     #---------------------------------------------------------------------------
     # Battlefield display.
@@ -1137,7 +1106,7 @@ class MaxRaidScene
     battletext  = _INTL("Battle ends in {1} turns, or after {2} knock outs.",turns,kocount)
     pbSetSmallFont(@overlay)
     pbDrawTextPositions(@overlay,textPos)
-    drawTextEx(@overlay,287,270,220,2,battletext,BASE,SHADOW)
+    drawTextEx(@overlay,287,268,220,2,battletext,BASE,SHADOW)
     #---------------------------------------------------------------------------
     # Selection loop.
     #---------------------------------------------------------------------------
@@ -1208,8 +1177,14 @@ class MaxRaidScene
             setBattleRule("base",base)        if base && !openSpace
             setBattleRule("backdrop",bg)      if bg && !openSpace
             $PokemonGlobal.nextBattleBGM = (rank==6) ? "Max Raid Battle (Legendary)" : "Max Raid Battle"
+            $PokemonGlobal.nextBattleBGM = "Eternamax Battle" if bosspoke==getID(PBSpecies,:ETERNATUS)
             pbMessage(_INTL("\\me[Max Raid Intro]You ventured into the den...\\wt[34] ...\\wt[34] ...\\wt[60]!\\wtnp[8]")) if !$DEBUG
             $game_switches[MAXRAID_SWITCH] = true
+            #-------------------------------------------------------------------
+            # Compatibility with Modular Battle Scene.
+            #-------------------------------------------------------------------
+            $PokemonSystem.activebattle = true if @size>=3 && defined?(PCV)
+            #-------------------------------------------------------------------
             pbWildBattleCore(bosspoke,bosslevel)
             pbWait(20)
             pbSEPlay("Door exit")
@@ -1389,7 +1364,7 @@ class MaxRaidScene
     rewards   = []
     hasbonus  = true if @bonuses && @bonuses.length==5
     bonus     = 1
-    bonus    += @bonuses.length
+    bonus    += @bonuses.length if @bonuses.length>0
     qty       = @size+((rank*bonus)*1.1).round   # Calculates item yield
     qty75     = qty/1.5.floor+1                  # Calculates 75% of item yield
     qty50     = qty/2.floor+1                    # Calculates 50% of item yield
@@ -2451,6 +2426,7 @@ class RaidDataScene
     gmaxmsg   = gmax ? "Yes" : "No"
     # Sets up options display
     sizes     = ["1","2","3"]
+    sizes    += ["4","5"] if defined?(PCV)
     weather   = ["None","Sun","Rain","Sandstorm","Hail"]
     terrain   = ["None","Electric","Grassy","Misty","Psychic"]
     environ   = ["None","Grass","Tall Grass","Moving Water","Still Water",
@@ -2511,9 +2487,15 @@ class RaidDataScene
           raidform = rand(5) if species==PBSpecies::FLOETTE
           raidform = rand(7) if species==PBSpecies::MINIOR
           $PokemonGlobal.nextBattleBGM = (raidlvl==6) ? "Max Raid Battle (Legendary)" : "Max Raid Battle"
+          $PokemonGlobal.nextBattleBGM = "Eternamax Battle" if species==getID(PBSpecies,:ETERNATUS)
           $game_switches[MAXRAID_SWITCH] = true
           $game_variables[MAXRAID_PKMN]  = [species,raidform,nil,lvl,gmax]
           $game_switches[HARDMODE_RAID]  = hardmode
+          #---------------------------------------------------------------------
+          # Compatibility with Modular Battle Scene
+          #---------------------------------------------------------------------
+          $PokemonSystem.activebattle = true if @sSel>=3 && defined?(PCV)
+          #---------------------------------------------------------------------
           pbWildBattleCore(species,lvl)
           pbWait(20)
           pbSEPlay("Door exit")

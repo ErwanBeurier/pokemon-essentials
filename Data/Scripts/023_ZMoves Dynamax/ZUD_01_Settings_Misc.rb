@@ -43,6 +43,10 @@
 # This section contains new additions that don't fit anywhere else in the plugin,
 # such as Ultra Necrozma forms, Max Moves in the summary, and Dynamax cries.
 #===============================================================================
+# SECTION 5 - PLUGIN MANAGER
+#-------------------------------------------------------------------------------
+# This section registers the ZUD plugin. 
+#===============================================================================
 
 ################################################################################
 # SECTION 1 - CUSTOMIZATION
@@ -571,3 +575,14 @@ def pbGetDynamaxCry(species,form)
   pkmn = getID(PBSpecies,species)
   pbPlayCrySpecies(pkmn,form,100,60)
 end
+
+################################################################################
+# SECTION 5 - PLUGIN MANAGER
+#===============================================================================
+# Registers the ZUD plugin. 
+#===============================================================================
+PluginManager.register({
+  :name => "ZUD plugin",
+  :version => "1.0",
+  :credits => ["Lucidious89", "StCooler"]
+})

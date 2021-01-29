@@ -156,28 +156,28 @@ end
 # Gets the compatibility data from ZUD_dynamax.
 #===============================================================================
 module GMaxData
-  FormName          = 0
-  MaxMoveType       = 1
-  MaxMove           = 2
-  Height            = 3
-  BattlerPlayerX    = 4
-  BattlerPlayerY    = 5
-  BattlerEnemyX     = 6
-  BattlerEnemyY     = 7
-  BattlerShadowX    = 8
-  BattlerShadowSize = 9
+  FormName                = 0
+  MaxMoveType             = 1
+  MaxMove                 = 2
+  Height                  = 3
+  MetricBattlerPlayerX    = 4
+  MetricBattlerPlayerY    = 5
+  MetricBattlerEnemyX     = 6
+  MetricBattlerEnemyY     = 7
+  MetricBattlerShadowX    = 8
+  MetricBattlerShadowSize = 9
   
   InfoTypes = {
-    "MaxMove"             => [0,                 "ee", :PBTypes, :PBMoves],
-    "FormName"            => [0,                 "s"],
-    "Pokedex"             => [0,                 "s"],
-    "BattlerPlayerX"      => [BattlerPlayerX,    "i"],
-    "BattlerPlayerY"      => [BattlerPlayerY,    "i"],
-    "BattlerEnemyX"       => [BattlerEnemyX,     "i"],
-    "BattlerEnemyY"       => [BattlerEnemyY,     "i"],
-    "BattlerShadowX"      => [BattlerShadowX,    "i"],
-    "BattlerShadowSize"   => [BattlerShadowSize, "u"],
-    "Height"              => [Height,            "f"]
+    "MaxMove"             => [0,                       "ee", :PBTypes, :PBMoves],
+    "FormName"            => [0,                       "s"],
+    "Pokedex"             => [0,                       "s"],
+    "BattlerPlayerX"      => [MetricBattlerPlayerX,    "i"],
+    "BattlerPlayerY"      => [MetricBattlerPlayerY,    "i"],
+    "BattlerEnemyX"       => [MetricBattlerEnemyX,     "i"],
+    "BattlerEnemyY"       => [MetricBattlerEnemyY,     "i"],
+    "BattlerShadowX"      => [MetricBattlerShadowX,    "i"],
+    "BattlerShadowSize"   => [MetricBattlerShadowSize, "u"],
+    "Height"              => [Height,                  "f"]
   }
 end 
 
@@ -271,12 +271,12 @@ def pbSaveGigantamaxData
       f.write("\r\n")
       f.write(sprintf("Pokedex = %s", csvQuoteAlways(messages.get(MessageTypes::GMaxPokedex,i))))
       f.write("\r\n")
-      f.write(sprintf("BattlerPlayerX = %d\r\n", data[GMaxData::BattlerPlayerX]))
-      f.write(sprintf("BattlerPlayerY = %d\r\n", data[GMaxData::BattlerPlayerY]))
-      f.write(sprintf("BattlerEnemyX = %d\r\n", data[GMaxData::BattlerEnemyX]))
-      f.write(sprintf("BattlerEnemyY = %d\r\n", data[GMaxData::BattlerEnemyY]))
-      f.write(sprintf("BattlerShadowX = %d\r\n", data[GMaxData::BattlerShadowX]))
-      f.write(sprintf("BattlerShadowSize = %d\r\n", data[GMaxData::BattlerShadowSize]))
+      f.write(sprintf("BattlerPlayerX = %d\r\n", data[GMaxData::MetricBattlerPlayerX]))
+      f.write(sprintf("BattlerPlayerY = %d\r\n", data[GMaxData::MetricBattlerPlayerY]))
+      f.write(sprintf("BattlerEnemyX = %d\r\n", data[GMaxData::MetricBattlerEnemyX]))
+      f.write(sprintf("BattlerEnemyY = %d\r\n", data[GMaxData::MetricBattlerEnemyY]))
+      f.write(sprintf("BattlerShadowX = %d\r\n", data[GMaxData::MetricBattlerShadowX]))
+      f.write(sprintf("BattlerShadowSize = %d\r\n", data[GMaxData::MetricBattlerShadowSize]))
       f.write("#-------------------------------\r\n")
     end
     # Normal max-moves
@@ -293,7 +293,6 @@ def pbSaveGigantamaxData
     end 
   }
 end
-
 
 #-------------------------------------------------------------------------------
 # Get Gigantamax compatibility data.
@@ -346,6 +345,7 @@ def pbLoadZMoveCompatibility
   end
   return $PokemonTemp.zmovecomps
 end
+
 
 ################################################################################
 # SECTION 4 - NPC DATA REWRITES
