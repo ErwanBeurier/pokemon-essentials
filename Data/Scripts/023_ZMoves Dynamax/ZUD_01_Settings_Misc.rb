@@ -446,11 +446,9 @@ MultipleForms.register(:ETERNATUS,{
 })
 
 # Reverts Ultra Burst after battle.
+alias _ZUD_pbAfterBattle pbAfterBattle
 def pbAfterBattle(decision,canLose)
   $Trainer.party.each do |pkmn|
-    pkmn.statusCount = 0 if pkmn.status==PBStatuses::POISON
-    pkmn.makeUnmega
-    pkmn.makeUnprimal
     pkmn.makeUnUltra
   end
   if $PokemonGlobal.partner
@@ -462,13 +460,7 @@ def pbAfterBattle(decision,canLose)
       pkmn.makeUnUltra
     end
   end
-  if decision==2 || decision==5   # if loss or draw
-    if canLose
-      $Trainer.party.each { |pkmn| pkmn.heal }
-      (Graphics.frame_rate/4).times { Graphics.update }
-    end
-  end
-  Events.onEndBattle.trigger(nil,decision,canLose)
+  _ZUD_pbAfterBattle(decision, canLose)
 end
 
 #===============================================================================

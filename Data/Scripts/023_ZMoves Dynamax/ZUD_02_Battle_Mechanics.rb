@@ -242,6 +242,7 @@ class PokeBattle_Battler
       @pokemon.makeUnUltra  if ultra?    # Reverts Ultra Burst upon fainting.
       @pokemon.unmax        if dynamax?  # Reverts Dynamax upon fainting.
       #-------------------------------------------------------------------------
+      @pokemon.yamaskhp = 0 # Yamask
       @battle.pbClearChoice(@index)
       pbOwnSide.effects[PBEffects::LastRoundFainted] = @battle.turnCount
       pbAbilitiesOnFainting
@@ -594,13 +595,10 @@ class PokeBattle_Battle
   #-----------------------------------------------------------------------------
   # Reverts Dynamax upon switching.
   #-----------------------------------------------------------------------------
-  def pbRecallAndReplace(idxBattler,idxParty,batonPass=false)
+  alias _ZUD_pbRecallAndReplace pbRecallAndReplace
+  def pbRecallAndReplace(idxBattler,idxParty,randomReplacement=false,batonPass=false)
     @battlers[idxBattler].unmax if @battlers[idxBattler].dynamax?
-    @scene.pbRecall(idxBattler) if !@battlers[idxBattler].fainted?
-    @battlers[idxBattler].pbAbilitiesOnSwitchOut
-    @scene.pbShowPartyLineup(idxBattler&1) if pbSideSize(idxBattler)==1
-    pbMessagesOnReplace(idxBattler,idxParty)
-    pbReplace(idxBattler,idxParty,batonPass)
+    _ZUD_pbRecallAndReplace(idxBattler,idxParty,randomReplacement,batonPass)
   end
   
   alias _ZUD_pbSwitchInBetween pbSwitchInBetween

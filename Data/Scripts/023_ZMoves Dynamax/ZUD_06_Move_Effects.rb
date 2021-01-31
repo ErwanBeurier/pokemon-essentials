@@ -266,6 +266,7 @@ class PokeBattle_MaxMove_StatUp < PokeBattle_MaxMove
   def pbEffectGeneral(user)
     @battle.eachBattler do |b|
       next if b.opposes?(user)
+      next if !b.pbCanRaiseStatStage?(@statUp[0],b,self)
       b.pbRaiseStatStage(@statUp[0],@statUp[1],b)
     end
   end
@@ -277,6 +278,7 @@ end
 class PokeBattle_MaxMove_TargetStatDown < PokeBattle_MaxMove
   def pbEffectAgainstTarget(user,target)
     user.eachOpposing do |b|
+      next if !b.pbCanLowerStatStage?(@statDown[0],b,self)
       b.pbLowerStatStage(@statDown[0],@statDown[1],b)
     end
   end

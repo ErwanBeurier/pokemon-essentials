@@ -192,7 +192,7 @@ class PokeBattle_Battler
          b.effects[PBEffects::MaxRaidBoss] && 
          b.effects[PBEffects::KnockOutCount]>0
         shieldbreak = 1
-        shieldbreak = 2 if move.maxMove? && move.damagingMove?
+        shieldbreak = 2 if move.powerMove? && move.damagingMove?
         if hitNum>0
           shieldbreak = 0
         end

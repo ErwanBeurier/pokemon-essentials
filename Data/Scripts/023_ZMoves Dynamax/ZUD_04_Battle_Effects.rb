@@ -319,11 +319,11 @@ class PokeBattle_Battler
     end
     choice[3] = target
     PBDebug.log("[Move usage] #{pbThis} started using the called/simple move #{choice[2].name}")
-    side=(@battle.opposes?(self.index)) ? 1 : 0
-    owner=@battle.pbGetOwnerIndexFromBattlerIndex(self.index)
     #---------------------------------------------------------------------------
     # Z-Moves
     #---------------------------------------------------------------------------
+    side=(@battle.opposes?(self.index)) ? 1 : 0
+    owner=@battle.pbGetOwnerIndexFromBattlerIndex(self.index)
     if @battle.zMove[side][owner]==self.index
       crystal = pbZCrystalFromType(choice[2].type)
       the_zmove = PokeBattle_ZMove.pbFromOldMoveAndCrystal(@battle,self,choice[2],crystal)
@@ -339,7 +339,8 @@ class PokeBattle_Battler
     if tryFlee && @battle.wildBattle? && opposes? &&
        @battle.rules["alwaysflee"] && @battle.pbCanRun?(@index)
       pbBeginTurn(choice)
-      @battle.pbDisplay(_INTL("{1} fled from battle!",pbThis)) { pbSEPlay("Battle flee") }
+      pbSEPlay("Battle flee")
+      @battle.pbDisplay(_INTL("{1} fled from battle!",pbThis))
       @battle.decision = 3
       pbEndTurn(choice)
       return true
@@ -395,6 +396,7 @@ class PokeBattle_Battler
     end
     #---------------------------------------------------------------------------
     @battle.pbJudge
+    @battle.pbCalculatePriority if defined?(DYNAMIC_PRIORITY) && DYNAMIC_PRIORITY
     return true
   end
   
@@ -432,10 +434,10 @@ class PokeBattle_Battler
   #=============================================================================
   # Dynamax Pokemon are immune to flinching.
   #-----------------------------------------------------------------------------
+  alias _ZUD_pbFlinch pbFlinch
   def pbFlinch(user=nil)
-    return if (hasActiveAbility?(:INNERFOCUS) && !@battle.moldBreaker)
     return if @effects[PBEffects::Dynamax]>0
-    @effects[PBEffects::Flinch] = true
+    _ZUD_pbFlinch(user)
   end
   
   #=============================================================================
