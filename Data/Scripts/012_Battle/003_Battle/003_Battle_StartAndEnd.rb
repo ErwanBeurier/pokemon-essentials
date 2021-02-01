@@ -187,7 +187,7 @@ class PokeBattle_Battle
             foeParty[0].name, foeParty[1].name,
             foeParty[2].name, foeParty[3].name,
             foeParty[4].name))
-      when 5
+      when 6
         pbDisplayPaused(_INTL("Oh! A wild {1}, {2}, {3}, {4}, {5} and {6} appeared!",
             foeParty[0].name, foeParty[1].name,
             foeParty[2].name, foeParty[3].name,

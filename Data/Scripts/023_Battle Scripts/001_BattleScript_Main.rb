@@ -137,7 +137,15 @@ class PokeBattle_Battle
         # Edited
         case TrainerDialogue.eval("battleStart")
         when -1
-          pbDisplayPaused(_INTL("Oh! A wild {1} appeared!",foeParty[0].name))
+          # Max Raids - Alters encounter text. (ZUD)
+          if defined?(MAXRAID_SWITCH) && $game_switches[MAXRAID_SWITCH]
+            text = "Dynamaxed"
+            text = "Gigantamax" if foeParty[0].gmaxFactor?
+            text = "Eternamax"  if isConst?(foeParty[0].species,PBSpecies,:ETERNATUS)
+            pbDisplayPaused(_INTL("Oh! A {1} {2} lurks in the den!",text,foeParty[0].name))
+          else
+            pbDisplayPaused(_INTL("Oh! A wild {1} appeared!",foeParty[0].name))
+          end
         when 0
           battleStart= TrainerDialogue.get("battleStart")
           pbDisplayPaused(_INTL(battleStart,foeParty[0].name))
@@ -200,6 +208,89 @@ class PokeBattle_Battle
           for i in 0...battleStart.length
             pbDisplayPaused(_INTL(battleStart[i],foeParty[0].name,
                foeParty[1].name,foeParty[2].name))
+          end
+        end
+      when 4
+        case TrainerDialogue.eval("battleStart")
+        when -1
+          pbDisplayPaused(_INTL("Oh! A wild {1}, {2}, {3} and {4} appeared!",
+              foeParty[0].name,foeParty[1].name,
+              foeParty[2].name,foeParty[3].name))
+        when 0
+          battleStart= TrainerDialogue.get("battleStart")
+          pbDisplayPaused(_INTL(battleStartfoeParty[0].name,
+             foeParty[1].name,foeParty[2].name,foeParty[3].name))
+        when 1
+          battleStart= TrainerDialogue.get("battleStart")
+          pbBGMPlay(battleStart["bgm"])
+          pbDisplayPaused(_INTL(battleStart,foeParty[0].name,
+             foeParty[1].name,foeParty[2].name,foeParty[3].name))
+        when 2
+          battleStart= TrainerDialogue.get("battleStart")
+          battleStart.call(self)
+        when 3
+          battleStart= TrainerDialogue.get("battleStart")
+          for i in 0...battleStart.length
+            pbDisplayPaused(_INTL(battleStart[i],foeParty[0].name,
+               foeParty[1].name,foeParty[2].name,foeParty[3].name))
+          end
+        end
+      when 5
+        case TrainerDialogue.eval("battleStart")
+        when -1
+          pbDisplayPaused(_INTL("Oh! A wild {1}, {2}, {3}, {4} and {5} appeared!",
+              foeParty[0].name, foeParty[1].name,
+              foeParty[2].name, foeParty[3].name,
+              foeParty[4].name))
+        when 0
+          battleStart= TrainerDialogue.get("battleStart")
+          pbDisplayPaused(_INTL(battleStartfoeParty[0].name,
+             foeParty[1].name,foeParty[2].name,foeParty[3].name,
+              foeParty[4].name))
+        when 1
+          battleStart= TrainerDialogue.get("battleStart")
+          pbBGMPlay(battleStart["bgm"])
+          pbDisplayPaused(_INTL(battleStart,foeParty[0].name,
+             foeParty[1].name,foeParty[2].name,foeParty[3].name,
+              foeParty[4].name))
+        when 2
+          battleStart= TrainerDialogue.get("battleStart")
+          battleStart.call(self)
+        when 3
+          battleStart= TrainerDialogue.get("battleStart")
+          for i in 0...battleStart.length
+            pbDisplayPaused(_INTL(battleStart[i],foeParty[0].name,
+               foeParty[1].name,foeParty[2].name,foeParty[3].name,
+              foeParty[4].name))
+          end
+        end
+      when 6
+        case TrainerDialogue.eval("battleStart")
+        when -1
+          pbDisplayPaused(_INTL("Oh! A wild {1}, {2}, {3}, {4}, {5} and {6} appeared!",
+              foeParty[0].name, foeParty[1].name,
+              foeParty[2].name, foeParty[3].name,
+              foeParty[4].name, foeParty[5].name))
+        when 0
+          battleStart= TrainerDialogue.get("battleStart")
+          pbDisplayPaused(_INTL(battleStartfoeParty[0].name,
+             foeParty[1].name,foeParty[2].name,foeParty[3].name,
+            foeParty[4].name, foeParty[5].name))
+        when 1
+          battleStart= TrainerDialogue.get("battleStart")
+          pbBGMPlay(battleStart["bgm"])
+          pbDisplayPaused(_INTL(battleStart,foeParty[0].name,
+             foeParty[1].name,foeParty[2].name,foeParty[3].name,
+              foeParty[4].name, foeParty[5].name))
+        when 2
+          battleStart= TrainerDialogue.get("battleStart")
+          battleStart.call(self)
+        when 3
+          battleStart= TrainerDialogue.get("battleStart")
+          for i in 0...battleStart.length
+            pbDisplayPaused(_INTL(battleStart[i],foeParty[0].name,
+               foeParty[1].name,foeParty[2].name,foeParty[3].name,
+              foeParty[4].name, foeParty[5].name))
           end
         end
       end
@@ -289,6 +380,20 @@ class PokeBattle_Battle
         when 3
           msg += _INTL("{1} sent out {2}, {3} and {4}!",t.fullname,
              @battlers[sent[0]].name,@battlers[sent[1]].name,@battlers[sent[2]].name)
+        when 4
+          msg += _INTL("{1} sent out {2}, {3}, {4} and {5}!",t.fullname,
+             @battlers[sent[0]].name,@battlers[sent[1]].name,
+             @battlers[sent[2]].name,@battlers[sent[3]].name)
+        when 5
+          msg += _INTL("{1} sent out {2}, {3}, {4}, {5} and {6}!",t.fullname,
+             @battlers[sent[0]].name,@battlers[sent[1]].name,
+             @battlers[sent[2]].name,@battlers[sent[3]].name,
+             @battlers[sent[4]].name)
+        when 6
+          msg += _INTL("{1} sent out {2}, {3}, {4}, {5}, {6} and {7}!",t.fullname,
+             @battlers[sent[0]].name,@battlers[sent[1]].name,
+             @battlers[sent[2]].name,@battlers[sent[3]].name,
+             @battlers[sent[4]].name,@battlers[sent[5]].name)
         end
         toSendOut.concat(sent)
       end
@@ -304,6 +409,19 @@ class PokeBattle_Battle
         when 3
           msg += _INTL("Go! {1}, {2} and {3}!",@battlers[sent[0]].name,
              @battlers[sent[1]].name,@battlers[sent[2]].name)
+        when 4
+          msg += _INTL("Go! {1}, {2}, {3} and {4}!",@battlers[sent[0]].name,
+             @battlers[sent[1]].name,@battlers[sent[2]].name,
+             @battlers[sent[3]].name)
+        when 5
+          msg += _INTL("Go! {1}, {2}, {3}, {4} and {5}!",@battlers[sent[0]].name,
+             @battlers[sent[1]].name,@battlers[sent[2]].name,
+             @battlers[sent[3]].name,@battlers[sent[4]].name)
+        when 6
+          msg += _INTL("Go! {1}, {2}, {3}, {4}, {5} and {6}!",@battlers[sent[0]].name,
+             @battlers[sent[1]].name,@battlers[sent[2]].name,
+             @battlers[sent[3]].name,@battlers[sent[4]].name,
+             @battlers[sent[5]].name)
         end
         toSendOut.concat(sent)
       end
@@ -640,7 +758,6 @@ end
 class PokeBattle_Battler
 # Faint Dialogue
   alias dialogue_faint pbFaint
-
   def pbFaint(showMessage=true)
     return if @fainted   # Has already fainted properly
     dialogue_faint(showMessage)
@@ -745,6 +862,10 @@ class PokeBattle_Move
     end
     # Disguise takes the damage
     return if target.damageState.disguise
+    # Ice Face takes the damage
+    return if target.damageState.iceface
+    # Max Raids - Damage thresholds for triggering shields. (ZUD)
+    damage = pbReduceMaxRaidDamage(target,damage)
     # Target takes the damage
     if damage>=target.hp
       damage = target.hp
