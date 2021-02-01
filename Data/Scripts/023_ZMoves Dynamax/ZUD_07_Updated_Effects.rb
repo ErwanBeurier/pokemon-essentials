@@ -90,6 +90,30 @@ def pbBattleConfusionBerry(battler,battle,item,forced,flavor,confuseMsg)
   return true
 end
 
+
+#===============================================================================
+# Life Orb
+#===============================================================================
+# HP reduction is based on the user's non-Dynamax HP.
+#-------------------------------------------------------------------------------
+BattleHandlers::UserItemAfterMoveUse.add(:LIFEORB,
+  proc { |item,user,targets,move,numHits,battle|
+    next if !user.takesIndirectDamage?
+    next if !move.pbDamagingMove? || numHits==0
+    hitBattler = false
+    targets.each do |b|
+      hitBattler = true if !b.damageState.unaffected && !b.damageState.substitute
+      break if hitBattler
+    end
+    next if !hitBattler
+    PBDebug.log("[Item triggered] #{user.pbThis}'s #{user.itemName} (recoil)")
+    user.pbReduceHP(user.totalhp/(10*user.dynamaxBoost))
+    battle.pbDisplay(_INTL("{1} lost some of its HP!",user.pbThis))
+    user.pbItemHPHealCheck
+    user.pbFaint if user.fainted?
+  }
+)
+
 #===============================================================================
 # Choice Items
 #===============================================================================

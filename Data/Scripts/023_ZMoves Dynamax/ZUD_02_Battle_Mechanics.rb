@@ -110,6 +110,7 @@ class PokeBattle_Battler
   #-----------------------------------------------------------------------------
   # Placeholder for Max Raid compatibility.
   #-----------------------------------------------------------------------------
+  def pbRaidBossUseMove(choice); end
   def pbRaidShieldBreak(move,target); end
   def pbSuccessCheckMaxRaid(move,user,target); return true; end
     
@@ -293,7 +294,6 @@ class PokeBattle_Battle
   # Placeholder for Max Raid compatibility.
   #-----------------------------------------------------------------------------
   def pbRaidUpdate(boss); end
-  def pbRaidBossMoves(boss); end
   def pbAttackPhaseCheer; end
   def pbAttackPhaseRaidBoss; end
   
@@ -410,7 +410,20 @@ class PokeBattle_Battle
   def pbDynamax(idxBattler)
     battler = @battlers[idxBattler]
     return if !battler || !battler.pokemon
-    return if !battler.hasDynamax? || battler.dynamax? 
+    return if !battler.hasDynamax? || battler.dynamax?
+    #---------------------------------------------------------------------------
+    # Compatibility for Mid Battle Dialogue - Prior to Dynamaxing.
+    #---------------------------------------------------------------------------
+    if defined?(DialogueModule)
+      if !battler.opposes?
+        TrainerDialogue.display("dynamaxBefore",self,@scene)
+        TrainerDialogue.display("gmaxBefore",self,@scene) if battler.gmaxFactor?
+      else
+        TrainerDialogue.display("dynamaxBeforeOpp",self,@scene)
+        TrainerDialogue.display("gmaxBeforeOpp",self,@scene) if battler.gmaxFactor?
+      end
+    end
+    #---------------------------------------------------------------------------
     trainerName = pbGetOwnerName(idxBattler)
     pbDisplay(_INTL("{1} recalled {2}!",trainerName,battler.pbThis(true)))
     battler.effects[PBEffects::Dynamax]     = DYNAMAX_TURNS
@@ -448,6 +461,19 @@ class PokeBattle_Battle
     battler.pbUpdate(false)
     @scene.pbHPChanged(battler,oldhp)
     battler.pokemon.pbReversion(true)
+    #---------------------------------------------------------------------------
+    # Compatibility for Mid Battle Dialogue - After Dynamaxing.
+    #---------------------------------------------------------------------------
+    if defined?(DialogueModule)
+      if !battler.opposes?
+        TrainerDialogue.display("dynamaxAfter",self,@scene)
+        TrainerDialogue.display("gmaxAfter",self,@scene) if battler.gmaxFactor?
+      else
+        TrainerDialogue.display("dynamaxAfterOpp",self,@scene)
+        TrainerDialogue.display("gmaxAfterOpp",self,@scene) if battler.gmaxFactor?
+      end
+    end
+    #---------------------------------------------------------------------------
   end
   
   #-----------------------------------------------------------------------------

@@ -1364,7 +1364,7 @@ class MaxRaidScene
     rewards   = []
     hasbonus  = true if @bonuses && @bonuses.length==5
     bonus     = 1
-    bonus    += @bonuses.length if @bonuses.length>0
+    bonus    += @bonuses.length if @bonuses
     qty       = @size+((rank*bonus)*1.1).round   # Calculates item yield
     qty75     = qty/1.5.floor+1                  # Calculates 75% of item yield
     qty50     = qty/2.floor+1                    # Calculates 50% of item yield

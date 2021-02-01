@@ -65,6 +65,20 @@ class PokeBattle_Move
   #-----------------------------------------------------------------------------
   alias _ZUD_pbDisplayUseMessage pbDisplayUseMessage
   def pbDisplayUseMessage(user)
+    #---------------------------------------------------------------------------
+    # Compatibility for Mid Battle Dialogue - Prior to attacking.
+    #---------------------------------------------------------------------------
+    if defined?(DialogueModule)
+      dialogparam = "attack"
+      dialogparam = "zmove"   if zMove? && !@specialUseZMove
+      dialogparam = "maxMove" if maxMove?
+      dialogparam += "Opp"    if user.opposes?
+      if !user.damageState.firstAttack
+        user.damageState.firstAttack = true
+        TrainerDialogue.display(dialogparam,@battle,@battle.scene)
+      end
+    end
+    #---------------------------------------------------------------------------
     if zMove? && !@specialUseZMove
       @battle.pbDisplay(_INTL("{1} surrounded itself with its Z-Power!",user.pbThis)) if !statusMove?      
       @battle.pbCommonAnimation("ZPower",user,nil)
@@ -395,6 +409,7 @@ class PokeBattle_Battler
       }
     end
     #---------------------------------------------------------------------------
+    pbRaidBossUseMove(choice) # Allows a Raid Pokemon to use additional moves.
     @battle.pbJudge
     @battle.pbCalculatePriority if defined?(DYNAMIC_PRIORITY) && DYNAMIC_PRIORITY
     return true

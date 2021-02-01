@@ -3,10 +3,6 @@
 # Z-Moves, Ultra Burst, and Dynamax (ZUD)
 #  For -Pokemon Essentials v18.dev-
 #
-# Original Z-Move plugin posted by AmethystRain. Updated by StCooler.
-# Original Ultra Burst plugin posted by WolfPP. Updated by Lucidious89.
-# Original Dynamax plugin posted by Fauno. Updated by Lucidious89.
-#
 #===============================================================================
 # The following adds the functionality for new battle mechanics found in the
 # series starting with Gen 7 (Z-Moves, Ultra Burst) and Gen 8 (Dynamax). All
@@ -569,10 +565,26 @@ def pbGetDynamaxCry(species,form)
 end
 
 ################################################################################
-# SECTION 5 - PLUGIN MANAGER
+# SECTION 5 - COMPATIBILITY
 #===============================================================================
-# Registers the ZUD plugin. 
-#===============================================================================
+# Compatibility with Mid Battle Dialogue.
+#-------------------------------------------------------------------------------
+module TrainerDialogue
+  def self.setInstance(parameter)
+    noIncrement = ["lowHP","lowHPOpp","halfHP","halfHPOpp","bigDamage","bigDamageOpp","smlDamage",
+      "smlDamageOpp","attack","attackOpp","superEff","superEffOpp","notEff","notEffOpp",
+      "maxMove", "maxMoveOpp", "zmove", "zmoveOpp", "dynamaxBefore", "dynamaxBeforeOpp", 
+      "dynamaxAfter", "dynamaxAfterOpp", "gmaxBefore", "gmaxBeforeOpp", "gmaxAfter", "gmaxAfterOpp"]
+    return if parameter.include?("rand")
+    if !noIncrement.include?(parameter)
+       $PokemonTemp.dialogueInstances[parameter] += 1
+    end
+  end
+end
+
+#-------------------------------------------------------------------------------
+# Registers the ZUD plugin.
+#-------------------------------------------------------------------------------
 PluginManager.register({
   :name => "ZUD plugin",
   :version => "1.0",

@@ -284,6 +284,27 @@ class PokeBattle_Battler
           end
         end
       end
+      break if @battle.decision==3
+    end
+  end
+  
+  #-----------------------------------------------------------------------------
+  # Allows a Raid Pokemon to strike multiple times in a turn.
+  #-----------------------------------------------------------------------------
+  def pbRaidBossUseMove(choice)
+    weakened = true if @effects[PBEffects::ShieldCounter]<2 && level>35
+    weakened = true if @effects[PBEffects::ShieldCounter]==0
+    if @effects[PBEffects::MaxRaidBoss] && weakened && 
+       @battle.pbSideSize(0)>1 && !choice[2].statusMove?
+      pbDisplayBaseMoves
+      for i in 1...@battle.pbSideSize(0)
+        break if @battle.decision==3
+        choice[2] = @moves[rand(@moves.length)]
+        PBDebug.log("[Move usage] #{pbThis} started using #{choice[2].name}")
+        PBDebug.logonerr{
+          pbUseMove(choice,choice[2]==@battle.struggle)
+        }
+      end
     end
   end
   
@@ -489,7 +510,11 @@ class PokeBattle_Battle
       priority.each do |b|
         next if !b.effects[PBEffects::MaxRaidBoss]
         next if b.effects[PBEffects::KnockOutCount]==0
-        b.pbDisplayBaseMoves if !b.effects[PBEffects::Transform] # Resets Max Moves
+        #-----------------------------------------------------------------------
+        # The Raid Pokemon starts using Max Moves after its shield triggers.
+        #-----------------------------------------------------------------------
+        b.pbDisplayPowerMoves(2) if b.effects[PBEffects::ShieldCounter]<2 && b.level>35
+        b.pbDisplayPowerMoves(2) if b.effects[PBEffects::ShieldCounter]==0
         #-----------------------------------------------------------------------
         # Raid Shield thresholds for effect damage.
         #-----------------------------------------------------------------------
@@ -619,15 +644,6 @@ class PokeBattle_Battle
     end
   end
   
-  #-----------------------------------------------------------------------------
-  # Randomizes a Raid Pokemon's moveset each turn between Max Moves and base moves.
-  #-----------------------------------------------------------------------------
-  def pbRaidBossMoves(boss)
-    if boss.effects[PBEffects::MaxRaidBoss] && rand(10)<5
-      boss.pbDisplayPowerMoves(2)
-    end
-  end
-  
 #===============================================================================
 # Replaces the "Run" command with "Cheer" during Max Raid battles.
 #===============================================================================
@@ -689,7 +705,7 @@ class PokeBattle_Battle
         cheerEffects.push(cheerLightScreen) if battler.pbOwnSide.effects[PBEffects::LightScreen]==0
         if boss.effects[PBEffects::KnockOutCount]<2 || boss.effects[PBEffects::Dynamax]<5
           if cheered==pbPlayerBattlerCount
-            cheerEffects.push(cheerHealHP)      if b.hp < b.totalhp/2
+            cheerEffects.push(cheerHealParty)   if b.hp < b.totalhp/2
             cheerEffects.push(cheerShieldBreak) if boss.effects[PBEffects::RaidShield]>0
             cheerEffects.push(cheerDynamax)     if !dmaxInUse && @dynamax[side][owner]!=-1
           end
@@ -701,7 +717,7 @@ class PokeBattle_Battle
       #-------------------------------------------------------------------------
       elsif cheered==2
         eachSameSideBattler(battler) do |b|
-          cheerEffects.push(cheerHealHP) if b.hp < b.totalhp/2
+          cheerEffects.push(cheerHealParty) if b.hp < b.totalhp/2
         end
         if cheered==pbPlayerBattlerCount
           if boss.effects[PBEffects::KnockOutCount]<2 || boss.effects[PBEffects::Dynamax]<5
@@ -774,7 +790,7 @@ class PokeBattle_Battle
       if battler==partyPriority.last
         eachSameSideBattler(battler) do |b|
           if b.hp < b.totalhp
-            b.pbRecoverHP((b.totalhp/2).floor)
+            b.pbRecoverHP((b.totalhp).floor)
             pbDisplay(_INTL("{1}'s HP was restored.",b.pbThis))
           end
           status = b.status

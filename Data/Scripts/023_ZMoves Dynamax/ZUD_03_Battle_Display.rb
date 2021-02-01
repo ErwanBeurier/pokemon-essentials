@@ -102,7 +102,6 @@ class PokeBattle_Battle
     @scene.pbBeginCommandPhase
     @battlers.each_with_index do |b,i|
       next if !b
-      pbRaidBossMoves(b)
       pbClearChoice(i) if pbCanShowCommands?(i)
     end
     # Mega Evolution
