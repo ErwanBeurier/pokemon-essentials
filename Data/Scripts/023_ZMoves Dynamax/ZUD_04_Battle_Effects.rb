@@ -108,7 +108,7 @@ class PokeBattle_Battler
     newpoke  = @effects[PBEffects::TransformPokemon]
     pokemon  = @effects[PBEffects::Transform] ? newpoke : self.pokemon
     oldmoves = [@moves[0],@moves[1],@moves[2],@moves[3]]
-    @effects[PBEffects::BaseMoves] = oldmoves if !@effects[PBEffects::MaxRaidBoss]
+    @effects[PBEffects::BaseMoves] = oldmoves
     for i in 0...4
       next if !@moves[i] || @moves[i].id==0
       # Z-Moves
@@ -176,7 +176,7 @@ class PokeBattle_Battler
         @pokemon.moves[i].pp = 0 if @pokemon.moves[i].pp<0
       end
     end
-    @effects[PBEffects::BaseMoves] = nil if !@effects[PBEffects::MaxRaidBoss]
+    @effects[PBEffects::BaseMoves] = nil
   end
   
   #=============================================================================

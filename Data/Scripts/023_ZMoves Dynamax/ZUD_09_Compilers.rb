@@ -82,7 +82,7 @@ def pbSaveZMoveCompatibility
   zmovecomps = zmovecomps["order"]
   return if !zmovecomps
   File.open("PBS/ZUD_zmoves.txt","wb") { |f|
-    f.write("# This is part of the Z-Moves plugin for Essentials v18.dev.\r\n")
+    f.write("# This is part of the Z-Moves plugin for Essentials v18.1.\r\n")
     f.write("# \r\n")
     f.write("# This file is NOT officially an Essentials PBS file.\r\n")
     f.write("# If you want to add a new Z-Move, check the README provided with this plugin.\r\n")
@@ -248,7 +248,7 @@ def pbSaveGigantamaxData
   gmaxData = pbLoadGmaxData
   messages = Messages.new("Data/messages.dat") rescue nil
   File.open("PBS/ZUD_dynamax.txt", "wb") { |f|
-    f.write("# This is part of the Dynamax plugin for Essentials v18.dev.\r\n")
+    f.write("# This is part of the Dynamax plugin for Essentials v18.1.\r\n")
     f.write("# \r\n")
     f.write("# This file is NOT officially an Essentials PBS file.\r\n")
     f.write("# If you want to add a new Gigantamax form, check the README provided with this plugin.\r\n")
