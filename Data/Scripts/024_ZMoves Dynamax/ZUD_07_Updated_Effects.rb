@@ -49,13 +49,11 @@ end
 # Adds Z-Crystals to held items that cannot be lost or stolen.
 #-------------------------------------------------------------------------------
 class PokeBattle_Battler
+  alias _ZUD_unlosableItem unlosableItem?
   def unlosableItem?(check_item)
     return false if check_item <= 0
-    return true if pbIsMail?(check_item)
     return true if pbIsZCrystal?(check_item)
-    return false if @effects[PBEffects::Transform]
-    return true if @pokemon && @pokemon.getMegaForm(true) > 0
-    return pbIsUnlosableItem?(check_item, @species, @ability)
+    self._ZUD_unlosableItem(check_item)
   end 
 end
 
@@ -65,15 +63,19 @@ end
 # Restores user's HP based on their non-Dynamax HP.
 #-------------------------------------------------------------------------------
 def pbBattleConfusionBerry(battler,battle,item,forced,flavor,confuseMsg)
-  return false if !forced && !battler.pbCanConsumeBerry?(item,false)
+  return false if !forced && !battler.canHeal?
+  return false if !forced && !(battler.canConsumePinchBerry?(item,false) rescue battler.pbCanConsumeBerry?(item,false))
   itemName = PBItems.getName(item)
   battle.pbCommonAnimation("EatBerry",battler) if !forced
   baseHP = battler.totalhp
   baseHP = (battler.totalhp/battler.pokemon.dynamaxCalc).floor if battler.dynamax?
-  amt = (NEWEST_BATTLE_MECHANICS) ? battler.pbRecoverHP(baseHP/3) : battler.pbRecoverHP(baseHP/2)
+  amt = (NEWEST_BATTLE_MECHANICS) ? battler.pbRecoverHP(baseHP/3) : battler.pbRecoverHP(baseHP/8)
+  if battler.hasActiveAbility?(:RIPEN)
+    amt *= 2
+  end
   if amt>0
     if forced
-      PBDebug.log("[Item triggered] #{battler.pbThis}'s #{itemName}")
+      PBDebug.log("[Item triggered] Forced consuming of #{itemName}")
       battle.pbDisplay(_INTL("{1}'s HP was restored.",battler.pbThis))
     else
       battle.pbDisplay(_INTL("{1} restored its health using its {2}!",battler.pbThis,itemName))
@@ -87,6 +89,30 @@ def pbBattleConfusionBerry(battler,battle,item,forced,flavor,confuseMsg)
   end
   return true
 end
+
+
+#===============================================================================
+# Life Orb
+#===============================================================================
+# HP reduction is based on the user's non-Dynamax HP.
+#-------------------------------------------------------------------------------
+BattleHandlers::UserItemAfterMoveUse.add(:LIFEORB,
+  proc { |item,user,targets,move,numHits,battle|
+    next if !user.takesIndirectDamage?
+    next if !move.pbDamagingMove? || numHits==0
+    hitBattler = false
+    targets.each do |b|
+      hitBattler = true if !b.damageState.unaffected && !b.damageState.substitute
+      break if hitBattler
+    end
+    next if !hitBattler
+    PBDebug.log("[Item triggered] #{user.pbThis}'s #{user.itemName} (recoil)")
+    user.pbReduceHP(user.totalhp/(10*user.dynamaxBoost))
+    battle.pbDisplay(_INTL("{1} lost some of its HP!",user.pbThis))
+    user.pbItemHPHealCheck
+    user.pbFaint if user.fainted?
+  }
+)
 
 #===============================================================================
 # Choice Items
@@ -132,7 +158,7 @@ BattleHandlers::TargetItemAfterMoveUse.add(:REDCARD,
     if user.dynamax?
       battle.pbDisplay(_INTL("But it failed!"))
     else
-      battle.pbRecallAndReplace(user.index,newPkmn)
+      battle.pbRecallAndReplace(user.index, newPkmn, true)
       battle.pbDisplay(_INTL("{1} was dragged out!",user.pbThis))
       battle.pbClearChoice(user.index)
       switched.push(user.index)
@@ -432,8 +458,33 @@ end
 #===============================================================================
 # If last move used was a Max Move, copies the base move of that Max Move.
 # Move fails if last use move was a Z-Move (handled elsewhere).
+# Some functions were rewritten because Copycat had a bug, and the Gen 8 
+# project does not contain the bugfix for now.
 #-------------------------------------------------------------------------------
 class PokeBattle_Move_0AF < PokeBattle_Move
+  # Added for bugfix. 
+  alias _copycat_initialize initialize
+  def initialize(battle,move)
+    _copycat_initialize(battle, move)
+    @copied_move = -1
+  end 
+  
+  # Added for bugfix. 
+  def pbChangeUsageCounters(user,specialUsage)
+    super
+    @copied_move = @battle.lastMoveUsed || 0
+  end
+
+  # Added for bugfix. 
+  def pbMoveFailed?(user,targets)
+    if @copied_move<=0 ||
+       @moveBlacklist.include?(pbGetMoveData(@copied_move,MOVE_FUNCTION_CODE))
+      @battle.pbDisplay(_INTL("But it failed!"))
+      return true
+    end
+    return false
+  end
+  
   def pbEffectGeneral(user)
     lastmove = @copied_move
     @battle.eachBattler do |b|
@@ -473,6 +524,25 @@ class PokeBattle_Move_0B4 < PokeBattle_Move
   def pbEffectGeneral(user)
     choice = @sleepTalkMoves[@battle.pbRandom(@sleepTalkMoves.length)]
     user.pbUseMoveSimple(user.moves[choice].id,user.pbDirectOpposing.index, choice)
+  end
+end
+
+#===============================================================================
+# Spite
+#===============================================================================
+# Reduced PP of Max Moves is properly applied to the base move as well.
+#-------------------------------------------------------------------------------
+class PokeBattle_Move_10E < PokeBattle_Move
+  def pbEffectAgainstTarget(user,target)
+    target.eachMoveWithIndex do |m,i|
+      next if m.id!=target.lastRegularMoveUsed
+      reduction = [4,m.pp].min
+      target.pbSetPP(m,m.pp-reduction)
+      target.effects[PBEffects::MaxMovePP][i] +=4 if target.dynamax?
+      @battle.pbDisplay(_INTL("It reduced the PP of {1}'s {2} by {3}!",
+         target.pbThis(true),m.name,reduction))
+      break
+    end
   end
 end
 
@@ -621,13 +691,13 @@ class PokeBattle_Move_0EC < PokeBattle_Move
       next if b.hasActiveAbility?(:SUCTIONCUPS) && !@battle.moldBreaker
       newPkmn = @battle.pbGetReplacementPokemonIndex(b.index,true)   # Random
       next if newPkmn<0
-      @battle.pbRecallAndReplace(b.index,newPkmn)
+      @battle.pbRecallAndReplace(b.index, newPkmn, true)
       @battle.pbDisplay(_INTL("{1} was dragged out!",b.pbThis))
       @battle.pbClearChoice(b.index)   # Replacement Pokémon does nothing this round
       switchedBattlers.push(b.index)
       roarSwitched.push(b.index)
     end
-    if roarSwitched>0
+    if roarSwitched.length>0
       @battle.moldBreaker = false if roarSwitched.include?(user.index)
       @battle.pbPriority(true).each do |b|
         b.pbEffectsOnSwitchIn(true) if roarSwitched.include?(b.index)

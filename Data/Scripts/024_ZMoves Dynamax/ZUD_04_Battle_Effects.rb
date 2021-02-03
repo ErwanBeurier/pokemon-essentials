@@ -65,6 +65,20 @@ class PokeBattle_Move
   #-----------------------------------------------------------------------------
   alias _ZUD_pbDisplayUseMessage pbDisplayUseMessage
   def pbDisplayUseMessage(user)
+    #---------------------------------------------------------------------------
+    # Compatibility for Mid Battle Dialogue - Prior to attacking.
+    #---------------------------------------------------------------------------
+    if defined?(DialogueModule)
+      dialogparam = "attack"
+      dialogparam = "zmove"   if zMove? && !@specialUseZMove
+      dialogparam = "maxMove" if maxMove?
+      dialogparam += "Opp"    if user.opposes?
+      if !user.damageState.firstAttack
+        user.damageState.firstAttack = true
+        TrainerDialogue.display(dialogparam,@battle,@battle.scene)
+      end
+    end
+    #---------------------------------------------------------------------------
     if zMove? && !@specialUseZMove
       @battle.pbDisplay(_INTL("{1} surrounded itself with its Z-Power!",user.pbThis)) if !statusMove?      
       @battle.pbCommonAnimation("ZPower",user,nil)
@@ -153,12 +167,13 @@ class PokeBattle_Battler
     ]
     for i in 0...4
       next if !@moves[i] || @moves[i].id == 0
-      if @effects[PBEffects::Transform]
-        @moves[i].pp -= 1 if i==@effects[PBEffects::UsedZMoveIndex] && mode==1
-        @moves[i].pp -= @effects[PBEffects::MaxMovePP][i] if mode==2
-      else
+      @moves[i].pp -= 1 if i==@effects[PBEffects::UsedZMoveIndex] && mode==1
+      @moves[i].pp -= @effects[PBEffects::MaxMovePP][i] if mode==2
+      @moves[i].pp = 0 if @moves[i].pp<0
+      if !@effects[PBEffects::Transform]
         @pokemon.moves[i].pp -= 1 if i==@effects[PBEffects::UsedZMoveIndex] && mode==1
         @pokemon.moves[i].pp -= @effects[PBEffects::MaxMovePP][i] if mode==2
+        @pokemon.moves[i].pp = 0 if @pokemon.moves[i].pp<0
       end
     end
     @effects[PBEffects::BaseMoves] = nil if !@effects[PBEffects::MaxRaidBoss]
@@ -318,11 +333,11 @@ class PokeBattle_Battler
     end
     choice[3] = target
     PBDebug.log("[Move usage] #{pbThis} started using the called/simple move #{choice[2].name}")
-    side=(@battle.opposes?(self.index)) ? 1 : 0
-    owner=@battle.pbGetOwnerIndexFromBattlerIndex(self.index)
     #---------------------------------------------------------------------------
     # Z-Moves
     #---------------------------------------------------------------------------
+    side=(@battle.opposes?(self.index)) ? 1 : 0
+    owner=@battle.pbGetOwnerIndexFromBattlerIndex(self.index)
     if @battle.zMove[side][owner]==self.index
       crystal = pbZCrystalFromType(choice[2].type)
       the_zmove = PokeBattle_ZMove.pbFromOldMoveAndCrystal(@battle,self,choice[2],crystal)
@@ -338,7 +353,8 @@ class PokeBattle_Battler
     if tryFlee && @battle.wildBattle? && opposes? &&
        @battle.rules["alwaysflee"] && @battle.pbCanRun?(@index)
       pbBeginTurn(choice)
-      @battle.pbDisplay(_INTL("{1} fled from battle!",pbThis)) { pbSEPlay("Battle flee") }
+      pbSEPlay("Battle flee")
+      @battle.pbDisplay(_INTL("{1} fled from battle!",pbThis))
       @battle.decision = 3
       pbEndTurn(choice)
       return true
@@ -393,7 +409,9 @@ class PokeBattle_Battler
       }
     end
     #---------------------------------------------------------------------------
+    pbRaidBossUseMove(choice) # Allows a Raid Pokemon to use additional moves.
     @battle.pbJudge
+    @battle.pbCalculatePriority if defined?(DYNAMIC_PRIORITY) && DYNAMIC_PRIORITY
     return true
   end
   
@@ -431,10 +449,10 @@ class PokeBattle_Battler
   #=============================================================================
   # Dynamax Pokemon are immune to flinching.
   #-----------------------------------------------------------------------------
+  alias _ZUD_pbFlinch pbFlinch
   def pbFlinch(user=nil)
-    return if (hasActiveAbility?(:INNERFOCUS) && !@battle.moldBreaker)
     return if @effects[PBEffects::Dynamax]>0
-    @effects[PBEffects::Flinch] = true
+    _ZUD_pbFlinch(user)
   end
   
   #=============================================================================

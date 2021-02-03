@@ -110,6 +110,7 @@ class PokeBattle_Battler
   #-----------------------------------------------------------------------------
   # Placeholder for Max Raid compatibility.
   #-----------------------------------------------------------------------------
+  def pbRaidBossUseMove(choice); end
   def pbRaidShieldBreak(move,target); end
   def pbSuccessCheckMaxRaid(move,user,target); return true; end
     
@@ -242,6 +243,7 @@ class PokeBattle_Battler
       @pokemon.makeUnUltra  if ultra?    # Reverts Ultra Burst upon fainting.
       @pokemon.unmax        if dynamax?  # Reverts Dynamax upon fainting.
       #-------------------------------------------------------------------------
+      @pokemon.yamaskhp = 0 # Yamask
       @battle.pbClearChoice(@index)
       pbOwnSide.effects[PBEffects::LastRoundFainted] = @battle.turnCount
       pbAbilitiesOnFainting
@@ -292,7 +294,7 @@ class PokeBattle_Battle
   # Placeholder for Max Raid compatibility.
   #-----------------------------------------------------------------------------
   def pbRaidUpdate(boss); end
-  def pbRaidBossMoves(boss); end
+  def pbAttackPhaseCheer; end
   def pbAttackPhaseRaidBoss; end
   
   #-----------------------------------------------------------------------------
@@ -356,7 +358,8 @@ class PokeBattle_Battle
     return true if $DEBUG && Input.press?(Input::CTRL)        # Allows Dynamax with CTRL in Debug.
     return false if battler.effects[PBEffects::SkyDrop]>=0    # No Dynamax if in Sky Drop.
     return false if @dynamax[side][owner]!=-1                 # No Dynamax if used this battle.
-    return false if wildBattle? && !CAN_DMAX_WILD             # No Dynamax in normal wild battles, unless enabled.
+    return false if wildBattle? && !CAN_DMAX_WILD && 
+                   !$game_switches[MAXRAID_SWITCH]            # No Dynamax in normal wild battles, unless enabled.
     return false if !pbHasDynamaxBand?(idxBattler)            # No Dynamax if no Dynamax Band.
     return @dynamax[side][owner]==-1
   end
@@ -407,7 +410,20 @@ class PokeBattle_Battle
   def pbDynamax(idxBattler)
     battler = @battlers[idxBattler]
     return if !battler || !battler.pokemon
-    return if !battler.hasDynamax? || battler.dynamax? 
+    return if !battler.hasDynamax? || battler.dynamax?
+    #---------------------------------------------------------------------------
+    # Compatibility for Mid Battle Dialogue - Prior to Dynamaxing.
+    #---------------------------------------------------------------------------
+    if defined?(DialogueModule)
+      if !battler.opposes?
+        TrainerDialogue.display("dynamaxBefore",self,@scene)
+        TrainerDialogue.display("gmaxBefore",self,@scene) if battler.gmaxFactor?
+      else
+        TrainerDialogue.display("dynamaxBeforeOpp",self,@scene)
+        TrainerDialogue.display("gmaxBeforeOpp",self,@scene) if battler.gmaxFactor?
+      end
+    end
+    #---------------------------------------------------------------------------
     trainerName = pbGetOwnerName(idxBattler)
     pbDisplay(_INTL("{1} recalled {2}!",trainerName,battler.pbThis(true)))
     battler.effects[PBEffects::Dynamax]     = DYNAMAX_TURNS
@@ -445,6 +461,19 @@ class PokeBattle_Battle
     battler.pbUpdate(false)
     @scene.pbHPChanged(battler,oldhp)
     battler.pokemon.pbReversion(true)
+    #---------------------------------------------------------------------------
+    # Compatibility for Mid Battle Dialogue - After Dynamaxing.
+    #---------------------------------------------------------------------------
+    if defined?(DialogueModule)
+      if !battler.opposes?
+        TrainerDialogue.display("dynamaxAfter",self,@scene)
+        TrainerDialogue.display("gmaxAfter",self,@scene) if battler.gmaxFactor?
+      else
+        TrainerDialogue.display("dynamaxAfterOpp",self,@scene)
+        TrainerDialogue.display("gmaxAfterOpp",self,@scene) if battler.gmaxFactor?
+      end
+    end
+    #---------------------------------------------------------------------------
   end
   
   #-----------------------------------------------------------------------------
@@ -592,19 +621,17 @@ class PokeBattle_Battle
   #-----------------------------------------------------------------------------
   # Reverts Dynamax upon switching.
   #-----------------------------------------------------------------------------
-  def pbRecallAndReplace(idxBattler,idxParty,batonPass=false)
+  alias _ZUD_pbRecallAndReplace pbRecallAndReplace
+  def pbRecallAndReplace(idxBattler,idxParty,randomReplacement=false,batonPass=false)
     @battlers[idxBattler].unmax if @battlers[idxBattler].dynamax?
-    @scene.pbRecall(idxBattler) if !@battlers[idxBattler].fainted?
-    @battlers[idxBattler].pbAbilitiesOnSwitchOut
-    @scene.pbShowPartyLineup(idxBattler&1) if pbSideSize(idxBattler)==1
-    pbMessagesOnReplace(idxBattler,idxParty)
-    pbReplace(idxBattler,idxParty,batonPass)
+    _ZUD_pbRecallAndReplace(idxBattler,idxParty,randomReplacement,batonPass)
   end
   
+  alias _ZUD_pbSwitchInBetween pbSwitchInBetween
   def pbSwitchInBetween(idxBattler,checkLaxOnly=false,canCancel=false)
-    @battlers[idxBattler].unmax if @battlers[idxBattler].dynamax?
-    return pbPartyScreen(idxBattler,checkLaxOnly,canCancel) if pbOwnedByPlayer?(idxBattler)
-    return @battleAI.pbDefaultChooseNewEnemy(idxBattler,pbParty(idxBattler))
+    ret = _ZUD_pbSwitchInBetween(idxBattler,checkLaxOnly,canCancel)
+    @battlers[idxBattler].unmax if @battlers[idxBattler].dynamax? && ret > 0
+    return ret 
   end
   
   #-----------------------------------------------------------------------------

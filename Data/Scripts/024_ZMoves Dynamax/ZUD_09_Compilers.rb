@@ -20,12 +20,18 @@
 # This section compiles data so that it may be read from the ZUD_dynamax PBS file.
 # All Gigantamax compatibility and other relevant data is obtained from this file.
 #===============================================================================
-# SECTION 3 - NPC DATA REWRITES
+# SECTION 3 - DATA LOADERS
+#-------------------------------------------------------------------------------
+# Data loaders, stored in PokemonTemp, for one load per savegame. 
+#===============================================================================
+# SECTION 4 - NPC DATA REWRITES
 #-------------------------------------------------------------------------------
 # This section rewrites code related to NPC Trainer metadata, as well as code 
 # associated with compiling trainer data. This is done to allow for NPC's to
 # utilize Dynamax mechanics.
 #===============================================================================
+
+
 
 ################################################################################
 # SECTION 1 - Z-MOVE COMPILER
@@ -95,10 +101,6 @@ def pbSaveZMoveCompatibility
   }
 end 
 
-def pbLoadZMoveCompatibility
-  return load_data("Data/ZUD_zmoves.dat")
-end 
-
 #-------------------------------------------------------------------------------
 # Gets Z-Move compatibility data.
 #-------------------------------------------------------------------------------
@@ -154,28 +156,28 @@ end
 # Gets the compatibility data from ZUD_dynamax.
 #===============================================================================
 module GMaxData
-  FormName          = 0
-  MaxMoveType       = 1
-  MaxMove           = 2
-  Height            = 3
-  BattlerPlayerX    = 4
-  BattlerPlayerY    = 5
-  BattlerEnemyX     = 6
-  BattlerEnemyY     = 7
-  BattlerShadowX    = 8
-  BattlerShadowSize = 9
+  FormName                = 0
+  MaxMoveType             = 1
+  MaxMove                 = 2
+  Height                  = 3
+  MetricBattlerPlayerX    = 4
+  MetricBattlerPlayerY    = 5
+  MetricBattlerEnemyX     = 6
+  MetricBattlerEnemyY     = 7
+  MetricBattlerShadowX    = 8
+  MetricBattlerShadowSize = 9
   
   InfoTypes = {
-    "MaxMove"             => [0,                 "ee", :PBTypes, :PBMoves],
-    "FormName"            => [0,                 "s"],
-    "Pokedex"             => [0,                 "s"],
-    "BattlerPlayerX"      => [BattlerPlayerX,    "i"],
-    "BattlerPlayerY"      => [BattlerPlayerY,    "i"],
-    "BattlerEnemyX"       => [BattlerEnemyX,     "i"],
-    "BattlerEnemyY"       => [BattlerEnemyY,     "i"],
-    "BattlerShadowX"      => [BattlerShadowX,    "i"],
-    "BattlerShadowSize"   => [BattlerShadowSize, "u"],
-    "Height"              => [Height,            "f"]
+    "MaxMove"             => [0,                       "ee", :PBTypes, :PBMoves],
+    "FormName"            => [0,                       "s"],
+    "Pokedex"             => [0,                       "s"],
+    "BattlerPlayerX"      => [MetricBattlerPlayerX,    "i"],
+    "BattlerPlayerY"      => [MetricBattlerPlayerY,    "i"],
+    "BattlerEnemyX"       => [MetricBattlerEnemyX,     "i"],
+    "BattlerEnemyY"       => [MetricBattlerEnemyY,     "i"],
+    "BattlerShadowX"      => [MetricBattlerShadowX,    "i"],
+    "BattlerShadowSize"   => [MetricBattlerShadowSize, "u"],
+    "Height"              => [Height,                  "f"]
   }
 end 
 
@@ -269,12 +271,12 @@ def pbSaveGigantamaxData
       f.write("\r\n")
       f.write(sprintf("Pokedex = %s", csvQuoteAlways(messages.get(MessageTypes::GMaxPokedex,i))))
       f.write("\r\n")
-      f.write(sprintf("BattlerPlayerX = %d\r\n", data[GMaxData::BattlerPlayerX]))
-      f.write(sprintf("BattlerPlayerY = %d\r\n", data[GMaxData::BattlerPlayerY]))
-      f.write(sprintf("BattlerEnemyX = %d\r\n", data[GMaxData::BattlerEnemyX]))
-      f.write(sprintf("BattlerEnemyY = %d\r\n", data[GMaxData::BattlerEnemyY]))
-      f.write(sprintf("BattlerShadowX = %d\r\n", data[GMaxData::BattlerShadowX]))
-      f.write(sprintf("BattlerShadowSize = %d\r\n", data[GMaxData::BattlerShadowSize]))
+      f.write(sprintf("BattlerPlayerX = %d\r\n", data[GMaxData::MetricBattlerPlayerX]))
+      f.write(sprintf("BattlerPlayerY = %d\r\n", data[GMaxData::MetricBattlerPlayerY]))
+      f.write(sprintf("BattlerEnemyX = %d\r\n", data[GMaxData::MetricBattlerEnemyX]))
+      f.write(sprintf("BattlerEnemyY = %d\r\n", data[GMaxData::MetricBattlerEnemyY]))
+      f.write(sprintf("BattlerShadowX = %d\r\n", data[GMaxData::MetricBattlerShadowX]))
+      f.write(sprintf("BattlerShadowSize = %d\r\n", data[GMaxData::MetricBattlerShadowSize]))
       f.write("#-------------------------------\r\n")
     end
     # Normal max-moves
@@ -290,14 +292,6 @@ def pbSaveGigantamaxData
       end 
     end 
   }
-end
-
-$GMaxDatabase = nil 
-def pbLoadGmaxData
-  if !$GMaxDatabase
-    $GMaxDatabase = load_data("Data/ZUD_dynamax.dat")
-  end 
-  return $GMaxDatabase
 end
 
 #-------------------------------------------------------------------------------
@@ -318,7 +312,43 @@ end
 
 
 ################################################################################
-# SECTION 3 - NPC DATA REWRITES
+# SECTION 3 - DATA LOADERS
+#===============================================================================
+# Data loaders, stored in PokemonTemp, for one load per savegame. 
+#===============================================================================
+
+class PokemonTemp
+  attr_accessor :zmovecomps
+  attr_accessor :gmaxData
+end
+
+def pbLoadGmaxData
+  $PokemonTemp = PokemonTemp.new if !$PokemonTemp
+  if !$PokemonTemp.gmaxData
+    if pbRgssExists?("Data/ZUD_dynamax.dat")
+      $PokemonTemp.gmaxData = load_data("Data/ZUD_dynamax.dat")
+    else
+      $PokemonTemp.gmaxData = []
+    end
+  end
+  return $PokemonTemp.gmaxData
+end
+
+def pbLoadZMoveCompatibility
+  $PokemonTemp = PokemonTemp.new if !$PokemonTemp
+  if !$PokemonTemp.zmovecomps
+    if pbRgssExists?("Data/ZUD_zmoves.dat")
+      $PokemonTemp.zmovecomps = load_data("Data/ZUD_zmoves.dat")
+    else
+      $PokemonTemp.zmovecomps = []
+    end
+  end
+  return $PokemonTemp.zmovecomps
+end
+
+
+################################################################################
+# SECTION 4 - NPC DATA REWRITES
 #===============================================================================
 # Adds Dynamax properties to existing data structures for compatibility.
 #===============================================================================

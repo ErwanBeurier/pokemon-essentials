@@ -266,6 +266,7 @@ class PokeBattle_MaxMove_StatUp < PokeBattle_MaxMove
   def pbEffectGeneral(user)
     @battle.eachBattler do |b|
       next if b.opposes?(user)
+      next if !b.pbCanRaiseStatStage?(@statUp[0],b,self)
       b.pbRaiseStatStage(@statUp[0],@statUp[1],b)
     end
   end
@@ -277,6 +278,7 @@ end
 class PokeBattle_MaxMove_TargetStatDown < PokeBattle_MaxMove
   def pbEffectAgainstTarget(user,target)
     user.eachOpposing do |b|
+      next if !b.pbCanLowerStatStage?(@statDown[0],b,self)
       b.pbLowerStatStage(@statDown[0],@statDown[1],b)
     end
   end
@@ -680,8 +682,6 @@ end
 # Heals all ally Pokemon by 1/6th their max HP.
 #-------------------------------------------------------------------------------
 class PokeBattle_Move_D014 < PokeBattle_MaxMove
-  def healingMove?; return true; end
-
   def pbEffectGeneral(user)
     @battle.eachBattler do |b|
       next if b.opposes?(user)
@@ -753,10 +753,11 @@ end
 class PokeBattle_Move_D017 < PokeBattle_MaxMove
   def pbEffectAgainstTarget(user,target)
     user.eachOpposing do |b|
-      b.eachMove do |m|
-        next if m.id!=target.lastRegularMoveUsed
+      b.eachMoveWithIndex do |m,i|
+        next if m.id!=b.lastRegularMoveUsed || m.pp==0 || m.totalpp<=0
         reduction = [2,m.pp].min
-        target.pbSetPP(m,m.pp-reduction)
+        b.pbSetPP(m,m.pp-reduction)
+        b.effects[PBEffects::MaxMovePP][i] +=4 if b.dynamax?
         @battle.pbDisplay(_INTL("{1}'s PP was reduced!",b.pbThis))
         break
       end
@@ -771,10 +772,12 @@ end
 #-------------------------------------------------------------------------------
 class PokeBattle_Move_D018 < PokeBattle_MaxMove
   def pbEffectGeneral(user)
-    user.pbOwnSide.effects[PBEffects::AuroraVeil] = 5
-    user.pbOwnSide.effects[PBEffects::AuroraVeil] = 8 if user.hasActiveItem?(:LIGHTCLAY)
-    @battle.pbDisplay(_INTL("{1} made {2} stronger against physical and special moves!",
-       @name,user.pbTeam(true)))
+    if user.pbOwnSide.effects[PBEffects::AuroraVeil]==0
+      user.pbOwnSide.effects[PBEffects::AuroraVeil] = 5
+      user.pbOwnSide.effects[PBEffects::AuroraVeil] = 8 if user.hasActiveItem?(:LIGHTCLAY)
+      @battle.pbDisplay(_INTL("{1} made {2} stronger against physical and special moves!",
+         @name,user.pbTeam(true)))
+    end
   end
 end
 
@@ -802,6 +805,7 @@ end
 class PokeBattle_Move_D020 < PokeBattle_MaxMove
   def pbEffectAgainstTarget(user,target)
     user.eachOpposing do |b|
+      next if b.effects[PBEffects::MeanLook] = user.index
       @battle.pbDisplay(_INTL("{1} can no longer escape!",b.pbThis))
       b.effects[PBEffects::MeanLook] = user.index
     end
@@ -843,6 +847,7 @@ end
 class PokeBattle_Move_D023 < PokeBattle_MaxMove
   def pbEffectAgainstTarget(user,target)
     user.eachOpposing do |b|
+      next if b.effects[PBEffects::Torment]
       b.effects[PBEffects::Torment] = true
       @battle.pbDisplay(_INTL("{1} was subjected to torment!",b.pbThis))
       b.pbItemStatusCureCheck

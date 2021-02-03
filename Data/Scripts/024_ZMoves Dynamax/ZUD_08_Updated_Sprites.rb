@@ -23,9 +23,49 @@
 ################################################################################
 # SECTION 1 - BATTLER SPRITES
 #===============================================================================
-# Enlarges/colors Pokémon battler sprites when Dynamaxed.
+# Applies battler metrics in ZUD_dynamax to Gigantamax sprites.
 #-------------------------------------------------------------------------------
+def pbApplyBattlerMetricsToSprite(sprite,index,species,shadow=false,metrics=nil,gmax=false)
+  metrics = (gmax ? pbLoadGmaxData[species] : pbLoadSpeciesMetrics) if !metrics
+  px = gmax ? metrics[GMaxData::MetricBattlerPlayerX] : metrics[MetricBattlerPlayerX][species]
+  py = gmax ? metrics[GMaxData::MetricBattlerPlayerY] : metrics[MetricBattlerPlayerY][species]
+  ex = gmax ? metrics[GMaxData::MetricBattlerEnemyX]  : metrics[MetricBattlerEnemyX][species]
+  ey = gmax ? metrics[GMaxData::MetricBattlerEnemyY]  : metrics[MetricBattlerEnemyY][species]
+  if shadow
+    if (index&1)==1   # Foe Pokémon
+      sprite.x += (metrics[MetricBattlerShadowX][species] || 0)*2
+    end
+  else
+    if (index&1)==0   # Player's Pokémon
+      sprite.x += (px || 0)*2
+      sprite.y += (py || 0)*2
+    else              # Foe Pokémon
+      sprite.x += (ex || 0)*2
+      sprite.y += (ey || 0)*2
+      sprite.y -= (metrics[MetricBattlerAltitude][species] || 0)*2
+    end
+  end
+end
+
+#===============================================================================
+# Enlarges/colors Pokémon battler sprites when Dynamaxed.
+#===============================================================================
 class PokemonBattlerSprite < RPG::Sprite
+  def pbSetPosition
+    return if !@_iconBitmap
+    pbSetOrigin
+    if (@index%2)==0
+      self.z = 50+5*@index/2
+    else
+      self.z = 50-5*(@index+1)/2
+    end
+    p = PokeBattle_SceneConstants.pbBattlerPosition(@index,@sideSize)
+    @spriteX = p[0]
+    @spriteY = p[1]
+    # Apply metrics. Takes Gigantamax sprites into consideration.
+    pbApplyBattlerMetricsToSprite(self,@index,@pkmn.fSpecies,false,nil,@pkmn.gmax?)
+  end
+  
   def setPokemonBitmap(pkmn,back=false,oldpkmn=nil)
     @pkmn    = pkmn
     @_iconBitmap.dispose if @_iconBitmap
@@ -43,8 +83,10 @@ class PokemonBattlerSprite < RPG::Sprite
     end
     if @dynamax
       if DYNAMAX_SIZE
-        self.zoom_x = 1.5
-        self.zoom_y = 1.5
+        activebattle = true if defined?(PCV) && $PokemonSystem.activebattle
+        enlarge = (activebattle) ? 2 : 1.5
+        self.zoom_x = enlarge
+        self.zoom_y = enlarge
         if !back
           self.y = self.y+16
         end
@@ -92,8 +134,10 @@ class PokemonBattlerSprite < RPG::Sprite
     #---------------------------------------------------------------------------
     if @dynamax
       if DYNAMAX_SIZE
-        self.zoom_x = 1.5
-        self.zoom_y = 1.5
+        activebattle = true if defined?(PCV) && $PokemonSystem.activebattle
+        enlarge = (activebattle) ? 2 : 1.5
+        self.zoom_x = enlarge
+        self.zoom_y = enlarge
       else
         self.zoom_x = 1
         self.zoom_y = 1
@@ -118,6 +162,18 @@ class PokemonBattlerSprite < RPG::Sprite
 end
 
 class PokemonBattlerShadowSprite < RPG::Sprite
+  def pbSetPosition
+    return if !@_iconBitmap
+    pbSetOrigin
+    self.z = 3
+    # Set original position
+    p = PokeBattle_SceneConstants.pbBattlerPosition(@index,@sideSize)
+    self.x = p[0]
+    self.y = p[1]
+    # Apply metrics
+    pbApplyBattlerMetricsToSprite(self,@index,@pkmn.fSpecies,true,nil,@pkmn.gmax?)
+  end
+  
   def setPokemonBitmap(pkmn)
     @pkmn = pkmn
     @_iconBitmap.dispose if @_iconBitmap
@@ -357,6 +413,37 @@ def pbCheckPokemonBitmapFiles(params)
   return nil
 end
 
+#===============================================================================
+# Auto-Positions all Gigantamax sprites.
+#===============================================================================
+def pbAutoPositionGmax
+  gmaxData = pbLoadGmaxData
+  for i in 1..PBSpecies.maxValueF
+    next if !gmaxData[i]
+    data = gmaxData[i]
+    s = pbGetSpeciesFromFSpecies(i)
+    Graphics.update if i%50==0
+    bitmap1 = pbLoadSpeciesBitmap(s[0],false,s[1],false,false,true,false,true)
+    bitmap2 = pbLoadSpeciesBitmap(s[0],false,s[1],false,false,false,false,true)
+    data[GMaxData::MetricBattlerPlayerX]    = 0   # Player's x
+    if bitmap1 && bitmap1.bitmap                  # Player's y
+      data[GMaxData::MetricBattlerPlayerY]  = (bitmap1.height-(findBottom(bitmap1.bitmap)+1))/2
+    end
+    data[GMaxData::MetricBattlerEnemyX]     = 0   # Foe's x
+    if bitmap2 && bitmap2.bitmap   # Foe's y
+      data[GMaxData::MetricBattlerEnemyY]   = (bitmap2.height-(findBottom(bitmap2.bitmap)+1))/2
+      data[GMaxData::MetricBattlerEnemyY]   += 4  # Just because
+    end
+    data[GMaxData::MetricBattlerShadowX]    = 0   # Shadow's x
+    data[GMaxData::MetricBattlerShadowSize] = 3   # Shadow size
+    bitmap1.dispose if bitmap1
+    bitmap2.dispose if bitmap2
+  end
+  save_data(gmaxData,"Data/ZUD_dynamax.dat")
+  $PokemonTemp.gmaxData = nil
+  pbSaveGigantamaxData
+end
+
 
 ################################################################################
 # SECTION 2 - ICON SPRITES
@@ -379,8 +466,20 @@ class PokemonPartyPanel < SpriteWrapper
   def pbDynamaxColor
     if DYNAMAX_COLOR
       if @pokemon.dynamax?
-        @pkmnsprite.color = Color.new(217,29,71,128)
-        @pkmnsprite.color = Color.new(56,160,193,128) if @pokemon.isSpecies?(:CALYREX)
+        alpha_div = (1.0 - self.color.alpha.to_f / 255.0)
+        r_base = 217
+        g_base = 29
+        b_base = 71
+        if @pokemon.isSpecies?(:CALYREX)
+          r_base = 56
+          g_base = 160
+          b_base = 193
+        end 
+        r = (r_base.to_f * alpha_div).floor
+        g = (g_base.to_f * alpha_div).floor 
+        b = (b_base.to_f * alpha_div).floor 
+        a = 128 + self.color.alpha / 2
+        @pkmnsprite.color = Color.new(r,g,b,a)
       else
         @pkmnsprite.color = self.color
       end

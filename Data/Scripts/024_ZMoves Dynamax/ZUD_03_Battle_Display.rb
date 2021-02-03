@@ -59,7 +59,7 @@ class PokeBattle_Battle
       idxEncoredMove = battler.pbEncoredMoveIndex
       if idxEncoredMove>=0 && idxMove!=idxEncoredMove && !move.powerMove?
         pbDisplayPaused(_INTL("Encore prevents using this move!")) if showMessages
-      return false 
+        return false 
       end 
     end
     return battler.pbCanChooseMove?(move,true,showMessages,sleepTalk)
@@ -102,7 +102,6 @@ class PokeBattle_Battle
     @scene.pbBeginCommandPhase
     @battlers.each_with_index do |b,i|
       next if !b
-      pbRaidBossMoves(b)
       pbClearChoice(i) if pbCanShowCommands?(i)
     end
     # Mega Evolution
@@ -193,6 +192,7 @@ class PokeBattle_Battle
     #pbAttackPhase<InsertCustomMechanic>
     #---------------------------------------------------------------------------
     pbAttackPhaseRaidBoss
+    pbAttackPhaseCheer
     pbAttackPhaseMoves
   end
 
@@ -395,7 +395,9 @@ class PokeBattle_Scene
         # Dynamax - Gets Max Move PP usage.
         #-----------------------------------------------------------------------
         if battler.effects[PBEffects::PowerMovesButton]
-          battler.effects[PBEffects::MaxMovePP][cw.index] += 1
+          pressure = true if @battle.pbCheckOpposingAbility(:PRESSURE,battler)
+          ppusage  = (pressure) ? 2 : 1
+          battler.effects[PBEffects::MaxMovePP][cw.index] += ppusage
         end
         #-----------------------------------------------------------------------
         pbPlayDecisionSE
@@ -715,10 +717,10 @@ class PokemonDataBox < SpriteWrapper
       imagePos.push(["Graphics/Pictures/Battle/icon_mega",@spriteBaseX+8,34])
     elsif @battler.primal?
       primalX = (@battler.opposes?) ? 208 : -28   # Foe's/player's
-      if isConst?(@battler.pokemon.species,PBSpecies,:KYOGRE)
-        imagePos.push(["Graphics/Pictures/Battle/icon_primal_Kyogre",@spriteBaseX+primalX+16,34])
-      elsif isConst?(@battler.pokemon.species,PBSpecies,:GROUDON)
-        imagePos.push(["Graphics/Pictures/Battle/icon_primal_Groudon",@spriteBaseX+primalX+16,34])
+      if @battler.isSpecies?(:KYOGRE)
+        imagePos.push(["Graphics/Pictures/Battle/icon_primal_Kyogre",@spriteBaseX+primalX,4])
+      elsif @battler.isSpecies?(:GROUDON)
+        imagePos.push(["Graphics/Pictures/Battle/icon_primal_Groudon",@spriteBaseX+primalX,4])
       end
     #---------------------------------------------------------------------------
     # Draws Dynamax icon.
@@ -727,7 +729,7 @@ class PokemonDataBox < SpriteWrapper
       imagePos.push(["Graphics/Pictures/Dynamax/icon_dynamax",@spriteBaseX+8,34])
     end
     #---------------------------------------------------------------------------
-    if @battler.owned?
+    if @battler.owned? && @battler.opposes?(0)
       imagePos.push(["Graphics/Pictures/Battle/icon_own",@spriteBaseX+8,36])
     end
     if @battler.status>0
