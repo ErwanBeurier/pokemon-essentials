@@ -1,10 +1,10 @@
 #===============================================================================
 #
 # Max Raid Battle Script - by Lucidious89
-#  For -Pokemon Essentials v18.dev-
+#  For -Pokemon Essentials v18.1-
 #
 #===============================================================================
-# The following is meant as an add-on for the ZUD Plugin for v18.dev.
+# The following is meant as an add-on for the ZUD Plugin for v18.1.
 # This adds all of the battle mechanics necessary for compatibility with
 # Max Raid Battles. Keep in mind that the ZUD Plugin is required for
 # this to be installed.
@@ -296,10 +296,11 @@ class PokeBattle_Battler
     weakened = true if @effects[PBEffects::ShieldCounter]==0
     if @effects[PBEffects::MaxRaidBoss] && weakened && 
        @battle.pbSideSize(0)>1 && !choice[2].statusMove?
-      pbDisplayBaseMoves
+      basemoves = @effects[PBEffects::BaseMoves]
+      basemoves = @moves if !basemoves
       for i in 1...@battle.pbSideSize(0)
         break if @battle.decision==3
-        choice[2] = @moves[rand(@moves.length)]
+        choice[2] = PokeBattle_Move.pbFromPBMove(@battle,basemoves[rand(basemoves.length)])
         PBDebug.log("[Move usage] #{pbThis} started using #{choice[2].name}")
         PBDebug.logonerr{
           pbUseMove(choice,choice[2]==@battle.struggle)
@@ -513,8 +514,10 @@ class PokeBattle_Battle
         #-----------------------------------------------------------------------
         # The Raid Pokemon starts using Max Moves after its shield triggers.
         #-----------------------------------------------------------------------
-        b.pbDisplayPowerMoves(2) if b.effects[PBEffects::ShieldCounter]<2 && b.level>35
-        b.pbDisplayPowerMoves(2) if b.effects[PBEffects::ShieldCounter]==0
+        if b.moves == b.effects[PBEffects::BaseMoves]
+          b.pbDisplayPowerMoves(2) if b.effects[PBEffects::ShieldCounter]<2 && b.level>35
+          b.pbDisplayPowerMoves(2) if b.effects[PBEffects::ShieldCounter]==0
+        end
         #-----------------------------------------------------------------------
         # Raid Shield thresholds for effect damage.
         #-----------------------------------------------------------------------

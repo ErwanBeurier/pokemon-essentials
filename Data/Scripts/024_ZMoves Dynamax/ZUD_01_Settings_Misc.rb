@@ -1,7 +1,7 @@
 #===============================================================================
 #
 # Z-Moves, Ultra Burst, and Dynamax (ZUD)
-#  For -Pokemon Essentials v18.dev-
+#  For -Pokemon Essentials v18.1-
 #
 #===============================================================================
 # The following adds the functionality for new battle mechanics found in the
@@ -63,7 +63,7 @@ ADD_NEW_ZMOVES = true  # If true, gives Z-Move effects to Gen 8 status moves.
 #-------------------------------------------------------------------------------
 # Dynamax Settings
 #-------------------------------------------------------------------------------
-DMAX_ANYMAP    = true  # If true, allows Dynamax on any map location.
+DMAX_ANYMAP    = true # If true, allows Dynamax on any map location.
 CAN_DMAX_WILD  = false # If true, allows Dynamax during normal wild encounters.
 DYNAMAX_TURNS  = 3     # The number of turns Dynamax lasts before expiring.
 #-------------------------------------------------------------------------------

@@ -1,14 +1,14 @@
 #===============================================================================
 #
 # Max Raid Events Script - by Lucidious89
-#  For -Pokemon Essentials v18.dev-
+#  For -Pokemon Essentials v18.1-
 #
 #===============================================================================
 #
 # ZUD_MaxRaid_02: Events
 #
 #===============================================================================
-# The following is meant as an add-on for the ZUD Plugin for v18.dev.
+# The following is meant as an add-on for the ZUD Plugin for v18.1.
 # This adds scripts you may run to initiate two different Max Raid Events:
 # Max Raid Dens, and the Max Raid Database.
 #
@@ -425,7 +425,7 @@ def pbGetMaxRaidSpeciesLists(filters=nil,displayOnly=false,env=nil)
           next if enviro.include?(i)     && f!=0 && !(sandy || trash)
           next if enviro.include?(i)     && f!=1 && sandy
           next if enviro.include?(i)     && f!=2 && trash
-        else
+        elsif filters
           next if fSpecies!=rfSpecies
         end
       else
