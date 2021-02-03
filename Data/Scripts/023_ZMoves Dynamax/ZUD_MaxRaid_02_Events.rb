@@ -425,7 +425,7 @@ def pbGetMaxRaidSpeciesLists(filters=nil,displayOnly=false,env=nil)
           next if enviro.include?(i)     && f!=0 && !(sandy || trash)
           next if enviro.include?(i)     && f!=1 && sandy
           next if enviro.include?(i)     && f!=2 && trash
-        else
+        elsif filters
           next if fSpecies!=rfSpecies
         end
       else

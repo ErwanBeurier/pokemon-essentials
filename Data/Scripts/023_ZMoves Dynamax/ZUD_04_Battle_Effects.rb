@@ -600,6 +600,7 @@ class PokeBattle_Battler
          move.function=="067" || # Skill Swap
          move.function=="070" || # OHKO moves
          move.function=="09A" || # Weight-based moves
+         move.function=="09B" || # Heat Crash / Heavy Slam
          move.function=="0B7" || # Torment
          move.function=="0B9" || # Disable
          move.function=="0BC" || # Encore
