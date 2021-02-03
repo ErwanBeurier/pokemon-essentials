@@ -64,6 +64,49 @@ end
 
 
 
+# -----------------------------------------------------------------------------
+# DEBUG TOOLS 
+# -----------------------------------------------------------------------------
+# Debug tool: string showing the content of the given d 
+# Used to scan Arrays of Hashes of Arrays.
+def scToStringRec(d)
+  if d.is_a?(Array)
+    s = "[ "
+    d.each { |val|
+      temp = scToStringRec(val)
+      s += _INTL("{1} ", temp)
+    }
+    s += "]"
+    return s
+  
+  elsif d.is_a?(Hash)
+    s = "{"
+    put_comma = false
+    d.each { |k,v|
+      temp = scToStringRec(v)
+      s += ", " if put_comma
+      s += _INTL("{1} => {2}", k, temp)
+      put_comma = true 
+    }
+    s += "}\n"
+    return s
+  elsif d.is_a?(PBDynAdventureRoom)
+    return d.desc 
+  else 
+    return _INTL("{1}", d)
+  end 
+end 
+
+# Debug tool: string showing the content of the given d 
+# Used to scan Arrays of Hashes of Arrays.
+# Prints the result in a file. 
+def scToString(d)
+  File.open("errorlog.txt", "a") { |f|
+    f.write(scToStringRec(d) + "\n")
+  }
+  pbMessage("Gladys I love you")
+end 
+
 
 
 
