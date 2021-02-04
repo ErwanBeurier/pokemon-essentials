@@ -49,18 +49,23 @@ class PokeBattle_Battler
           target.effects[PBEffects::Quash]    = 0
         end
       end
-      # Grudge
-      if target.effects[PBEffects::Grudge] && target.fainted?
-        move.pp = 0
-        @battle.pbDisplay(_INTL("{1}'s {2} lost all of its PP due to the grudge!",
-           user.pbThis,move.name))
-      end
-      # Destiny Bond (recording that it should apply)
-      if target.effects[PBEffects::DestinyBond] && target.fainted?
-        if user.effects[PBEffects::DestinyBondTarget]<0
-          user.effects[PBEffects::DestinyBondTarget] = target.index
-        end
-      end
+      # # Grudge
+      # if target.effects[PBEffects::Grudge] && target.fainted?
+        # move.pp = 0
+        # @battle.pbDisplay(_INTL("{1}'s {2} lost all of its PP due to the grudge!",
+           # user.pbThis,move.name))
+      # end
+      # # Destiny Bond (recording that it should apply)
+      # if target.effects[PBEffects::DestinyBond] && target.fainted?
+        # if user.effects[PBEffects::DestinyBondTarget]<0
+          # user.effects[PBEffects::DestinyBondTarget] = target.index
+        # end
+      # end
+      #=========================================================================
+      # Effects for Grudge and Destiny Bond. (ZUD)
+      #=========================================================================
+      pbEffectsOnKO(move,user,target)
+      #=========================================================================
     end
   end
 

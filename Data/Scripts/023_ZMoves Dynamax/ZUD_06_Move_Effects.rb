@@ -723,24 +723,28 @@ end
 #===============================================================================
 # G-Max Replenish.
 #===============================================================================
-# User has a 50% chance to recover its last consumed item.
+# User has a 50% chance to recover ally Pokemon's consumed berries.
 #-------------------------------------------------------------------------------
 class PokeBattle_Move_D016 < PokeBattle_MaxMove
   def pbEffectGeneral(user)
     if @battle.pbRandom(10)<5
-      item = user.recycleItem
-      user.item = item
-      user.setInitialItem(item) if @battle.wildBattle? && user.initialItem==0
-      user.setRecycleItem(0)
-      user.effects[PBEffects::PickupItem] = 0
-      user.effects[PBEffects::PickupUse]  = 0
-      itemName = PBItems.getName(item)
-      if itemName.starts_with_vowel?
-        @battle.pbDisplay(_INTL("{1} found an {2}!",user.pbThis,itemName))
-      else
-        @battle.pbDisplay(_INTL("{1} found a {2}!",user.pbThis,itemName))
-      end
-      user.pbHeldItemTriggerCheck
+      @battle.eachBattler do |b|
+        next if b.opposes?(user)
+        next if pbIsBerry?(b.initialItem)
+        item = b.recycleItem
+        b.item = item
+        b.setInitialItem(item) if @battle.wildBattle? && b.initialItem==0
+        b.setRecycleItem(0)
+        b.effects[PBEffects::PickupItem] = 0
+        b.effects[PBEffects::PickupUse]  = 0
+        itemName = PBItems.getName(item)
+        if itemName.starts_with_vowel?
+          @battle.pbDisplay(_INTL("{1} found an {2}!",b.pbThis,itemName))
+        else
+          @battle.pbDisplay(_INTL("{1} found a {2}!",b.pbThis,itemName))
+        end
+        user.pbHeldItemTriggerCheck
+      end				 
     end
   end
 end
@@ -790,8 +794,7 @@ class PokeBattle_Move_D019 < PokeBattle_MaxMove
   def pbEffectGeneral(user)
     @battle.eachBattler do |b|
       next if b.opposes?(user)
-      next if b.effects[PBEffects::FocusEnergy] > 2
-      b.effects[PBEffects::FocusEnergy] = 2
+      b.effects[PBEffects::ChiStrike] += 1
       @battle.pbDisplay(_INTL("{1} is getting pumped!",b.pbThis))
     end
   end

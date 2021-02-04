@@ -75,9 +75,9 @@ MAXRAID_PKMN   = 500   # The base variable number used to store a Raid Pokemon.
 # Initializes effects for Max Raid battles.
 #===============================================================================
 module PBEffects
-  RaidShield    = 210  # The current HP for a Max Raid Pokemon's shields.
-  ShieldCounter = 211  # The counter for triggering Raid Shields and other effects.
-  KnockOutCount = 212  # The counter for KO's a Raid Pokemon needs to end the raid.
+  RaidShield    = 211  # The current HP for a Max Raid Pokemon's shields.
+  ShieldCounter = 212  # The counter for triggering Raid Shields and other effects.
+  KnockOutCount = 213  # The counter for KO's a Raid Pokemon needs to end the raid.
 end
 
 class PokeBattle_Battler
@@ -134,6 +134,7 @@ class PokeBattle_Battler
            move.function=="0E2" || # Memento
            move.function=="0E7" || # Destiny Bond
            move.function=="0EB" || # Roar/Whirlwind
+           move.function=="10C" || # Substitute
            (move.function=="10D" && user.pbHasType?(:GHOST)) # Curse
           @battle.pbDisplay(_INTL("But it failed!"))
           ret = false
@@ -268,8 +269,8 @@ class PokeBattle_Battler
            user.effects[PBEffects::RaidShield]<=0 &&
            user.effects[PBEffects::TwoTurnAttack]==0 &&
            move.damagingMove?
-          damage = b.totalhp/16 if user.effects[PBEffects::ShieldCounter]>=1
-          damage = b.totalhp/8 if user.effects[PBEffects::ShieldCounter]<=0
+          damage = b.realtotalhp/16 if user.effects[PBEffects::ShieldCounter]>=1
+          damage = b.realtotalhp/8 if user.effects[PBEffects::ShieldCounter]<=0
           oldhp  = b.hp
           if b.hp>0 && !b.fainted?
             @battle.pbDisplay(_INTL("A malicious wave of Dynamax energy rippled from {1}'s attack!",
@@ -793,7 +794,7 @@ class PokeBattle_Battle
       if battler==partyPriority.last
         eachSameSideBattler(battler) do |b|
           if b.hp < b.totalhp
-            b.pbRecoverHP((b.totalhp).floor)
+            b.pbRecoverHP(b.totalhp.floor)
             pbDisplay(_INTL("{1}'s HP was restored.",b.pbThis))
           end
           status = b.status

@@ -58,59 +58,68 @@ class PokeBattle_Battler
 end
 
 #===============================================================================
-# Confusion Berries
+# Berry Juice
 #===============================================================================
-# Restores user's HP based on their non-Dynamax HP.
+# Healing isn't reduced while Dynamaxed.
 #-------------------------------------------------------------------------------
-def pbBattleConfusionBerry(battler,battle,item,forced,flavor,confuseMsg)
-  return false if !forced && !battler.canHeal?
-  return false if !forced && !(battler.canConsumePinchBerry?(item,false) rescue battler.pbCanConsumeBerry?(item,false))
-  itemName = PBItems.getName(item)
-  battle.pbCommonAnimation("EatBerry",battler) if !forced
-  baseHP = battler.totalhp
-  baseHP = (battler.totalhp/battler.pokemon.dynamaxCalc).floor if battler.dynamax?
-  amt = (NEWEST_BATTLE_MECHANICS) ? battler.pbRecoverHP(baseHP/3) : battler.pbRecoverHP(baseHP/8)
-  if battler.hasActiveAbility?(:RIPEN)
-    amt *= 2
-  end
-  if amt>0
+BattleHandlers::HPHealItem.add(:BERRYJUICE,
+  proc { |item,battler,battle,forced|
+    next false if !battler.canHeal?
+    next false if !forced && battler.hp>battler.totalhp/2
+    itemName = PBItems.getName(item)
+    PBDebug.log("[Item triggered] Forced consuming of #{itemName}") if forced
+    battle.pbCommonAnimation("UseItem",battler) if !forced
+    battler.pbRecoverHP(20,true,true,true) # Ignores Dynamax
     if forced
-      PBDebug.log("[Item triggered] Forced consuming of #{itemName}")
       battle.pbDisplay(_INTL("{1}'s HP was restored.",battler.pbThis))
     else
       battle.pbDisplay(_INTL("{1} restored its health using its {2}!",battler.pbThis,itemName))
     end
-  end
-  nUp = PBNatures.getStatRaised(battler.nature)
-  nDn = PBNatures.getStatLowered(battler.nature)
-  if nUp!=nDn && nDn-1==flavor
-    battle.pbDisplay(confuseMsg)
-    battler.pbConfuse if battler.pbCanConfuseSelf?(false)
-  end
-  return true
-end
-
+    next true
+  }
+)
 
 #===============================================================================
-# Life Orb
+# Oran Berry
 #===============================================================================
-# HP reduction is based on the user's non-Dynamax HP.
+# Healing isn't reduced while Dynamaxed.
 #-------------------------------------------------------------------------------
-BattleHandlers::UserItemAfterMoveUse.add(:LIFEORB,
-  proc { |item,user,targets,move,numHits,battle|
-    next if !user.takesIndirectDamage?
-    next if !move.pbDamagingMove? || numHits==0
-    hitBattler = false
-    targets.each do |b|
-      hitBattler = true if !b.damageState.unaffected && !b.damageState.substitute
-      break if hitBattler
+BattleHandlers::HPHealItem.add(:ORANBERRY,
+  proc { |item,battler,battle,forced|
+    next false if !battler.canHeal?
+    next false if !forced && battler.isUnnerved?
+    next false if !forced && battler.hp>battler.totalhp/2
+    battle.pbCommonAnimation("EatBerry",battler) if !forced
+    if battler.hasActiveAbility?(:RIPEN)
+      battler.pbRecoverHP(20,true,true,true) # Ignores Dynamax
+    else
+      battler.pbRecoverHP(10,true,true,true) # Ignores Dynamax
     end
-    next if !hitBattler
-    PBDebug.log("[Item triggered] #{user.pbThis}'s #{user.itemName} (recoil)")
-    user.pbReduceHP(user.totalhp/(10*user.dynamaxBoost))
-    battle.pbDisplay(_INTL("{1} lost some of its HP!",user.pbThis))
-    user.pbItemHPHealCheck
-    user.pbFaint if user.fainted?
+    itemName = PBItems.getName(item)
+    if forced
+      PBDebug.log("[Item triggered] Forced consuming of #{itemName}")
+      battle.pbDisplay(_INTL("{1}'s HP was restored.",battler.pbThis))
+    else
+      battle.pbDisplay(_INTL("{1} restored a little HP using its {2}!",battler.pbThis,itemName))
+    end
+    next true
+  }
+)
+
+#===============================================================================
+# Shell Bell
+#===============================================================================
+# Healing isn't reduced while Dynamaxed.
+#-------------------------------------------------------------------------------
+BattleHandlers::UserItemAfterMoveUse.add(:SHELLBELL,
+  proc { |item,user,targets,move,numHits,battle|
+    next if !user.canHeal?
+    totalDamage = 0
+    targets.each { |b| totalDamage += b.damageState.totalHPLost }
+    next if totalDamage<=0
+    user.pbRecoverHP(totalDamage/8,true,true,true) # Ignores Dynamax
+    battle.pbDisplay(_INTL("{1} restored a little HP using its {2}!",
+       user.pbThis,user.itemName))
   }
 )
 
@@ -195,6 +204,52 @@ BattleHandlers::AbilityOnSwitchIn.add(:IMPOSTER,
     battle.pbAnimation(getConst(PBMoves,:TRANSFORM),battler,choice)
     battle.scene.pbChangePokemon(battler,choice.pokemon)
     battler.pbTransform(choice)
+  }
+)
+
+#===============================================================================
+# Forewarn
+#===============================================================================
+# Checks the target's base moves, not Max Moves.
+#-------------------------------------------------------------------------------
+BattleHandlers::AbilityOnSwitchIn.add(:FOREWARN,
+  proc { |ability,battler,battle|
+    next if !battler.pbOwnedByPlayer?
+    highestPower = 0
+    forewarnMoves = []
+    battle.eachOtherSideBattler(battler.index) do |b|
+      b.eachMoveWithIndex do |m,i|
+        move = (b.dynamax?) ? b.effects[PBEffects::BaseMoves][i] : m
+        moveData = pbGetMoveData(move.id)
+        power = moveData[MOVE_BASE_DAMAGE]
+        power = 160 if ["070"].include?(moveData[MOVE_FUNCTION_CODE])    # OHKO
+        power = 150 if ["08B"].include?(moveData[MOVE_FUNCTION_CODE])    # Eruption
+        # Counter, Mirror Coat, Metal Burst
+        power = 120 if ["071","072","073"].include?(moveData[MOVE_FUNCTION_CODE])
+        # Sonic Boom, Dragon Rage, Night Shade, Endeavor, Psywave,
+        # Return, Frustration, Crush Grip, Gyro Ball, Hidden Power,
+        # Natural Gift, Trump Card, Flail, Grass Knot
+        power = 80 if ["06A","06B","06D","06E","06F",
+                       "089","08A","08C","08D","090",
+                       "096","097","098","09A"].include?(moveData[MOVE_FUNCTION_CODE])
+        next if power<highestPower
+        forewarnMoves = [] if power>highestPower
+        forewarnMoves.push(move.id)
+        highestPower = power
+      end
+    end
+    if forewarnMoves.length>0
+      battle.pbShowAbilitySplash(battler)
+      forewarnMoveID = forewarnMoves[battle.pbRandom(forewarnMoves.length)]
+      if PokeBattle_SceneConstants::USE_ABILITY_SPLASH
+        battle.pbDisplay(_INTL("{1} was alerted to {2}!",
+          battler.pbThis,PBMoves.getName(forewarnMoveID)))
+      else
+        battle.pbDisplay(_INTL("{1}'s Forewarn alerted it to {2}!",
+          battler.pbThis,PBMoves.getName(forewarnMoveID)))
+      end
+      battle.pbHideAbilitySplash(battler)
+    end
   }
 )
 
@@ -433,7 +488,7 @@ class PokeBattle_Move_05C < PokeBattle_Move
   
   # Records the correct move to revert to after Z-Move/Dynamax.
   def pbEffectAgainstTarget(user,target)
-    user.effects[PBEffects::BaseMoves]   = []
+    user.effects[PBEffects::BaseMoves] = []
     for i in 0...4
       battlemove = PokeBattle_Move.pbFromPBMove(@battle,user.pokemon.moves[i])
       user.effects[PBEffects::BaseMoves].push(battlemove)
@@ -574,16 +629,12 @@ end
 #-------------------------------------------------------------------------------
 class PokeBattle_Move_05A < PokeBattle_Move
   def pbEffectAgainstTarget(user,target)
-    userHP = user.hp
-    targHP = target.hp
-    userHP = (user.hp/user.dynamaxBoost).round if user.dynamax?
-    targHP = (target.hp/target.dynamaxBoost).round if target.dynamax?
-    newHP  = (userHP+targHP)/2
-    if userHP>newHP;    user.pbReduceHP(userHP-newHP,false,false)
-    elsif userHP<newHP; user.pbRecoverHP(newHP-userHP,false)
+    newHP = (user.realhp+target.realhp)/2
+    if user.realhp>newHP;    user.pbReduceHP(user.realhp-newHP,false,false,true,true)
+    elsif user.realhp<newHP; user.pbRecoverHP(newHP-user.realhp,false,true,true)
     end
-    if targHP>newHP;    target.pbReduceHP(targHP-newHP,false,false)
-    elsif targHP<newHP; target.pbRecoverHP(newHP-targHP,false)
+    if target.realhp>newHP;    target.pbReduceHP(target.realhp-newHP,false,false,true,true)
+    elsif target.realhp<newHP; target.pbRecoverHP(newHP-target.realhp,false,true,true)
     end
     @battle.pbDisplay(_INTL("The battlers shared their pain!"))
     user.pbItemHPHealCheck
@@ -598,11 +649,7 @@ end
 #-------------------------------------------------------------------------------
 class PokeBattle_Move_06E < PokeBattle_FixedDamageMove
   def pbFixedDamage(user,target)
-    userHP = user.hp
-    targHP = target.hp
-    userHP = (user.hp/user.dynamaxBoost).round if user.dynamax?
-    targHP = (target.hp/target.dynamaxBoost).round if target.dynamax?
-    return targHP-userHP
+    return target.realhp-user.realhp
   end
 end
 
@@ -613,9 +660,7 @@ end
 #-------------------------------------------------------------------------------
 class PokeBattle_Move_06C < PokeBattle_FixedDamageMove
   def pbFixedDamage(user,target)
-    baseHP = target.hp
-    baseHP = (target.hp/target.dynamaxBoost).round if target.dynamax?
-    return (baseHP/2.0).round
+    return (target.realhp/2.0).round
   end
 end
 
@@ -702,6 +747,37 @@ class PokeBattle_Move_0EC < PokeBattle_Move
       @battle.pbPriority(true).each do |b|
         b.pbEffectsOnSwitchIn(true) if roarSwitched.include?(b.index)
       end
+    end
+  end
+end
+
+#===============================================================================
+# Strength Sap
+#===============================================================================
+# Healing isn't reduced while Dynamaxed.
+#-------------------------------------------------------------------------------
+class PokeBattle_Move_160 < PokeBattle_Move
+  def pbEffectAgainstTarget(user,target)
+    stageMul = [2,2,2,2,2,2, 2, 3,4,5,6,7,8]
+    stageDiv = [8,7,6,5,4,3, 2, 2,2,2,2,2,2]
+    atk      = target.attack
+    atkStage = target.stages[PBStats::ATTACK]+6
+    healAmt = (atk.to_f*stageMul[atkStage]/stageDiv[atkStage]).floor
+    # Reduce target's Attack stat
+    if target.pbCanLowerStatStage?(PBStats::ATTACK,user,self)
+      target.pbLowerStatStage(PBStats::ATTACK,1,user)
+    end
+    # Heal user
+    if target.hasActiveAbility?(:LIQUIDOOZE)
+      @battle.pbShowAbilitySplash(target)
+      user.pbReduceHP(healAmt,true,true,true,true) # Ignores Dynamax
+      @battle.pbDisplay(_INTL("{1} sucked up the liquid ooze!",user.pbThis))
+      @battle.pbHideAbilitySplash(target)
+      user.pbItemHPHealCheck
+    elsif user.canHeal?
+      healAmt = (healAmt*1.3).floor if user.hasActiveItem?(:BIGROOT)
+      user.pbRecoverHP(healAmt,true,true,true) # Ignores Dynamax
+      @battle.pbDisplay(_INTL("{1}'s HP was restored.",user.pbThis))
     end
   end
 end
