@@ -97,7 +97,18 @@ class PokeBattle_Battler
     end
     # Imprison
     @battle.eachOtherSideBattler(@index) do |b|
-      next if !b.effects[PBEffects::Imprison] || !b.pbHasMove?(move.id)
+      #=========================================================================
+      # Dynamax - Imprison only blocks base moves, not Max Moves. (ZUD)
+      #=========================================================================
+      next if move.powerMove?
+      basemove = false
+      b.eachMoveWithIndex do |m,i|
+        next if !b.effects[PBEffects::BaseMoves]
+        basemove = true if b.effects[PBEffects::BaseMoves][i].id==move.id
+      end
+      hasmove = (b.dynamax?) ? basemove : b.pbHasMove?(move.id)
+      next if !b.effects[PBEffects::Imprison] || !hasmove
+      #=========================================================================
       if showMessages
         msg = _INTL("{1} can't use its sealed {2}!",pbThis,move.name)
         (commandPhase) ? @battle.pbDisplayPaused(msg) : @battle.pbDisplay(msg)

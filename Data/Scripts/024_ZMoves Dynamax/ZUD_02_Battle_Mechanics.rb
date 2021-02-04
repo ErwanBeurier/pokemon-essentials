@@ -51,7 +51,8 @@ module PBEffects
   NonGMaxForm      = 206  # Records a G-Max Pokemon's base form to revert to (used for Alcremie).
   MaxMovePP        = 207  # Records the PP usage of Max Moves while Dynamaxed.
   MaxGuard         = 208  # The effect for the move Max Guard.
-  MaxRaidBoss      = 209  # The effect that designates a Max Raid Pokemon. Set here for compatibility.
+  ChiStrike        = 209  # The crit-boosting effect of G-Max Chi Strike.
+  MaxRaidBoss      = 210  # The effect that designates a Max Raid Pokemon. Set here for compatibility.
   
   #-----------------------------------------------------------------------------
   # Effects that apply to a side.
@@ -80,6 +81,7 @@ class PokeBattle_Battler
     @effects[PBEffects::NonGMaxForm]      = nil
     @effects[PBEffects::MaxMovePP]        = [0,0,0,0]
     @effects[PBEffects::MaxGuard]         = false
+    @effects[PBEffects::ChiStrike]        = 0
     @lastMoveUsedIsZMove                  = false
   end
 end
@@ -127,6 +129,12 @@ class PokeBattle_Battler
   def dynamaxAble?; return @pokemon && @pokemon.dynamaxAble?; end
   def dynamaxBoost; return @pokemon && @pokemon.dynamaxBoost; end
   def gmaxFactor?;  return @pokemon && @pokemon.gmaxFactor?;  end
+    
+  #-----------------------------------------------------------------------------
+  # Gets the non-Dynamax HP of a Pokemon.
+  #-----------------------------------------------------------------------------
+  def realhp;       return @pokemon && @pokemon.realhp;       end
+  def realtotalhp;  return @pokemon && @pokemon.realtotalhp;  end
   
   #-----------------------------------------------------------------------------
   # Checks for Z-Move compatibility from inputted move.
@@ -163,8 +171,9 @@ class PokeBattle_Battler
   end
   
   def hasDynamax?
-    transform = @effects[PBEffects::Transform]
-    newpoke   = @effects[PBEffects::TransformPokemon]
+    transform = @effects[PBEffects::Transform] || @effects[PBEffects::Illusion]
+    newpoke   = @effects[PBEffects::TransformPokemon] if @effects[PBEffects::Transform]
+    newpoke   = @effects[PBEffects::Illusion] if @effects[PBEffects::Illusion]
     pokemon   = transform ? newpoke : @pokemon
     powerspot  = $game_map && POWERSPOTS.include?($game_map.map_id)
     eternaspot = $game_map && ETERNASPOT.include?($game_map.map_id)
@@ -411,6 +420,7 @@ class PokeBattle_Battle
     battler = @battlers[idxBattler]
     return if !battler || !battler.pokemon
     return if !battler.hasDynamax? || battler.dynamax?
+    return if @move.id==@struggle.id
     #---------------------------------------------------------------------------
     # Compatibility for Mid Battle Dialogue - Prior to Dynamaxing.
     #---------------------------------------------------------------------------
@@ -430,12 +440,13 @@ class PokeBattle_Battle
     battler.effects[PBEffects::NonGMaxForm] = battler.form
     battler.effects[PBEffects::Encore]      = 0
     battler.effects[PBEffects::Disable]     = 0
+    battler.effects[PBEffects::Substitute]  = 0
     battler.effects[PBEffects::Torment]     = false
     @scene.pbRecall(idxBattler)
     # Alcremie reverts to form 0 only for the duration of Gigantamax.
-    if battler.isSpecies?(:ALCREMIE) && battler.gmaxFactor?
-      battler.pokemon.form = 0 
-    end
+    battler.pokemon.form = 0 if battler.isSpecies?(:ALCREMIE) && battler.gmaxFactor?
+    battler.pokemon.form = 0 if battler.isSpecies?(:CRAMORANT)
+	   
     battler.pokemon.makeDynamax
     text = "Dynamax"
     text = "Gigantamax" if battler.hasGmax? && battler.gmaxFactor?

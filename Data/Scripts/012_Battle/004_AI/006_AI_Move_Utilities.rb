@@ -557,6 +557,7 @@ class PokeBattle_AI
       if c>=0
         c += 1 if move.highCriticalRate?
         c += user.effects[PBEffects::FocusEnergy]
+        c += user.effects[PBEffects::ChiStrike]
         c += 1 if user.inHyperMode? && isConst?(move.type,PBTypes,:SHADOW)
       end
       if c>=0

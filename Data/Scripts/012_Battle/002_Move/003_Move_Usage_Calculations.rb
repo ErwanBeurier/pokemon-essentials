@@ -205,6 +205,7 @@ class PokeBattle_Move
     return true if user.effects[PBEffects::LaserFocus]>0
     c += 1 if highCriticalRate?
     c += user.effects[PBEffects::FocusEnergy]
+    c += user.effects[PBEffects::ChiStrike]
     c += 1 if user.inHyperMode? && isConst?(@type,PBTypes,:SHADOW)
     c = ratios.length-1 if c>=ratios.length
     # Calculation

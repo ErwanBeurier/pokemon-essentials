@@ -456,15 +456,34 @@ class PokeBattle_Battler
   end
   
   #=============================================================================
-  # Destiny Bond
+  # Grudge, Destiny Bond
   #=============================================================================
-  # Effect is negated on Dynamax Pokemon.
-  #-----------------------------------------------------------------------------
-  alias _ZUD_pbEffectsOnMakingHit pbEffectsOnMakingHit
-  def pbEffectsOnMakingHit(move,user,target)
-    _ZUD_pbEffectsOnMakingHit(move,user,target)
-    if target.opposes?(user) && user.dynamax?
-      user.effects[PBEffects::DestinyBondTarget] = -1
+  # Grudge: Lowers PP of base move if Max Move was used. Fails on Z-Moves.
+  # Destiny Bond: Effect fails to apply on a Dynamax Pokemon.
+  #=============================================================================
+													  
+  def pbEffectsOnKO(move,user,target)
+    # Grudge
+    if target.effects[PBEffects::Grudge] && target.fainted? && !move.zMove?
+      move.pp  = 0
+      basemove = nil
+      user.eachMoveWithIndex do |m,i|
+        next if m.pp>0
+        user.pokemon.moves[i].pp = 0 if !user.effects[PBEffects::Transform]
+        if move.maxMove? && user.dynamax?
+          basemove = user.effects[PBEffects::BaseMoves][i]
+          user.effects[PBEffects::MaxMovePP][i] += basemove.totalpp
+        end
+      end
+      movename = (basemove) ? basemove.name : move.name  
+      @battle.pbDisplay(_INTL("{1}'s {2} lost all of its PP due to the grudge!",
+        user.pbThis,movename))
+    end
+    # Destiny Bond (recording that it should apply)
+    if target.effects[PBEffects::DestinyBond] && target.fainted? && !user.dynamax?
+      if user.effects[PBEffects::DestinyBondTarget]<0
+        user.effects[PBEffects::DestinyBondTarget] = target.index
+      end
     end
   end
   
@@ -637,6 +656,62 @@ class PokeBattle_Battler
     end
     return ret
   end
+  
+  #=============================================================================
+  # Effects that change HP do so based on the user's non-Dynamax HP.
+  #=============================================================================
+  def pbReduceHP(amt,anim=true,registerDamage=true,anyAnim=true,ignoreDynamax=false)
+    if ignoreDynamax
+      amt = amt.round
+    else
+      amt = (amt/self.dynamaxBoost).round
+    end
+    amt = @hp if amt>@hp
+    amt = 1 if amt<1 && !fainted?
+    oldHP = @hp
+    self.hp -= amt
+    PBDebug.log("[HP change] #{pbThis} lost #{amt} HP (#{oldHP}=>#{@hp})") if amt>0
+    raise _INTL("HP less than 0") if @hp<0
+    raise _INTL("HP greater than total HP") if @hp>@totalhp
+    @battle.scene.pbHPChanged(self,oldHP,anim) if anyAnim && amt>0
+    @tookDamage = true if amt>0 && registerDamage
+    return amt
+  end
+
+  def pbRecoverHP(amt,anim=true,anyAnim=true,ignoreDynamax=false)
+    if ignoreDynamax
+      amt = amt.round
+    else
+      amt = (amt/self.dynamaxBoost).round
+    end
+    amt = @totalhp-@hp if amt>@totalhp-@hp
+    amt = 1 if amt<1 && @hp<@totalhp
+    oldHP = @hp
+    self.hp += amt
+    PBDebug.log("[HP change] #{pbThis} gained #{amt} HP (#{oldHP}=>#{@hp})") if amt>0
+    raise _INTL("HP less than 0") if @hp<0
+    raise _INTL("HP greater than total HP") if @hp>@totalhp
+    @battle.scene.pbHPChanged(self,oldHP,anim) if anyAnim && amt>0
+    self.yamaskhp = 0
+    return amt
+  end
+  
+  def pbRecoverHPFromDrain(amt,target,msg=nil)
+    if target.hasActiveAbility?(:LIQUIDOOZE)
+      @battle.pbShowAbilitySplash(target)
+      pbReduceHP(amt)
+      @battle.pbDisplay(_INTL("{1} sucked up the liquid ooze!",pbThis))
+      @battle.pbHideAbilitySplash(target)
+      pbItemHPHealCheck
+    else
+      msg = _INTL("{1} had its energy drained!",target.pbThis) if !msg || msg==""
+      @battle.pbDisplay(msg)
+      if canHeal?
+        amt = (amt*1.3).floor if hasActiveItem?(:BIGROOT)
+        pbRecoverHP(amt,true,true,true) # Drain moves ignore Dynamax.
+      end
+    end
+  end
 end
 
 
@@ -663,7 +738,7 @@ class PokeBattle_Battle
           next if !b.takesIndirectDamage? || b.pbHasType?(:GRASS)
           oldHP = b.hp
           @scene.pbDamageAnimation(b)
-          b.pbReduceHP(b.totalhp/8,false)
+          b.pbReduceHP(b.totalhp/6,false)
           pbDisplay(_INTL("{1} is hurt by G-Max Vine Lash's ferocious beating!",b.pbThis))
           b.pbItemHPHealCheck
           b.pbAbilitiesOnDamageTaken(oldHP)
@@ -683,7 +758,7 @@ class PokeBattle_Battle
           next if !b.takesIndirectDamage? || b.pbHasType?(:FIRE)
           oldHP = b.hp
           @scene.pbDamageAnimation(b)
-          b.pbReduceHP(b.totalhp/8,false)
+          b.pbReduceHP(b.totalhp/6,false)
           pbDisplay(_INTL("{1} is burning up within G-Max Wildfire's flames!",b.pbThis))
           b.pbItemHPHealCheck
           b.pbAbilitiesOnDamageTaken(oldHP)
@@ -703,7 +778,7 @@ class PokeBattle_Battle
           next if !b.takesIndirectDamage? || b.pbHasType?(:WATER)
           oldHP = b.hp
           @scene.pbDamageAnimation(b)
-          b.pbReduceHP(b.totalhp/8,false)
+          b.pbReduceHP(b.totalhp/6,false)
           pbDisplay(_INTL("{1} is hurt by G-Max Cannonade's vortex!",b.pbThis))
           b.pbItemHPHealCheck
           b.pbAbilitiesOnDamageTaken(oldHP)
@@ -723,7 +798,7 @@ class PokeBattle_Battle
           next if !b.takesIndirectDamage? || b.pbHasType?(:ROCK)
           oldHP = b.hp
           @scene.pbDamageAnimation(b)
-          b.pbReduceHP(b.totalhp/8,false)
+          b.pbReduceHP(b.totalhp/6,false)
           pbDisplay(_INTL("{1} is hurt by the rocks thrown out by G-Max Volcalith!",b.pbThis))
           b.pbItemHPHealCheck
           b.pbAbilitiesOnDamageTaken(oldHP)

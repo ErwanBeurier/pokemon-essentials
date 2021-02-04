@@ -2891,6 +2891,7 @@ ItemHandlers::UseOnPokemon.add(:MAXPLUMAGE,proc { |item,pkmn,scene|
     next false
   end
   scene.pbDisplay(_INTL("{1}'s base stats increased by 1!",pkmn.name))
+  pkmn.calcStats
   scene.pbHardRefresh
   next true
 })
