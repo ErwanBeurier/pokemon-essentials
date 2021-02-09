@@ -69,9 +69,9 @@ DYNAMAX_TURNS  = 3     # The number of turns Dynamax lasts before expiring.
 #-------------------------------------------------------------------------------
 # Switch Numbers
 #-------------------------------------------------------------------------------
-NO_Z_MOVE      = 35    # The switch number for disabling Z-Moves.
-NO_ULTRA_BURST = 36    # The switch number for disabling Ultra Burst.
-NO_DYNAMAX     = 37    # The switch number for disabling Dynamax.
+NO_Z_MOVE      = 85    # The switch number for disabling Z-Moves.
+NO_ULTRA_BURST = 86    # The switch number for disabling Ultra Burst.
+NO_DYNAMAX     = 87    # The switch number for disabling Dynamax.
 #-------------------------------------------------------------------------------
 # Item Arrays
 #-------------------------------------------------------------------------------

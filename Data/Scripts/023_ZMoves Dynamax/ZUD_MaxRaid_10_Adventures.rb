@@ -658,6 +658,10 @@ class PBDynAdventure
     return @data[@current_level][@current_room]
   end 
   
+  def isCurrentRoom(room)
+    return room.level == @current_level && room.index == @current_room
+  end
+  
   
   def door(n)
     # Handles the access to door n of the current room. 
@@ -772,6 +776,10 @@ class PBDynAdventureMap
     @sprites["downarrow"].play
     @sprites["downarrow"].visible = false
     
+    @sprites["location"] = Sprite.new(@viewport)
+    @sprites["location"].bitmap = Bitmap.new("Graphics/Pictures/mapPlayer00" + ($Trainer.isFemale? ? "1" : "0"))
+    @sprites["location"].z = 3
+    @sprites["location"].visible = false 
     
     drawTypes
     drawGraph 
@@ -792,6 +800,13 @@ class PBDynAdventureMap
       @sprites[s].x = r_width * (r + 1) + 64 * r
       @sprites[s].y = 55 + l*69 - (room.poke_revealed ? 32 : 14)
       @sprites[s].z = 2
+      
+      if @adventure.isCurrentRoom(room)
+        # Draw the character.
+        @sprites["location"].x = @sprites[s].x + 40
+        @sprites["location"].y = @sprites[s].y + 10
+        @sprites["location"].visible = true 
+      end 
     end 
   end 
   

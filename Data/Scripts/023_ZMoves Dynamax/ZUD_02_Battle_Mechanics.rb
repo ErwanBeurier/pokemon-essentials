@@ -437,6 +437,10 @@ class PokeBattle_Battle
     trainerName = pbGetOwnerName(idxBattler)
     pbDisplay(_INTL("{1} recalled {2}!",trainerName,battler.pbThis(true)))
     battler.effects[PBEffects::Dynamax]     = DYNAMAX_TURNS
+    if isDynAdventure?
+      dyn = pbGetDynAdventure.currentRoom.dynamax_turns rescue nil 
+      battler.effects[PBEffects::Dynamax]   = dyn if dyn
+    end 
     battler.effects[PBEffects::NonGMaxForm] = battler.form
     battler.effects[PBEffects::Encore]      = 0
     battler.effects[PBEffects::Disable]     = 0

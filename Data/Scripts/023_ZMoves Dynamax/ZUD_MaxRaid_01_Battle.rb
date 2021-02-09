@@ -97,7 +97,7 @@ class PokeBattle_Battler
       @effects[PBEffects::Dynamax]       = 6 if @effects[PBEffects::Dynamax]<6
       @effects[PBEffects::Dynamax]       = 26 if @effects[PBEffects::Dynamax]>26
       @effects[PBEffects::ShieldCounter] = 1
-      @effects[PBEffects::ShieldCounter] = 2 if level>35
+      @effects[PBEffects::ShieldCounter] = 2 if level>50
       @effects[PBEffects::KnockOutCount] = MAXRAID_KOS
       @effects[PBEffects::KnockOutCount] = MAXRAID_KOS-1 if level>55
       @effects[PBEffects::KnockOutCount] = 1 if MAXRAID_KOS<1
@@ -239,6 +239,10 @@ class PokeBattle_Battler
           shieldLvl += 1 if b.level>55
           shieldLvl += 1 if b.level>65
           shieldLvl += 1 if b.level>=70 || $game_switches[HARDMODE_RAID]
+          if isDynAdventure?
+            sl = pbGetDynAdventure.currentRoom.shield_level_mod rescue nil 
+            shieldLvl += sl if sl
+          end 
           shieldLvl  = 1 if shieldLvl<=0
           shieldLvl  = 8 if shieldLvl>8
           shields1   = b.hp <= b.totalhp/2            # Activates at 1/2 HP
