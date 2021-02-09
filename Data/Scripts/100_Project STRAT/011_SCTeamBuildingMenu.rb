@@ -1255,7 +1255,6 @@ class SCTeamBuilder
 				@sprites[k].bitmap.height)
 			@sprites[ktt].x = @sprites[k].x
 			@sprites[ktt].y = @sprites[k].y
-		
 		end 
 		
 		

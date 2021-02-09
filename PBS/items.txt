@@ -907,3 +907,4 @@
 2027,SCAQUATICCOAT,Aquatic coat,Aquatic coats,1,2000,"Gives a resistance to Water- and Ice-type moves to the holder, if it is Normal-type.",0,0,0,
 2028,CLIENTDIARY,Diary,Diaries,8,0,"Your diary. Contains the information on your next client.",2,0,6,
 2029,GENERICZCRYSTAL,Generic Z-Crystal,Generic Z-Crystals,1,0,"Item for internal use only.",0,0,0,
+2030,DYNAMAXMAP,Dynamap,Dynamaps,8,0,"Displays the map of your Dynamax adventure.",2,0,6,
