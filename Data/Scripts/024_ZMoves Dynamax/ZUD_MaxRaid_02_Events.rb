@@ -474,6 +474,8 @@ def pbGetMaxRaidSpecies(poke,rank,env)
     if enctype>0 || $PokemonEncounters.pbMapHasEncounter?($game_map.map_id,enctype)
       encounter = $PokemonEncounters.pbMapEncounter($game_map.map_id,enctype)
       poke = encounter[0]
+    # else
+      # poke = PBSpecies::DITTO
     end
   end
   #-----------------------------------------------------------------------------
@@ -2191,12 +2193,18 @@ class RaidDataScene
     formname = pbGetMessage(MessageTypes::FormNames,fSpecies)
     if formname && formname!="" && formname!=PBSpecies.getName(species) &&
        # Species that don't need their base form names displayed.
-       !(species==PBSpecies::CASTFORM ||
-         species==PBSpecies::KELDEO   ||
-         species==PBSpecies::XERNEAS  || 
-         species==PBSpecies::SILVALLY ||
-         species==PBSpecies::SINISTEA ||
-         species==PBSpecies::POLTEAGEIST)
+       !(species==PBSpecies::CASTFORM    ||
+         species==PBSpecies::GIRATINA    ||
+         species==PBSpecies::KELDEO      ||
+         species==PBSpecies::MELOETTA    ||
+         species==PBSpecies::AEGISLASH   ||
+         species==PBSpecies::XERNEAS     ||
+         species==PBSpecies::MIMIKYU     ||
+         species==PBSpecies::SILVALLY    ||
+         species==PBSpecies::SINISTEA    ||
+         species==PBSpecies::POLTEAGEIST ||
+         species==PBSpecies::EISCUE      ||
+         species==PBSpecies::MORPEKO)
       # Species that will randomize forms with each encounter.
       randform = [PBSpecies::UNOWN,
                   PBSpecies::FLABEBE,
@@ -2705,10 +2713,6 @@ end
 # Compatibility with Pokemon Birthsigns' Birthsign Journal.
 #===============================================================================
 class PokemonPokegearScreen
-  def initialize(scene)
-    @scene = scene
-  end
-
   def pbStartScreen
     commands = []
     cmdMap        = -1

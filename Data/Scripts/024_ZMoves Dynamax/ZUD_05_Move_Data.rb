@@ -34,7 +34,8 @@ class PokeBattle_ZMove < PokeBattle_Move
 
   def initialize(battle,move,pbmove)
     super(battle, pbmove)
-    @category   = move.category
+    moveData    = pbGetMoveData(pbmove.id)
+    @category   = (moveData[MOVE_CATEGORY]==2) ? 2 : move.category
     @oldmove    = move
     @oldname    = move.name
     @status     = @oldmove.statusMove?
@@ -42,7 +43,7 @@ class PokeBattle_ZMove < PokeBattle_Move
       @name     = "Z-" + move.name
       @oldmove.name = @name
     end 
-    @baseDamage = pbZMoveBaseDamage(move) if @baseDamage==1
+    @baseDamage = pbZMoveBaseDamage(move) if @baseDamage==1 && @category<2
     @short_name = (@name.length > 15 && SHORTEN_MOVES) ? @name[0..12] + "..." : @name
     @flags = (@flags[/z/] ? @flags : @flags + "z") # Z-Status moves
   end

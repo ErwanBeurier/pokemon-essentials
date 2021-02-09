@@ -312,7 +312,7 @@ class PokeBattle_Battler
         gmaxmove = pbGetGMaxMoveFromSpecies(@pokemon,newtype)
         maxMove  = (gmaxmove && gmaxFactor?) ? gmaxmove : pbGetMaxMove(newtype)
         newMove  = (thismove.statusMove?) ? PBMove.new(:MAXGUARD) : PBMove.new(maxMove)
-        newMove  = PokeBattle_MaxMove.pbFromOldMove(@battle,oldMove,newMove)
+        newMove  = PokeBattle_MaxMove.new(@battle,oldMove,newMove)
         return newMove
       end
     end
@@ -461,7 +461,6 @@ class PokeBattle_Battler
   # Grudge: Lowers PP of base move if Max Move was used. Fails on Z-Moves.
   # Destiny Bond: Effect fails to apply on a Dynamax Pokemon.
   #=============================================================================
-													  
   def pbEffectsOnKO(move,user,target)
     # Grudge
     if target.effects[PBEffects::Grudge] && target.fainted? && !move.zMove?

@@ -446,7 +446,6 @@ class PokeBattle_Battle
     # Alcremie reverts to form 0 only for the duration of Gigantamax.
     battler.pokemon.form = 0 if battler.isSpecies?(:ALCREMIE) && battler.gmaxFactor?
     battler.pokemon.form = 0 if battler.isSpecies?(:CRAMORANT)
-	   
     battler.pokemon.makeDynamax
     text = "Dynamax"
     text = "Gigantamax" if battler.hasGmax? && battler.gmaxFactor?
@@ -623,6 +622,12 @@ class PokeBattle_Battle
   def pbDynamaxTimer
     eachBattler do |b|
       next if b.effects[PBEffects::Dynamax]<=0
+      # Converts any newly-learned moves into Max Moves while Dynamaxed.
+      for m in 0...b.moves.length
+        next if b.moves[m].id==0 || b.moves[m].id==nil
+        next if b.moves[m].maxMove?
+        b.moves[m] = PokeBattle_MaxMove.pbFromOldMove(self,b,b.moves[m])
+      end
       b.effects[PBEffects::Dynamax]-=1
       b.unmax if b.effects[PBEffects::Dynamax]==0
       pbRaidUpdate(b)
