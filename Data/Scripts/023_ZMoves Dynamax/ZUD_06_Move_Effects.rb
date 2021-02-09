@@ -326,7 +326,7 @@ class PokeBattle_MaxMove_Status < PokeBattle_MaxMove
   def pbEffectAgainstTarget(user,target)
     user.eachOpposing do |b|
       randstatus = @statuses[@battle.pbRandom(@statuses.length)]
-      if b.pbCanInflictStatus?(randstatus,b,false)
+      if !b.pbHasAnyStatus? && b.pbCanInflictStatus?(randstatus,b,false)
         b.pbInflictStatus(randstatus)
       end
     end
@@ -730,7 +730,7 @@ class PokeBattle_Move_D016 < PokeBattle_MaxMove
     if @battle.pbRandom(10)<5
       @battle.eachBattler do |b|
         next if b.opposes?(user)
-        next if pbIsBerry?(b.initialItem)
+        next if !pbIsBerry?(b.recycleItem)
         item = b.recycleItem
         b.item = item
         b.setInitialItem(item) if @battle.wildBattle? && b.initialItem==0
@@ -744,7 +744,7 @@ class PokeBattle_Move_D016 < PokeBattle_MaxMove
           @battle.pbDisplay(_INTL("{1} found a {2}!",b.pbThis,itemName))
         end
         user.pbHeldItemTriggerCheck
-      end				 
+      end
     end
   end
 end

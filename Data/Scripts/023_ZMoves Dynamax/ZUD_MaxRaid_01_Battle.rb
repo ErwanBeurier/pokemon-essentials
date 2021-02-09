@@ -355,6 +355,7 @@ class PokeBattle_Battler
   def pbCatchRaidPokemon(target)
     @battle.pbDisplayPaused(_INTL("{1} is weak!\nThrow a Poké Ball now!",target.pbThis))
     pbWait(20)
+    resetWindowSize if defined?(PCV) # Compatibility for Modular Battle Scene
     scene  = PokemonBag_Scene.new
     screen = PokemonBagScreen.new(scene,$PokemonBag)
     ball   = screen.pbChooseItemScreen(Proc.new{|item| pbIsPokeBall?(item) })
