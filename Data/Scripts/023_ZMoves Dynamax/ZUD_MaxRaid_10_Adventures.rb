@@ -1,3 +1,25 @@
+# More installations:
+# In ZUD_02_Battle_Mechanics, in the function: 
+#  def pbDynamax(idxBattler)
+# find the line:
+#    battler.effects[PBEffects::Dynamax]     = DYNAMAX_TURNS
+# and paste this below:
+#    if isDynAdventure?
+#      dyn = pbGetDynAdventure.currentRoom.dynamax_turns rescue nil 
+#      battler.effects[PBEffects::Dynamax]   = dyn if dyn
+#    end 
+# 
+# And in ZUD_MaxRaids_01_Battle, in the function:
+#  def pbProcessRaidEffectsOnHit(move,user,targets,hitNum) # Added to def pbProcessMoveHit
+# find the line:
+#          shieldLvl += 1 if b.level>=70 || $game_switches[HARDMODE_RAID]
+# and paste this below: 
+#          if isDynAdventure?
+#            sl = pbGetDynAdventure.currentRoom.shield_level_mod rescue nil 
+#            shieldLvl += sl if sl
+#          end 
+
+
 # A raid is a random graph of the form:
 #
 #     Boss
