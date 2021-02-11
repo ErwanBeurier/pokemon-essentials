@@ -235,6 +235,8 @@ class PokeBattle_Move_18A < PokeBattle_Move
         ret = getConst(PBTypes,:FAIRY) || ret
       when PBBattleTerrains::Psychic
         ret = getConst(PBTypes,:PSYCHIC) || ret
+      when PBBattleTerrains::Magnetic
+        ret = getConst(PBTypes,:STEEL) || ret
       end
     end
     return ret
@@ -414,6 +416,8 @@ class PokeBattle_Move_195 < PokeBattle_Move
         @battle.pbDisplay(_INTL("The mist disappeared from the battlefield!"))
       when PBBattleTerrains::Psychic
         @battle.pbDisplay(_INTL("The weirdness disappeared from the battlefield!"))
+      when PBBattleTerrains::Magnetic
+        @battle.pbDisplay(_INTL("The magnetism disappeared from the battlefield!"))
     end
     @battle.pbStartTerrain(user,PBBattleTerrains::None,true)
   end

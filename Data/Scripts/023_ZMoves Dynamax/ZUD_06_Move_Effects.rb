@@ -220,6 +220,8 @@ class PokeBattle_Move_Z008 < PokeBattle_ZMove
       @battle.pbDisplay(_INTL("The mist disappeared from the battlefield!"))
     when PBBattleTerrains::Psychic
       @battle.pbDisplay(_INTL("The weirdness disappeared from the battlefield!"))
+    when PBBattleTerrains::Magnetic
+      @battle.pbDisplay(_INTL("The magnetism disappeared from the battlefield!"))
     end
     @battle.pbStartTerrain(user,PBBattleTerrains::None,true)
   end
@@ -634,6 +636,8 @@ class PokeBattle_Move_D012 < PokeBattle_MaxMove
         @battle.pbDisplay(_INTL("The mist disappeared from the battlefield!"))
       when PBBattleTerrains::Psychic
         @battle.pbDisplay(_INTL("The weirdness disappeared from the battlefield!"))
+      when PBBattleTerrains::Magnetic
+        @battle.pbDisplay(_INTL("The magnetism disappeared from the battlefield!"))
     end
     @battle.pbStartTerrain(user,PBBattleTerrains::None,true)
     case @battle.pbWeather

@@ -877,3 +877,4 @@
 2019,GHOSTGALLOP,Ghost gallop,01F,75,GHOST,Physical,100,5,0,NearOther,0,abe,"The user ploughs into the target. Also boosts the speed of the user."
 2020,KINDLING,Kindling,02C,0,FIRE,Status,0,20,0,User,0,dg,"The user's inner fire grows. Raises Sp. Atk and Sp. Def stats."
 2021,FASTSWOOP,Fast Swoop,000,40,FLYING,Physical,100,30,0,NearOther,1,abef,"The user swoops down on the target like a bird of prey. Strikes first."
+2022,MAGNETICTERRAIN,Magnetic Terrain,C001,0,STEEL,Status,0,10,0,BothSides,0,,"Steel- and Electric-types Pokémon levitate using electrically generated magnetism for five turns."

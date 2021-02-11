@@ -346,6 +346,8 @@ class PokeBattle_Battle
       pbDisplay(_INTL("Mist swirls about the battlefield!"))
     when PBBattleTerrains::Psychic
       pbDisplay(_INTL("The battlefield is weird!"))
+    when PBBattleTerrains::Magnetic
+      pbDisplay(_INTL("The battlefield got magnetic!"))
     end
     # Abilities upon entering battle
     pbOnActiveAll

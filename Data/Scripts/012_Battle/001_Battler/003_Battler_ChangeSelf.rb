@@ -259,6 +259,7 @@ class PokeBattle_Battler
       when PBBattleTerrains::Grassy;     newTypes = [getID(PBTypes,:GRASS)]
       when PBBattleTerrains::Misty;      newTypes = [getID(PBTypes,:FAIRY)]
       when PBBattleTerrains::Psychic;    newTypes = [getID(PBTypes,:PSYCHIC)]
+      when PBBattleTerrains::Magnetic;   newTypes = [getID(PBTypes,:STEEL)]
       else;                              newTypes = originalTypes.dup
       end
       if self.pbTypes!=newTypes

@@ -898,6 +898,8 @@ class PokeBattle_Move_0A4 < PokeBattle_Move
       @secretPower = 3   # Fairy Wind, lower Sp. Atk by 1
     when PBBattleTerrains::Psychic
       @secretPower = 4   # Confusion, lower Speed by 1
+    when PBBattleTerrains::Magnetic
+      @secretPower = 15   # Mirror Shot, lower Sp. Def by 1
     else
       case @battle.environment
       when PBEnvironment::Grass, PBEnvironment::TallGrass,
@@ -968,6 +970,10 @@ class PokeBattle_Move_0A4 < PokeBattle_Move
       end
     when 7, 11, 13
       target.pbFlinch(user)
+    when 15
+      if target.pbCanLowerStatStage?(PBStats::SPDEF,user,self)
+        target.pbLowerStatStage(PBStats::SPDEF,1,user)
+      end
     end
   end
 
@@ -988,6 +994,7 @@ class PokeBattle_Move_0A4 < PokeBattle_Move
     when 12; id = getConst(PBMoves,:GUST) || id
     when 13; id = getConst(PBMoves,:SWIFT) || id
     when 14; id = getConst(PBMoves,:PSYWAVE) || id
+    when 15; id = getConst(PBMoves,:MIRRORSHOT) || id
     end
     super
   end
@@ -1343,6 +1350,8 @@ class PokeBattle_Move_0B3 < PokeBattle_Move
       @npMove = getConst(PBMoves,:MOONBLAST) || @npMove
     when PBBattleTerrains::Psychic
       @npMove = getConst(PBMoves,:PSYCHIC) || @npMove
+    when PBBattleTerrains::Magnetic
+      @npMove = getConst(PBMoves,:FLASHCANNON) || @npMove
     else
       case @battle.environment
       when PBEnvironment::Grass, PBEnvironment::TallGrass,

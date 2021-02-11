@@ -123,6 +123,8 @@ class PokeBattle_Battle
         pbDisplay(_INTL("The mist disappeared from the battlefield!"))
       when PBBattleTerrains::Psychic
         pbDisplay(_INTL("The weirdness disappeared from the battlefield!"))
+      when PBBattleTerrains::Magnetic
+        pbDisplay(_INTL("The magnetism disappeared from the battlefield!"))
       end
       @field.terrain = PBBattleTerrains::None
       # Start up the default terrain
@@ -136,6 +138,7 @@ class PokeBattle_Battle
     when PBBattleTerrains::Grassy;   pbDisplay(_INTL("Grass is covering the battlefield."))
     when PBBattleTerrains::Misty;    pbDisplay(_INTL("Mist is swirling about the battlefield."))
     when PBBattleTerrains::Psychic;  pbDisplay(_INTL("The battlefield is weird."))
+    when PBBattleTerrains::Magnetic; pbDisplay(_INTL("The battlefield is magnetic."))
     end
   end
 

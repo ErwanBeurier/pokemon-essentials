@@ -1375,6 +1375,8 @@ class PokeBattle_Move_049 < PokeBattle_TargetStatDownMove
         @battle.pbDisplay(_INTL("The mist disappeared from the battlefield!"))
       when PBBattleTerrains::Psychic
         @battle.pbDisplay(_INTL("The weirdness disappeared from the battlefield!"))
+      when PBBattleTerrains::Magnetic
+        @battle.pbDisplay(_INTL("The magnetism disappeared from the battlefield!"))
     end
     @battle.pbStartTerrain(user,PBBattleTerrains::None,true)
     case @battle.pbWeather
@@ -1916,6 +1918,10 @@ class PokeBattle_Move_060 < PokeBattle_Move
     when PBBattleTerrains::Psychic
       if hasConst?(PBTypes,:PSYCHIC)
         @newType = getID(PBTypes,:PSYCHIC); checkedTerrain = true
+      end
+    when PBBattleTerrains::Magnetic
+      if hasConst?(PBTypes,:STEEL)
+        @newType = getID(PBTypes,:STEEL); checkedTerrain = true
       end
     end
     if !checkedTerrain

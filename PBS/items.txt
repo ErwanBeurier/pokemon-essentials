@@ -908,3 +908,4 @@
 2028,CLIENTDIARY,Diary,Diaries,8,0,"Your diary. Contains the information on your next client.",2,0,6,
 2029,GENERICZCRYSTAL,Generic Z-Crystal,Generic Z-Crystals,1,0,"Item for internal use only.",0,0,0,
 2030,DYNAMAXMAP,Dynamap,Dynamaps,8,0,"Displays the map of your Dynamax adventure.",2,0,6,
+2031,MAGNETICSEED,Magnetic Seed,Magnetic Seeds,1,4000,"An item to be held by a Pokémon. It boosts Sp. Def. on Magnetic Terrain. It can only be used once.",0,0,0,

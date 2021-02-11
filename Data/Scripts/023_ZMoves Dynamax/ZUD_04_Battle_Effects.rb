@@ -214,6 +214,7 @@ class PokeBattle_Battler
         when PBBattleTerrains::Grassy;              newtype = :GRASS
         when PBBattleTerrains::Misty;               newtype = :FAIRY
         when PBBattleTerrains::Psychic;             newtype = :PSYCHIC
+        when PBBattleTerrains::Magnetic;            newtype = :STEEL
         end
       #-------------------------------------------------------------------------
       # Base move is Revelation Dance.

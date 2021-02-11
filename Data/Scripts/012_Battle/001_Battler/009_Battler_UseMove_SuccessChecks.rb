@@ -490,6 +490,10 @@ class PokeBattle_Battler
         @battle.pbDisplay(_INTL("{1} makes Ground moves miss with Telekinesis!",target.pbThis))
         return false
       end
+      if @battle.field.terrain==PBBattleTerrains::Magnetic && (target.pbHasType?(:ELECTRIC) || target.pbHasType?(:STEEL))
+        @battle.pbDisplay(_INTL("The Magnetic Terrain makes {1} levitate!",target.pbThis))
+        return false
+      end
     end
     # Immunity to powder-based moves
     if NEWEST_BATTLE_MECHANICS && move.powderMove?

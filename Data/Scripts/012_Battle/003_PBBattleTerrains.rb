@@ -6,6 +6,7 @@ begin
     Grassy   = 2
     Misty    = 3
     Psychic  = 4
+    Magnetic = 5
 
     def self.animationName(terrain)
       case terrain
@@ -13,6 +14,7 @@ begin
       when Grassy;   return "GrassyTerrain"
       when Misty;    return "MistyTerrain"
       when Psychic;  return "PsychicTerrain"
+      when Magnetic;  return "MagneticTerrain"
       end
       return nil
     end

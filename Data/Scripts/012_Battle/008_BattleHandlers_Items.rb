@@ -1492,6 +1492,16 @@ BattleHandlers::TerrainStatBoostItem.add(:PSYCHICSEED,
   }
 )
 
+BattleHandlers::TerrainStatBoostItem.add(:MAGNETICSEED,
+  proc { |item,battler,battle|
+    next false if battle.field.terrain!=PBBattleTerrains::Magnetic
+    next false if !battler.pbCanRaiseStatStage?(PBStats::SPDEF,battler)
+    itemName = PBItems.getName(item)
+    battle.pbCommonAnimation("UseItem",battler)
+    next battler.pbRaiseStatStageByCause(PBStats::SPDEF,1,battler,itemName)
+  }
+)
+
 #===============================================================================
 # EORHealingItem handlers
 #===============================================================================

@@ -734,6 +734,8 @@ class PokeBattle_Battle
       pbDisplay(_INTL("Mist swirled about the battlefield!"))
     when PBBattleTerrains::Psychic
       pbDisplay(_INTL("The battlefield got weird!"))
+    when PBBattleTerrains::Magnetic
+      pbDisplay(_INTL("The battlefield got magnetic!"))
     end
     pbCalculatePriority(true) if DYNAMIC_PRIORITY
     # Check for terrain seeds that boost stats in a terrain
