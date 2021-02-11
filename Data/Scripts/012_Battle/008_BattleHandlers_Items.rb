@@ -1438,6 +1438,12 @@ BattleHandlers::WeatherExtenderItem.add(:SMOOTHROCK,
   }
 )
 
+BattleHandlers::WeatherExtenderItem.add(:WINDYROCK,
+  proc { |item,weather,duration,battler,battle|
+    next 8 if weather==PBWeather::Tempest
+  }
+)
+
 #===============================================================================
 # TerrainExtenderItem handlers
 #===============================================================================

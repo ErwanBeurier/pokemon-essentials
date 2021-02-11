@@ -204,6 +204,7 @@ class PokeBattle_Battler
         when PBWeather::Rain, PBWeather::HeavyRain; newtype = :WATER
         when PBWeather::Sandstorm;                  newtype = :ROCK
         when PBWeather::Hail;                       newtype = :ICE
+        when PBWeather::Tempest, PBWeather::StrongWinds; newtype = :FLYING
         end
       #-------------------------------------------------------------------------
       # Terrain is in play and base move is Terrain Pulse.

@@ -139,6 +139,8 @@ class PokeBattle_Move_008 < PokeBattle_ParalysisMove
 	  return 50
 	when PBWeather::Rain, PBWeather::HeavyRain
 	  return 0
+	when PBWeather::Tempest
+	  return 0
 	end
     return super
   end
@@ -206,6 +208,7 @@ end
 class PokeBattle_Move_00D < PokeBattle_FreezeMove
   def pbBaseAccuracy(user,target)
     return 0 if @battle.pbWeather==PBWeather::Hail
+    return 0 if @battle.pbWeather==PBWeather::Tempest
     return super
   end
 end
@@ -331,6 +334,8 @@ class PokeBattle_Move_015 < PokeBattle_ConfuseMove
 	  when PBWeather::Sun, PBWeather::HarshSun
       return 50
 	  when PBWeather::Rain, PBWeather::HeavyRain
+	    return 0
+	  when PBWeather::Tempest
 	    return 0
 	  end
     return super

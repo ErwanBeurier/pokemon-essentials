@@ -125,6 +125,8 @@ class PokeBattle_Move_087 < PokeBattle_Move
       ret = getConst(PBTypes,:ROCK) || ret
     when PBWeather::Hail
       ret = getConst(PBTypes,:ICE) || ret
+    when PBWeather::Tempest, PBWeather::StrongWinds
+      ret = getConst(PBTypes,:FLYING) || ret
     end
     if user.hasUtilityUmbrella? && (ret == getConst(PBTypes,:FIRE) || ret == getConst(PBTypes,:WATER))
       ret = getID(PBTypes,:NORMAL)
@@ -2600,7 +2602,7 @@ class PokeBattle_Move_0D8 < PokeBattle_HealingMove
       else
         @healAmount = (user.totalhp/2.0).round
       end
-    when PBWeather::None, PBWeather::StrongWinds
+    when PBWeather::None, PBWeather::StrongWinds, PBWeather::Tempest
       @healAmount = (user.totalhp/2.0).round
     else
       @healAmount = (user.totalhp/4.0).round

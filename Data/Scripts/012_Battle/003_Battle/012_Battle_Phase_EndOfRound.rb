@@ -48,6 +48,8 @@ class PokeBattle_Battle
         pbDisplay(_INTL("The sandstorm subsided."))
       when PBWeather::Hail
         pbDisplay(_INTL("The hail stopped."))
+      when PBWeather::Tempest
+        pbDisplay(_INTL("The tempest subsided."))
       when PBWeather::ShadowSky
         pbDisplay(_INTL("The shadow sky faded."))
       end
@@ -67,7 +69,8 @@ class PokeBattle_Battle
     when PBWeather::Hail;        pbDisplay(_INTL("The hail is crashing down."))
 #    when PBWeather::HarshSun;    pbDisplay(_INTL("The sunlight is extremely harsh."))
 #    when PBWeather::HeavyRain;   pbDisplay(_INTL("It is raining heavily."))
-#    when PBWeather::StrongWinds; pbDisplay(_INTL("The wind is strong."))
+   # when PBWeather::StrongWinds; pbDisplay(_INTL("The wind is strong."))
+   when PBWeather::Tempest;       pbTempestRemoveHazards(priority)
     when PBWeather::ShadowSky;   pbDisplay(_INTL("The shadow sky continues."));
     end
     # Effects due to weather
@@ -102,10 +105,64 @@ class PokeBattle_Battle
         b.pbReduceHP(b.totalhp/16,false)
         b.pbItemHPHealCheck
         b.pbFaint if b.fainted?
+      when PBWeather::Tempest
+        next if !b.takesTempestDamage?
+        pbDisplay(_INTL("{1} is hurt by the tempest!",b.pbThis))
+        @scene.pbDamageAnimation(b)
+        b.pbReduceHP(b.totalhp/16,false)
+        b.pbItemHPHealCheck
+        b.pbFaint if b.fainted?
       end
     end
   end
-
+  
+  
+  def pbTempestRemoveHazards(priority)
+    return if pbWeather != PBWeather::Tempest
+    pbDisplay(_INTL("The tempest is blowing."))
+    
+    priority.each do |b|
+      if b.pbOwnSide.effects[PBEffects::AuroraVeil]>0
+        b.pbOwnSide.effects[PBEffects::AuroraVeil] = 0
+        @battle.pbDisplay(_INTL("{1}'s Aurora Veil wore off!",b.pbTeam))
+      end
+      if b.pbOwnSide.effects[PBEffects::LightScreen]>0
+        b.pbOwnSide.effects[PBEffects::LightScreen] = 0
+        @battle.pbDisplay(_INTL("{1}'s Light Screen wore off!",b.pbTeam))
+      end
+      if b.pbOwnSide.effects[PBEffects::Reflect]>0
+        b.pbOwnSide.effects[PBEffects::Reflect] = 0
+        @battle.pbDisplay(_INTL("{1}'s Reflect wore off!",b.pbTeam))
+      end
+      if b.pbOwnSide.effects[PBEffects::Mist]>0
+        b.pbOwnSide.effects[PBEffects::Mist] = 0
+        @battle.pbDisplay(_INTL("{1}'s Mist faded!",b.pbTeam))
+      end
+      if b.pbOwnSide.effects[PBEffects::Safeguard]>0
+        b.pbOwnSide.effects[PBEffects::Safeguard] = 0
+        @battle.pbDisplay(_INTL("{1} is no longer protected by Safeguard!!",b.pbTeam))
+      end
+      if b.pbOwnSide.effects[PBEffects::StealthRock]
+        b.pbOwnSide.effects[PBEffects::StealthRock] = false
+        @battle.pbDisplay(_INTL("The tempest blew away the stealth rocks!"))
+      end
+      if b.pbOwnSide.effects[PBEffects::Spikes]>0
+        b.pbOwnSide.effects[PBEffects::Spikes] = 0
+        @battle.pbDisplay(_INTL("The tempest blew away spikes!"))
+      end
+      if b.pbOwnSide.effects[PBEffects::ToxicSpikes]>0
+        b.pbOwnSide.effects[PBEffects::ToxicSpikes] = 0
+        @battle.pbDisplay(_INTL("The tempest blew away poison spikes!"))
+      end
+      if b.pbOwnSide.effects[PBEffects::StickyWeb]
+        b.pbOwnSide.effects[PBEffects::StickyWeb]      = false
+        b.pbOwnSide.effects[PBEffects::StickyWebUser]  = -1
+        @battle.pbDisplay(_INTL("The tempest blew away sticky webs!"))
+      end
+    end 
+  end 
+  
+  
   #=============================================================================
   # End Of Round terrain
   #=============================================================================

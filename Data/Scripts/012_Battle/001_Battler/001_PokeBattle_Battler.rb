@@ -554,6 +554,14 @@ class PokeBattle_Battler
     return true
   end
 
+  def takesTempestDamage?
+    return false if !takesIndirectDamage?
+    return false if inTwoTurnAttack?("0CA","0CB")   # Dig, Dive
+    return false if hasActiveItem?(:SAFETYGOGGLES)
+    return false if hasActiveAbility?([:OVERCOAT])
+    return true
+  end
+
   def affectedByPowder?(showMsg=false)
     return false if fainted?
     return true if !NEWEST_BATTLE_MECHANICS

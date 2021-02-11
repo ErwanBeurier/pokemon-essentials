@@ -15,3 +15,15 @@ class PokeBattle_Move_C001 < PokeBattle_Move
     @battle.pbStartTerrain(user,PBBattleTerrains::Magnetic)
   end
 end
+
+
+
+#===============================================================================
+# Starts tempest weather. (Autumn Tempest)
+#===============================================================================
+class PokeBattle_Move_C002 < PokeBattle_WeatherMove
+  def initialize(battle,move)
+    super
+    @weatherType = PBWeather::Tempest
+  end
+end

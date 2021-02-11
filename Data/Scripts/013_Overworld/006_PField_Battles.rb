@@ -124,7 +124,9 @@ def pbPrepareBattle(battle)
   # Weather
   if battleRules["defaultWeather"].nil?
     case $game_screen.weather_type
-    when PBFieldWeather::Rain, PBFieldWeather::HeavyRain, PBFieldWeather::Storm
+    when PBFieldWeather::Storm
+      battle.defaultWeather = PBWeather::Tempest
+    when PBFieldWeather::Rain, PBFieldWeather::HeavyRain
       battle.defaultWeather = PBWeather::Rain
     when PBFieldWeather::Snow, PBFieldWeather::Blizzard
       battle.defaultWeather = PBWeather::Hail

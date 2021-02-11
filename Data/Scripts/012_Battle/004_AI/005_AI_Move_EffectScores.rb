@@ -1904,7 +1904,7 @@ class PokeBattle_AI
         case @battle.pbWeather
         when PBWeather::Sun, PBWeather::HarshSun
           score += 30
-        when PBWeather::None
+        when PBWeather::None, PBWeather::StrongWinds, PBWeather::Tempest
         else
           score -= 30
         end
@@ -3086,6 +3086,37 @@ class PokeBattle_AI
     when "175"
       score += 30 if target.effects[PBEffects::Minimize]
     #---------------------------------------------------------------------------
+    when "C002"
+      if @battle.pbCheckGlobalAbility(:AIRLOCK) ||
+         @battle.pbCheckGlobalAbility(:CLOUDNINE)
+        score -= 90
+      elsif @battle.pbWeather==PBWeather::Tempest
+        score -= 90
+      else
+        # Remove anything that helps the opponent
+        score += 30 if target.pbOwnSide.effects[PBEffects::AuroraVeil]>0 ||
+                       target.pbOwnSide.effects[PBEffects::Reflect]>0 ||
+                       target.pbOwnSide.effects[PBEffects::LightScreen]>0 ||
+                       target.pbOwnSide.effects[PBEffects::Mist]>0 ||
+                       target.pbOwnSide.effects[PBEffects::Safeguard]>0
+        score += 30 if user.pbOwnSide.effects[PBEffects::Spikes]>0 ||
+                       user.pbOwnSide.effects[PBEffects::ToxicSpikes]>0 ||
+                       user.pbOwnSide.effects[PBEffects::StealthRock] || 
+                       user.pbOwnSide.effects[PBEffects::StickyWeb] || 
+                       user.pbOwnSide.effects[PBEffects::Steelsurge]
+        # Do not remmove anything that helps the user.
+        score -= 30 if user.pbOwnSide.effects[PBEffects::AuroraVeil]>0 ||
+                       user.pbOwnSide.effects[PBEffects::Reflect]>0 ||
+                       user.pbOwnSide.effects[PBEffects::LightScreen]>0 ||
+                       user.pbOwnSide.effects[PBEffects::Mist]>0 ||
+                       user.pbOwnSide.effects[PBEffects::Safeguard]>0
+        score -= 30 if target.pbOwnSide.effects[PBEffects::Spikes]>0 ||
+                       target.pbOwnSide.effects[PBEffects::ToxicSpikes]>0 ||
+                       target.pbOwnSide.effects[PBEffects::StealthRock] || 
+                       target.pbOwnSide.effects[PBEffects::StickyWeb] ||
+                       target.pbOwnSide.effects[PBEffects::Steelsurge]
+      end
+
     end
     return score
   end

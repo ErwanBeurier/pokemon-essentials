@@ -672,6 +672,7 @@ class PokeBattle_Battle
     when PBWeather::StrongWinds; pbDisplay(_INTL("Mysterious strong winds are protecting Flying-type Pokémon!"))
     when PBWeather::ShadowSky;   pbDisplay(_INTL("A shadow sky appeared!"))
     when PBWeather::Fog;         pbDisplay(_INTL("The fog is deep..."))
+    when PBWeather::Tempest;     pbDisplay(_INTL("A tempest started blowing!"))
     end
     # Check for end of primordial weather, and weather-triggered form changes
     eachBattler { |b| b.pbCheckFormOnWeatherChange }

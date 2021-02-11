@@ -179,6 +179,8 @@ class PokeBattle_Battler
           newForm = 2
         when PBWeather::Hail
           newForm = 3
+        when PBWeather::Tempest, PBWeather::StrongWinds
+          newForm = 4
         end
         if @form!=newForm
           @battle.pbShowAbilitySplash(self,true)
