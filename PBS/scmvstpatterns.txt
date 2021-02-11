@@ -72,7 +72,7 @@
 71,SLOWSPECIALSETUP,"Slow Special Set-Up"
 72,ZMOVEFASTPHYSOFF,"Z-Move Fast Phys. Off."
 73,ZMOVESLOWPHYSOFF,"Z-Move Slow Phys. Off."
-74,ZMOVESLOWSPEOFF,"Z-Move Slow Spe. Off."
+74,ZMOVEFASTSPEOFF,"Z-Move Fast Spe. Off."
 75,ZMOVESLOWSPEOFF,"Z-Move Slow Spe. Off."
 76,ZBELLYDRUM,"Z-Belly Drum"
 77,ZBELLYDRUM,"Z-Belly Drum"

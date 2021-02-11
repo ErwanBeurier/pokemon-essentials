@@ -386,6 +386,8 @@ class PokeBattle_Battle
     end
     # Update battlers' participants (who will gain Exp/EVs when a battler faints)
     eachBattler { |b| b.pbUpdateParticipants }
+    # Carboniferous
+    pbActivateCarboniferous(battler)
     # Healing Wish / Lunar Dance / Z-Memento / Z-Parting Shot 
     pbActivateHealingWish(battler)
     # Entry hazards

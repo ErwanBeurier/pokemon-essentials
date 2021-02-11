@@ -188,6 +188,7 @@ begin
     WaterSportField = 11
     WonderRoom      = 12
     NeutralizingGas = 13
+    Carboniferous   = 14
   end
 
 rescue Exception

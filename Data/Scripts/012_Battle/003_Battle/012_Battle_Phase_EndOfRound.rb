@@ -628,6 +628,9 @@ class PokeBattle_Battle
     # Magic Room
     pbEORCountDownFieldEffect(PBEffects::MagicRoom,
        _INTL("Magic Room wore off, and held items' effects returned to normal!"))
+    # Carboniferous
+    pbEORCountDownFieldEffect(PBEffects::Carboniferous,
+       _INTL("Carboniferous ended, Bug-type Pokémon returned to their normal strength!"))
     # End of terrains
     pbEORTerrain
     priority.each do |b|

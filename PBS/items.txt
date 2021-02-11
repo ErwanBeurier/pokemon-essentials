@@ -877,6 +877,8 @@
 1045,MAXSCALES,Max Scales,,2,4000,"Reflective scales that act like a mirror. Pokémon are able to recall a past move when gazing into them.",1,0,0,
 1046,MAXPLUMAGE,Max Plumage,Max Plumages,2,4000,"A bundle of six distinctly colored feathers. Increases each base stat of a Pokémon by 1 point.",1,0,0,
 #-------------------------------
+# New items in STRAT. 
+#-------------------------------
 2000,SCNORMALMAXER,Normal Maxer,Normal Maxers,1,1000,"An item to be held by a Normal-type Pokémon. It boosts the power of all moves.",0,0,0,
 2001,SCNORMALCRYSTAL,Normal eff. crystal,Normal eff. crystals,1,2000,"If held by a Normal-type Pokémon, makes Normal moves effective against Normal-type Pokémons.",0,0,0,
 2002,SCELECTRICCRYSTAL,Electric eff. crystal,Electric eff. crystals,1,2000,"If held by a Normal-type Pokémon, makes Normal moves effective against Electric-type Pokémons.",0,0,0,

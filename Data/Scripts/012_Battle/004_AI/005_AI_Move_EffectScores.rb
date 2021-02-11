@@ -3116,7 +3116,25 @@ class PokeBattle_AI
                        target.pbOwnSide.effects[PBEffects::StickyWeb] ||
                        target.pbOwnSide.effects[PBEffects::Steelsurge]
       end
-
+    #---------------------------------------------------------------------------
+    when "C003" # Carboniferous
+      if @battle.field.effects[PBEffects::Carboniferous]>0
+        score -= 90
+        
+      elsif skill>=PBTrainerAI.mediumSkill
+        score += 40 if user.pbHasType?(:BUG)
+        score -= 40 if target.pbHasType?(:BUG)
+        
+      elsif skill>=PBTrainerAI.highSkill
+        @battle.eachInTeamFromBattlerIndex(user) { |pkmn, i|
+          next if !pkmn.able?
+          score += 20 if pkmn.type1 == PBTypes::BUG || pkmn.type2 == PBTypes::BUG
+        }
+        @battle.eachInTeamFromBattlerIndex(target) { |pkmn, i|
+          next if !pkmn.able?
+          score -= 20 if pkmn.type1 == PBTypes::BUG || pkmn.type2 == PBTypes::BUG
+        }
+      end
     end
     return score
   end
