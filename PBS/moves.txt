@@ -880,3 +880,5 @@
 2022,MAGNETICTERRAIN,Magnetic Terrain,C001,0,STEEL,Status,0,10,0,BothSides,0,,"Steel- and Electric-types Pokémon levitate using electrically generated magnetism for five turns."
 2023,AUTUMNTEMPEST,Autumn Tempest,C002,0,FLYING,Status,0,5,0,BothSides,0,,"The user summons a tempest that lasts five turns, blowing away hazards and screens."
 2024,CARBONIFEROUS,Carboniferous,C003,0,PSYCHIC,Status,0,5,0,BothSides,0,,"The battlefield regresses back to Carboniferous, reinforcing any Bug-type Pokémon for five turns."
+2025,WARMANDALA,War Mandala,C004,0,NORMAL,Status,0,5,0,UserSide,0,d,"The user paints a mandala at its feet. Raises the Attack of Pokémon that switch in. "
+2026,MINDMANDALA,Mind Mandala,C005,0,NORMAL,Status,0,5,0,UserSide,0,d,"The user paints a mandala at its feet. Raises the Sp. Atk of Pokémon that switch in. "

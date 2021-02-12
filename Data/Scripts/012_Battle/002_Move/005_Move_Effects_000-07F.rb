@@ -1304,7 +1304,9 @@ class PokeBattle_Move_049 < PokeBattle_TargetStatDownMove
                     targetSide.effects[PBEffects::LightScreen]>0 ||
                     targetSide.effects[PBEffects::Reflect]>0 ||
                     targetSide.effects[PBEffects::Mist]>0 ||
-                    targetSide.effects[PBEffects::Safeguard]>0
+                    targetSide.effects[PBEffects::Safeguard]>0 || 
+                    targetSide.effects[PBEffects::WarMandala]>0 || 
+                    targetSide.effects[PBEffects::MindMandala]>0
     return false if targetSide.effects[PBEffects::StealthRock] ||
                     targetSide.effects[PBEffects::Spikes]>0 ||
                     targetSide.effects[PBEffects::ToxicSpikes]>0 ||
@@ -1339,7 +1341,15 @@ class PokeBattle_Move_049 < PokeBattle_TargetStatDownMove
     end
     if target.pbOwnSide.effects[PBEffects::Safeguard]>0
       target.pbOwnSide.effects[PBEffects::Safeguard] = 0
-      @battle.pbDisplay(_INTL("{1} is no longer protected by Safeguard!!",target.pbTeam))
+      @battle.pbDisplay(_INTL("{1} is no longer protected by Safeguard!",target.pbTeam))
+    end
+    if target.pbOwnSide.effects[PBEffects::WarMandala]>0
+      target.pbOwnSide.effects[PBEffects::WarMandala] = 0
+      @battle.pbDisplay(_INTL("{1}'s War Mandala disappeared!",target.pbTeam))
+    end
+    if target.pbOwnSide.effects[PBEffects::MindMandala]>0
+      target.pbOwnSide.effects[PBEffects::MindMandala] = 0
+      @battle.pbDisplay(_INTL("{1}'s Mind Mandala disappeared!",target.pbTeam))
     end
     if target.pbOwnSide.effects[PBEffects::StealthRock] ||
        (NEWEST_BATTLE_MECHANICS &&

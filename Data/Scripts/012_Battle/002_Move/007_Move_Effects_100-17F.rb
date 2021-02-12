@@ -2728,7 +2728,9 @@ class PokeBattle_Move_17A < PokeBattle_Move
               sides[i].effects[PBEffects::Spikes]==0 &&
              !sides[i].effects[PBEffects::StickyWeb] &&
               sides[i].effects[PBEffects::ToxicSpikes]==0 &&
-              sides[i].effects[PBEffects::Tailwind]==0
+              sides[i].effects[PBEffects::Tailwind]==0 &&
+              sides[i].effects[PBEffects::WarMandala]==0 &&
+              sides[i].effects[PBEffects::MindMandala]==0
       changeside=true
     end
     if !changeside
@@ -2788,6 +2790,14 @@ class PokeBattle_Move_17A < PokeBattle_Move
       tailwind=ownside.effects[PBEffects::Tailwind]
       ownside.effects[PBEffects::Tailwind]=oppside.effects[PBEffects::Tailwind]
       oppside.effects[PBEffects::Tailwind]=tailwind
+    # War Mandala
+      warmandala=ownside.effects[PBEffects::WarMandala]
+      ownside.effects[PBEffects::WarMandala]=oppside.effects[PBEffects::WarMandala]
+      oppside.effects[PBEffects::WarMandala]=warmandala
+	  # Mind Mandala
+      mindmandala=ownside.effects[PBEffects::MindMandala]
+      ownside.effects[PBEffects::MindMandala]=oppside.effects[PBEffects::MindMandala]
+      oppside.effects[PBEffects::MindMandala]=mindmandala
       @battle.pbDisplay(_INTL("{1} swapped the battle effects affecting each side of the field!",user.pbThis))
       return 0
     end

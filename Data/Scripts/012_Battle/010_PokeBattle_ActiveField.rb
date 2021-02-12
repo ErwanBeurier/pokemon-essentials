@@ -63,6 +63,8 @@ begin
       @effects[PBEffects::ToxicSpikes]        = 0
       @effects[PBEffects::WideGuard]          = false
       @effects[PBEffects::StickyWebUser]      = -1 
+      @effects[PBEffects::WarMandala]         = 0
+      @effects[PBEffects::MindMandala]        = 0
     end
   end
 

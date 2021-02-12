@@ -627,6 +627,14 @@ class PokeBattle_Move_D012 < PokeBattle_MaxMove
       target.pbOpposingSide.effects[PBEffects::Steelsurge] = false if NEWEST_BATTLE_MECHANICS
       @battle.pbDisplay(_INTL("{1} blew away the pointed steel!",user.pbThis))
     end
+    if target.pbOwnSide.effects[PBEffects::WarMandala]>0
+      target.pbOwnSide.effects[PBEffects::WarMandala] = 0
+      @battle.pbDisplay(_INTL("{1}'s War Mandala was blown away!",target.pbTeam))
+    end
+    if target.pbOwnSide.effects[PBEffects::MindMandala]>0
+      target.pbOwnSide.effects[PBEffects::MindMandala] = 0
+      @battle.pbDisplay(_INTL("{1}'s Mind Mandala was blown away!",target.pbTeam))
+    end
     case @battle.field.terrain
       when PBBattleTerrains::Electric
         @battle.pbDisplay(_INTL("The electric current disappeared from the battlefield!"))

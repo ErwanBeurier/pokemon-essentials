@@ -170,6 +170,8 @@ begin
     ToxicSpikes        = 20
     WideGuard          = 21
     StickyWebUser      = 22 
+    WarMandala         = 23
+    MindMandala        = 24 
     
     #===========================================================================
     # These effects apply to the battle (i.e. both sides)

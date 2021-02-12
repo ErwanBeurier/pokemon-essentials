@@ -44,13 +44,13 @@ class PokeBattle_Move_C003 < PokeBattle_Move
   def pbEffectGeneral(user)
     @battle.field.effects[PBEffects::Carboniferous] = 5
     @battle.pbDisplay(_INTL("The battlefield regresses to an ancient time!"))
-    @battle.pbActivateCarboniferous
+    @battle.scActivateCarboniferous
   end
 end
 
 
 class PokeBattle_Battle
-  def pbActivateCarboniferous(idxBattler = nil)
+  def scActivateCarboniferous(idxBattler = nil)
     # if idxBattler = nil, try to boost all battlers on the field. 
     return if @field.effects[PBEffects::Carboniferous] <= 0
     
@@ -73,6 +73,77 @@ class PokeBattle_Battle
       end
     end
     pbDisplay(_INTL("Bug-type Pokémon are stronger in Carboniferous!")) if showMessage
+  end 
+end 
+
+
+#===============================================================================
+# Sets a mandala at the feet of the user. Raises the attack of Pokémon that 
+# enter the terrain. Activates three times. (War Mandala)
+#===============================================================================
+class PokeBattle_Move_C004 < PokeBattle_Move
+  def pbMoveFailed?(user,targets)
+    if user.pbOwnSide.effects[PBEffects::WarMandala]>0
+      @battle.pbDisplay(_INTL("But it failed!"))
+      return true
+    end
+    return false
+  end
+
+  def pbEffectGeneral(user)
+    user.pbOwnSide.effects[PBEffects::WarMandala] = 3
+    @battle.pbDisplay(_INTL("{1} painted a War Mandala!",user.pbThis))
+  end
+end
+
+
+#===============================================================================
+# Sets a mandala at the feet of the user. Raises the Sp. Atk of Pokémon that 
+# enter the terrain. Activates three times. (Mind Mandala)
+#===============================================================================
+class PokeBattle_Move_C005 < PokeBattle_Move
+  def pbMoveFailed?(user,targets)
+    if user.pbOwnSide.effects[PBEffects::MindMandala]>0
+      @battle.pbDisplay(_INTL("But it failed!"))
+      return true
+    end
+    return false
+  end
+
+  def pbEffectGeneral(user)
+    user.pbOwnSide.effects[PBEffects::MindMandala] = 3
+    @battle.pbDisplay(_INTL("{1} painted a Mind Mandala!",user.pbThis))
+  end
+end
+
+
+class PokeBattle_Battle
+  
+  def scActivateMandalas(battler)
+    return if battler.airborne?
+    
+    if battler.pbOwnSide.effects[PBEffects::WarMandala] > 0 && 
+      battler.pbCanRaiseStatStage?(PBStats::ATTACK,battler)
+      
+      battler.pbRaiseStatStage(PBStats::ATTACK,1,battler)
+      pbDisplay(_INTL("The War Mandala strengthened {1}!",battler.pbThis))
+      
+      battler.pbOwnSide.effects[PBEffects::WarMandala] -= 1
+      if battler.pbOwnSide.effects[PBEffects::WarMandala] == 0
+        pbDisplay(_INTL("The War Mandala wore off...")) 
+      end 
+    end 
+    if battler.pbOwnSide.effects[PBEffects::MindMandala] > 0 &&
+      battler.pbCanRaiseStatStage?(PBStats::SPATK,battler)
+      
+      battler.pbRaiseStatStage(PBStats::SPATK,1,battler)
+      pbDisplay(_INTL("The Mind Mandala strengthened {1}!",battler.pbThis))
+      
+      battler.pbOwnSide.effects[PBEffects::MindMandala] -= 1
+      if battler.pbOwnSide.effects[PBEffects::MindMandala] == 0
+        pbDisplay(_INTL("The Mind Mandala wore off...")) 
+      end
+    end 
   end 
 end 
 

@@ -159,6 +159,14 @@ class PokeBattle_Battle
         b.pbOwnSide.effects[PBEffects::StickyWebUser]  = -1
         @battle.pbDisplay(_INTL("The tempest blew away sticky webs!"))
       end
+      if b.pbOwnSide.effects[PBEffects::WarMandala]>0
+        b.pbOwnSide.effects[PBEffects::WarMandala] = 0
+        @battle.pbDisplay(_INTL("{1}'s War Mandala was blown away!",b.pbTeam))
+      end
+      if b.pbOwnSide.effects[PBEffects::MindMandala]>0
+        b.pbOwnSide.effects[PBEffects::MindMandala] = 0
+        @battle.pbDisplay(_INTL("{1}'s Mind Mandala was blown away!",b.pbTeam))
+      end
     end 
   end 
   

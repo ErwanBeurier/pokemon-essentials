@@ -986,7 +986,9 @@ class PokeBattle_AI
                      target.pbOwnSide.effects[PBEffects::Reflect]>0 ||
                      target.pbOwnSide.effects[PBEffects::LightScreen]>0 ||
                      target.pbOwnSide.effects[PBEffects::Mist]>0 ||
-                     target.pbOwnSide.effects[PBEffects::Safeguard]>0
+                     target.pbOwnSide.effects[PBEffects::Safeguard]>0 || 
+                     target.pbOwnSide.effects[PBEffects::WarMandala]>0 || 
+                     target.pbOwnSide.effects[PBEffects::MindMandala]>0
       score -= 30 if target.pbOwnSide.effects[PBEffects::Spikes]>0 ||
                      target.pbOwnSide.effects[PBEffects::ToxicSpikes]>0 ||
                      target.pbOwnSide.effects[PBEffects::StealthRock]
@@ -3098,7 +3100,9 @@ class PokeBattle_AI
                        target.pbOwnSide.effects[PBEffects::Reflect]>0 ||
                        target.pbOwnSide.effects[PBEffects::LightScreen]>0 ||
                        target.pbOwnSide.effects[PBEffects::Mist]>0 ||
-                       target.pbOwnSide.effects[PBEffects::Safeguard]>0
+                       target.pbOwnSide.effects[PBEffects::Safeguard]>0 || 
+                       target.pbOwnSide.effects[PBEffects::WarMandala]>0 || 
+                       target.pbOwnSide.effects[PBEffects::MindMandala]>0
         score += 30 if user.pbOwnSide.effects[PBEffects::Spikes]>0 ||
                        user.pbOwnSide.effects[PBEffects::ToxicSpikes]>0 ||
                        user.pbOwnSide.effects[PBEffects::StealthRock] || 
@@ -3109,7 +3113,9 @@ class PokeBattle_AI
                        user.pbOwnSide.effects[PBEffects::Reflect]>0 ||
                        user.pbOwnSide.effects[PBEffects::LightScreen]>0 ||
                        user.pbOwnSide.effects[PBEffects::Mist]>0 ||
-                       user.pbOwnSide.effects[PBEffects::Safeguard]>0
+                       user.pbOwnSide.effects[PBEffects::Safeguard]>0 || 
+                       target.pbOwnSide.effects[PBEffects::WarMandala]>0 || 
+                       target.pbOwnSide.effects[PBEffects::MindMandala]>0
         score -= 30 if target.pbOwnSide.effects[PBEffects::Spikes]>0 ||
                        target.pbOwnSide.effects[PBEffects::ToxicSpikes]>0 ||
                        target.pbOwnSide.effects[PBEffects::StealthRock] || 
@@ -3135,6 +3141,12 @@ class PokeBattle_AI
           score -= 20 if pkmn.type1 == PBTypes::BUG || pkmn.type2 == PBTypes::BUG
         }
       end
+    #---------------------------------------------------------------------------
+    when "C004"
+      score -= 90 if user.pbOwnSide.effects[PBEffects::WarMandala]>0
+    #---------------------------------------------------------------------------
+    when "C005"
+      score -= 90 if user.pbOwnSide.effects[PBEffects::MindMandala]>0
     end
     return score
   end
