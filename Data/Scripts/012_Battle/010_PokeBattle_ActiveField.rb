@@ -84,6 +84,7 @@ begin
       @effects[PBEffects::Wish]                      = 0
       @effects[PBEffects::WishAmount]                = 0
       @effects[PBEffects::WishMaker]                 = -1
+      @effects[PBEffects::WarmWelcome]               = false
     end
   end
 

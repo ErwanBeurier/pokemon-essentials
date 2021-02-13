@@ -147,3 +147,26 @@ class PokeBattle_Battle
   end 
 end 
 
+
+#===============================================================================
+# The Pokémon that replaces the user raises its Attack and Sp. Atk by 2 stages. 
+# (Warm Welcome)
+#===============================================================================
+class PokeBattle_Move_C006 < PokeBattle_Move
+  def pbMoveFailed?(user,targets)
+    if @battle.positions[user.index].effects[PBEffects::WarmWelcome]
+      @battle.pbDisplay(_INTL("But it failed!"))
+      return true
+    end
+    return false
+  end
+
+  def pbEffectGeneral(user)
+    @battle.positions[user.index].effects[PBEffects::WarmWelcome] = true
+    @battle.pbDisplay(_INTL("{1} is cheering its allies!",user.pbThis))
+  end
+end
+
+
+
+

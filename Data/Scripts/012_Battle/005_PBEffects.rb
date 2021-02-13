@@ -143,6 +143,7 @@ begin
     Wish                      = 6
     WishAmount                = 7
     WishMaker                 = 8
+    WarmWelcome               = 9
 
     #===========================================================================
     # These effects apply to a side

@@ -368,6 +368,18 @@ class PokeBattle_Battle
       battler.pbRecoverHP(battler.totalhp)
       @positions[battler.index].effects[PBEffects::ZHeal] = false
     end
+    # Warm Welcome (STRAT)
+    if @positions[battler.index].effects[PBEffects::WarmWelcome]
+      canraiseattack = battler.pbCanRaiseStatStage?(PBStats::ATTACK,battler)
+      canraisespatk = battler.pbCanRaiseStatStage?(PBStats::SPATK,battler)
+      if canraiseattack || canraisespatk
+        pbCommonAnimation("WarmWelcome",battler)
+        pbDisplay(_INTL("{1} received the cheers!",battler.pbThis))
+        battler.pbRaiseStatStage(PBStats::ATTACK,2,battler) if canraiseattack
+        battler.pbRaiseStatStage(PBStats::SPATK,2,battler) if canraisespatk
+        @positions[battler.index].effects[PBEffects::WarmWelcome] = false
+      end 
+    end
   end 
   
   
