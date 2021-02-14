@@ -912,3 +912,5 @@
 2030,DYNAMAXMAP,Dynamap,Dynamaps,8,0,"Displays the map of your Dynamax adventure.",2,0,6,
 2031,MAGNETICSEED,Magnetic Seed,Magnetic Seeds,1,4000,"An item to be held by a Pokémon. It boosts Sp. Def. on Magnetic Terrain. It can only be used once.",0,0,0,
 2032,WINDYROCK,Windy Rock,Windy Rocks,1,4000,"A Pokémon held item that extends the duration of the move Autumn Tempest used by the holder.",0,0,0,
+2033,EVIOLITETREN,Eviolite-Tren,Eviolites-Tren,1,4000,"A mysterious evolutionary lump. When held, it raises the Attack if the holder can still evolve.",0,0,0,
+2034,EVIOLITEMPH,Eviolite-Rita,Eviolites-Rita,1,4000,"A mysterious evolutionary lump. When held, it raises the Sp. Atk if the holder can still evolve.",0,0,0,

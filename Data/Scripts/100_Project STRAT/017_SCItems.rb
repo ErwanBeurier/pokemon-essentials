@@ -239,3 +239,38 @@ BattleHandlers::ItemOnSwitchIn.add(:SCNORMALMAXER,
   }
 )
 
+
+#===============================================================================
+# Eviolite variants
+#===============================================================================
+
+# TREN = Trenbolone (steroid)
+BattleHandlers::DamageCalcTargetItem.add(:EVIOLITETREN,
+  proc { |item,user,target,move,mults,baseDmg,type|
+    # NOTE: Eviolite cares about whether the Pokémon itself can evolve, which
+    #       means it also cares about the Pokémon's form. Some forms cannot
+    #       evolve even if the species generally can, and such forms are not
+    #       affected by Eviolite.
+    next if !move.physicalMove?
+    evos = pbGetEvolvedFormData(target.pokemon.fSpecies,true)
+    mults[ATK_MULT] *= 1.3 if evos && evos.length>0
+  }
+)
+# MPH = Methylphenidate (Ritalin, for attention deficit).
+BattleHandlers::DamageCalcTargetItem.add(:EVIOLITEMPH,
+  proc { |item,user,target,move,mults,baseDmg,type|
+    # NOTE: Eviolite cares about whether the Pokémon itself can evolve, which
+    #       means it also cares about the Pokémon's form. Some forms cannot
+    #       evolve even if the species generally can, and such forms are not
+    #       affected by Eviolite.
+    next if !move.specialMove?
+    evos = pbGetEvolvedFormData(target.pokemon.fSpecies,true)
+    mults[ATK_MULT] *= 1.3 if evos && evos.length>0
+  }
+)
+
+
+
+
+
+
