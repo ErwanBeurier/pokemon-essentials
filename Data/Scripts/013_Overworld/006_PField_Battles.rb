@@ -52,6 +52,8 @@ class PokemonTemp
     when "fixedplayerteam";        rules["randplayerteam"] = false
     when "internal";               rules["notinternal"]    = false
     when "notinternal";            rules["notinternal"]    = true
+    when "changingTerrain";        rules["changingTerrain"] = true
+    when "changingWeather";        rules["changingWeather"] = true
     else
       if PokeBattle_Battle.isValidBattleMode?(rule.to_s.downcase)
         rules["size"] = rule.to_s.downcase

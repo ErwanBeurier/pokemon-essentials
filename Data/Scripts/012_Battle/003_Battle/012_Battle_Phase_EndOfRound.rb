@@ -345,6 +345,8 @@ class PokeBattle_Battle
         b.pbFaint if b.fainted?
       end
     end
+    # Carboniferous healing effect (STRAT)
+    scEORCarboniferous
     # Dynamax - End of round effects (G-Max Vine Lash, Wildfire, etc.) (ZUD)
     pbEORMaxMoveEffects(priority)
     # Status-curing effects/abilities and HP-healing items

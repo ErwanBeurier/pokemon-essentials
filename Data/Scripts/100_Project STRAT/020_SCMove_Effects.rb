@@ -52,7 +52,7 @@ end
 class PokeBattle_Battle
   def scActivateCarboniferous(idxBattler = nil)
     # if idxBattler = nil, try to boost all battlers on the field. 
-    return if @field.effects[PBEffects::Carboniferous] <= 0
+    return if @field.effects[PBEffects::Carboniferous] == 0
     
     idxBattler = idxBattler.index if idxBattler && idxBattler.respond_to?("index")
     statUp = [PBStats::ATTACK,1,PBStats::DEFENSE,1,PBStats::SPATK,1,PBStats::SPDEF,1,PBStats::SPEED,1]
@@ -73,6 +73,18 @@ class PokeBattle_Battle
       end
     end
     pbDisplay(_INTL("Bug-type Pokémon are stronger in Carboniferous!")) if showMessage
+  end 
+  
+  def scEORCarboniferous
+    return if @field.effects[PBEffects::Carboniferous] == 0
+    
+    eachBattler do |b|
+      next if !b.pbHasType?(:BUG)
+      next if !b.canHeal?
+      
+      b.pbRecoverHP(b.totalhp/16)
+      b.pbDisplay(_INTL("{1} restored a little HP due to the air quality of Carboniferous!", b.pbThis))
+    end
   end 
 end 
 
