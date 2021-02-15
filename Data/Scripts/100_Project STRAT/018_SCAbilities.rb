@@ -18,12 +18,33 @@ BattleHandlers::DamageCalcUserAbility.add(:HIGHPOTENTIAL,
 #===============================================================================
 
 class PokeBattle_Move
+  
+  def __blademove__init initialize
+  def initialize(battle,move)
+    __blademove__init(battle, move)
+    @isBladeMove = -1
+  end
+  
   def bladeMove?
-    return [PBMoves::XSCISSOR, PBMoves::NIGHTSLASH, PBMoves::SACREDSWORD, 
-      PBMoves::SECRETSWORD, PBMoves::AERIALACE, PBMoves::AIRSLASH,
-      PBMoves::LEAFBLADE, PBMoves::SOLARBLADE, PBMoves::CROSSPOISON,
-      PBMoves::PSYCHOCUT, PBMoves::BEHEMOTHBLADE, PBMoves::RAZORSHELL,
-      PBMoves::CUT, PBMoves::FALSESWIPE, PBMoves::SLASH].include(@id)
+    if @isBladeMove == -1
+      @isBladeMove = [PBMoves::AERIALACE, 
+                      PBMoves::AIRSLASH, 
+                      PBMoves::BEHEMOTHBLADE, 
+                      PBMoves::CROSSPOISON, 
+                      PBMoves::CUT, 
+                      PBMoves::FALSESWIPE, 
+                      PBMoves::FURYCUTTER, 
+                      PBMoves::LEAFBLADE, 
+                      PBMoves::NIGHTSLASH, 
+                      PBMoves::PSYCHOCUT, 
+                      PBMoves::RAZORSHELL, 
+                      PBMoves::SACREDSWORD, 
+                      PBMoves::SECRETSWORD, 
+                      PBMoves::SLASH, 
+                      PBMoves::SOLARBLADE, 
+                      PBMoves::XSCISSOR].include(@id)
+    end 
+    return @isBladeMove
   end 
 end
 

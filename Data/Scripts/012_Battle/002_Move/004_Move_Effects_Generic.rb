@@ -495,7 +495,7 @@ class PokeBattle_TwoTurnMove < PokeBattle_Move
     @powerHerb = false
     @chargingTurn = false   # Assume damaging turn by default
     @damagingTurn = true
-    @birdofprey = false
+    @birdofprey = false # STRAT
     # 0 at start of charging turn, move's ID at start of damaging turn
     if user.effects[PBEffects::TwoTurnAttack]==0
       @powerHerb = user.hasActiveItem?(:POWERHERB)
