@@ -10,6 +10,21 @@ BattleHandlers::DamageCalcUserAbility.add(:HIGHPOTENTIAL,
 )
 
 
+#===============================================================================
+# Parasitic mould
+# When the Pokémon is KO-ed, it activates Leech Seed on the attacking Pokémon. 
+#===============================================================================
+
+BattleHandlers::TargetAbilityOnHit.add(:PARASITICMOULD,
+  proc { |ability,user,target,move,battle|
+    next if !target.fainted?
+    next if user.effects[PBEffects::LeechSeed]>=0
+    battle.pbShowAbilitySplash(target)
+    battle.pbDisplay(_INTL("{1} was seeded!",user.pbThis))
+    user.effects[PBEffects::LeechSeed] = target.index
+    battle.pbHideAbilitySplash(target)
+  }
+)
 
 
 #===============================================================================
@@ -55,3 +70,29 @@ BattleHandlers::DamageCalcUserAbility.add(:SHARPEDGE,
   }
 )
 
+
+#===============================================================================
+# Wolf Blood 
+# Raises the power of biting moves + Howl raises the attack by 3 stages instead 
+# of 1 (handled elsewhere). 
+#===============================================================================
+
+BattleHandlers::DamageCalcUserAbility.copy(:STRONGJAW,:WOLFBLOOD)
+
+
+
+#===============================================================================
+# Vampiric  
+# Biting moves restore 25% of the damage dealt. 
+#===============================================================================
+
+BattleHandlers::UserAbilityOnHit.add(:VAMPIRIC,
+  proc { |ability,user,target,move,battle|
+    next if target.damageState.hpLost<=0
+    next if !move.bitingMove?
+    battle.pbShowAbilitySplash(user)
+    hpGain = (target.damageState.hpLost/4.0).round
+    user.pbRecoverHPFromDrain(hpGain,target)
+    battle.pbHideAbilitySplash(user)
+  }
+)

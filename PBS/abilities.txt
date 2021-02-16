@@ -271,3 +271,4 @@
 501,BEESWARM,Bee Swarm,"Queen and swarm each attacks."
 502,SHARPEDGE,Sharp Edge,"Heightens the critical-hit ratios of slashing moves."
 503,BIRDOFPREY,Bird of Prey,"Fly, Bounce and Sky-Attack are done in one turn."
+504,PARASITICMOULD,Parasitic Mould,"Seeds the attacker landing the finishing hit."

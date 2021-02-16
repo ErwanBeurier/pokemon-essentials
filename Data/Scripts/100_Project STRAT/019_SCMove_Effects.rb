@@ -1,3 +1,5 @@
+
+
 #===============================================================================
 # For 5 rounds, creates a magnetic terrain which makes Electric and Steel-types 
 # airborne. (Magnetic Terrain)
@@ -179,6 +181,18 @@ class PokeBattle_Move_C006 < PokeBattle_Move
   end
 end
 
+
+
+
+#===============================================================================
+# Increases the user's Attack by 1 stage (3 stages if the user has the ability 
+# Wolf Blood) (updated Howl)
+#===============================================================================
+class PokeBattle_Move_C007 < PokeBattle_Move_01C
+  def pbOnStartUse(user,targets)
+    @statUp[1] = 3 if user.hasActiveAbility?(:WOLFBLOOD)
+  end
+end
 
 
 
