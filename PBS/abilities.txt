@@ -273,3 +273,5 @@
 503,BIRDOFPREY,Bird of Prey,"Fly, Bounce and Sky-Attack are done in one turn."
 504,PARASITICMOULD,Parasitic Mould,"Seeds the attacker landing the finishing hit."
 505,RACEHORSE,Racehorse,"Boosts Speed stat when the Pokémon enters a battle."
+506,AVENGER,Avenger,"Boosts Attack in tough times."
+507,DRAGONBORN,Dragonborn,"Gives the third type Dragon to the Pokémon."

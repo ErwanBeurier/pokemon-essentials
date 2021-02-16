@@ -139,3 +139,19 @@ BattleHandlers::AbilityOnSwitchIn.add(:AVENGER,
     battle.pbHideAbilitySplash(battler)
   }
 )
+
+
+
+#===============================================================================
+# Dragonborn   
+# On switching in, the Pokémon gains a third type (Dragon). 
+#===============================================================================
+
+BattleHandlers::AbilityOnSwitchIn.add(:DRAGONBORN,
+  proc { |ability,battler,battle|
+    battler.effects[PBEffects::Type3] = getConst(PBTypes,:DRAGON)
+  }
+)
+
+
+

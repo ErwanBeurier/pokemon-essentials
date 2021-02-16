@@ -2830,18 +2830,18 @@ HiddenAbility = DRIZZLE
 [AERODACTYL,2]
 FormName = Drakoid
 Type1 = ROCK
-Type2 = DRAGON
-Abilities = LEVITATE
-HiddenAbility = LEVITATE
+Type2 = FLYING
+Abilities = DRAGONBORN
+HiddenAbility = DRAGONBORN
 #-------------------------------
 [AERODACTYL,3]
 FormName = Mega Aerodactyl - Drakoid
 MegaStone = AERODACTYLITE
 BaseStats = 80,135,85,150,70,95
 Type1 = ROCK
-Type2 = DRAGON
-Abilities = LEVITATE
-HiddenAbility = LEVITATE
+Type2 = FLYING
+Abilities = DRAGONBORN
+HiddenAbility = DRAGONBORN
 Height = 2.1
 Weight = 79.0
 Pokedex = When it Mega Evolves, it becomes more vicious than ever before. Some say that's because its excess of power is causing it pain.
