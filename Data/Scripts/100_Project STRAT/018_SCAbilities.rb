@@ -80,7 +80,6 @@ BattleHandlers::DamageCalcUserAbility.add(:SHARPEDGE,
 BattleHandlers::DamageCalcUserAbility.copy(:STRONGJAW,:WOLFBLOOD)
 
 
-
 #===============================================================================
 # Vampiric  
 # Biting moves restore 25% of the damage dealt. 
@@ -97,6 +96,7 @@ BattleHandlers::UserAbilityOnHit.add(:VAMPIRIC,
   }
 )
 
+
 #===============================================================================
 # Race Horse   
 # Increases Speed by one stage when switching in. 
@@ -109,11 +109,15 @@ BattleHandlers::AbilityOnSwitchIn.add(:RACEHORSE,
   }
 )
 
+
 #===============================================================================
 # Avenger   
 # In Double Battles (or more), raises the attack by 3 stages if a partner died.
+# When switching in, if this Pokémon is the last of the team, raises its attack 
+# by 3 stages.
 #===============================================================================
 
+# In Double Battles (or more), raises the attack by 3 stages if a partner died.
 BattleHandlers::AbilityOnBattlerFainting.add(:AVENGER,
   proc { |ability,battler,fainted,battle|
     next if fainted.opposes?(battler)
@@ -124,3 +128,14 @@ BattleHandlers::AbilityOnBattlerFainting.add(:AVENGER,
   }
 )
 
+# When switching in, if this Pokémon is the last of the team, raises its attack 
+# by 3 stages.
+BattleHandlers::AbilityOnSwitchIn.add(:AVENGER,
+  proc { |ability,battler,battle|
+    next if battle.pbCanChooseNonActive?(battler.index)
+    battle.pbShowAbilitySplash(battler)
+    battler.pbRaiseStatStageByAbility(PBStats::ATTACK,3,battler)
+    battle.pbDisplay(_INTL("{1} wants to avenge its partners!", battler.pbThis))
+    battle.pbHideAbilitySplash(battler)
+  }
+)
