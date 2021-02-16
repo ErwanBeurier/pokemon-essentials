@@ -96,3 +96,31 @@ BattleHandlers::UserAbilityOnHit.add(:VAMPIRIC,
     battle.pbHideAbilitySplash(user)
   }
 )
+
+#===============================================================================
+# Race Horse   
+# Increases Speed by one stage when switching in. 
+#===============================================================================
+
+BattleHandlers::AbilityOnSwitchIn.add(:RACEHORSE,
+  proc { |ability,battler,battle|
+    stat = PBStats::SPEED
+    battler.pbRaiseStatStageByAbility(stat,1,battler)
+  }
+)
+
+#===============================================================================
+# Avenger   
+# In Double Battles (or more), raises the attack by 3 stages if a partner died.
+#===============================================================================
+
+BattleHandlers::AbilityOnBattlerFainting.add(:AVENGER,
+  proc { |ability,battler,fainted,battle|
+    next if fainted.opposes?(battler)
+    battle.pbShowAbilitySplash(battler)
+    battler.pbRaiseStatStageByAbility(PBStats::ATTACK,3,battler)
+    battle.pbDisplay(_INTL("{1} wants to avenge {2}!", battler.pbThis, fainted.pbThis))
+    battle.pbHideAbilitySplash(battler)
+  }
+)
+
