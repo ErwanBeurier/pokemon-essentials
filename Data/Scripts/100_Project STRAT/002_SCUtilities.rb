@@ -108,6 +108,48 @@ def scToString(d)
 end 
 
 
+# -----------------------------------------------------------------------------
+# Print all variables and switches in a file. 
+# -----------------------------------------------------------------------------
+# Allow loops on game variables.
+class Game_Variables
+  def each_with_index
+    @data.each_with_index { |v, i| yield v, i }
+  end 
+end
+
+# Allow loops on game switches.
+class Game_Switches
+  def each_with_index
+    @data.each_with_index { |v, i| yield v, i }
+  end 
+end 
+
+# Prints game variables and game switches. 
+def pbSaveVariablesToTxt
+  File.open("variables.txt","w") { |f| 
+    f.write(_INTL("#============================================\n"))
+    f.write(_INTL("# Date: {1}\n", Time.now))
+    f.write(_INTL("#============================================\n"))
+    f.write(_INTL("# Variables:\n"))
+    f.write(_INTL("#============================================\n"))
+    
+    $game_variables.each_with_index { |val, i|
+      f.write(_INTL("{1}= {2}", i.to_s.ljust(5), val))
+      f.write("\n")
+    }
+    
+    f.write(_INTL("#============================================\n"))
+    f.write(_INTL("# Switches=\n"))
+    f.write(_INTL("#============================================\n"))
+    
+    $game_switches.each_with_index { |val, i|
+      f.write(_INTL("{1}= {2}", i.to_s.ljust(5), val))
+      f.write("\n")
+    }
+  }
+  pbMessage("Done writing variables.txt.")
+end 
 
 
 

@@ -275,3 +275,5 @@
 505,RACEHORSE,Racehorse,"Boosts Speed stat when the Pokémon enters a battle."
 506,AVENGER,Avenger,"Boosts Attack in tough times."
 507,DRAGONBORN,Dragonborn,"Gives the third type Dragon to the Pokémon."
+508,VAMPIRIC,Vampiric,"Biting moves drain the HP of the target."
+509,PREDATOR,Predator,"Powers up moves of the same type."

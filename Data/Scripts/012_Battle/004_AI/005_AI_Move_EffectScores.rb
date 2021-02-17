@@ -991,7 +991,9 @@ class PokeBattle_AI
                      target.pbOwnSide.effects[PBEffects::MindMandala]>0
       score -= 30 if target.pbOwnSide.effects[PBEffects::Spikes]>0 ||
                      target.pbOwnSide.effects[PBEffects::ToxicSpikes]>0 ||
-                     target.pbOwnSide.effects[PBEffects::StealthRock]
+                     target.pbOwnSide.effects[PBEffects::StealthRock] ||
+                     target.pbOwnSide.effects[PBEffects::LavaTrap] ||
+                     target.pbOwnSide.effects[PBEffects::StickyWeb]
     #---------------------------------------------------------------------------
     when "04A"
       avg =  target.stages[PBStats::ATTACK]*10
@@ -2045,6 +2047,8 @@ class PokeBattle_AI
         score += 50 if target.pbOwnSide.effects[PBEffects::Spikes]>0
         score += 50 if target.pbOwnSide.effects[PBEffects::ToxicSpikes]>0
         score += 50 if target.pbOwnSide.effects[PBEffects::StealthRock]
+        score += 50 if target.pbOwnSide.effects[PBEffects::LavaTrap]
+        score += 50 if target.pbOwnSide.effects[PBEffects::Steelsurge]
       end
     #---------------------------------------------------------------------------
     when "0EC"
@@ -2053,6 +2057,8 @@ class PokeBattle_AI
         score += 40 if target.pbOwnSide.effects[PBEffects::Spikes]>0
         score += 40 if target.pbOwnSide.effects[PBEffects::ToxicSpikes]>0
         score += 40 if target.pbOwnSide.effects[PBEffects::StealthRock]
+        score += 40 if target.pbOwnSide.effects[PBEffects::LavaTrap]
+        score += 40 if target.pbOwnSide.effects[PBEffects::Steelsurge]
       end
     #---------------------------------------------------------------------------
     when "0ED"
@@ -2357,6 +2363,8 @@ class PokeBattle_AI
         score += 80 if user.pbOwnSide.effects[PBEffects::Spikes]>0
         score += 80 if user.pbOwnSide.effects[PBEffects::ToxicSpikes]>0
         score += 80 if user.pbOwnSide.effects[PBEffects::StealthRock]
+        score += 80 if user.pbOwnSide.effects[PBEffects::LavaTrap]
+        score += 80 if user.pbOwnSide.effects[PBEffects::Steelsurge]
       end
     #---------------------------------------------------------------------------
     when "111"
@@ -3107,7 +3115,8 @@ class PokeBattle_AI
                        user.pbOwnSide.effects[PBEffects::ToxicSpikes]>0 ||
                        user.pbOwnSide.effects[PBEffects::StealthRock] || 
                        user.pbOwnSide.effects[PBEffects::StickyWeb] || 
-                       user.pbOwnSide.effects[PBEffects::Steelsurge]
+                       user.pbOwnSide.effects[PBEffects::Steelsurge] || 
+                       user.pbOwnSide.effects[PBEffects::LavaTrap]
         # Do not remmove anything that helps the user.
         score -= 30 if user.pbOwnSide.effects[PBEffects::AuroraVeil]>0 ||
                        user.pbOwnSide.effects[PBEffects::Reflect]>0 ||
@@ -3120,7 +3129,8 @@ class PokeBattle_AI
                        target.pbOwnSide.effects[PBEffects::ToxicSpikes]>0 ||
                        target.pbOwnSide.effects[PBEffects::StealthRock] || 
                        target.pbOwnSide.effects[PBEffects::StickyWeb] ||
-                       target.pbOwnSide.effects[PBEffects::Steelsurge]
+                       target.pbOwnSide.effects[PBEffects::Steelsurge]||
+                       target.pbOwnSide.effects[PBEffects::LavaTrap]
       end
     #---------------------------------------------------------------------------
     when "C003" # Carboniferous

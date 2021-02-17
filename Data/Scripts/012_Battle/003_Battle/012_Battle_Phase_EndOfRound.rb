@@ -146,6 +146,10 @@ class PokeBattle_Battle
         b.pbOwnSide.effects[PBEffects::StealthRock] = false
         @battle.pbDisplay(_INTL("The tempest blew away the stealth rocks!"))
       end
+      if b.pbOwnSide.effects[PBEffects::LavaTrap]
+        b.pbOwnSide.effects[PBEffects::LavaTrap] = false
+        @battle.pbDisplay(_INTL("The tempest blew away the lava trap!"))
+      end
       if b.pbOwnSide.effects[PBEffects::Spikes]>0
         b.pbOwnSide.effects[PBEffects::Spikes] = 0
         @battle.pbDisplay(_INTL("The tempest blew away spikes!"))

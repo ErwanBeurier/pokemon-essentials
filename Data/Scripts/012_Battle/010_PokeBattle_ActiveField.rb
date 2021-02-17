@@ -65,6 +65,7 @@ begin
       @effects[PBEffects::StickyWebUser]      = -1 
       @effects[PBEffects::WarMandala]         = 0
       @effects[PBEffects::MindMandala]        = 0
+      @effects[PBEffects::LavaTrap]           = false
     end
   end
 

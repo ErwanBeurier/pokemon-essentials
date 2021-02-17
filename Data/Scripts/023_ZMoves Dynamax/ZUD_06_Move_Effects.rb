@@ -620,6 +620,13 @@ class PokeBattle_Move_D012 < PokeBattle_MaxMove
       target.pbOpposingSide.effects[PBEffects::StealthRock] = false if NEWEST_BATTLE_MECHANICS
       @battle.pbDisplay(_INTL("{1} blew away stealth rocks!",user.pbThis))
     end
+    if target.pbOwnSide.effects[PBEffects::LavaTrap] || # STRAT
+       (NEWEST_BATTLE_MECHANICS &&
+       target.pbOpposingSide.effects[PBEffects::LavaTrap])
+      target.pbOwnSide.effects[PBEffects::LavaTrap]      = false
+      target.pbOpposingSide.effects[PBEffects::LavaTrap] = false if NEWEST_BATTLE_MECHANICS
+      @battle.pbDisplay(_INTL("{1} blew away the lava trap!",user.pbThis))
+    end
     if target.pbOwnSide.effects[PBEffects::Steelsurge] ||
        (NEWEST_BATTLE_MECHANICS &&
        target.pbOpposingSide.effects[PBEffects::Steelsurge])

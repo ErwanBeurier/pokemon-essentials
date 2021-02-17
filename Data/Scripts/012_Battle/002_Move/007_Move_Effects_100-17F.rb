@@ -82,7 +82,8 @@ end
 #===============================================================================
 class PokeBattle_Move_105 < PokeBattle_Move
   def pbMoveFailed?(user,targets)
-    if user.pbOpposingSide.effects[PBEffects::StealthRock]
+    if (!user.hasActiveAbility?(:LAVAMONSTER) && user.pbOpposingSide.effects[PBEffects::StealthRock]) ||
+      (user.hasActiveAbility?(:LAVAMONSTER) && user.pbOpposingSide.effects[PBEffects::LavaTrap])
       @battle.pbDisplay(_INTL("But it failed!"))
       return true
     end
@@ -90,9 +91,17 @@ class PokeBattle_Move_105 < PokeBattle_Move
   end
 
   def pbEffectGeneral(user)
-    user.pbOpposingSide.effects[PBEffects::StealthRock] = true
     @battle.pbDisplay(_INTL("Pointed stones float in the air around {1}!",
        user.pbOpposingTeam(true)))
+    
+    if user.hasActiveAbility?(:LAVAMONSTER)
+      @battle.pbShowAbilitySplash(user)
+      user.pbOpposingSide.effects[PBEffects::LavaTrap] = true
+      @battle.pbDisplay(_INTL("The pointed stones melted down!!"))
+      @battle.pbHideAbilitySplash(user)
+    else
+      user.pbOpposingSide.effects[PBEffects::StealthRock] = true
+    end 
   end
 end
 
@@ -393,6 +402,10 @@ class PokeBattle_Move_110 < PokeBattle_Move
     if user.pbOwnSide.effects[PBEffects::StealthRock]
       user.pbOwnSide.effects[PBEffects::StealthRock] = false
       @battle.pbDisplay(_INTL("{1} blew away stealth rocks!",user.pbThis))
+    end
+    if user.pbOwnSide.effects[PBEffects::LavaTrap]
+      user.pbOwnSide.effects[PBEffects::LavaTrap] = false
+      @battle.pbDisplay(_INTL("{1} blew away the lava trap!",user.pbThis))
     end
     if user.pbOwnSide.effects[PBEffects::Spikes]>0
       user.pbOwnSide.effects[PBEffects::Spikes] = 0
@@ -2730,7 +2743,8 @@ class PokeBattle_Move_17A < PokeBattle_Move
               sides[i].effects[PBEffects::ToxicSpikes]==0 &&
               sides[i].effects[PBEffects::Tailwind]==0 &&
               sides[i].effects[PBEffects::WarMandala]==0 &&
-              sides[i].effects[PBEffects::MindMandala]==0
+              sides[i].effects[PBEffects::MindMandala]==0 &&
+             !sides[i].effects[PBEffects::LavaTrap]
       changeside=true
     end
     if !changeside
@@ -2778,6 +2792,10 @@ class PokeBattle_Move_17A < PokeBattle_Move
       stealthrock=ownside.effects[PBEffects::StealthRock]
       ownside.effects[PBEffects::StealthRock]=oppside.effects[PBEffects::StealthRock]
       oppside.effects[PBEffects::StealthRock]=stealthrock
+	  # Lava Trap
+      lavatrap=ownside.effects[PBEffects::LavaTrap]
+      ownside.effects[PBEffects::LavaTrap]=oppside.effects[PBEffects::LavaTrap]
+      oppside.effects[PBEffects::LavaTrap]=lavatrap
 	  # Sticky Web
       stickyweb=ownside.effects[PBEffects::StickyWeb]
       ownside.effects[PBEffects::StickyWeb]=oppside.effects[PBEffects::StickyWeb]

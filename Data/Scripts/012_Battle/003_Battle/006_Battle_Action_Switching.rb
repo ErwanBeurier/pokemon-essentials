@@ -424,6 +424,23 @@ class PokeBattle_Battle
         end
       end
     end
+    # Lava Trap (Fire Stealth Rock; STRAT)
+    if battler.pbOwnSide.effects[PBEffects::LavaTrap] && battler.takesIndirectDamage? &&
+       !battler.hasActiveItem?(:HEAVYDUTYBOOTS)
+      aType = getConst(PBTypes,:FIRE) || 0
+      bTypes = battler.pbTypes(true)
+      eff = PBTypes.getCombinedEffectiveness(aType,bTypes[0],bTypes[1],bTypes[2])
+      if !PBTypes.ineffective?(eff)
+        eff = eff.to_f/PBTypeEffectiveness::NORMAL_EFFECTIVE
+        oldHP = battler.hp
+        battler.pbReduceHP(battler.totalhp*eff/8,false)
+        pbDisplay(_INTL("Melted stones burnt {1}'s skin!",battler.pbThis))
+        battler.pbItemHPHealCheck
+        if battler.pbAbilitiesOnDamageTaken(oldHP)   # Switched out
+          return pbOnActiveOne(battler)   # For replacement battler
+        end
+      end
+    end
     # Spikes
     if battler.pbOwnSide.effects[PBEffects::Spikes]>0 && battler.takesIndirectDamage? &&
        !battler.airborne? && !battler.hasActiveItem?(:HEAVYDUTYBOOTS)

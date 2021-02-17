@@ -34,7 +34,7 @@ BattleHandlers::TargetAbilityOnHit.add(:PARASITICMOULD,
 
 class PokeBattle_Move
   
-  def __blademove__init initialize
+  alias __blademove__init initialize
   def initialize(battle,move)
     __blademove__init(battle, move)
     @isBladeMove = -1
@@ -152,6 +152,51 @@ BattleHandlers::AbilityOnSwitchIn.add(:DRAGONBORN,
     battler.effects[PBEffects::Type3] = getConst(PBTypes,:DRAGON)
   }
 )
+
+
+#===============================================================================
+# Lava golem   
+# Rock-type moves become Fire-type.
+#===============================================================================
+
+BattleHandlers::MoveBaseTypeModifierAbility.add(:LAVAGOLEM,
+  proc { |ability,user,move,type|
+    next if !isConst?(type,PBTypes,:ROCK) || !hasConst?(PBTypes,:FIRE)
+    move.powerBoost = true
+    next getConst(PBTypes,:FIRE)
+  }
+)
+
+
+#===============================================================================
+# Blacksmith   
+# Rock-type moves become Steel-type. 
+#===============================================================================
+
+BattleHandlers::MoveBaseTypeModifierAbility.add(:BLACKSMITH,
+  proc { |ability,user,move,type|
+    next if !isConst?(type,PBTypes,:ROCK) || !hasConst?(PBTypes,:STEEL)
+    move.powerBoost = true
+    next getConst(PBTypes,:STEEL)
+  }
+)
+
+
+#===============================================================================
+# Predator   
+# If a Pokémon uses a STAB on another Pokémon with that same type, then boosts 
+# damage.
+# Example: Water-type Pokémon uses Water-type move on Water-type Pokémon.
+#===============================================================================
+
+BattleHandlers::DamageCalcUserAbility.add(:PREDATOR,
+  proc { |ability,user,target,move,mults,baseDmg,type|
+    next if !target.pbHasType?(move.type)
+    next if !user.pbHasType?(move.type)
+    mults[BASE_DMG_MULT] *= 4/3.0 
+  }
+)
+
 
 
 

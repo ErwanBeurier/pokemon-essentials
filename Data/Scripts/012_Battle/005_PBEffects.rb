@@ -173,6 +173,7 @@ begin
     StickyWebUser      = 22 
     WarMandala         = 23
     MindMandala        = 24 
+    LavaTrap           = 25
     
     #===========================================================================
     # These effects apply to the battle (i.e. both sides)
