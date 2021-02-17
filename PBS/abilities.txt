@@ -278,3 +278,4 @@
 508,VAMPIRIC,Vampiric,"Biting moves drain the HP of the target."
 509,PREDATOR,Predator,"Powers up moves of the same type."
 510,LAVAMONSTER,Lava Monster,"Rock-type moves become Fire-type and powered up."
+511,MINECLEARER,Mine-Clearer,"Removes every hazard when switching in."

@@ -198,5 +198,58 @@ BattleHandlers::DamageCalcUserAbility.add(:PREDATOR,
 )
 
 
+#===============================================================================
+# Dragonborn   
+# On switching in, the Pokémon gains a third type (Dragon). 
+#===============================================================================
+
+BattleHandlers::AbilityOnSwitchIn.add(:MINECLEARER,
+  proc { |ability,battler,battle|
+    battle.pbShowAbilitySplash(battler)
+    battle.eachBattler do |b|
+      next if !b 
+      if b.pbOwnSide.effects[PBEffects::AuroraVeil]>0
+        b.pbOwnSide.effects[PBEffects::AuroraVeil] = 0
+      end
+      if b.pbOwnSide.effects[PBEffects::LightScreen]>0
+        b.pbOwnSide.effects[PBEffects::LightScreen] = 0
+      end
+      if b.pbOwnSide.effects[PBEffects::Reflect]>0
+        b.pbOwnSide.effects[PBEffects::Reflect] = 0
+      end
+      if b.pbOwnSide.effects[PBEffects::Mist]>0
+        b.pbOwnSide.effects[PBEffects::Mist] = 0
+      end
+      if b.pbOwnSide.effects[PBEffects::Safeguard]>0
+        b.pbOwnSide.effects[PBEffects::Safeguard] = 0
+      end
+      if b.pbOwnSide.effects[PBEffects::StealthRock]
+        b.pbOwnSide.effects[PBEffects::StealthRock] = false
+      end
+      if b.pbOwnSide.effects[PBEffects::LavaTrap]
+        b.pbOwnSide.effects[PBEffects::LavaTrap] = false
+      end
+      if b.pbOwnSide.effects[PBEffects::Spikes]>0
+        b.pbOwnSide.effects[PBEffects::Spikes] = 0
+      end
+      if b.pbOwnSide.effects[PBEffects::ToxicSpikes]>0
+        b.pbOwnSide.effects[PBEffects::ToxicSpikes] = 0
+      end
+      if b.pbOwnSide.effects[PBEffects::StickyWeb]
+        b.pbOwnSide.effects[PBEffects::StickyWeb]      = false
+        b.pbOwnSide.effects[PBEffects::StickyWebUser]  = -1
+      end
+      if b.pbOwnSide.effects[PBEffects::WarMandala]>0
+        b.pbOwnSide.effects[PBEffects::WarMandala] = 0
+      end
+      if b.pbOwnSide.effects[PBEffects::MindMandala]>0
+        b.pbOwnSide.effects[PBEffects::MindMandala] = 0
+      end
+    end 
+    battle.pbDisplay("Every hazard and protection was removed!")
+    battle.pbHideAbilitySplash(battler)
+  }
+)
+
 
 
