@@ -277,3 +277,4 @@
 507,DRAGONBORN,Dragonborn,"Gives the third type Dragon to the Pokémon."
 508,VAMPIRIC,Vampiric,"Biting moves drain the HP of the target."
 509,PREDATOR,Predator,"Powers up moves of the same type."
+510,LAVAMONSTER,Lava Monster,"Rock-type moves become Fire-type and powered up."
