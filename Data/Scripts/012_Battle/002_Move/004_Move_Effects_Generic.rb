@@ -499,7 +499,7 @@ class PokeBattle_TwoTurnMove < PokeBattle_Move
     # 0 at start of charging turn, move's ID at start of damaging turn
     if user.effects[PBEffects::TwoTurnAttack]==0
       @powerHerb = user.hasActiveItem?(:POWERHERB)
-      @birdofprey = user.hasActiveAbility?(:BIRDOFPREY) && ["0C7", "0C9", "0CC"]
+      @birdofprey = user.hasActiveAbility?(:BIRDOFPREY) && ["0C7", "0C9", "0CC"].include?(@function)
       @chargingTurn = true
       @damagingTurn = @powerHerb || @birdofprey
     end

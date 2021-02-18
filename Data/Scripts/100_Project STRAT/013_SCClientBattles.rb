@@ -1,3 +1,12 @@
+################################################################################
+# SCClientBattles
+# 
+# This script is part of Pokémon Project STRAT by StCooler, and is therefore 
+# not part of Pokémon Essentials. 
+#
+# This script allows for the random generation of clients of the player + random 
+# fights occuring on the map.
+################################################################################
 
 
 

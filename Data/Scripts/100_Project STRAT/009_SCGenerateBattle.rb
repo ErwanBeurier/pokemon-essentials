@@ -5,7 +5,7 @@
 # not part of Pokémon Essentials. 
 # 
 # This script mainly contains scripts to generate random battles with 
-# different formats. 
+# different formats + the rules that I want to use. 
 ###############################################################################
 
 

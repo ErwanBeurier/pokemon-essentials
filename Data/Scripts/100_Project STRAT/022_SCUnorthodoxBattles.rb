@@ -93,11 +93,11 @@ class PokeBattle_Battle
   
   
   alias __unorthodox__pbEORWeather pbEORWeather
-  def pbEORWeather
+  def pbEORWeather(priority)
     if @changingWeather
       scSelectRandomWeather
     else
-      __unorthodox__pbEORWeather
+      __unorthodox__pbEORWeather(priority)
     end 
   end 
 end 

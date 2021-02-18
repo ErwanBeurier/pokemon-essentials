@@ -1,5 +1,9 @@
 ################################################################################
 # 								Team Builder
+# 
+# This script is part of Pokémon Project STRAT by StCooler, and is therefore 
+# not part of Pokémon Essentials. 
+#
 # By StCooler
 # Based on the GTS System by Hansiec. 
 # This script is derived from an old version of the GTS script. As of 2020-11-28, 
@@ -7,16 +11,29 @@
 # 
 # Contents:
 # This script makes a Menu from a team builder. 
-# It contains NO online stuff related to GTS. I only needed the menu UI. 
-# 
+# It contains NO online stuff related to GTS. I only needed the menu UI.
+#------------------------------------------------------------------------------
+# SCTB contains many functions that are useful in the main class; mostly, any 
+# list to choose from.
+#------------------------------------------------------------------------------
+# SCTB_Button is a class used for making buttons.
+#------------------------------------------------------------------------------
+# SCTeamViewer is the UI to modify/access the teams in the Team Storage.
+#------------------------------------------------------------------------------
+# SCTeamBuilder is the first UI to see the whole team + nicknames. Also displays 
+# the validity of the team for the current tier.
+#------------------------------------------------------------------------------
+# SCWantedDataComplete is the UI that allows to chose/modify a specific Pokémon 
+# in the team.
+#------------------------------------------------------------------------------
+# SCBaseStats, SCWantedDataIVs and SCWantedDataEVs are deprecated. 
+#------------------------------------------------------------------------------
+# SCWantedDataStats is the UI to access the base stats of the current Pokémon, 
+# and access/modify the EV/IV of the Pokémon.
 ################################################################################
-# 
 # Credits: 
-# GTS System                  Version 2.0.0
-# By Hansiec                      RELEASE
-# Special Thanks to Saving Raven for providing graphics and testing
-# 
-# 
+#
+# This UI system is based on the GTS System (Version 2.0.0) by Hansiec.
 ################################################################################
 
 
@@ -2957,7 +2974,7 @@ end
 
 
 ###############################################################################
-# SCBaseStats
+# SCBaseStats - DEPRECATED
 # 
 # Prints the base stats of the Pokemon + its types. 
 # Class called in SCWantedDataComplete. 
@@ -3225,7 +3242,7 @@ end
 
 
 ###############################################################################
-# SCWantedDataIVs
+# SCWantedDataIVs - DEPRECATED
 # 
 # Code derived from the GTSWantedDataIVs class.
 # Submenu for the team builder. 

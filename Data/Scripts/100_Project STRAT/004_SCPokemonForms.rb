@@ -9,12 +9,8 @@
 # form. 
 # Thanks to Golisopod-User (on GitHub) for the implementation of the way to 
 # handle Mega-evolutoins depending on form (the problem existed for Slowbro; 
-# Galarian Slowbro cannot mega-evolve). 
+# Galarian Slowbro cannot mega-evolve). This is the same script I'm using here.
 ###############################################################################
-
-
-
-
 
 MultipleForms.register(:BEEDRILL,{
   "getSpecificMegaForm" => proc { |pkmn|

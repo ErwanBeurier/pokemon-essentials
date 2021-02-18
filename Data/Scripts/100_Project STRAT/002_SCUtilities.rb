@@ -10,10 +10,9 @@
 
 
 
-#----------------------------------------------------------
-# Returns a random subset of n non-repeated elements from 
-# the array.
-#----------------------------------------------------------
+#------------------------------------------------------------------------------
+# Returns a random subset of n non-repeated elements from the array.
+#------------------------------------------------------------------------------
 def scsample(a, n)
   n = a.length if n < 0
   
@@ -100,8 +99,9 @@ end
 # Debug tool: string showing the content of the given d 
 # Used to scan Arrays of Hashes of Arrays.
 # Prints the result in a file. 
-def scToString(d)
-  File.open("errorlog.txt", "a") { |f|
+def scToString(d, title = nil, filename = "errorlog.txt")
+  File.open(filename, "a") { |f|
+    f.write(title + "\n") if title.is_a?(String)
     f.write(scToStringRec(d) + "\n")
   }
   pbMessage("Gladys I love you")
@@ -125,7 +125,7 @@ class Game_Switches
   end 
 end 
 
-# Prints game variables and game switches. 
+# Prints all game variables and game switches. 
 def pbSaveVariablesToTxt
   File.open("variables.txt","w") { |f| 
     f.write(_INTL("#============================================\n"))

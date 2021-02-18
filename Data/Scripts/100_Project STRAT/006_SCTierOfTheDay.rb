@@ -1,3 +1,12 @@
+###############################################################################
+# SCTierOfTheDay
+# 
+# This script is part of Pokémon Project STRAT by StCooler, and is therefore 
+# not part of Pokémon Essentials. 
+# 
+# Class that handles the "Tier Of The Day", a random tier with around 40 
+# Pokémon, to allow for new, temporary tiers. 
+###############################################################################
 
 class SCTierOfTheDayHandler
 	

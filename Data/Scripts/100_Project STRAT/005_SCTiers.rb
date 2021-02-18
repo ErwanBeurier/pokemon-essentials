@@ -6,20 +6,20 @@
 # 
 # Classes that handle tiers (list of authorised Pokémons, generation of valid 
 # teams, team checking, some menuing for creation of teams, et ceatera). 
+# Several tiers require more "hard-code", like Monotype and Bitype. 
 ###############################################################################
 
 
 
-# ==============================================================
+# =============================================================================
 # SCTier 
-# General class for tiers. General tiers should be instances of 
-# this instance. Subclassing is required only when there is more 
-# than just lists of banned + frequent + rare + allowed Pokémons. 
-# Typically, Monotype will require more lists, because each 
-# type will have its own list of allowed Pokémons (for 
-# complexity reasons, I prepared lists of Pokémons per type, 
-# instead of checking the types on-the-fly). 
-# ==============================================================
+# General class for tiers. General tiers should be instances of this instance. 
+# Subclassing is required only when there is more than just lists of banned + 
+# frequent + rare + allowed Pokémons. 
+# Typically, Monotype will require more lists, because each type will have its 
+# own list of allowed Pokémons (for complexity reasons, I prepared lists of 
+# Pokémons per type, instead of checking the types on-the-fly). 
+# =============================================================================
 class SCTier 
 	# Probability 0 of being chosen 
 	attr_reader(:banned_pkmns)
@@ -78,13 +78,15 @@ class SCTier
 	end 
 	
 	
-	
+	# Just for extorior display, we don't need fully built teams.
 	def fastRandSpecies(num_species)
 		return scsample(@frequent_pkmns, num_species)
 	end 
   
   
-  
+  # Stratum of base stats.
+  # When the tier is crowded, allow for the use of a range of base stats, to 
+  # prevent generating a team with Dunsparce and Tyranitar.
   def chooseStratum(new_stratum)
     return if !@stratum_range || ! @stratum
     data = scLoadStatTotals
@@ -488,12 +490,12 @@ end
 
 
 
-# ==============================================================
+# =============================================================================
 # SCMonotypeTier 
-# Special class for the Monotype tier. Along with the list of 
-# banned/allowed/rare/frequent Pokémons, there is a list of 
-# Pokémons per type + the generation of teams needs this. 
-# ==============================================================
+# Special class for the Monotype tier. Along with the list of banned/allowed/
+# rare/frequent Pokémons, there is a list of Pokémons per type + the 
+# generation of teams needs this. 
+# =============================================================================
 class SCMonotypeTier < SCTier
 	# Dictionary to store the list of Pokémons per type. 
 	attr_reader(:pkmns_per_type)
@@ -662,13 +664,12 @@ end
 
 
 
-# ==============================================================
-# SCPersonalisedTier 
-# Special class for the tier on-the-fly. Along with the list 
-# of banned/allowed/rare/frequent Pokémons, there is a list of 
-# Pokémons per "big tier". It's an attempt to allow the player 
-# to design their own tier. 
-# ==============================================================
+# =============================================================================
+# SCPersonalisedTier - DEPRECATED
+# Special class for the tier on-the-fly. Along with the list of banned/allowed
+# /rare/frequent Pokémons, there is a list of Pokémons per "big tier". It's an 
+# attempt to allow the player to design their own tier. 
+# =============================================================================
 class SCPersonalisedTier < SCTier
 	# tiers "On-The-Fly" - DEPRECATED
 	
@@ -898,12 +899,11 @@ end
 
 
 
-# ==============================================================
+# =============================================================================
 # SCBitypeTier 
-# Special class for the Bitype tier. Along with the list of 
-# banned/allowed/rare/frequent Pokémons, there is a list of 
-# Pokémons per pair of types. 
-# ==============================================================
+# Special class for the Bitype tier. Along with the list of banned/allowed/
+# rare/frequent Pokémons, there is a list of Pokémons per pair of types. 
+# =============================================================================
 class SCBitypeTier < SCTier
 	# Matrix types x types => list of Pokémons. 
 	attr_reader(:pkmns_bitype)
@@ -1133,9 +1133,9 @@ end
 
 
 
-# ==============================================================
+# =============================================================================
 # Functions
-# ==============================================================
+# =============================================================================
 def loadTier(tierid)
 	# Loads the tier from the compiled file. 
 	# Returns a class. 

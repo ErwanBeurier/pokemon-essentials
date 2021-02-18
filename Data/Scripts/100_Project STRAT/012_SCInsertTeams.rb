@@ -1,54 +1,14 @@
+################################################################################
+# SCInsertTeams
+# 
+# This script is part of Pokémon Project STRAT by StCooler, and is therefore 
+# not part of Pokémon Essentials. 
+#
 # This script inserts preset teams into the PC for narrative purposes. 
+################################################################################
 
 
-
-# Following this scheme: 
-# [speciesid, # 		0 = Species 
-# 1, # 					1 = Min level (not used)
-# 120, # 				2 = Level 
-# -1, # 				3 = Gender 
-# 0, # 					4 = Ability 
-# -1, # 				5 = Items 
-# -1, # 				6 = Nature 
-# "", # 				7 = Nickname 
-# Array.new(6, 31), # 	8 = IVs 
-# Array.new(4, -1), # 	9 = moves 
-# Array.new(6, 0), # 	10 = EVs 
-# false, # 				11 = Shiny
-# form_stuff]  # 		12 = Form (unimplemented)
-
-
-def scNewMovesetData(pokeid, ability, nature, item, move1, move2, move3, move4, evs)
-	pklist = SCTB.initData(pokeid)
-  
-  # Ability
-  ab = SCTB.getAbilityIndex(ability, pokeid)
-  pklist[SCMovesetsData::ABILITY] = ability
-  pklist[SCMovesetsData::ABILITYINDEX] = ab
-  
-  # Nature 
-  pklist[SCMovesetsData::NATURE] = nature
-  
-  # Item 
-  pklist[SCMovesetsData::ITEM] = item 
-  
-  # Moves 
-  pklist[SCMovesetsData::MOVE1] = move1
-  pklist[SCMovesetsData::MOVE2] = move2
-  pklist[SCMovesetsData::MOVE3] = move3
-  pklist[SCMovesetsData::MOVE4] = move4
-  
-  # Stats
-  pklist[SCMovesetsData::EV] = evs.clone
-	
-	return pklist 
-end 
-
-
-
-
-
-
+# Reads the database of Teams and inserts the team it finds. 
 def scInsertTeamToStorage(tier, id)
   trainerdata = pbLoadTrainer(PBTrainers::POKEMONTRAINER_Red, "Player", id)
   
@@ -107,6 +67,56 @@ def scInsertTeamToStorage(tier, id)
 	scTeamStorage.addTeam(team_name, party, tier)
 end 
 
+
+
+
+
+#==============================================================================
+# DEPRECATED.
+# Hard-coded way of inserting teams.
+#==============================================================================
+# Following this scheme: 
+# [speciesid, # 		0 = Species 
+# 1, # 					1 = Min level (not used)
+# 120, # 				2 = Level 
+# -1, # 				3 = Gender 
+# 0, # 					4 = Ability 
+# -1, # 				5 = Items 
+# -1, # 				6 = Nature 
+# "", # 				7 = Nickname 
+# Array.new(6, 31), # 	8 = IVs 
+# Array.new(4, -1), # 	9 = moves 
+# Array.new(6, 0), # 	10 = EVs 
+# false, # 				11 = Shiny
+# form_stuff]  # 		12 = Form (unimplemented)
+
+
+
+def scNewMovesetData(pokeid, ability, nature, item, move1, move2, move3, move4, evs)
+	pklist = SCTB.initData(pokeid)
+  
+  # Ability
+  ab = SCTB.getAbilityIndex(ability, pokeid)
+  pklist[SCMovesetsData::ABILITY] = ability
+  pklist[SCMovesetsData::ABILITYINDEX] = ab
+  
+  # Nature 
+  pklist[SCMovesetsData::NATURE] = nature
+  
+  # Item 
+  pklist[SCMovesetsData::ITEM] = item 
+  
+  # Moves 
+  pklist[SCMovesetsData::MOVE1] = move1
+  pklist[SCMovesetsData::MOVE2] = move2
+  pklist[SCMovesetsData::MOVE3] = move3
+  pklist[SCMovesetsData::MOVE4] = move4
+  
+  # Stats
+  pklist[SCMovesetsData::EV] = evs.clone
+	
+	return pklist 
+end 
 
 
 def scInsertTeam0001

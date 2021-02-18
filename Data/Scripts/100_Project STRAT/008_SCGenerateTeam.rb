@@ -4,20 +4,9 @@
 # This script is part of Pokémon Project STRAT by StCooler, and is therefore 
 # not part of Pokémon Essentials. 
 # 
-# This script contains functions related to the generation of teams, with 
-# regards to a given tier. 
+# This script contains functions related to the generation of teams and 
+# movesets (and Z-crystals), with regards to a given tier.
 ###############################################################################
-
-
-
-
-# TODO:
-# - Pattern for ARCEUS
-# - Lightclay
-# - Trick room setter 
-
-
-
 
 
 def scChooseAbility(pokemon, tier)
@@ -55,9 +44,6 @@ def scChooseAbility(pokemon, tier)
   
   return ret[a][1]
 end 
-
-
-
 
 
 
@@ -409,6 +395,7 @@ def scGenerateMoveset(pkmn, trainer, tier)
   
   return pokemon
 end 
+
 
 
 def scGetFittingZCrystals(pokemon, strict)

@@ -1,25 +1,35 @@
-
-
+###############################################################################
+# SCRandomMusic
+# 
+# This script is part of Pokémon Project STRAT by StCooler, and is therefore 
+# not part of Pokémon Essentials. 
+# 
+# This script contains everything related to the choice of music in the game. 
+# The functions are meant to be called in Battle or in Events, on the map. 
+###############################################################################
 
 module SCRandMusic
   # Exteriors
   Routes = 0
   TownsCities = 1
+  
   # Interiors
   PokemonLeagues = 2
   PokemonCenters = 3
   BattleFacilities = 4
   GymInteriors = 5
+  
   # Trainer Battles 
   TrainerBattles = 6
   BattleFacilityChampions = 7
   GymLeaders = 8
   Champions = 9
+  
   # Wild Battles
   WildBattles = 10
   LegendaryBattles = 11
 
-
+  
   def self.set(type)
     case type 
     # Background music - outside of battle.
@@ -30,6 +40,7 @@ module SCRandMusic
       self.set2(-1, type)
     end
   end 
+  
 
   def self.set2(ambiance_type, battle_type)
     case ambiance_type 
@@ -64,9 +75,7 @@ module SCRandMusic
       $PokemonGlobal.nextBattleBGM = self.get_rand_legendary
     end
   end 
-
   
-
 
   # Routes
   def self.get_rand_routes
@@ -209,7 +218,6 @@ module SCRandMusic
     
     return scsample(music_list, 1)
   end 
-  
   
   
   # Towns & Cities
