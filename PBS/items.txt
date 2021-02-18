@@ -914,3 +914,4 @@
 2032,WINDYROCK,Windy Rock,Windy Rocks,1,4000,"A Pokémon held item that extends the duration of the move Autumn Tempest used by the holder.",0,0,0,
 2033,EVIOLITETREN,Eviolite-Tren,Eviolites-Tren,1,4000,"A mysterious evolutionary lump. When held, it raises the Attack if the holder can still evolve.",0,0,0,
 2034,EVIOLITEMPH,Eviolite-Rita,Eviolites-Rita,1,4000,"A mysterious evolutionary lump. When held, it raises the Sp. Atk if the holder can still evolve.",0,0,0,
+2035,SOULLINK,Soul-Link,Soul-Links,1,4000,"Designates the holder as available for the Assistance mechanic.",0,0,0,

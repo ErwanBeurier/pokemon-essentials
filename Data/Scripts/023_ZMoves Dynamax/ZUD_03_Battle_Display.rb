@@ -92,6 +92,7 @@ class PokeBattle_Battle
     #===========================================================================
     # pbUnregister<InsertCustomMechanic>(idxBattler)
     #---------------------------------------------------------------------------
+    pbUnregisterAssistance(idxBattler)
     pbClearChoice(idxBattler)
   end
   
@@ -140,6 +141,12 @@ class PokeBattle_Battle
     #  end
     #end
     #---------------------------------------------------------------------------
+    # Assistance
+    for side in 0...2
+      @assistance[side].each_with_index do |ass,i|
+        @assistance[side][i] = -1 if ass>=0
+      end
+    end
     pbCommandPhaseLoop(true)
     return if @decision!=0
     pbCommandPhaseLoop(false)
@@ -191,6 +198,7 @@ class PokeBattle_Battle
     #===========================================================================
     #pbAttackPhase<InsertCustomMechanic>
     #---------------------------------------------------------------------------
+    pbAttackPhaseAssistance
     pbAttackPhaseRaidBoss
     pbAttackPhaseCheer
     pbAttackPhaseMoves
@@ -209,7 +217,7 @@ class PokeBattle_Battle
     @scene.pbFightMenu(idxBattler,pbCanMegaEvolve?(idxBattler),
                                   pbCanUltraBurst?(idxBattler),
                                   pbCanZMove?(idxBattler),
-                                  pbCanDynamax?(idxBattler)
+                                  pbCanDynamax?(idxBattler),
                                   ##############################################
                                   # CUSTOM MECHANICS
                                   #=============================================
@@ -218,6 +226,7 @@ class PokeBattle_Battle
                                   #=============================================
                                   #pbCan<InsertCustomMechanic>?(idxBattler)
                                   #---------------------------------------------
+                                  pbCanCallAssitance?(idxBattler)
                                   ) { |cmd|
       case cmd
       when -1   # Cancel
@@ -239,11 +248,14 @@ class PokeBattle_Battle
       # Add the toggle for any custom battle mechanics here.
       # Make sure to adjust the numbers after "when" for Shift.
       #=========================================================================
-      #when -6   # Custom Mechanic
+      #when -7   # Custom Mechanic
       #  pbToggleRegistered<InsertCustomMechanic>(idxBattler)   
       #  next false
       #-------------------------------------------------------------------------
-      when -6   # Shift
+      when -6   # Assistance 
+        pbToggleRegisteredAssistance(idxBattler)
+        ret = true 
+      when -7   # Shift
         pbUnregisterMegaEvolution(idxBattler)
         pbUnregisterUltraBurst(idxBattler)
         pbUnregisterZMove(idxBattler)
@@ -280,7 +292,7 @@ class PokeBattle_Scene
   def pbFightMenu(idxBattler,megaEvoPossible=false,
                              ultraPossible=false,
                              zMovePossible=false,
-                             dynamaxPossible=false
+                             dynamaxPossible=false,
                              ###################################################
                              # CUSTOM MECHANICS
                              #==================================================
@@ -289,6 +301,7 @@ class PokeBattle_Scene
                              #==================================================
                              #customPossible=false
                              #--------------------------------------------------
+                             assistancePossible=false 
                              )
                              
     battler = @battle.battlers[idxBattler]
@@ -313,8 +326,10 @@ class PokeBattle_Scene
     #===========================================================================
     #cw.chosen_button = FightMenuDisplay::CustomButton     if customPossible
     #---------------------------------------------------------------------------
+    cw.chosen_button = FightMenuDisplay::AssistanceButton  if assistancePossible
     if megaEvoPossible || ultraPossible || 
-       zMovePossible   || dynamaxPossible # || customPossible
+       zMovePossible   || dynamaxPossible ||
+       assistancePossible # || customPossible
       mechanicPossible = true
     end
     cw.setIndexAndMode(moveIndex,(mechanicPossible) ? 1 : 0)
@@ -353,6 +368,10 @@ class PokeBattle_Scene
         #  cw.mode = newMode if newMode!=cw.mode
         #end
         #-----------------------------------------------------------------------
+        if assistancePossible
+          newMode = (@battle.pbRegisteredAssistance?(idxBattler)) ? 2 : 1
+          cw.mode = newMode if newMode!=cw.mode
+        end
         needRefresh = false
       end
       oldIndex = cw.index
@@ -492,13 +511,21 @@ class PokeBattle_Scene
         #  break if yield -6
         #  needRefresh = true
         #end
+        #-----------------------------------------------------------------------
+        # Assistance
+        #-----------------------------------------------------------------------
+        if assistancePossible
+          pbPlayDecisionSE
+          break if yield -6
+          needRefresh = true
+        end
 #===============================================================================
 # Shift Command
 #===============================================================================
       elsif Input.trigger?(Input::F5)
         if cw.shiftMode>0
           pbPlayDecisionSE
-          break if yield -6
+          break if yield -7
           needRefresh = true
         end
       end
@@ -516,6 +543,7 @@ class FightMenuDisplay < BattleMenuBase
   UltraBurstButton = 1
   ZMoveButton      = 2
   DynamaxButton    = 3
+  AssistanceButton = 4
   ##############################################################################
   # CUSTOM MECHANICS
   #=============================================================================
@@ -551,6 +579,8 @@ class FightMenuDisplay < BattleMenuBase
       #=========================================================================
       #@battleButtonBitmap[CustomButton]     = AnimatedBitmap.new(_INTL("Graphics/Pictures/Battle/cursor_custom"))
       #-------------------------------------------------------------------------
+      # Assistance
+      @battleButtonBitmap[AssistanceButton] = AnimatedBitmap.new(_INTL("Graphics/Pictures/Battle/cursor_assistance"))
       # Chosen button:
       @chosen_button = NoButton
       background = IconSprite.new(0,Graphics.height-96,viewport)
