@@ -188,12 +188,14 @@ class SCTeamStorage
     return if self.isEmptyTeam?(index)
     
     s = "#-------------------------------\r\n"
-    s += "[POKEMONTRAINER_Red,Player,X]\r\n"
+    s += _INTL("[POKEMONTRAINER_Red,Player,{1}]\r\n", index)
     s += "LoseText = \"" + @content[index]["Name"] + "\"\r\n"
 
     for pklist in @content[index]["Party"]
       s += scConvertMovesetToString(pklist, true, false)
     end 
+    
+    s.gsub!("\r\n", "\n")
     
     File.open("PBS/trainers.txt","a") { |f|
       f.write(s)

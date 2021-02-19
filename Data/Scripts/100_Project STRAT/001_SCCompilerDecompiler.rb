@@ -467,6 +467,7 @@ def scConvertMovesetToString(moveset, with_tab = false, for_compiler = true)
     end 
     
     s += sprintf(s_tab + moves_s)
+    s += "\r\n"
   end 
   
   # Ability 
@@ -505,6 +506,7 @@ def scConvertMovesetToString(moveset, with_tab = false, for_compiler = true)
       for i in 1...6
         s += sprintf(",%d",moveset[SCMovesetsData::EV][i])
       end
+      s += "\r\n"
     end 
   end
   
