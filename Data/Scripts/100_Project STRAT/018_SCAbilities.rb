@@ -252,4 +252,17 @@ BattleHandlers::AbilityOnSwitchIn.add(:MINECLEARER,
 )
 
 
+#===============================================================================
+# Beginner's Luck   
+# Once per switch-in, the Pokémon ignores the immunity of a target. 
+#===============================================================================
+
+BattleHandlers::AbilityOnSwitchIn.add(:BEGINNERSLUCK,
+  proc { |ability,battler,battle|
+    battler.effects[PBEffects::BeginnersLuck] = 1 if battler.effects[PBEffects::BeginnersLuck] == -1
+  }
+)
+
+
+
 

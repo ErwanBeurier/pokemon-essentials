@@ -311,6 +311,7 @@ class PokeBattle_Battler
 	  @effects[PBEffects::TarShot]             = false
 	  @effects[PBEffects::BlunderPolicy]       = false
     @effects[PBEffects::SwitchedAlly]        = -1
+    @effects[PBEffects::BeginnersLuck]       = -1
   end
 
   #=============================================================================

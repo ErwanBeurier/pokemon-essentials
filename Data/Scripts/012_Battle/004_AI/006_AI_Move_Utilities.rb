@@ -53,6 +53,20 @@ class PokeBattle_AI
       ret = PBTypeEffectiveness::NORMAL_EFFECTIVE_ONE if isConst?(defType,PBTypes,:FLYING) &&
                                                          isConst?(moveType,PBTypes,:GROUND)
     end
+    # STRAT additions: Normal-type specific items. 
+    ret = scHandleCoats(ret, moveType,defType,target)
+    ret = scHandleCrystalsTarget(ret, moveType,defType,target)
+    ret = scHandleCrystalsUser(ret, moveType,defType,user)
+    # STRAT: Beginner's Luck 
+    if user.effects[PBEffects::BeginnersLuck] == 1
+      ret = PBTypeEffectiveness::NORMAL_EFFECTIVE_ONE if PBTypes.ineffective?(moveType,defType)
+      # user.effects[PBEffects::BeginnersLuck] = 0 
+    end
+    # Tar shot 
+    if target.effects[PBEffects::TarShot] && isConst?(moveType,PBTypes,:FIRE) 
+      ret = PBTypeEffectiveness::SUPER_EFFECTIVE_ONE if PBTypes.normalEffective?(moveType,target.type1,target.type2)
+      ret = PBTypeEffectiveness::NORMAL_EFFECTIVE_ONE if PBTypes.notVeryEffective?(moveType,target.type1,target.type2)
+    end
     return ret
   end
 

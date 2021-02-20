@@ -61,6 +61,11 @@ class PokeBattle_Move
     ret = scHandleCoats(ret, moveType,defType,target)
     ret = scHandleCrystalsTarget(ret, moveType,defType,target)
     ret = scHandleCrystalsUser(ret, moveType,defType,user)
+    # STRAT: Beginner's Luck 
+    if user.effects[PBEffects::BeginnersLuck] == 1
+      ret = PBTypeEffectiveness::NORMAL_EFFECTIVE_ONE if PBTypes.ineffective?(moveType,defType)
+      user.effects[PBEffects::BeginnersLuck] = 0 
+    end
     # Tar shot 
     if target.effects[PBEffects::TarShot] && isConst?(moveType,PBTypes,:FIRE) 
       ret = PBTypeEffectiveness::SUPER_EFFECTIVE_ONE if PBTypes.normalEffective?(moveType,target.type1,target.type2)

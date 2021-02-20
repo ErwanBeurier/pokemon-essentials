@@ -279,3 +279,4 @@
 509,PREDATOR,Predator,"Powers up moves of the same type."
 510,LAVAMONSTER,Lava Monster,"Rock-type moves become Fire-type and powered up."
 511,MINECLEARER,Mine-Clearer,"Removes every hazard when switching in."
+512,BEGINNERSLUCK,Beginner's Luck,"Once per switch, ignores immunity."

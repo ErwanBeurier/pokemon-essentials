@@ -190,9 +190,37 @@ end
 #===============================================================================
 class PokeBattle_Move_C007 < PokeBattle_Move_01C
   def pbOnStartUse(user,targets)
-    @statUp[1] = 3 if user.hasActiveAbility?(:WOLFBLOOD)
+    @statUp[1] = (user.hasActiveAbility?(:WOLFBLOOD) ? 3 : 1)
+    super
   end
 end
 
 
 
+#===============================================================================
+# Restore HP of allies and self. (Relaxing Purring)
+#===============================================================================
+class PokeBattle_Move_C008 < PokeBattle_Move
+  def healingMove?; return true; end
+
+  def pbMoveFailed?(user,targets)
+    jglheal = 0
+    for i in 0...targets.length
+      jglheal += 1 if (targets[i].hp == targets[i].totalhp || !targets[i].canHeal?)
+    end
+    if jglheal == targets.length
+      @battle.pbDisplay(_INTL("But it failed!"))
+      return true
+    end
+    return false
+  end
+
+  def pbEffectAgainstTarget(user,target)
+    if target.hp != target.totalhp && target.canHeal?
+      hpGain = (target.totalhp/3.0).round
+      target.pbRecoverHP(hpGain)
+      @battle.pbDisplay(_INTL("{1}'s health was restored.",target.pbThis))
+    end
+    super
+  end
+end
