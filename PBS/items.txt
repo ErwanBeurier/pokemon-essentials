@@ -907,6 +907,7 @@
 2025,SCFORESTCOAT,Forest coat,Forest coats,1,2000,"Gives a resistance to Normal-, Flying-, Bug- and Grass-type moves to the holder, if it is Normal-type.",0,0,0,
 2026,SCDEMONICCOAT,Demonic coat,Demonic coats,1,2000,"Gives a resistance to Dark- and Fire-type moves to the holder, if it is Normal-type.",0,0,0,
 2027,SCAQUATICCOAT,Aquatic coat,Aquatic coats,1,2000,"Gives a resistance to Water- and Ice-type moves to the holder, if it is Normal-type.",0,0,0,
+#-------------------------------
 2028,CLIENTDIARY,Diary,Diaries,8,0,"Your diary. Contains the information on your next client.",2,0,6,
 2029,GENERICZCRYSTAL,Generic Z-Crystal,Generic Z-Crystals,1,0,"Item for internal use only.",0,0,0,
 2030,DYNAMAXMAP,Dynamap,Dynamaps,8,0,"Displays the map of your Dynamax adventure.",2,0,6,
@@ -915,3 +916,5 @@
 2033,EVIOLITETREN,Eviolite-Tren,Eviolites-Tren,1,4000,"A mysterious evolutionary lump. When held, it raises the Attack if the holder can still evolve.",0,0,0,
 2034,EVIOLITEMPH,Eviolite-Rita,Eviolites-Rita,1,4000,"A mysterious evolutionary lump. When held, it raises the Sp. Atk if the holder can still evolve.",0,0,0,
 2035,SOULLINK,Soul-Link,Soul-Links,1,4000,"Designates the holder as available for the Assistance mechanic.",0,0,0,
+2036,FOSSILIUMZ,Fossilium Z,,8,0,"It converts Z-Power into crystals that upgrade revived fossils' Antic Power to an exclusive Z-move.",5,0,14,
+2037,SPINDIUMZ,Spindium Z,,8,0,"It converts Z-Power into crystals that upgrade Spinda's Teeter Dance to an exclusive Z-move.",5,0,14,

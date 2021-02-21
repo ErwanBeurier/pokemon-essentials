@@ -873,6 +873,7 @@
 2015,HIDDENPOWERDRAGON,H.P. Dragon,000,60,DRAGON,Special,100,15,0,NearOther,0,bef,"A unique attack that varies in type and intensity depending on the Pokémon using it."
 2016,HIDDENPOWERDARK,H.P. Dark,000,60,DARK,Special,100,15,0,NearOther,0,bef,"A unique attack that varies in type and intensity depending on the Pokémon using it."
 2017,HIDDENPOWERFAIRY,H.P. Fairy,000,60,FAIRY,Special,100,15,0,NearOther,0,bef,"A unique attack that varies in type and intensity depending on the Pokémon using it."
+#---------------------------------------------
 2018,PALEODRAIN,Paleo Drain,0DD,75,ROCK,Physical,100,10,0,NearOther,0,abe,"The user uses its paleolithic strength to drain the opponent's power."
 2019,GHOSTGALLOP,Ghost gallop,01F,75,GHOST,Physical,100,5,0,NearOther,0,abe,"The user ploughs into the target. Also boosts the speed of the user."
 2020,KINDLING,Kindling,02C,0,FIRE,Status,0,20,0,User,0,dg,"The user's inner fire grows. Raises Sp. Atk and Sp. Def stats."
@@ -886,3 +887,6 @@
 2028,ASSISTANCEPLACEHOLDER,Assistance Placeholder,000,0,NORMAL,Status,0,5,0,User,0,,"This move is made for internal use only. No Pokémon should have it."
 2029,ASSISTANCE,Assistance,C007,0,NORMAL,Status,0,20,0,User,0,,"The user gives its seat to another Pokémon of the team for just one move."
 2030,RELAXINGPURRING,Relaxing Purring,C008,0,NORMAL,Status,0,10,0,UserAndAllies,0,d,"The user purrs and relaxes its allies, healing their HP."
+#---------------------------------------------
+2500,PREHISTORICPOWERREJURGENCE,Prehistoric Power Rejurgence,Z010,170,ROCK,Special,0,1,100,AllNearFoes,0,fz,"The revived fossil attacks the opposing Pokémon with full force. This move boosts the user's stats."
+2501,CONFUSIONSOLODANCE,Confusion Solo Dance,Z011,0,NORMAL,Status,0,1,100,AllNearFoes,0,fz,"Spinda performs a dance that only it can master. This move drastically boosts the user's stats."
