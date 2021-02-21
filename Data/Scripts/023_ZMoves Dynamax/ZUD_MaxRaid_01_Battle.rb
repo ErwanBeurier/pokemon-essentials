@@ -1176,12 +1176,14 @@ end
 class PokeBattle_TwoTurnMove < PokeBattle_Move
   def pbIsChargingTurn?(user)
     @powerHerb = false
+    @birdofprey = false # STRAT
     @chargingTurn = false
     @damagingTurn = true
     if user.effects[PBEffects::TwoTurnAttack]==0
       @powerHerb = user.hasActiveItem?(:POWERHERB)
+      @birdofprey = user.hasActiveAbility?(:BIRDOFPREY) && ["0C7", "0C9", "0CC"].include?(@function)
       @chargingTurn = true
-      @damagingTurn = @powerHerb
+      @damagingTurn = @powerHerb || @birdofprey
       if user.effects[PBEffects::MaxRaidBoss] &&
          ["0C9","0CA","0CB","0CC","0CD","0CE","14D"].include?(@function)
         @damagingTurn = true
