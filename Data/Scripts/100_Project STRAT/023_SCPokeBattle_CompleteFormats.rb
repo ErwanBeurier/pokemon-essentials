@@ -777,7 +777,7 @@ class PokeBattle_Battle
     # Makes each side compact when a Pokémon is KO and not replaced. 
     return if singleBattle?
     for side in 0..1
-      next if pbSideSize(side) == 1
+      next if pbSideSize(side) <= 1
       
       # debug_log = ""
       # @battlers.each do |b|
@@ -814,6 +814,7 @@ class PokeBattle_Battle
           # b1 is on the left of b2, swap b1 and b2. 
           next if !b2 || b2.opposes?(b1)
           next if b2.index <= b1.index # b1 is on the right of b2
+          next if b1.index >= @sideSizes[side] * 2 + side # b1 was already handled in the previous call of this function
           
           # Here, b1 is on the left of b2. 
           some_right_alive = some_right_alive || !b2.fainted?
@@ -850,16 +851,89 @@ class PokeBattle_Battle
       
       @sideSizes[side] = new_side_size
     end 
-    @scene.pbReinitTargetWindow
+    @scene.pbReinitSceneForNewSizes
   end 
 end 
 
 class PokeBattle_Scene
   
-  def pbReinitTargetWindow
+  def pbReinitSceneForNewSizes
+    @sprites["targetWindow"].dispose
     @sprites["targetWindow"] = TargetMenuDisplay.new(@viewport,200,@battle.sideSizes)
-    pbRefresh
+    @sprites["targetWindow"].visible = false 
+    # # Data boxes and Pokémon sprites
+    # @battle.battlers.each_with_index do |b,i|
+      # next if !b
+      # @sprites["dataBox_#{i}"] = PokemonDataBox.new(b,@battle.pbSideSize(i),@viewport)
+    # end
+    # pbRefresh
+    pbResetSceneAfterSizeChange(0)
+    pbResetSceneAfterSizeChange(1)
   end 
+  
+  
+  def pbResetSceneAfterSizeChange(battlerindex)
+    pbRefresh
+    sendOutAnims=[]
+    adjustAnims=[]
+    # setupbox=false
+    # if !@sprites["dataBox_#{battlerindex}"]
+      # @sprites["dataBox_#{battlerindex}"] = PokemonDataBox.new(@battle.battlers[battlerindex],
+          # @battle.pbSideSize(battlerindex),@viewport)
+      # setupbox=true
+      # @sprites["targetWindow"].dispose
+      # @sprites["targetWindow"] = TargetMenuDisplay.new(@viewport,200,@battle.sideSizes)
+      # @sprites["targetWindow"].visible=false
+      # pbCreatePokemonSprite(battlerindex)
+      # @battle.battlers[battlerindex].eachAlly{|b|
+        # adjustAnims.push([DataBoxDisappearAnimation.new(@sprites,@viewport,b.index),b])
+      # }
+    # end
+    # sendOutAnim = SOSJoinAnimation.new(@sprites,@viewport,
+        # @battle.pbGetOwnerIndexFromBattlerIndex(battlerindex)+1,
+        # @battle.battlers[battlerindex])
+    # dataBoxAnim = DataBoxAppearAnimation.new(@sprites,@viewport,battlerindex)
+    # sendOutAnims.push([sendOutAnim,dataBoxAnim,false])
+    # Play all animations
+    loop do
+      adjustAnims.each do |a|
+        next if a[0].animDone?
+        a[0].update
+      end
+      pbUpdate
+      break if !adjustAnims.any? {|a| !a[0].animDone?}
+    end
+    # delete and remake sprites
+    adjustAnims.each {|a|
+      @sprites["dataBox_#{a[1].index}"].dispose
+      @sprites["dataBox_#{a[1].index}"] = PokemonDataBox.new(a[1],
+          @battle.pbSideSize(a[1].index),@viewport)
+    }
+    # have to remake here, because I have to destroy and remake the databox
+    # and that breaks the reference link.
+    @battle.battlers[battlerindex].eachAlly{|b|
+      sendanim=SOSAdjustAnimation.new(@sprites,@viewport,
+        @battle.pbGetOwnerIndexFromBattlerIndex(b.index)+1,b)
+      dataanim=DataBoxAppearAnimation.new(@sprites,@viewport,b.index)
+      sendOutAnims.push([sendanim,dataanim,false,b])
+    }
+    loop do
+      sendOutAnims.each do |a|
+        next if a[2]
+        a[0].update
+        a[1].update if a[0].animDone?
+        a[2] = true if a[1].animDone?
+      end
+      pbUpdate
+      break if !sendOutAnims.any? { |a| !a[2] }
+    end
+    adjustAnims.each {|a| a[0].dispose}
+    sendOutAnims.each { |a| a[0].dispose; a[1].dispose }
+    # Play shininess animations for shiny Pokémon
+    if @battle.showAnims && @battle.battlers[battlerindex].shiny?
+      pbCommonAnimation("Shiny",@battle.battlers[battlerindex])
+    end
+  end
 end 
 
 
@@ -921,3 +995,207 @@ class PokeBattle_Battle
   end
 end 
 
+
+
+
+
+# Compatibility between ZUD and my implementation of multiple battles. 
+class PokemonDataBox < SpriteWrapper
+  def initializeDataBoxGraphic(sideSize)
+    @onPlayerSide = ((@battler.index%2)==0)
+    # Get the data box graphic and set whether the HP numbers/Exp bar are shown
+    if sideSize==1   # One Pokémon on side, use the regular dara box BG
+      bgFilename = ["Graphics/Pictures/Battle/databox_normal",
+                    "Graphics/Pictures/Battle/databox_normal_foe"][@battler.index%2]
+      if @onPlayerSide
+        @showHP  = true
+        @showExp = true
+      end
+    elsif sideSize < 4 # Multiple Pokémon on side, use the thin dara box BG
+      bgFilename = ["Graphics/Pictures/Battle/databox_thin",
+                    "Graphics/Pictures/Battle/databox_thin_foe"][@battler.index%2]
+    else # For a side with 4 Pokémons or more. 
+      bgFilename = ["Graphics/Pictures/Battle/databox_tiny",
+                    "Graphics/Pictures/Battle/databox_tiny_foe"][@battler.index%2]
+    end
+    @databoxBitmap  = AnimatedBitmap.new(bgFilename)
+    # Determine the co-ordinates of the data box and the left edge padding width
+    if @onPlayerSide
+      if !@largeSideSize
+        @spriteX = Graphics.width - 244
+        @spriteY = Graphics.height - 192
+        @spriteBaseX = 34
+      else 
+        @spriteX = 10
+        @spriteY = Graphics.height - 96 - @databoxBitmap.height # 96 = heigth of the menu
+        @spriteBaseX = 10
+      end 
+    else
+      if !@largeSideSize
+        @spriteX = -16
+        @spriteY = 36
+        @spriteBaseX = 16
+      else 
+        @spriteX = Graphics.width
+        @spriteY = 0
+        @spriteBaseX = 10
+      end 
+    end
+    case sideSize
+    when 2
+      @spriteX += [-12,  12,  0,  0][@battler.index]
+      @spriteY += [-20, -34, 34, 20][@battler.index]
+    when 3
+      @spriteX += [-12,  12, -6,  6,  0,  0][@battler.index]
+      @spriteY += [-42, -46,  4,  0, 50, 46][@battler.index]
+    when 4, 5, 6
+      @spriteX += 80 * @battler.index / 2 if @onPlayerSide
+      @spriteX -= 20 + 80 * ((@battler.index - 1) / 2 + 1) if !@onPlayerSide
+    end
+  end
+  
+  
+  def initializeOtherGraphics(viewport)
+    # Create other bitmaps
+    @numbersBitmap = AnimatedBitmap.new(_INTL("Graphics/Pictures/Battle/icon_numbers"))
+    @expBarBitmap  = AnimatedBitmap.new(_INTL("Graphics/Pictures/Battle/overlay_exp"))
+    if @largeSideSize # Side with more than 3 battlers. 
+      @hpBarBitmap   = AnimatedBitmap.new(_INTL("Graphics/Pictures/Battle/overlay_hp_tiny"))
+    else
+      @hpBarBitmap   = AnimatedBitmap.new(_INTL("Graphics/Pictures/Battle/overlay_hp"))
+    end 
+    #---------------------------------------------------------------------------
+    # Max Raid Displays
+    #---------------------------------------------------------------------------
+    @raidNumbersBitmap  = AnimatedBitmap.new(_INTL("Graphics/Pictures/Dynamax/raidbattle_num"))
+    @raidNumbersBitmap1 = AnimatedBitmap.new(_INTL("Graphics/Pictures/Dynamax/raidbattle_num1"))
+    @raidNumbersBitmap2 = AnimatedBitmap.new(_INTL("Graphics/Pictures/Dynamax/raidbattle_num2"))
+    @raidNumbersBitmap3 = AnimatedBitmap.new(_INTL("Graphics/Pictures/Dynamax/raidbattle_num3"))
+    @raidBar            = AnimatedBitmap.new(_INTL("Graphics/Pictures/Dynamax/raidbattle_bar"))
+    @shieldHP           = AnimatedBitmap.new(_INTL("Graphics/Pictures/Dynamax/raidbattle_shield"))
+    #---------------------------------------------------------------------------
+    # Create sprite to draw HP numbers on
+    @hpNumbers = BitmapSprite.new(124,16,viewport)
+    pbSetSmallFont(@hpNumbers.bitmap)
+    @sprites["hpNumbers"] = @hpNumbers
+    # Create sprite wrapper that displays HP bar
+    @hpBar = SpriteWrapper.new(viewport)
+    @hpBar.bitmap = @hpBarBitmap.bitmap
+    @hpBar.src_rect.height = @hpBarBitmap.height/3
+    @sprites["hpBar"] = @hpBar
+    # Create sprite wrapper that displays Exp bar
+    @expBar = SpriteWrapper.new(viewport)
+    @expBar.bitmap = @expBarBitmap.bitmap
+    @sprites["expBar"] = @expBar
+    # Create sprite wrapper that displays everything except the above
+    @contents = BitmapWrapper.new(@databoxBitmap.width,@databoxBitmap.height)
+    self.bitmap  = @contents
+    self.visible = false
+    self.z       = 150+((@battler.index)/2)*5
+    pbSetSystemFont(self.bitmap)
+  end
+  
+  
+  def refresh
+    self.bitmap.clear
+    return if !@battler.pokemon
+    textPos = []
+    imagePos = []
+    # Draw background panel
+    self.bitmap.blt(0,0,@databoxBitmap.bitmap,Rect.new(0,0,@databoxBitmap.width,@databoxBitmap.height))
+    # Draw Pokémon's name
+    nameWidth = self.bitmap.text_size(@battler.name).width
+    nameOffset = 0
+    nameOffset = nameWidth-116 if nameWidth>116
+    #---------------------------------------------------------------------------
+    # Sets all battle visuals for a Max Raid Pokemon.
+    #---------------------------------------------------------------------------
+    if $game_switches[MAXRAID_SWITCH] && @battler.effects[PBEffects::MaxRaidBoss]
+      textPos.push([@battler.name,@spriteBaseX+8-nameOffset,6,false,Color.new(248,248,248),Color.new(248,32,32)])
+      turncount = @battler.effects[PBEffects::Dynamax]-1
+      pbDrawRaidNumber(0,turncount,self.bitmap,@spriteBaseX+170,20,1)
+      kocount = @battler.effects[PBEffects::KnockOutCount]
+      kocount = 0 if kocount<0
+      pbDrawRaidNumber(1,kocount,self.bitmap,@spriteBaseX+199,20,1)
+      if @battler.effects[PBEffects::RaidShield]>0
+        shieldHP   =   @battler.effects[PBEffects::RaidShield]
+        shieldLvl  =   MAXRAID_SHIELD
+        shieldLvl += 1 if @battler.level>25
+        shieldLvl += 1 if @battler.level>35
+        shieldLvl += 1 if @battler.level>45
+        shieldLvl += 1 if @battler.level>55
+        shieldLvl += 1 if @battler.level>65
+        shieldLvl += 1 if @battler.level>=70 || $game_switches[HARDMODE_RAID]
+        shieldLvl  = 1 if shieldLvl<=0
+        shieldLvl  = 8 if shieldLvl>8
+        offset     = (121-(2+shieldLvl*30/2))
+        self.bitmap.blt(@spriteBaseX+offset,59,@raidBar.bitmap,Rect.new(0,0,2+shieldLvl*30,12)) 
+        self.bitmap.blt(@spriteBaseX+offset,59,@shieldHP.bitmap,Rect.new(0,0,2+shieldHP*30,12))
+      end
+    #---------------------------------------------------------------------------
+    elsif !@largeSideSize
+      textPos.push([@battler.name,@spriteBaseX+8-nameOffset,6,false,NAME_BASE_COLOR,NAME_SHADOW_COLOR])
+      # Draw Pokémon's gender symbol
+      case @battler.displayGender
+      when 0   # Male
+        textPos.push([_INTL("♂"),@spriteBaseX+126,6,false,MALE_BASE_COLOR,MALE_SHADOW_COLOR])
+      when 1   # Female
+        textPos.push([_INTL("♀"),@spriteBaseX+126,6,false,FEMALE_BASE_COLOR,FEMALE_SHADOW_COLOR])
+      end
+      pbDrawTextPositions(self.bitmap,textPos)
+    end
+    # Draw Pokémon's level
+    if !@largeSideSize
+      imagePos.push(["Graphics/Pictures/Battle/overlay_lv",@spriteBaseX+140,16])
+      pbDrawNumber(@battler.level,self.bitmap,@spriteBaseX+162,16)
+    end 
+    if !@largeSideSize
+      # Draw shiny icon
+      if @battler.shiny?
+        shinyX = (@battler.opposes?(0)) ? 206 : -6   # Foe's/player's
+        imagePos.push(["Graphics/Pictures/shiny",@spriteBaseX+shinyX,36])
+      end
+      # Draw Mega Evolution/Primal Reversion icon
+      if @battler.mega?
+        imagePos.push(["Graphics/Pictures/Battle/icon_mega",@spriteBaseX+8,34])
+      elsif @battler.primal?
+        primalX = (@battler.opposes?) ? 208 : -28   # Foe's/player's
+        if @battler.isSpecies?(:KYOGRE)
+          imagePos.push(["Graphics/Pictures/Battle/icon_primal_Kyogre",@spriteBaseX+primalX,4])
+        elsif @battler.isSpecies?(:GROUDON)
+          imagePos.push(["Graphics/Pictures/Battle/icon_primal_Groudon",@spriteBaseX+primalX,4])
+        end
+      #---------------------------------------------------------------------------
+      # Draws Dynamax icon.
+      #---------------------------------------------------------------------------
+      elsif @battler.dynamax?
+        imagePos.push(["Graphics/Pictures/Dynamax/icon_dynamax",@spriteBaseX+8,34])
+      end
+      #---------------------------------------------------------------------------
+      # Draw owned icon (foe Pokémon only)
+      if @battler.owned? && @battler.opposes?(0)
+        imagePos.push(["Graphics/Pictures/Battle/icon_own",@spriteBaseX+8,36])
+      end
+    end
+    # Draw status icon
+    if @battler.status>0
+      s = @battler.status
+      s = 6 if s==PBStatuses::POISON && @battler.statusCount>0   # Badly poisoned
+      
+      if @largeSideSize
+        status_x = 8
+        status_y = (@onPlayerSide ? 22 : 16)
+        imagePos.push(["Graphics/Pictures/Battle/icon_statuses_tiny",status_x,status_y,
+           0,(s-1)*10,-1,10])
+      else 
+        status_x = @spriteBaseX+24
+        status_y = 36
+        imagePos.push(["Graphics/Pictures/Battle/icon_statuses",status_x,status_y,
+           0,(s-1)*STATUS_ICON_HEIGHT,-1,STATUS_ICON_HEIGHT])
+      end 
+    end
+    pbDrawImagePositions(self.bitmap,imagePos)
+    refreshHP
+    refreshExp
+  end
+end 

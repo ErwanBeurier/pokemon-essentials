@@ -253,7 +253,7 @@ BattleHandlers::AbilityOnSwitchIn.add(:MINECLEARER,
 
 
 #===============================================================================
-# Beginner's Luck   
+# Beginner's Luck
 # Once per switch-in, the Pokémon ignores the immunity of a target. 
 #===============================================================================
 
@@ -264,5 +264,50 @@ BattleHandlers::AbilityOnSwitchIn.add(:BEGINNERSLUCK,
 )
 
 
+#===============================================================================
+# Invasive
+# The Pokémon calls a clone in battle. 
+#===============================================================================
 
+BattleHandlers::AbilityOnSwitchIn.add(:INVASIVE,
+  proc { |ability,battler,battle|
+    next if battle.pbSideSize(battler.index) >= 6 
+    # Warn the player.
+    battle.pbShowAbilitySplash(battler)
+    battle.pbDisplay(_INTL("{1} is invasive!", battler.pbThis))
+    battle.pbHideAbilitySplash(battler)
+    # Prepare the indices. 
+    idxBattler = battler.index
+    idxOwner = battle.pbGetOwnerIndexFromBattlerIndex(idxBattler)
+    idxSide = idxBattler % 2
+    idxInvader = battle.sideSizes[idxSide] * 2 + idxSide
+    # Prepare the new invader.
+    invader = battler.pokemon.clone
+    battle.sideSizes[idxSide] += 1
+    if battle.battlers[idxInvader].nil?
+      battle.pbCreateBattler(idxInvader,invader,battle.pbParty(idxBattler).length)
+    else
+      battle.battlers[idxInvader].pbInitialize(invader,battle.pbParty(idxBattler).length)
+    end
+    battle.scene.pbSOSJoin(idxInvader,invader)
+    battle.pbDisplay(_INTL("{1} appeared!",battle.battlers[idxInvader].pbThis))
+    # required to gain exp and to do "switch in" effects, like Spikes
+    battle.pbOnActiveOne(battle.battlers[idxInvader])
+    # @party2.push(ally)
+    # @party2order.push(@party2order.length)
+    # If the battler is on the player's side, allow it to choose the commands.
+    # while battle.lastCmd.length < battle.battlers.length
+      # battle.lastCmd.push(0)
+    # end 
+    battle.scene.pbUpdateLastCmd
+  }
+)
+class PokeBattle_Scene
+  def pbUpdateLastCmd
+    while @lastCmd.length < @battle.battlers.length
+      @lastCmd.push(0)
+      @lastMove.push(0)
+    end 
+  end 
+end 
 

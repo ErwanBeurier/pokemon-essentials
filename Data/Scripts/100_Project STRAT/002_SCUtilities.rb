@@ -99,12 +99,16 @@ end
 # Debug tool: string showing the content of the given d 
 # Used to scan Arrays of Hashes of Arrays.
 # Prints the result in a file. 
-def scToString(d, title = nil, filename = "errorlog.txt")
+def scToString(d, title = nil, filename = "errorlog.txt", silent = false)
   File.open(filename, "a") { |f|
     f.write(title + "\n") if title.is_a?(String)
     f.write(scToStringRec(d) + "\n")
   }
-  pbMessage("Gladys I love you")
+  pbMessage("Gladys I love you") if !silent
+end 
+
+def scLog(d, title = nil)
+  scToString(d, title, "errorlog.txt", true)
 end 
 
 
