@@ -559,6 +559,10 @@ class PokeBattle_TwoTurnMove < PokeBattle_Move
   def pbShowAnimation(id,user,targets,hitNum=0,showAnimation=true)
     hitNum = 1 if @chargingTurn && !@damagingTurn   # Charging anim
     super
+    if ["0C9","0CA","0CB","0CC","0CD","0CE","14D"].include?(@function)
+      @battle.scene.pbVanishSprite(user) if @chargingTurn
+      @battle.scene.pbUnVanishSprite(user) if @damagingTurn
+    end 
   end
 end
 

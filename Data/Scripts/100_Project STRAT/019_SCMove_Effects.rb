@@ -1,3 +1,28 @@
+class PokeBattle_Scene
+  def pbVanishSprite(pkmn)
+    pkmnsprite=@sprites["pokemon_#{pkmn.index}"]
+    pkmnsprite.visible = false
+    pbUpdate    
+  end
+  def pbUnVanishSprite(pkmn)
+    # @battle.pbCommonAnimation("Fade in",pkmn,nil) if fade
+    pkmnsprite=@sprites["pokemon_#{pkmn.index}"]
+    pkmnsprite.visible = true
+    pbUpdate 
+  end 
+  # def pbSubstituteSprite(pkmn,back)
+    # pkmnsprite=@sprites["pokemon#{pkmn.index}"]
+    # pkmnsprite.setPokemonBitmapSpecies("substitute",000,back)
+    # pkmnsprite.opacity+=1000
+  # end
+  # def pbUnSubstituteSprite(pkmn,back)   
+    # pkmnsprite=@sprites["pokemon#{pkmn.index}"]
+    # pkmnsprite.setPokemonBitmapSpecies(pkmn.battlerToPokemon,pkmn.species,back)
+    # pkmnsprite.opacity+=1000
+  # end  
+end 
+
+
 
 
 #===============================================================================
