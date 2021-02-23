@@ -54,6 +54,8 @@ class PokemonTemp
     when "notinternal";            rules["notinternal"]    = true
     when "changingTerrain";        rules["changingTerrain"] = true
     when "changingWeather";        rules["changingWeather"] = true
+    when "inverseBattle";          rules["inverseBattle"]  = true
+    when "inverseSTAB";            rules["inverseSTAB"]    = true
     else
       if PokeBattle_Battle.isValidBattleMode?(rule.to_s.downcase)
         rules["size"] = rule.to_s.downcase

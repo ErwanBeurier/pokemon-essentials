@@ -33,6 +33,7 @@ class PokeBattle_Move
   #=============================================================================
   def pbCalcTypeModSingle(moveType,defType,user,target)
     ret = PBTypes.getEffectiveness(moveType,defType)
+    ret = invertEffectivenessOne(ret) if @inverseBattle
     # Ring Target
     if target.hasActiveItem?(:RINGTARGET)
       ret = PBTypeEffectiveness::NORMAL_EFFECTIVE_ONE if PBTypes.ineffective?(moveType,defType)
@@ -439,7 +440,7 @@ class PokeBattle_Move
       multipliers[FINAL_DMG_MULT] *= random/100.0
     end
     # STAB
-    if type>=0 && user.pbHasType?(type)
+    if type>=0 && ((user.pbHasType?(type) && !@inverseSTAB) || (!user.pbHasType?(type) && @inverseSTAB))
       if user.hasActiveAbility?(:ADAPTABILITY)
         multipliers[FINAL_DMG_MULT] *= 2
       else

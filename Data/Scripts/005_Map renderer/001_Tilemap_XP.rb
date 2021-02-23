@@ -410,11 +410,7 @@ class CustomTilemap
     elsif $PokemonGlobal.bridge>0 && PBTerrain.isBridge?(terrain)
       spriteZ = 1
     else
-      begin 
       spriteZ = (priority==0) ? 0 : ypos+priority*32+32
-      rescue 
-      raise _INTL("id={1}, xpos={2}, ypos={3}", id, xpos, ypos)
-      end 
     end
     sprite.z = spriteZ
     count += 2
