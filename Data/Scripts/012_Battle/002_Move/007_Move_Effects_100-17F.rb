@@ -923,6 +923,7 @@ class PokeBattle_Move_120 < PokeBattle_Move
     end
   end
 end
+
 #===============================================================================
 # Target's Attack is used instead of user's Attack for this move's calculations.
 # (Foul Play)
@@ -1559,7 +1560,7 @@ end
 #===============================================================================
 class PokeBattle_Move_149 < PokeBattle_Move
   def pbMoveFailed?(user,targets)
-    if user.turnCount>1 || user.lastRoundMoved>=0
+    if user.turnCount > 1
       @battle.pbDisplay(_INTL("But it failed!"))
       return true
     end
@@ -2579,7 +2580,7 @@ end
 #===============================================================================
 class PokeBattle_Move_174 < PokeBattle_Move
   def pbMoveFailed?(user,targets)
-    if user.turnCount>1 || user.lastRoundMoved>=0
+    if user.turnCount > 1
       @battle.pbDisplay(_INTL("But it failed!"))
       return true
     end
