@@ -196,6 +196,7 @@ class PokeBattle_Battle
         pbDisplay(_INTL("The magnetism disappeared from the battlefield!"))
       end
       @field.terrain = PBBattleTerrains::None
+      eachBattler { |b| b.pbCheckFormOnTerrainChange }
       # Start up the default terrain
       pbStartTerrain(nil,@field.defaultTerrain,false) if @field.defaultTerrain!=PBBattleTerrains::None
       return if @field.terrain==PBBattleTerrains::None
