@@ -726,8 +726,8 @@ class PokeBattle_AI
     @battle.pbRegisterUltraBurst(idxBattler) if pbEnemyShouldUltraBurst?(idxBattler)
     @battle.pbRegisterDynamax(idxBattler) if pbEnemyShouldDynamax?(idxBattler)
     if pbEnemyShouldZMove?(idxBattler)
-      pbChooseEnemyZMove(idxBattler) 
-      return
+      ret = pbChooseEnemyZMove(idxBattler) 
+      return if ret 
     end
     pbChooseMoves(idxBattler)
   end
@@ -762,7 +762,8 @@ class PokeBattle_AI
           end          
         end
       end
-    end   
+    end
+    return false if !chosenmove
     target_i   = nil
     target_eff = 0 
     # Choose the target
@@ -776,6 +777,7 @@ class PokeBattle_AI
     @battle.pbRegisterZMove(index)
     @battle.pbRegisterMove(index,chosenindex,false)
     @battle.pbRegisterTarget(index,target_i)
+    return true 
   end
   
   #-----------------------------------------------------------------------------
