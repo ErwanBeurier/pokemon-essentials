@@ -45,3 +45,36 @@ class PokeBattle_Move_Z011 < PokeBattle_ZMove_AllStatsUp
                PBStats::SPEED,3]
   end
 end 
+
+
+#===============================================================================
+# Phoenix Fire
+#===============================================================================
+# Resurrects a Pokémon from the party. 
+#-------------------------------------------------------------------------------
+class PokeBattle_Move_Z012 < PokeBattle_ZMove_AllStatsUp
+  def pbAdditionalEffect(user, target)
+    return if @battle.positions[user.index].effects[PBEffects::PhoenixFire]
+    @battle.positions[user.index].effects[PBEffects::PhoenixFire] = true
+    @battle.pbDisplay(_INTL("{1} sets up a reviving fire!",user.name))
+  end 
+end
+
+# Phoenix Fire effect. 
+class PokeBattle_Battler
+# Faint Dialogue
+  alias __phoenix__faint pbFaint # Should be the one from ZUD
+  def pbFaint(showMessage=true)
+    return if @fainted # Already fainted properly. 
+    if @battle.positions[@index].effects[PBEffects::PhoenixFire]
+      @battle.positions[@index].effects[PBEffects::PhoenixFire] = false
+      @battle.pbCommonAnimation("PhoenixFireEffect",self)
+      pbRecoverHP((self.totalhp*3 / 4).round)
+      self.status      = PBStatuses::NONE
+      self.statusCount = 0
+      @battle.pbDisplay(_INTL("{1} was saved by Phoenix Fire!",pbThis))
+      return 
+    end 
+    return __phoenix__faint(showMessage)
+  end
+end

@@ -888,5 +888,6 @@
 2029,ASSISTANCE,Assistance,C007,0,NORMAL,Status,0,20,0,User,0,,"The user gives its seat to another Pokémon of the team for just one move."
 2030,RELAXINGPURRING,Relaxing Purring,C008,0,NORMAL,Status,0,10,0,UserAndAllies,0,d,"The user purrs and relaxes its allies, healing their HP."
 #---------------------------------------------
-2500,PREHISTORICPOWERREJURGENCE,Prehistoric Power Rejurgence,Z010,170,ROCK,Special,0,1,100,AllNearFoes,0,fz,"The revived fossil attacks the opposing Pokémon with full force. This move boosts the user's stats."
-2501,CONFUSIONSOLODANCE,Confusion Solo Dance,Z011,0,NORMAL,Status,0,1,100,AllNearFoes,0,fz,"Spinda performs a dance that only it can master. This move drastically boosts the user's stats."
+2500,PREHISTORICPOWERREJURGENCE,Prehistoric Power Rejurgence,Z010,170,ROCK,Special,0,1,100,NearOther,0,fz,"The revived fossil attacks the opposing Pokémon with full force. This move boosts the user's stats."
+2501,CONFUSIONSOLODANCE,Confusion Solo Dance,Z011,0,NORMAL,Status,0,1,100,User,0,fz,"Spinda performs a dance that only it can master. This move drastically boosts the user's stats."
+2502,PHOENIXFIRE,Phoenix Fire,Z012,180,FIRE,Physical,0,1,100,NearOther,0,fz,"Ho-Oh attacks the opposing Pokémon with full force. Revives a Pokémon from the party."

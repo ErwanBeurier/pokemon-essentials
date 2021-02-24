@@ -137,7 +137,8 @@ ItemHandlers::UseOnPokemon.copy(:NORMALIUMZ,  :FIRIUMZ,     :WATERIUMZ,  :ELECTR
                                 :DARKINIUMZ,  :STEELIUMZ,   :FAIRIUMZ,   :ALORAICHIUMZ, :DECIDIUMZ,
                                 :INCINIUMZ,   :PRIMARIUMZ,  :EEVIUMZ,    :PIKANIUMZ,    :SNORLIUMZ, 
                                 :MEWNIUMZ,    :TAPUNIUMZ,   :MARSHADIUMZ,:PIKASHUNIUMZ, :KOMMONIUMZ,
-                                :LYCANIUMZ,   :MIMIKIUMZ,   :LUNALIUMZ,  :SOLGANIUMZ,   :ULTRANECROZIUMZ)
+                                :LYCANIUMZ,   :MIMIKIUMZ,   :LUNALIUMZ,  :SOLGANIUMZ,   :ULTRANECROZIUMZ,
+                                :FOSSILIUMZ,  :SPINDIUMZ,   :HOOHIUMZ)
                                 
 #===============================================================================
 # Dynamax items

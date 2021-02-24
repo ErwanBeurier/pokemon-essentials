@@ -918,3 +918,4 @@
 2035,SOULLINK,Soul-Link,Soul-Links,1,4000,"Designates the holder as available for the Assistance mechanic.",0,0,0,
 2036,FOSSILIUMZ,Fossilium Z,,8,0,"It converts Z-Power into crystals that upgrade revived fossils' Antic Power to an exclusive Z-move.",5,0,14,
 2037,SPINDIUMZ,Spindium Z,,8,0,"It converts Z-Power into crystals that upgrade Spinda's Teeter Dance to an exclusive Z-move.",5,0,14,
+2038,HOOHIUMZ,Ho-Ohium Z,,8,0,"It converts Z-Power into crystals that upgrade Ho-Oh's Sacred Fire to an exclusive Z-move.",5,0,14,

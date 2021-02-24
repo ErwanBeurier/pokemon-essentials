@@ -86,6 +86,7 @@ begin
       @effects[PBEffects::WishAmount]                = 0
       @effects[PBEffects::WishMaker]                 = -1
       @effects[PBEffects::WarmWelcome]               = false
+      @effects[PBEffects::PhoenixFire]               = false
     end
   end
 

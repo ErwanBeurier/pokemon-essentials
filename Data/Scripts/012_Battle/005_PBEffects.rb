@@ -145,6 +145,7 @@ begin
     WishAmount                = 7
     WishMaker                 = 8
     WarmWelcome               = 9
+    PhoenixFire               = 10
 
     #===========================================================================
     # These effects apply to a side
