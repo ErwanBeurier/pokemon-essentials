@@ -197,6 +197,7 @@ class PokeBattle_Battler
         newForm = 0
         case @battle.pbWeather
         when PBWeather::Sun, PBWeather::HarshSun; newForm = 1
+        when PBWeather::None; newForm = 1 # STRAT
         end
         if @form!=newForm
           @battle.pbShowAbilitySplash(self,true)

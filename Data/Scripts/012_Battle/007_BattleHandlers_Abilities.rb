@@ -947,7 +947,7 @@ BattleHandlers::DamageCalcUserAbility.add(:FLASHFIRE,
 BattleHandlers::DamageCalcUserAbility.add(:FLOWERGIFT,
   proc { |ability,user,target,move,mults,baseDmg,type|
     w = user.battle.pbWeather
-    if move.physicalMove? && (w==PBWeather::Sun || w==PBWeather::HarshSun) &&
+    if (w==PBWeather::Sun || w==PBWeather::HarshSun) &&
       !target.hasUtilityUmbrella?
       mults[ATK_MULT] = (mults[ATK_MULT]*1.5).round
     end
@@ -1188,7 +1188,7 @@ BattleHandlers::DamageCalcUserAllyAbility.add(:BATTERY,
 BattleHandlers::DamageCalcUserAllyAbility.add(:FLOWERGIFT,
   proc { |ability,user,target,move,mults,baseDmg,type|
     w = user.battle.pbWeather
-    if move.physicalMove? && (w==PBWeather::Sun || w==PBWeather::HarshSun) &&
+    if (w==PBWeather::Sun || w==PBWeather::HarshSun) &&
       !target.hasUtilityUmbrella?
       mults[ATK_MULT] = (mults[ATK_MULT]*1.5).round
     end
@@ -1232,7 +1232,7 @@ BattleHandlers::DamageCalcTargetAbility.copy(:FILTER,:SOLIDROCK)
 BattleHandlers::DamageCalcTargetAbility.add(:FLOWERGIFT,
   proc { |ability,user,target,move,mults,baseDmg,type|
     w = user.battle.pbWeather
-    if move.specialMove? && (w==PBWeather::Sun || w==PBWeather::HarshSun) &&
+    if (w==PBWeather::Sun || w==PBWeather::HarshSun) &&
       !target.hasUtilityUmbrella?
       mults[DEF_MULT] = (mults[DEF_MULT]*1.5).round
     end
@@ -1337,7 +1337,7 @@ BattleHandlers::DamageCalcTargetAbilityNonIgnorable.add(:SHADOWSHIELD,
 BattleHandlers::DamageCalcTargetAllyAbility.add(:FLOWERGIFT,
   proc { |ability,user,target,move,mults,baseDmg,type|
     w = user.battle.pbWeather
-    if move.specialMove? && (w==PBWeather::Sun || w==PBWeather::HarshSun) &&
+    if (w==PBWeather::Sun || w==PBWeather::HarshSun) &&
       !target.hasUtilityUmbrella?
       mults[DEF_MULT] = (mults[DEF_MULT]*1.5).round
     end
