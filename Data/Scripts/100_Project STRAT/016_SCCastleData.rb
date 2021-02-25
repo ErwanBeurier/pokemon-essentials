@@ -1,3 +1,13 @@
+################################################################################
+# SCCastleData
+# 
+# This script is part of Pokémon Project STRAT by StCooler, and is therefore 
+# not part of Pokémon Essentials. 
+#
+# This is a tiny class gathering all the databases + big tools used in this 
+# game: Team storage, Battle statistics, the handler of Tier of day, the 
+# generator of clients.
+################################################################################
 
 
 class SCCastleData

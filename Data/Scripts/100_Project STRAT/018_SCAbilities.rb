@@ -1,3 +1,12 @@
+################################################################################
+# SCClientBattles
+# 
+# This script is part of Pokémon Project STRAT by StCooler, and is therefore 
+# not part of Pokémon Essentials. 
+#
+# This script contains the implementation of new abilities.
+################################################################################
+
 #===============================================================================
 # High potential
 # Doubles the special attack (like Huge Power)

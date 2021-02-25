@@ -1,3 +1,12 @@
+################################################################################
+# SCItems
+# 
+# This script is part of Pokémon Project STRAT by StCooler, and is therefore 
+# not part of Pokémon Essentials. 
+#
+# This script contains the implementation of the new items.
+################################################################################
+
 #===============================================================================
 # Cient diary
 # Activates from the bag, isn't consumed. 

@@ -1,8 +1,19 @@
+################################################################################
+# SCUnorthodoxBattles
+# 
+# This script is part of Pokémon Project STRAT by StCooler, and is therefore 
+# not part of Pokémon Essentials. 
+#
+# This script contains the implementation of battles rule changers: 
+# - inverse battles (inverses the effectiveness of moves)
+# - random terrain / weather (changes the weather/terrain at the end of a turn)
+# - disallow all mechanics (+ enable them). 
+################################################################################
+
+
 #==============================================================================
 # Inverse Battles
 #==============================================================================
-
-
 
 class PokeBattle_Battle
   attr_accessor :inverseBattle
@@ -39,44 +50,6 @@ def pbPrepareBattle(battle)
   battle.inverseSTAB = battleRules["inverseSTAB"] if !battleRules["inverseSTAB"].nil?
 end 
 
-
-# Old implementation: 
-# $InverseBattle = false 
-
-# def scMakeInverseBattle
-  # $InverseBattle = true 
-# end 
-
-# class PBTypes
-  # # Inverse type effectiveness. 
-  # def PBTypes.getEffectiveness(attackType,targetType)
-    # return PBTypeEffectiveness::NORMAL_EFFECTIVE_ONE if !targetType || targetType<0
-    
-    # ret = PBTypes.loadTypeData[2][attackType*(PBTypes.maxValue+1)+targetType]
-    
-    # if $InverseBattle
-      # case ret
-      # when PBTypeEffectiveness::INEFFECTIVE, PBTypeEffectiveness::NOT_EFFECTIVE_ONE
-        # ret = PBTypeEffectiveness::SUPER_EFFECTIVE_ONE
-        
-      # when PBTypeEffectiveness::SUPER_EFFECTIVE_ONE
-        # ret = PBTypeEffectiveness::NOT_EFFECTIVE_ONE
-        
-      # end 
-    # end 
-    # return ret 
-  # end
-# end 
-
-# class PokeBattle_Battle 
-  # # Revert Inverse Battle. 
-  # alias __inversebattle__pbEndOfBattle pbEndOfBattle
-  # def pbEndOfBattle
-    # ret = __inversebattle__pbEndOfBattle
-    # $InverseBattle = false
-    # return ret 
-  # end 
-# end 
 
 
 
@@ -151,4 +124,24 @@ def pbPrepareBattle(battle)
   battle.changingWeather = battleRules["changingWeather"] if !battleRules["changingWeather"].nil?
 end 
 
+
+#==============================================================================
+# Control all mechanics.
+#==============================================================================
+
+def scDisableAllMechanics
+  $game_switches[NO_Z_MOVE] = true
+  $game_switches[NO_ULTRA_BURST] = true
+  $game_switches[NO_DYNAMAX] = true
+  $game_switches[NO_MEGA_EVOLUTION] = true
+  $game_switches[NO_ASSISTANCE] = true
+end 
+
+def scEnableAllMechanics
+  $game_switches[NO_Z_MOVE] = false
+  $game_switches[NO_ULTRA_BURST] = false
+  $game_switches[NO_DYNAMAX] = false
+  $game_switches[NO_MEGA_EVOLUTION] = false
+  $game_switches[NO_ASSISTANCE] = false
+end 
 

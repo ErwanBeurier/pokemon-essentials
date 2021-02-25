@@ -6,13 +6,21 @@
 #
 # This script allows for the random generation of clients of the player + random 
 # fights occuring on the map.
+#-------------------------------------------------------------------------------
+# Module SCClientBattles defines tools + hard-coded stuff for the other classes 
+# to use.
+#-------------------------------------------------------------------------------
+# Class SCStadium represents a stadium; teleports the events, gives them 
+# sprites, and so on.
+#-------------------------------------------------------------------------------
+# Class SCClientBattlesGenerator contains tools for the generation of clients: 
+# clients for the player + random clients battling in the castle.
 ################################################################################
 
 
-
-
+# This module defines the tools, and hard-coded lists of constants that will be 
+# used by SCClientBattlesHandler and SCStadium
 module SCClientBattles
-  # This module defines the tools, and hard-coded lists of constants that will be used by SCClientBattlesHandler and SCStadium
   Player = -100
   AnyPartner = -200
   Cameraman = 230
@@ -275,6 +283,7 @@ module SCClientBattles
   end 
   
   
+  
   def self.employeePairs
     ret = []
     
@@ -384,6 +393,8 @@ module SCClientBattles
     return tier_list
   end 
   
+  
+  
   def self.biasedFormats
     ret = Array.new(40, "1v1")
     ret += Array.new(3, "2v2")
@@ -394,9 +405,6 @@ module SCClientBattles
     return ret 
   end 
 end 
-
-
-
 
 
 
@@ -500,6 +508,7 @@ class SCStadium
   end
   
   
+  
   def setTier(tier)
     @tier = tier 
     
@@ -510,10 +519,13 @@ class SCStadium
     @employee_pokemons = tier_instance.fastRandSpecies(2)
   end 
   
+  
+  
   def setFormat(format)
     @format = format 
     @format = "1v1" if !format 
   end 
+  
   
 
   def showCharacters(client1, client2, employee1, employee2)
@@ -593,9 +605,7 @@ end
 
 
 
-
 class SCClientBattlesGenerator
-  
   
   
   def initialize
@@ -893,10 +903,6 @@ class SCClientBattlesGenerator
     playerNextBattleMessage(true) if !mute
   end 
 end 
-
-
-
-
 
 
 

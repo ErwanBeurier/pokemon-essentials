@@ -1,6 +1,12 @@
-# Script by StCooler
-# Do what you want with it. Just credit me if you use it.
+################################################################################
+# SCCastleScripts
 # 
+# This script is part of Pokémon Project STRAT by StCooler, and is therefore 
+# not part of Pokémon Essentials. 
+#
+# This script contains misc functions related to the castle: the PC, the TV, 
+# loading trainer graphics for the random ladder.
+################################################################################
 
 
 

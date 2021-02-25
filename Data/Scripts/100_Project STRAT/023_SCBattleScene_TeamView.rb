@@ -1,4 +1,12 @@
-# See the opponent's team in battle. 
+################################################################################
+# SCBattleScene_TeamView
+# 
+# This script is part of Pokémon Project STRAT by StCooler, and is therefore 
+# not part of Pokémon Essentials. 
+#
+# This script contains the implementation of the access to the Party Screen of 
+# the opponent. 
+################################################################################
 
 class PokeBattle_Scene
   def pbOppPartyScreen(idxBattler)

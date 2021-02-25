@@ -1,3 +1,14 @@
+################################################################################
+# SCMoves_Effects
+# 
+# This script is part of Pokémon Project STRAT by StCooler, and is therefore 
+# not part of Pokémon Essentials. 
+#
+# This script contains the implementation of new moves. I also redefine some 
+# other classes to go with the moves.
+################################################################################
+
+# Disparition of battler's sprites for Fly or others.
 class PokeBattle_Scene
   def pbVanishSprite(pkmn)
     pkmnsprite=@sprites["pokemon_#{pkmn.index}"]

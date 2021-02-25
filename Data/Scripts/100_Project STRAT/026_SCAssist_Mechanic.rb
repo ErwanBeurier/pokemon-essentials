@@ -1,5 +1,8 @@
-# 
+# Switch to allow Assistance or not. 
+NO_ASSISTANCE = 88
 
+
+# Adding the mechanics of Assistance. 
 class PokeBattle_Battle
   attr_accessor :assistance
   
@@ -29,6 +32,7 @@ class PokeBattle_Battle
   
   
   def pbCanCallAssitance?(idxBattler)
+    return false if $game_switches[NO_ASSISTANCE]
     battler = @battlers[idxBattler]
     side  = battler.idxOwnSide
     owner = pbGetOwnerIndexFromBattlerIndex(idxBattler)
@@ -109,10 +113,10 @@ class PokeBattle_Battle
   
   # DEBUG
   # Disable the other mechanics.
-  def pbCanMegaEvolve?(idxBattler) ; return false ; end 
-  def pbCanUltraBurst?(idxBattler) ; return false ; end 
-  def pbCanZMove?(idxBattler) ; return false ; end 
-  def pbCanDynamax?(idxBattler) ; return false ; end 
+  # def pbCanMegaEvolve?(idxBattler) ; return false ; end 
+  # def pbCanUltraBurst?(idxBattler) ; return false ; end 
+  # def pbCanZMove?(idxBattler) ; return false ; end 
+  # def pbCanDynamax?(idxBattler) ; return false ; end 
 
 end 
 

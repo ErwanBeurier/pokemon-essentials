@@ -1,3 +1,15 @@
+################################################################################
+# SCVariablesSwitches
+# 
+# This script is part of Pokémon Project STRAT by StCooler, and is therefore 
+# not part of Pokémon Essentials. 
+#
+# This script contains the definition of constants for variables and switches, 
+# to make it easier to include them in scripts and still knowwhat they do.
+################################################################################
+
+
+
 module SCVar
   # ---------------------------------------------------------------------------
   # Tier related stuff. 
