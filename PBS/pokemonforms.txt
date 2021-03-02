@@ -1064,7 +1064,7 @@ BattlerEnemyY = 20
 [CASTFORM,4]
 FormName = Windy Form
 Type1 = FLYING
-Color = White
+Color = Blue
 Pokedex = This is the form Castform takes under a tempest. Its body becomes an immaterial, windy-like structure that blows away anything that tries to touch it.
 BattlerPlayerY = 0
 BattlerEnemyY = 20

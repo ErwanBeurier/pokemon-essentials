@@ -243,6 +243,7 @@ def scCompileMovesets
   trainers        = []
   pokemonindex    = -2
   movesets        = {}
+  roles_to_poke   = {} # Dictionary: role -> list of poke. 
   moveset         = SCMovesetsData.newEmpty()
   moveset_natures = []
   moveset_ev_spreads = []
@@ -328,6 +329,12 @@ def scCompileMovesets
         if !SCMovesetsData.validRole(record)
           raise _INTL("Bad moveset role: {1} (must be integer X*10 + Y, X=1..4 and Y=1..3)\r\n{2}",record,FileLineData.linereport)
         end 
+        roles_to_poke[record] = [] if !roles_to_poke[record]
+        roles_to_poke[record].push(pokemon_id) if !roles_to_poke[record].include?(pokemon_id)
+        # Role without the physical/special/mixed
+        simplified_role = (record / 10).floor * 10
+        roles_to_poke[simplified_role] = [] if !roles_to_poke[simplified_role]
+        roles_to_poke[simplified_role].push(pokemon_id) if !roles_to_poke[simplified_role].include?(pokemon_id)
       when "Form"
         moveset[SCMovesetsData::BASESPECIES] = pokemon_id
         pokemon_id = pbGetFSpeciesFromForm(pokemon_id, record)
@@ -354,6 +361,7 @@ def scCompileMovesets
     end 
   end 
   save_data(movesets,"Data/scmovesets.dat")
+  save_data(roles_to_poke,"Data/scroles.dat")
 end
 
 
@@ -387,18 +395,6 @@ def scSaveMovesets
       end 
     end
   }
-end
-
-
-
-def scLoadMovesetsData
-  # To be improved: 
-  # $PokemonTemp = PokemonTemp.new if !$PokemonTemp
-  # if !$PokemonTemp.trainersData
-    # $PokemonTemp.trainersData = load_data("Data/trainers.dat") || []
-  # end
-  # return $PokemonTemp.trainersData
-  return load_data("Data/scmovesets.dat")
 end
 
 
@@ -545,8 +541,6 @@ end
 
 
 
-
-
 #===============================================================================
 # Compile/decompile learned moves
 #===============================================================================
@@ -554,6 +548,8 @@ end
 def scCompileLearnedMoves
   movepool = {}
   stats = {}
+  moves_to_poke = {}
+  
   pbCompilerEachCommentedLine("PBS/sclearned.txt") { |line,lineno|
     if lineno%50==0
       Graphics.update
@@ -564,13 +560,42 @@ def scCompileLearnedMoves
       total_bs = pbGetCsvRecord($~[2],lineno,[1, "i", nil])
       total_bs = (total_bs / 10).to_i * 10
       movelist = pbGetCsvRecord($~[3],lineno,[2, "*e", :PBMoves])
+      # Register the movepool
       movepool[poke] = movelist
+      # Register the base stats 
       stats[total_bs] = [] if !stats[total_bs]
       stats[total_bs].push(poke)
+      # Register the transpose of movepool
+      movelist.each { |move| 
+        moves_to_poke[move] = [] if !moves_to_poke[move]
+        moves_to_poke[move].push(poke)
+      }
     end 
   }
+  
+  # Prepare the move menus. 
+  move_menu = {}
+  banned_moves = [PBMoves::ASSISTANCEPLACEHOLDER]
+  
+  for i in 1..PBMoves.maxValue
+    next if banned_moves.include?(i)
+    
+    cname = getConstantName(PBMoves,i) rescue nil
+    next if !cname
+    
+    flags = pbGetMoveData(i, MOVE_FLAGS)
+    next if flags[/z/] || flags[/x/] # No Z-move, no Max-move. 
+    
+    move_name = PBMoves.getName(i)
+    letter = move_name[0...1].upcase
+    move_menu[letter] = [] if !move_menu[letter]
+    move_menu[letter].push([i,move_name]) 
+  end
+  
   save_data(movepool,"Data/sclearned.dat")
   save_data(stats,"Data/scstattotals.dat")
+  save_data(moves_to_poke,"Data/sclearnedtranspose.dat")
+  save_data(move_menu,"Data/scmovemenu.dat")
 end 
 
 
@@ -603,28 +628,6 @@ def scSaveLearnedMoves
 end 
 
 
-
-def scLoadLearnedMoves
-  # To be improved: 
-  # $PokemonTemp = PokemonTemp.new if !$PokemonTemp
-  # if !$PokemonTemp.trainersData
-    # $PokemonTemp.trainersData = load_data("Data/trainers.dat") || []
-  # end
-  # return $PokemonTemp.trainersData
-  return load_data("Data/sclearned.dat")
-end
-
-
-
-def scLoadStatTotals
-  # To be improved: 
-  # $PokemonTemp = PokemonTemp.new if !$PokemonTemp
-  # if !$PokemonTemp.trainersData
-    # $PokemonTemp.trainersData = load_data("Data/trainers.dat") || []
-  # end
-  # return $PokemonTemp.trainersData
-  return load_data("Data/scstattotals.dat")
-end 
 
 
 #===============================================================================
@@ -795,17 +798,6 @@ def scConvertListToString(constant_type, the_list)
 end 
 
 
-def scLoadTierData
-  # To be improved: 
-  # $PokemonTemp = PokemonTemp.new if !$PokemonTemp
-  # if !$PokemonTemp.trainersData
-    # $PokemonTemp.trainersData = load_data("Data/trainers.dat") || []
-  # end
-  # return $PokemonTemp.trainersData
-  return load_data("Data/sctiers.dat")
-end 
-
-
 
 
 #===============================================================================
@@ -944,20 +936,109 @@ end
 
 
 
+
+#===============================================================================
+# Pokemon Temp
+#===============================================================================
+
+
+# New attributes to store the database. 
+class PokemonTemp
+  attr_accessor :sc_movesets
+  attr_accessor :sc_roles
+  attr_accessor :sc_learned
+  attr_accessor :sc_learned_transpose
+  attr_accessor :sc_stattotals
+  attr_accessor :sc_move_menu
+  attr_accessor :sc_tiers
+  attr_accessor :sc_formreqs
+end 
+
+
+
+def scLoadMovesetsData
+  $PokemonTemp = PokemonTemp.new if !$PokemonTemp
+  if !$PokemonTemp.sc_movesets
+    $PokemonTemp.sc_movesets = load_data("Data/scmovesets.dat") || []
+  end
+  return $PokemonTemp.sc_movesets
+end
+
+
+
+def scLoadRolesToPoke
+  $PokemonTemp = PokemonTemp.new if !$PokemonTemp
+  if !$PokemonTemp.sc_roles
+    $PokemonTemp.sc_roles = load_data("Data/scroles.dat") || []
+  end
+  return $PokemonTemp.sc_roles
+end
+
+
+
+def scLoadMoveMenu
+  $PokemonTemp = PokemonTemp.new if !$PokemonTemp
+  if !$PokemonTemp.sc_move_menu
+    $PokemonTemp.sc_move_menu = load_data("Data/scmovemenu.dat") || []
+  end
+  return $PokemonTemp.sc_move_menu
+end
+
+
+
+def scLoadLearnedMoves
+  $PokemonTemp = PokemonTemp.new if !$PokemonTemp
+  if !$PokemonTemp.sc_learned
+    $PokemonTemp.sc_learned = load_data("Data/sclearned.dat") || []
+  end
+  return $PokemonTemp.sc_learned
+end
+
+
+
+def scLoadLearnedTranspose
+  $PokemonTemp = PokemonTemp.new if !$PokemonTemp
+  if !$PokemonTemp.sc_learned_transpose
+    $PokemonTemp.sc_learned_transpose = load_data("Data/sclearnedtranspose.dat") || []
+  end
+  return $PokemonTemp.sc_learned_transpose
+end
+
+
+
+def scLoadStatTotals
+  $PokemonTemp = PokemonTemp.new if !$PokemonTemp
+  if !$PokemonTemp.sc_stattotals
+    $PokemonTemp.sc_stattotals = load_data("Data/scstattotals.dat") || []
+  end
+  return $PokemonTemp.sc_stattotals
+end 
+
+
+
+def scLoadTierData
+  $PokemonTemp = PokemonTemp.new if !$PokemonTemp
+  if !$PokemonTemp.sc_tiers
+    $PokemonTemp.sc_tiers = load_data("Data/sctiers.dat") || []
+  end
+  return $PokemonTemp.sc_tiers
+end 
+
+
+
 def scLoadPersonalItems(pkmn = nil)
   # To be improved: 
-  # $PokemonTemp = PokemonTemp.new if !$PokemonTemp
-  # if !$PokemonTemp.trainersData
-    # $PokemonTemp.trainersData = load_data("Data/trainers.dat") || []
-  # end
-  # return $PokemonTemp.trainersData
-  data = load_data("Data/scformreqs.dat")
+  $PokemonTemp = PokemonTemp.new if !$PokemonTemp
+  if !$PokemonTemp.sc_formreqs
+    $PokemonTemp.sc_formreqs = load_data("Data/scformreqs.dat") || []
+  end
   
   if pkmn
     pkmn = pbGetSpeciesFromFSpecies(pkmn)[0]
-    return data[pkmn] if pkmn
+    return $PokemonTemp.sc_formreqs[pkmn] if pkmn
   end 
-  return data
+  
+  return $PokemonTemp.sc_formreqs
 end 
 
 

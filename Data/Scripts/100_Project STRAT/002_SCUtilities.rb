@@ -120,12 +120,18 @@ class Game_Variables
   def each_with_index
     @data.each_with_index { |v, i| yield v, i }
   end 
+  def length 
+    return @data.length 
+  end 
 end
 
 # Allow loops on game switches.
 class Game_Switches
   def each_with_index
     @data.each_with_index { |v, i| yield v, i }
+  end 
+  def length 
+    return @data.length 
   end 
 end 
 
@@ -135,7 +141,7 @@ def pbSaveVariablesToTxt
     f.write(_INTL("#============================================\n"))
     f.write(_INTL("# Date: {1}\n", Time.now))
     f.write(_INTL("#============================================\n"))
-    f.write(_INTL("# Variables:\n"))
+    f.write(_INTL("# Variables (length={1})\n", $game_variables.length))
     f.write(_INTL("#============================================\n"))
     
     $game_variables.each_with_index { |val, i|
@@ -144,7 +150,7 @@ def pbSaveVariablesToTxt
     }
     
     f.write(_INTL("#============================================\n"))
-    f.write(_INTL("# Switches=\n"))
+    f.write(_INTL("# Switches (length={1})\n", $game_switches.length))
     f.write(_INTL("#============================================\n"))
     
     $game_switches.each_with_index { |val, i|

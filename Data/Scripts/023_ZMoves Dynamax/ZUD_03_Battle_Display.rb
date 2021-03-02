@@ -254,7 +254,8 @@ class PokeBattle_Battle
       #-------------------------------------------------------------------------
       when -6   # Assistance 
         pbToggleRegisteredAssistance(idxBattler)
-        ret = true 
+        # ret = true 
+        next false 
       when -7   # Shift
         pbUnregisterMegaEvolution(idxBattler)
         pbUnregisterUltraBurst(idxBattler)
@@ -269,6 +270,7 @@ class PokeBattle_Battle
         #=======================================================================
         # pbUnregister<InsertCustomMechanic>(idxBattler)
         #-----------------------------------------------------------------------
+        pbUnregisterAssistance(idxBattler)
         pbRegisterShift(idxBattler)
         ret = true
       else

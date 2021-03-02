@@ -61,10 +61,10 @@ class PokeBattle_Battle
     side  = @battlers[idxBattler].idxOwnSide
     owner = pbGetOwnerIndexFromBattlerIndex(idxBattler)
     @assistance[side][owner] = idxBattler
-    @choices[idxBattler][0] = :UseMove   # "Use move"
-    @choices[idxBattler][1] = -1         # Index of move to be used
-    @choices[idxBattler][2] = SCAssistMechanic.new(self)  # PokeBattle_Move object to represent the Assistance.
-    @choices[idxBattler][3] = -1         # No target chosen yet
+    # @choices[idxBattler][0] = :UseMove   # "Use move"
+    # @choices[idxBattler][1] = -1         # Index of move to be used
+    # @choices[idxBattler][2] = SCAssistMechanic.new(self)  # PokeBattle_Move object to represent the Assistance.
+    # @choices[idxBattler][3] = -1         # No target chosen yet
   end
   
   def pbUnregisterAssistance(idxBattler)
@@ -100,13 +100,19 @@ class PokeBattle_Battle
   #-----------------------------------------------------------------------------
   def pbAttackPhaseAssistance
     pbPriority.each do |b|
-      idxMove = @choices[b.index]
+      # idxMove = @choices[b.index]
       next if wildBattle? && b.opposes?
       # next unless @choices[b.index][0]==:UseMove && !b.fainted?
       next unless !b.fainted?
       owner = pbGetOwnerIndexFromBattlerIndex(b.index)
       next if @assistance[b.idxOwnSide][owner]!=b.index
-      # Quelque chose ici ?
+      # Store the choice of the Pokémon, and replace the choice with assistance.
+      assist = SCAssistMechanic.new(self)
+      assist.registerOtherChoice(@choices[b.index])
+      @choices[b.index][0] = :UseMove  # "Use move"
+      @choices[b.index][1] = -1        # Index of move to be used
+      @choices[b.index][2] =  assist   # PokeBattle_Move object to represent the Assistance.
+      @choices[b.index][3] = -1        # No target chosen yet
     end
   end
   
@@ -311,6 +317,11 @@ end
 
   
 class PokeBattle_Move_C007 < PokeBattle_Move
+  def initialize(battle, move)
+    super(battle, move)
+    @other_choice = nil 
+  end 
+  
   def pbMoveFailed?(user, targets)
     assist, idxParty = @battle.pbGetAssistingPokemon(user.index)
     if !assist || !idxParty
@@ -375,6 +386,7 @@ class PokeBattle_Move_C007 < PokeBattle_Move
     
     @battle.pbDisplay(_INTL("{1} is here to assist {2}!",@battle.battlers[idxAssist].pbThis, oldName))
     
+    # @battle.pbUnregisterAssistance(idxAssist) # 
     # Ask which move the assist should use.
     chosenCmd = 0 
     @battle.scene.pbFightMenu(idxAssist,false, false, false, false, false) { |cmd|
@@ -390,6 +402,8 @@ class PokeBattle_Move_C007 < PokeBattle_Move
           # Target the other Pokémon instead.
           choice[3] = idxBattler
         end 
+        # @battle.pbDisplay(_INTL("choice = [{1}, {2}, {3}, {4}]", choice[0], choice[1], choice[2].name, choice[3]))
+        break 
       end 
     }
     
@@ -450,6 +464,10 @@ class PokeBattle_Move_C007 < PokeBattle_Move
       # Disable Assistance for the rest of the battle.
       @battle.pbDisableAssistance(idxBattler)
     end 
+    
+    # Let the first Pokémon perform its move (Assistance mechanic, not the move Assistance)
+    # Delcatty cannot abuse this. 
+    @battle.battlers[idxAssist].pbUseMove(@other_choice, true) if @other_choice
   end 
 end 
 
@@ -460,6 +478,14 @@ class SCAssistMechanic < PokeBattle_Move_C007
   def initialize(battle)
     pbmove = PBMove.new(getConst(PBMoves, :ASSISTANCE))
     super(battle, pbmove)
+  end 
+  
+  def registerOtherChoice(choice)
+    @other_choice = []
+    @other_choice[0] = choice[0] # Use move 
+    @other_choice[1] = choice[1] # Index of move to be used 
+    @other_choice[2] = choice[2] # PokeBattle_Move
+    @other_choice[3] = choice[3] # Target
   end 
 end 
 

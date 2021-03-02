@@ -1235,8 +1235,11 @@ def pbCompiler
        "ZUD_dynamax.dat",
        # STRAT additions 
        "scmovesets.dat",
+       "scroles.dat",
        "sclearned.dat",
+       "sclearnedtranspose.dat",
        "sctiers.dat",
+       "scmovemenu.dat",
        "scformreqs.dat"
     ]
     textFiles = [

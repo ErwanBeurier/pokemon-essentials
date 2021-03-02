@@ -87,7 +87,7 @@ BattleHandlers::HPHealItem.add(:BERRYJUICE,
 BattleHandlers::HPHealItem.add(:ORANBERRY,
   proc { |item,battler,battle,forced|
     next false if !battler.canHeal?
-    next false if !forced && battler.isUnnerved?
+    next false if !forced && battler.canConsumeBerry?
     next false if !forced && battler.hp>battler.totalhp/2
     battle.pbCommonAnimation("EatBerry",battler) if !forced
     if battler.hasActiveAbility?(:RIPEN)

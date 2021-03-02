@@ -208,8 +208,8 @@ BattleHandlers::DamageCalcUserAbility.add(:PREDATOR,
 
 
 #===============================================================================
-# Dragonborn   
-# On switching in, the Pokémon gains a third type (Dragon). 
+# Mine clearer
+# The Pokémon clears hasards, walls and mandalas when it switches in.
 #===============================================================================
 
 BattleHandlers::AbilityOnSwitchIn.add(:MINECLEARER,

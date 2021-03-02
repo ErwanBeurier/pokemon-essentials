@@ -76,7 +76,7 @@ module SCTB
 	
 	
 	
-	def self.filterSpeciesInTier(tier, type)
+	def self.filterSpeciesByType(tier, type)
 		# Returns a dictionary of the species in the tier with type "type".
 		# "type" can be nil, meaning there is no filter. 
 		
@@ -100,6 +100,106 @@ module SCTB
 		
 		return filtered_dict
 	end 
+  
+  
+  
+  def self.filterSpeciesByRole(tier, role)
+		all_species = tier.alphabeticSpecies()
+		# pbMessage(_INTL("length: {1}", all_species.keys.length))
+		return all_species if role == nil 
+		
+		filtered_dict = {}
+    the_roles = scLoadRolesToPoke
+    the_roles = the_roles[role]
+    
+    return all_species if !the_roles
+		
+		for letter in all_species.keys
+			for sp in all_species[letter]
+				if the_roles.include?(sp)
+					if filtered_dict.keys.include?(letter)
+						filtered_dict[letter].push(sp)
+					else 
+						filtered_dict[letter] = [sp]
+					end 
+				end 
+			end
+		end 
+		
+		return filtered_dict
+  end 
+  
+  
+  
+  def self.filterSpeciesByMove(tier, move)
+		all_species = tier.alphabeticSpecies()
+		# pbMessage(_INTL("length: {1}", all_species.keys.length))
+		return all_species if move == nil 
+		
+		filtered_dict = {}
+    sclearnedtr = scLoadLearnedTranspose
+		sclearnedtr = sclearnedtr[move]
+    
+    return all_species if !sclearnedtr
+    
+		for letter in all_species.keys
+			for sp in all_species[letter]
+				if sclearnedtr.include?(sp)
+					if filtered_dict.keys.include?(letter)
+						filtered_dict[letter].push(sp)
+					else 
+						filtered_dict[letter] = [sp]
+					end 
+				end 
+			end
+		end 
+		
+		return filtered_dict
+  end 
+  
+  
+  def self.filterSpeciesByTypeMoveRole(tier, type, move, role)
+		all_species = tier.alphabeticSpecies()
+		# pbMessage(_INTL("length: {1}", all_species.keys.length))
+		return all_species if !type && !move && !role
+		
+		filtered_dict = {}
+    
+    sclearnedtr = scLoadLearnedTranspose
+		sclearnedtr = sclearnedtr[move] rescue nil 
+    
+    the_roles = scLoadRolesToPoke
+    the_roles = the_roles[role] rescue nil 
+    
+    num_poke = 0 
+    
+		for letter in all_species.keys
+			for sp in all_species[letter]
+        check_type = true 
+        check_type = scSpeciesHasType(sp, -1, type) if type 
+        
+        check_role = true 
+        check_role = the_roles.include?(sp) if the_roles
+        
+        check_move = true 
+        check_move = sclearnedtr.include?(sp) if sclearnedtr
+        
+				if check_type && check_role && check_move
+          num_poke += 1
+					if filtered_dict.keys.include?(letter)
+						filtered_dict[letter].push(sp)
+					else 
+						filtered_dict[letter] = [sp]
+					end 
+				end 
+			end
+		end 
+    
+    if num_poke == 0
+      raise _INTL("No Pokémon found for this set of filters.")
+		end 
+		return filtered_dict
+  end 
 	
 	
 	
@@ -1790,7 +1890,13 @@ class SCWantedDataComplete
 		@base_stats = []
 		@species_name = "????"
 		@filter_by_type = nil 
+    @filter_by_move = nil 
+    @filter_by_role = nil 
+    @old_filter_by_type = nil
+    @old_filter_by_role = nil
+    @old_filter_by_move = nil
     @typeBitmap = AnimatedBitmap.new(_INTL("Graphics/Pictures/types"))
+    @dict_of_species = {} 
     
 		resetMoves
 	end
@@ -2439,6 +2545,28 @@ class SCWantedDataComplete
 	end 
 	
 	
+  
+  def updateDictOfSpecies
+    return if @dict_of_species.keys.length > 0 && 
+              @old_filter_by_type == @filter_by_type && 
+              @old_filter_by_role == @filter_by_role && 
+              @old_filter_by_move == @filter_by_move
+    
+    begin 
+    @dict_of_species = SCTB.filterSpeciesByTypeMoveRole(@tier, @filter_by_type, @filter_by_move, @filter_by_role)
+    @old_filter_by_type = @filter_by_type
+    @old_filter_by_role = @filter_by_role
+    @old_filter_by_move = @filter_by_move
+    rescue 
+    pbMessage("Filters yielded no Pokémon.")
+    # Revert to old filters
+    @filter_by_type = @old_filter_by_type
+    @filter_by_role = @old_filter_by_role
+    @filter_by_move = @old_filter_by_move
+    end 
+  end 
+  
+  
 	
 	def do_command
 		if @index == 0
@@ -2459,20 +2587,26 @@ class SCWantedDataComplete
         end 
       else
         # Choose Pokemons by letter. 
-        dict_of_species = SCTB.filterSpeciesInTier(@tier, @filter_by_type)
+        updateDictOfSpecies
         
         while true
-          filter_index = 1 # index of the option "type filter", might change if option to choose a moveset
+          filter_by_type_index = 1 # index of the option "type filter", might change if option to choose a moveset
+          filter_by_move_index = 2 # index of the option "move filter", might change if option to choose a moveset
+          filter_by_role_index = 3 # index of the option "role filter", might change if option to choose a moveset
           choose_moveset_command = false 
           commands2 = ["Cancel"]
           
           if @wanted_data[SCMovesetsData::SPECIES]
             commands2.push("Choose moveset")
             choose_moveset_command = true
-            filter_index += 1
+            filter_by_type_index += 1
+            filter_by_move_index += 1
+            filter_by_role_index += 1
           end 
           
           commands2.push("Type filter")
+          commands2.push("Move filter")
+          commands2.push("Role filter")
           
           alphabet = ["A","B","C","D","E","F",
                 "G","H","I","J","K","L",
@@ -2482,12 +2616,12 @@ class SCWantedDataComplete
 
           for letter in alphabet
             # For correct order. 
-            if dict_of_species.keys.include?(letter)
+            if @dict_of_species.keys.include?(letter)
               commands2.push(letter)
             end 
           end
           
-          msg = "Choose a Letter."
+          msg = "Choose a letter (" + self.filterMessage + ")"
           c2 = pbMessage(msg, commands2, -1, nil, 1)
           
           if c2 == 0 
@@ -2498,7 +2632,7 @@ class SCWantedDataComplete
             @wanted_data = temp if temp 
             break 
             
-          elsif c2 == filter_index
+          elsif c2 == filter_by_type_index
             # Filter Pokémons by type. 
             list_types = ["(None)", "Bug", "Dark", "Dragon", "Electric", "Fairy", 
                 "Fighting", "Fire", "Flying", "Ghost", "Grass", 
@@ -2513,11 +2647,65 @@ class SCWantedDataComplete
               @filter_by_type = nil 
             end 
             
-            dict_of_species = SCTB.filterSpeciesInTier(@tier, @filter_by_type)
+            updateDictOfSpecies
             
-          elsif c2 > filter_index
+          elsif c2 == filter_by_move_index
+            # Filter Pokémons by move. 
+            move_menu = scLoadMoveMenu
+            cmd = 1
+            while cmd > 0 
+              cmd = pbMessage("Choose a move to filter with.", ["None"] + alphabet, -1)
+              
+              if cmd > 0
+                letter = alphabet[cmd-1]
+                @filter_by_move = pbChooseList(move_menu[letter],0,0)
+                @filter_by_move = nil if @filter_by_move == 0 
+              elsif cmd == 0 
+                @filter_by_move = nil 
+              end 
+              break 
+            end 
+            
+            updateDictOfSpecies
+            
+          elsif c2 == filter_by_role_index
+            # Filter Pokémons by role. 
+            role_menu = scLoadRolesToPoke
+            
+            big_role = 1
+            categ = 1
+            
+            while big_role > 0 && categ > 0
+              # Big role 
+              big_role = pbMessage("Choose a role.", 
+                    ["None", "Lead", "Offensive", "Defensive", "Other"], -1)
+              
+              break if big_role == -1
+              
+              if big_role == 0 # No filter 
+                @filter_by_role = nil 
+                break 
+              end 
+              
+              # Category 
+              categ = pbMessage("Choose a role.", 
+                    ["All", "Physical", "Special", "Mixed"], -1)
+              break if categ == -1
+              
+              # if categ == 0 # No filter 
+                # @filter_by_role = nil 
+                # break 
+              # end 
+              
+              @filter_by_role = big_role * 10 + categ
+              break 
+            end 
+            
+            updateDictOfSpecies
+            
+          elsif c2 > filter_by_role_index
             letter = commands2[c2]
-            s = SCTB.orderSpecies(dict_of_species[letter])
+            s = SCTB.orderSpecies(@dict_of_species[letter])
             
             if s[0] > 0
               @wanted_data = SCTB.initData(s[0])
@@ -2811,6 +2999,47 @@ class SCWantedDataComplete
 		drawWantedData
 	end
 	
+  
+  
+  def filterMessage
+    msg = _INTL("Current filters: ")
+    
+    if !@filter_by_move && !@filter_by_role && !@filter_by_type
+      msg += "none." 
+    else 
+      msg_move = (@filter_by_move ? PBMoves.getName(@filter_by_move) : "all moves")
+      msg_type = (@filter_by_type ? PBTypes.getName(@filter_by_type) : "all types")
+      
+      
+      msg_role = "all roles"
+      
+      if @filter_by_role
+        case @filter_by_role % 10
+        when 1 
+          msg_role += "physical "
+        when 2
+          msg_role += "special "
+        else 
+          msg_role += "mixed "
+        end 
+        
+        case (@filter_by_role / 10).floor
+        when 1 
+          msg_role = "lead"
+        when 2
+          msg_role = "offensive"
+        when 3 
+          msg_role = "defensive"
+        else 
+          msg_role = "other"
+        end 
+      end 
+      
+      msg = _INTL("{1}, {2}, {3}", msg_type, msg_move, msg_role)
+    end 
+    
+    return msg 
+  end 
 	
   
   def chooseHiddenPower(move)
