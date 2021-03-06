@@ -165,8 +165,59 @@ end
 
 
 
+def scGenerateHiddenPowerConversion
+  # Generates a table that associates types with IV combinations.
+  types = []
+  for i in 0..PBTypes.maxValue
+    next if PBTypes.isPseudoType?(i)
+    next if isConst?(i,PBTypes,:NORMAL) || isConst?(i,PBTypes,:SHADOW)
+    types.push(i)
+  end
+  
+  File.open("hidden_power.txt", "w") { |f|
+    # Header
+    f.write("Type".ljust(10))
+    f.write("HP".ljust(4))
+    f.write("Atk".ljust(4))
+    f.write("Def".ljust(4))
+    f.write("Spd".ljust(4))
+    f.write("SpA".ljust(4))
+    f.write("SpD".ljust(4))
+    f.write("\n")
+    
+    for num in 0..63
+      iv = Array.new(6,30)
+      
+      for j in 0..5
+        iv[j] += (num >> j) &1 # Note: inverted order:
+      end 
+      
+      type = scHiddenPower2(iv, types)
+      
+      f.write(PBTypes.getName(type).ljust(10))
+      
+      for j in 0..5
+        f.write(iv[j].to_s.ljust(4))
+      end 
+      f.write("\n")
+    end
+  }
+  pbMessage("Written.")
+end 
 
 
-
+def scHiddenPower2(iv, types)
+  # NOTE: This allows Hidden Power to be Fairy-type (if you have that type in
+  #       your game). I don't care that the official games don't work like that.
+  idxType = 0
+  idxType |= (iv[PBStats::HP]&1)
+  idxType |= (iv[PBStats::ATTACK]&1)<<1
+  idxType |= (iv[PBStats::DEFENSE]&1)<<2
+  idxType |= (iv[PBStats::SPEED]&1)<<3
+  idxType |= (iv[PBStats::SPATK]&1)<<4
+  idxType |= (iv[PBStats::SPDEF]&1)<<5
+  idxType = (types.length-1)*idxType/63
+  return types[idxType]
+end
 
 
