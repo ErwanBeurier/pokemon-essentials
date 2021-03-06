@@ -281,3 +281,4 @@
 511,MINECLEARER,Mine-Clearer,"Removes every hazard when switching in."
 512,BEGINNERSLUCK,Beginner's Luck,"Once per switch, ignores immunity."
 513,INVASIVE,Invasive,"Calls an ally on switch in."
+514,WINDRIDER,Wind Rider,"Boosts speed when struck with wind moves."

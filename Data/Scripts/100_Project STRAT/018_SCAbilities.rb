@@ -66,7 +66,7 @@ class PokeBattle_Move
                       PBMoves::SECRETSWORD, 
                       PBMoves::SLASH, 
                       PBMoves::SOLARBLADE, 
-                      PBMoves::XSCISSOR].include(@id)
+                      PBMoves::XSCISSOR].include?(@id)
     end 
     return @isBladeMove
   end 
@@ -320,3 +320,60 @@ class PokeBattle_Scene
   end 
 end 
 
+
+#===============================================================================
+# Wind rider
+# Boosts speed when struck with wind moves. 
+#===============================================================================
+
+class PokeBattle_Move
+  alias __windmove__init initialize
+  def initialize(battle,move)
+    __windmove__init(battle, move)
+    @isWindMove = -1
+  end
+  
+  def windMove?
+    if @isWindMove == -1
+      @isWindMove = [PBMoves::SILVERWIND,
+                      PBMoves::TWISTER,
+                      PBMoves::FAIRYWIND,
+                      PBMoves::VACUUMWAVE,
+                      PBMoves::AEROBLAST,
+                      PBMoves::AIRCUTTER,
+                      PBMoves::AIRSLASH,
+                      PBMoves::GUST,
+                      PBMoves::HURRICANE,
+                      PBMoves::OMINOUSWIND,
+                      PBMoves::ICYWIND,
+                      PBMoves::RAZORWIND].include?(@id)
+    end 
+    return @isWindMove
+  end 
+end
+
+
+BattleHandlers::MoveImmunityTargetAbility.add(:WINDRIDER,
+  proc { |ability,user,target,move,type,battle|
+    next false if user.index==target.index
+    next false if !move.windMove?
+    stat = PBStats::ATTACK
+    battle.pbShowAbilitySplash(target)
+    if target.pbCanRaiseStatStage?(stat,target)
+      if PokeBattle_SceneConstants::USE_ABILITY_SPLASH
+        target.pbRaiseStatStage(stat,1,target)
+      else
+        target.pbRaiseStatStageByCause(stat,1,target,target.abilityName)
+      end
+    else
+      if PokeBattle_SceneConstants::USE_ABILITY_SPLASH
+        battle.pbDisplay(_INTL("It doesn't affect {1}...",target.pbThis(true)))
+      else
+        battle.pbDisplay(_INTL("{1}'s {2} made {3} ineffective!",
+           target.pbThis,target.abilityName,move.name))
+      end
+    end
+    battle.pbHideAbilitySplash(target)
+    next true
+  }
+)

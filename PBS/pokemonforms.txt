@@ -2941,6 +2941,8 @@ BattlerEnemyY = 15
 #-------------------------------
 [JUMPLUFF,1]
 FormName = Offensive
+Abilities = CHLOROPHYLL,INFILTRATOR
+HiddenAbility = WINDRIDER
 BaseStats = 75,55,70,110,95,55
 BattlerEnemyY = 17
 #-------------------------------
