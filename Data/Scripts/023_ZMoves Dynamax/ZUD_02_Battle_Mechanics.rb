@@ -185,6 +185,7 @@ class PokeBattle_Battler
     return false if pokemon.mega?   || hasMega?
     return false if pokemon.primal? || hasPrimal?
     return false if pokemon.ultra?  || hasUltra?
+    return false if canCallAssistance?
     return true
   end
   

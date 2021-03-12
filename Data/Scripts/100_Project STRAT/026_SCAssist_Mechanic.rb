@@ -131,14 +131,14 @@ end
 class PokeBattle_Battler
   def canCallAssistance?
     # DEBUG 
-    return true 
+    # return true 
     # END OF DEBUG
     return false if shadowPokemon?
     return false if pbIsZCrystal?(self.item) || hasZMove?
     return false if pokemon.mega?   || hasMega?
     return false if pokemon.primal? || hasPrimal?
     return false if pokemon.ultra?  || hasUltra?
-    return false if hasDynamax?
+    # return false if hasDynamax?
     return true
   end
   

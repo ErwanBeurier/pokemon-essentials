@@ -33,7 +33,8 @@ class SCTeamStorage
 	
 	
 	def deleteTeam(index)
-		@content.delete_at(index)
+    @content[index] = self.newEmptySlot
+		@content[index]["Name"] = "Team " + index.to_s 
 	end 
 	
 	

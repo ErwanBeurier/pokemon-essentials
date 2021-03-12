@@ -221,3 +221,73 @@ def scHiddenPower2(iv, types)
 end
 
 
+
+def pbControlledWildBattle(species, level, moves = nil, ability = nil, 
+                          nature = nil, gender = nil, item = nil, shiny = nil, 
+                          dynamax = false, gmax = false,
+                          outcomeVar=1, canRun=true, canLose=false)
+  # Create an instance
+  species = getConst(PBSpecies, species)
+  pkmn = PokeBattle_Pokemon.new(species, level)
+  
+  # Give moves.
+  # Should be a list of moves:
+  if moves
+    for i in 0...4
+      pkmn.moves[i] = PBMove.new(getConst(PBMoves,moves[i])) if moves[i]
+    end 
+  end 
+  
+  # Give ability
+  # NOTE that the ability should be 0, 1 or 2.
+  pkmn.setAbility(ability) if [0, 1, 2].include?(ability)
+  
+  # Give nature
+  pkmn.setNature(nature) if nature
+  
+  # Give gender
+  # 0 if male, 1 if female.
+  pkmn.setGender(gender) if gender
+  
+  # Give item 
+  pkmn.item = item if item 
+  
+  # Shiny or not.
+  pkmn.makeShiny if shiny
+  
+  # Handle the dynamax and gmax forms.
+  dynamax = dynamax || gmax
+  if dynamax
+    pbResetRaidSettings
+    setBattleRule(sprintf("%dv%d",MAXRAID_SIZE,1))
+    $game_switches[MAXRAID_SWITCH] = true 
+    storedPkmn = pbMapInterpreter.get_character(0).id + MAXRAID_PKMN
+    pkmn.giveGMaxFactor if pkmn.hasGmax? && gmax
+    $game_variables[storedPkmn] = pkmn
+  end 
+  
+  # Start the battle.
+  # This is copied from pbWildBattle. 
+  
+  # Potentially call a different pbWildBattle-type method instead (for roaming
+  # Pokémon, Safari battles, Bug Contest battles)
+  handled = [nil]
+  Events.onWildBattleOverride.trigger(nil,species,level,handled)
+  return handled[0] if handled[0]!=nil
+  # Set some battle rules
+  setBattleRule("outcomeVar",outcomeVar) if outcomeVar!=1
+  setBattleRule("cannotRun") if !canRun
+  setBattleRule("canLose") if canLose
+  # Perform the battle
+  decision = pbWildBattleCore(pkmn)
+  # Used by the Poké Radar to update/break the chain
+  Events.onWildBattleEnd.trigger(nil,species,level,decision)
+  # Return false if the player lost or drew the battle, and true if any other result
+  
+  # Reset dynamax stuff.
+  pbResetRaidSettings
+  
+  return (decision!=2 && decision!=5)
+end
+
+

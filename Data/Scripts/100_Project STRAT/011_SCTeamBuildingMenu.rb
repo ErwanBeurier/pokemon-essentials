@@ -266,7 +266,7 @@ module SCTB
   
   
   
-	def self.itemsMenu(speciesid)
+	def self.itemsMenu(speciesid, pokemon)
 		# Generates a two-step menu in order to choose an item for the given 
 		# POkémon. 
 		# speciesid = the id of the Pokémon.
@@ -908,8 +908,8 @@ class SCTeamViewer
 			
 			@sprites[k] = IconSprite.new
 			@sprites[k].setBitmap("Graphics/Pictures/GTS/tb_team_preview")
-			@sprites[k].x = Graphics.width - 10
-			@sprites[k].x -= @sprites[k].bitmap.width
+			@sprites[k].x = Graphics.width / 2
+			@sprites[k].x -= @sprites[k].bitmap.width / 2
 			@sprites[k].y = 84 + i * 100
 
 			# The text part 
@@ -1317,6 +1317,9 @@ class SCTeamBuilder
 		@exit = false
 		
 		@index = 0
+    
+    @index_row = 0
+    @index_column = 0
 	end
 
 	
@@ -1355,11 +1358,20 @@ class SCTeamBuilder
 			kt = k+"t"
 			ktt = k+"tt"
 			
+			# @sprites[k] = IconSprite.new
+			# @sprites[k].setBitmap("Graphics/Pictures/GTS/pokemon_bar")
+			# @sprites[k].x = Graphics.width / 2
+			# @sprites[k].x -= @sprites[k].bitmap.width / 2
+			# @sprites[k].y = 50 + i * 38
 			@sprites[k] = IconSprite.new
-			@sprites[k].setBitmap("Graphics/Pictures/GTS/pokemon_bar")
+			@sprites[k].bitmap = Bitmap.new(96, 96)
 			@sprites[k].x = Graphics.width / 2
-			@sprites[k].x -= @sprites[k].bitmap.width / 2
-			@sprites[k].y = 50 + i * 38
+			@sprites[k].x -= 192*3 * 3 /8
+			@sprites[k].x += (i%3) * 192*3 / 4
+			@sprites[k].y = (i < 3 ? 50 : 50+96)
+			@sprites[k].zoom_x = 0.5
+			@sprites[k].zoom_y = @sprites[k].zoom_x
+      
 
 			@sprites[kt] = IconSprite.new
 			@sprites[kt].bitmap = Bitmap.new(@sprites[k].bitmap.width, 
@@ -1417,14 +1429,14 @@ class SCTeamBuilder
 		@sprites["7tt"].y = @sprites["7"].y
 		
 		
-		for i in 0...6
-			k = i.to_s + "tt"
-			pbSetSystemFont(@sprites[k].bitmap)
-			textpos=[          
-				["Pkmn " + (i+1).to_s,30,0,0,Color.new(248,248,248),Color.new(40,40,40)],
-			]
-			pbDrawTextPositions(@sprites[k].bitmap,textpos)
-		end 
+		# for i in 0...6
+			# k = i.to_s + "tt"
+			# pbSetSystemFont(@sprites[k].bitmap)
+			# textpos=[          
+				# ["Pkmn " + (i+1).to_s,30,0,0,Color.new(248,248,248),Color.new(40,40,40)],
+			# ]
+			# pbDrawTextPositions(@sprites[k].bitmap,textpos)
+		# end 
 		
 		pbSetSystemFont(@sprites["7tt"].bitmap)
 		textpos=[          
@@ -1437,25 +1449,80 @@ class SCTeamBuilder
 		
 		
 		bit = Bitmap.new("Graphics/Pictures/GTS/Select")
-		@sprites["selection_l"] = IconSprite.new
-		@sprites["selection_l"].bitmap = Bitmap.new(16, 46)
-		@sprites["selection_l"].bitmap.blt(0, 0, bit, Rect.new(0, 0, 16, 16))
-		@sprites["selection_l"].bitmap.blt(0, 23, bit, Rect.new(0, 16, 16, 32))
+		@sprites["selection_l_u"] = IconSprite.new
+		@sprites["selection_l_u"].bitmap = Bitmap.new(16, 23)
+		@sprites["selection_l_u"].bitmap.blt(0, 0, bit, Rect.new(0, 0, 16, 16))
+    
+		@sprites["selection_l_d"] = IconSprite.new
+		@sprites["selection_l_d"].bitmap = Bitmap.new(16, 23)
+		@sprites["selection_l_d"].bitmap.blt(0, 0, bit, Rect.new(0, 16, 16, 32))
 
-		@sprites["selection_r"] = IconSprite.new
-		@sprites["selection_r"].bitmap = Bitmap.new(16, 46)
-		@sprites["selection_r"].bitmap.blt(0, 0, bit, Rect.new(16, 0, 32, 16))
-		@sprites["selection_r"].bitmap.blt(0, 23, bit, Rect.new(16, 16, 32, 32))
+		@sprites["selection_r_u"] = IconSprite.new
+		@sprites["selection_r_u"].bitmap = Bitmap.new(16, 23)
+		@sprites["selection_r_u"].bitmap.blt(0, 0, bit, Rect.new(16, 0, 32, 16))
 
-		@sprites["selection_l"].x = @sprites["#{@index}"].x-2
-		@sprites["selection_l"].y = @sprites["#{@index}"].y-2
-		@sprites["selection_r"].x = @sprites["#{@index}"].x+
-		@sprites["#{@index}"].bitmap.width-18
-		@sprites["selection_r"].y = @sprites["#{@index}"].y-2
+		@sprites["selection_r_d"] = IconSprite.new
+		@sprites["selection_r_d"].bitmap = Bitmap.new(16, 23)
+		@sprites["selection_r_d"].bitmap.blt(0, 0, bit, Rect.new(16, 16, 32, 32))
+		# @sprites["selection_l"] = IconSprite.new
+		# @sprites["selection_l"].bitmap = Bitmap.new(16, 46)
+		# @sprites["selection_l"].bitmap.blt(0, 0, bit, Rect.new(0, 0, 16, 16))
+		# @sprites["selection_l"].bitmap.blt(0, 23, bit, Rect.new(0, 16, 16, 32))
 
+		# @sprites["selection_r"] = IconSprite.new
+		# @sprites["selection_r"].bitmap = Bitmap.new(16, 46)
+		# @sprites["selection_r"].bitmap.blt(0, 0, bit, Rect.new(16, 0, 32, 16))
+		# @sprites["selection_r"].bitmap.blt(0, 23, bit, Rect.new(16, 16, 32, 32))
+    
+    drawSelector
 		drawWantedData
 	end
 	
+  
+  
+  def drawSelector
+		# @sprites["selection_l"].x = @sprites["#{@index}"].x-2
+		# @sprites["selection_l"].y = @sprites["#{@index}"].y-2
+		# @sprites["selection_r"].x = @sprites["#{@index}"].x+
+		# @sprites["#{@index}"].bitmap.width-18
+		# @sprites["selection_r"].y = @sprites["#{@index}"].y-2
+		@sprites["selection_l_u"].x = @sprites["#{@index}"].x-2
+		@sprites["selection_l_u"].y = @sprites["#{@index}"].y-2
+    
+    if @index < 6
+      @sprites["selection_l_d"].x = @sprites["#{@index}"].x-2
+      # @sprites["selection_l_d"].y = 192
+      @sprites["selection_l_d"].y = @sprites["#{@index}"].y+
+        @sprites["#{@index}"].bitmap.height * 3 / 4 + 2
+    else 
+      @sprites["selection_l_d"].x = @sprites["#{@index}"].x-2
+      # @sprites["selection_l_d"].y = 192
+      @sprites["selection_l_d"].y = @sprites["#{@index}"].y+
+        @sprites["#{@index}"].bitmap.height-18
+    end 
+    
+    if @index < 6
+      @sprites["selection_r_u"].x = @sprites["#{@index}"].x+
+        @sprites["#{@index}"].bitmap.width * 3 / 4 + 2
+      @sprites["selection_r_u"].y = @sprites["#{@index}"].y-2
+    else 
+      @sprites["selection_r_u"].x = @sprites["#{@index}"].x+
+        @sprites["#{@index}"].bitmap.width-18
+      @sprites["selection_r_u"].y = @sprites["#{@index}"].y-2
+    end 
+    
+    if @index < 6
+      @sprites["selection_r_d"].x = @sprites["#{@index}"].x+
+        @sprites["#{@index}"].bitmap.width * 3 / 4 + 2
+      @sprites["selection_r_d"].y = @sprites["#{@index}"].y+
+        @sprites["#{@index}"].bitmap.height * 3 / 4 + 2
+    else 
+      @sprites["selection_r_d"].x = @sprites["#{@index}"].x+
+        @sprites["#{@index}"].bitmap.width-18
+      @sprites["selection_r_d"].y = @sprites["#{@index}"].y+
+        @sprites["#{@index}"].bitmap.height-18
+    end 
+  end 
 	
 	
 	def drawWantedData
@@ -1468,6 +1535,15 @@ class SCTeamBuilder
 			if (not @party[i].empty?) && @party[i][0]
 				#s = PBItems.getName(@wanted_data[SCMovesetsData::ITEM]) 
         
+        @sprites[i.to_s].bitmap = pbLoadSpeciesBitmap(@party[i][0], 
+                              @party[i][SCMovesetsData::GENDER], 
+                              @party[i][SCMovesetsData::FORM], 
+                              @party[i][SCMovesetsData::SHINY]).bitmap
+        @sprites[i.to_s].zoom_x = 0.75
+        @sprites[i.to_s].zoom_y = @sprites[i.to_s].zoom_x
+
+        
+        
         species_name = PBSpecies.getName(@party[i][SCMovesetsData::SPECIES])
         nickname = nil
         
@@ -1475,7 +1551,8 @@ class SCTeamBuilder
           nickname = @party[i][SCMovesetsData::NICKNAME]
         end 
         
-        name_nickname = (nickname ? _INTL("{1} ({2})", species_name, nickname) : species_name)
+        # name_nickname = (nickname ? _INTL("{1} ({2})", species_name, nickname) : species_name)
+        name_nickname = species_name if !nickname
         
 				pbSetSystemFont(@sprites[k].bitmap)
 				textpos=[          
@@ -1544,11 +1621,7 @@ class SCTeamBuilder
 	def update
 		pbUpdateSpriteHash(@sprites)
 
-		@sprites["selection_l"].x = @sprites["#{@index}"].x-2
-		@sprites["selection_l"].y = @sprites["#{@index}"].y-2
-		@sprites["selection_r"].x = @sprites["#{@index}"].x+
-		@sprites["#{@index}"].bitmap.width-18
-		@sprites["selection_r"].y = @sprites["#{@index}"].y-2
+		drawSelector
 
 		if Input.trigger?(Input::B)
 			pbPlayCancelSE
@@ -1562,16 +1635,50 @@ class SCTeamBuilder
 		end
 
 		if Input.trigger?(Input::UP)
-			@index -= 1
-			if @index < 0
-				@index = 7
-			end
+      case @index_row 
+      when 0 # First line of the team
+        @index_row = 3 # Get on Finish Party
+        @index = 7
+      when 1 # Second line of the team 
+        @index_row = 0 # Got to first line 
+        @index = @index_row * 3 + @index_column
+      when 2 # Validity line 
+        @index_row = 1 # Get on the second line.
+        @index = @index_row * 3 + @index_column 
+      else # Finish party 
+        @index_row = 2 # Get on validity line
+        @index = 6
+      end 
 		end
 		if Input.trigger?(Input::DOWN)
-			@index += 1
-			if @index > 7
-				@index = 0
-			end
+      case @index_row 
+      when 0 # First line of the team
+        @index_row += 1 # Get on the second line.
+        @index = @index_row * 3 + @index_column 
+      when 1 # Second line of the team 
+        @index_row = 2 # Get on validity line
+        @index = 6
+      when 2 # Validity line 
+        @index_row = 3 # Get on Finish Party
+        @index = 7
+      else # Finish party 
+        @index_row = 0 
+        @index = @index_row * 3 + @index_column
+      end 
+		end
+		if Input.trigger?(Input::LEFT)
+      if @index < 6
+        @index_column -= 1
+        @index_column = 2 if @index_column < 0
+        @index = @index_row * 3 + @index_column
+      end 
+		end
+		if Input.trigger?(Input::RIGHT)
+      if @index < 6
+        @index_column += 1
+        @index_column = 0 if @index_column > 2
+        @index = @index_row * 3 + @index_column
+      end 
 		end
 	end
 	
@@ -2819,7 +2926,7 @@ class SCWantedDataComplete
 				if !@wanted_data[SCMovesetsData::SPECIES]
 					pbMessage("Select a species before selecting an item.")
 				else
-					res = SCTB.itemsMenu(@wanted_data[SCMovesetsData::BASESPECIES])
+					res = SCTB.itemsMenu(@wanted_data[SCMovesetsData::BASESPECIES], @wanted_data)
 					@wanted_data[SCMovesetsData::ITEM] = res if res != -1
 				end
 			else 
