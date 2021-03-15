@@ -291,6 +291,7 @@ module SCTB
 			PBItems::ASSAULTVEST,
 			PBItems::FOCUSSASH,
 			PBItems::AIRBALLOON,
+			PBItems::SOULLINK,
 			PBItems::HEATROCK,
 			PBItems::DAMPROCK,
 			PBItems::SMOOTHROCK,
@@ -1122,17 +1123,17 @@ class SCTeamViewer
 						rand_party = scGenerateTeamRand($Trainer, team_type, nil, nil, tier_choice)
 						rand_party = convertPartyToList(rand_party)
 						
-						scTeamStorage.modifyTeam(team_index, "Empty", rand_party, tier_choice)
+						scTeamStorage.modifyTeam(team_index, team_types[team_type], rand_party, tier_choice)
 						
 						create_spriteset
 						Graphics.transition
 						
-						keep_team = pbMessage("Keep this team?", ["Yes", "No"], 0)
+						keep_team = pbMessage("Keep this team?", ["Yes", "No", "Change"], 0)
 						
 						if keep_team == 0 
 							pbMessage("Generated team for tier " + tier_choice + "!")
 							break
-						else
+						elsif keep_team == 2
 							team_type = pbMessage("Generate what type of team?", team_types, -1)
 						end 
 					end 
@@ -1486,14 +1487,19 @@ class SCTeamBuilder
 		# @sprites["selection_r"].x = @sprites["#{@index}"].x+
 		# @sprites["#{@index}"].bitmap.width-18
 		# @sprites["selection_r"].y = @sprites["#{@index}"].y-2
-		@sprites["selection_l_u"].x = @sprites["#{@index}"].x-2
-		@sprites["selection_l_u"].y = @sprites["#{@index}"].y-2
+    if @index < 6
+      @sprites["selection_l_u"].x = @sprites["#{@index}"].x+10
+      @sprites["selection_l_u"].y = @sprites["#{@index}"].y+10
+    else 
+      @sprites["selection_l_u"].x = @sprites["#{@index}"].x-2
+      @sprites["selection_l_u"].y = @sprites["#{@index}"].y-2
+    end 
     
     if @index < 6
-      @sprites["selection_l_d"].x = @sprites["#{@index}"].x-2
+      @sprites["selection_l_d"].x = @sprites["#{@index}"].x+10
       # @sprites["selection_l_d"].y = 192
       @sprites["selection_l_d"].y = @sprites["#{@index}"].y+
-        @sprites["#{@index}"].bitmap.height * 3 / 4 + 2
+        @sprites["#{@index}"].bitmap.height * 3 / 5 + 2
     else 
       @sprites["selection_l_d"].x = @sprites["#{@index}"].x-2
       # @sprites["selection_l_d"].y = 192
@@ -1503,8 +1509,8 @@ class SCTeamBuilder
     
     if @index < 6
       @sprites["selection_r_u"].x = @sprites["#{@index}"].x+
-        @sprites["#{@index}"].bitmap.width * 3 / 4 + 2
-      @sprites["selection_r_u"].y = @sprites["#{@index}"].y-2
+        @sprites["#{@index}"].bitmap.width * 3 / 5 + 2
+      @sprites["selection_r_u"].y = @sprites["#{@index}"].y+10
     else 
       @sprites["selection_r_u"].x = @sprites["#{@index}"].x+
         @sprites["#{@index}"].bitmap.width-18
@@ -1513,9 +1519,9 @@ class SCTeamBuilder
     
     if @index < 6
       @sprites["selection_r_d"].x = @sprites["#{@index}"].x+
-        @sprites["#{@index}"].bitmap.width * 3 / 4 + 2
+        @sprites["#{@index}"].bitmap.width * 3 / 5 + 2
       @sprites["selection_r_d"].y = @sprites["#{@index}"].y+
-        @sprites["#{@index}"].bitmap.height * 3 / 4 + 2
+        @sprites["#{@index}"].bitmap.height * 3 / 5 + 2
     else 
       @sprites["selection_r_d"].x = @sprites["#{@index}"].x+
         @sprites["#{@index}"].bitmap.width-18

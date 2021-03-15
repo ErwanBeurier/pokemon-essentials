@@ -62,6 +62,7 @@ class SCTier
 		@banned_items = dictionary["BannedItems"]
 		@banned_moves = dictionary["BannedMoves"]
 		@banned_abilities = dictionary["BannedAbilities"]
+    @default_index_menu = 0 # Index in the stratum choice. 
     
     if dictionary["Stratum"]
       @stratum_range = dictionary["Stratum"]
@@ -301,13 +302,14 @@ class SCTier
 		list_strata = [600, 550, 500, 450, 400]
     list_strata_str = ["Very strong", "Strong", "Medium", "Weak", "Very weak"]
     
-		cmd = Kernel.pbMessage("How strong do you want your team?", list_strata_str, -1)
+		cmd = pbMessage("How strong do you want your team?", list_strata_str, -1, nil, @default_index_menu)
 		
 		if cmd > -1 
+      @default_index_menu = cmd 
 			return list_strata[cmd]
 		end 
 		
-		return list_strata[2]
+		return list_strata[1]
   end 
   
   
@@ -1136,6 +1138,12 @@ end
 # =============================================================================
 # Functions
 # =============================================================================
+
+class PokemonTemp
+  attr_accessor :current_tier
+end 
+
+
 def loadTier(tierid)
 	# Loads the tier from the compiled file. 
 	# Returns a class. 
@@ -1158,22 +1166,29 @@ def loadTier(tierid)
 		return SCTier.new(dictionary)
   end 
   
-	tier_dict = scLoadTierData
-	
-	if !tier_dict.key?(tierid)
-		raise _INTL("{1} is not a tier!", tierid)
-	end 
-	
-  case tierid
-  when "MONO"
-		return SCMonotypeTier.new(tier_dict[tierid])
-  when "BI"
-		return SCBitypeTier.new(tier_dict[tierid])
-  when "OTF"
-		return SCPersonalisedTier.new(tier_dict[tierid])
-	end 
-	
-	return SCTier.new(tier_dict[tierid])
+  $PokemonTemp = PokemonTemp.new if !$PokemonTemp
+  
+  if !$PokemonTemp.current_tier || $PokemonTemp.current_tier.id != tierid
+    tier_dict = scLoadTierData
+    
+    if !tier_dict.key?(tierid)
+      raise _INTL("{1} is not a tier!", tierid)
+    end 
+    
+    case tierid
+    when "MONO"
+      $PokemonTemp.current_tier =  SCMonotypeTier.new(tier_dict[tierid])
+    when "BI"
+      $PokemonTemp.current_tier = SCBitypeTier.new(tier_dict[tierid])
+    when "OTF"
+      $PokemonTemp.current_tier = SCPersonalisedTier.new(tier_dict[tierid])
+    end 
+    
+    $PokemonTemp.current_tier = SCTier.new(tier_dict[tierid])
+  end
+  
+  
+  return $PokemonTemp.current_tier
 end 
 
 

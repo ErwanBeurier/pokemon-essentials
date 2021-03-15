@@ -164,17 +164,18 @@ BattleHandlers::AbilityOnSwitchIn.add(:DRAGONBORN,
 
 
 #===============================================================================
-# Lava golem   
+# Lava Monster   
 # Rock-type moves become Fire-type.
 #===============================================================================
 
-BattleHandlers::MoveBaseTypeModifierAbility.add(:LAVAGOLEM,
+BattleHandlers::MoveBaseTypeModifierAbility.add(:LAVAMONSTER,
   proc { |ability,user,move,type|
     next if !isConst?(type,PBTypes,:ROCK) || !hasConst?(PBTypes,:FIRE)
     move.powerBoost = true
     next getConst(PBTypes,:FIRE)
   }
 )
+BattleHandlers::DamageCalcUserAbility.copy(:AERILATE,:LAVAMONSTER)
 
 
 #===============================================================================
