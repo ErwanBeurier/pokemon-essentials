@@ -141,7 +141,7 @@ class PokeBattle_Move_C004 < PokeBattle_Move
   end
 
   def pbEffectGeneral(user)
-    user.pbOwnSide.effects[PBEffects::WarMandala] = 3
+    user.pbOwnSide.effects[PBEffects::WarMandala] = 2
     @battle.pbDisplay(_INTL("{1} painted a War Mandala!",user.pbThis))
   end
 end
@@ -161,7 +161,7 @@ class PokeBattle_Move_C005 < PokeBattle_Move
   end
 
   def pbEffectGeneral(user)
-    user.pbOwnSide.effects[PBEffects::MindMandala] = 3
+    user.pbOwnSide.effects[PBEffects::MindMandala] = 2
     @battle.pbDisplay(_INTL("{1} painted a Mind Mandala!",user.pbThis))
   end
 end

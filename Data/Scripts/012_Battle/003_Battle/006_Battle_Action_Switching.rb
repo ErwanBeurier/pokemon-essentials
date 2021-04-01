@@ -345,7 +345,7 @@ class PokeBattle_Battle
   
   # Called when a Pokémon switches in + after using Ally Switch (Gen 8 mechanics)
   def pbActivateHealingWish(battler)
-	return if !battler.canTakeHealingWish?
+    return if !battler.canTakeHealingWish?
     # Healing Wish
     if @positions[battler.index].effects[PBEffects::HealingWish]
       pbCommonAnimation("HealingWish",battler)
@@ -369,18 +369,6 @@ class PokeBattle_Battle
       pbDisplay(_INTL("The Z-Power healed {1}!",battler.pbThis))
       battler.pbRecoverHP(battler.totalhp)
       @positions[battler.index].effects[PBEffects::ZHeal] = false
-    end
-    # Warm Welcome (STRAT)
-    if @positions[battler.index].effects[PBEffects::WarmWelcome]
-      canraiseattack = battler.pbCanRaiseStatStage?(PBStats::ATTACK,battler)
-      canraisespatk = battler.pbCanRaiseStatStage?(PBStats::SPATK,battler)
-      if canraiseattack || canraisespatk
-        pbCommonAnimation("WarmWelcome",battler)
-        pbDisplay(_INTL("{1} received the cheers!",battler.pbThis))
-        battler.pbRaiseStatStage(PBStats::ATTACK,2,battler) if canraiseattack
-        battler.pbRaiseStatStage(PBStats::SPATK,2,battler) if canraisespatk
-        @positions[battler.index].effects[PBEffects::WarmWelcome] = false
-      end 
     end
   end 
   
@@ -406,6 +394,18 @@ class PokeBattle_Battle
     scActivateMandalas(battler)
     # Healing Wish / Lunar Dance / Z-Memento / Z-Parting Shot 
     pbActivateHealingWish(battler)
+    # Warm Welcome (STRAT)
+    if @positions[battler.index].effects[PBEffects::WarmWelcome]
+      canraiseattack = battler.pbCanRaiseStatStage?(PBStats::ATTACK,battler)
+      canraisespatk = battler.pbCanRaiseStatStage?(PBStats::SPATK,battler)
+      if canraiseattack || canraisespatk
+        pbCommonAnimation("WarmWelcome",battler)
+        pbDisplay(_INTL("{1} received the cheers!",battler.pbThis))
+        battler.pbRaiseStatStage(PBStats::ATTACK,2,battler) if canraiseattack
+        battler.pbRaiseStatStage(PBStats::SPATK,2,battler) if canraisespatk
+        @positions[battler.index].effects[PBEffects::WarmWelcome] = false
+      end 
+    end
     # Entry hazards
     # Dynamax - G-Max Steelsurge hazard effect (ZUD)
     pbSteelsurgeEffect(battler)

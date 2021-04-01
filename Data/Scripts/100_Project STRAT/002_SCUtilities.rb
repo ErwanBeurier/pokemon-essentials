@@ -73,7 +73,7 @@ def scToStringRec(d)
     s = "[ "
     d.each { |val|
       temp = scToStringRec(val)
-      s += _INTL("{1} ", temp)
+      s += _INTL("{1} ; ", temp)
     }
     s += "]"
     return s
@@ -289,5 +289,109 @@ def pbControlledWildBattle(species, level, moves = nil, ability = nil,
   
   return (decision!=2 && decision!=5)
 end
+
+
+
+
+# -----------------------------------------------------------------------------
+# Displays the number of the animatin
+# -----------------------------------------------------------------------------
+
+
+def pbFindAnimationIndex(wanted_anim= nil, showMessage = true)
+  
+  wanted_anim = pbMessageFreeText("What animation do you want?","",false,30) if !wanted_anim
+
+  l = []
+  animations = pbLoadBattleAnimations
+  return if !animations
+  animations.each_with_index do |a, i|
+    next if !a || !a.name.include?(wanted_anim)
+    l.push([i, a.name])
+  end
+  if l.length > 0
+    if showMessage
+      s = ""
+      l.each_with_index { |a, i| 
+        s += "\n" if i > 0
+        s += a[0].to_s
+        s += ": " 
+        s += a[1].to_s
+      }
+      pbMessage(_INTL("{1} are at index {2}", wanted_anim, s))
+    end 
+    return true 
+  end 
+  pbMessage(_INTL("{1} was not found.", wanted_anim)) if showMessage
+  return false 
+end 
+
+
+def pbFindMissingAnimations
+  missing_moves = {}
+  missing_moves["Normal"] = []
+  missing_moves["ZMoves"] = []
+  missing_moves["MaxMoves"] = []
+  
+  for i in 1...PBMoves.maxValue
+    cname = getConstantName(PBMoves,i) rescue nil
+    next if !cname
+    if !pbFindAnimationIndex(cname, false)
+      # Move not found.
+      
+      name = PBMoves.getName(i)
+      flags = pbGetMoveData(i, MOVE_FLAGS)
+      if flags[/z/] # Z-move 
+        missing_moves["ZMoves"].push(name)
+      elsif flags[/x/] # Max-move
+        missing_moves["MaxMoves"].push(_INTL(name))
+      else 
+        missing_moves["Normal"].push(name)
+      end 
+    end 
+  end 
+  missing_moves["Normal"].sort! 
+  missing_moves["ZMoves"].sort! 
+  missing_moves["MaxMoves"].sort! 
+  
+  scToString(missing_moves)
+end 
+
+
+def pbFindMissingCommonAnimations
+  common_anims = ["Sleep", "Toxic", "Poison", "Burn", "Paralysis", "Frozen", "Confusion", 
+                  "Attract", "StatUp", "StatDown", "Powder", "UseItem", "CraftyShield", 
+                  "WideGuard", "QuickGuard", "Protect", "Obstruct", "KingsShield",
+                  "SpikyShield", "BanefulBunker", "ParentalBond", "FocusPunch", "ShellTrap",
+                  "BeakBlast", "LevelUp", "HealingWish", "LunarDance", "Shadow", "MegaEvolution", 
+                  "MegaEvolution2", "PrimalKyogre", "PrimalKyogre2", "PrimalGroudon", 
+                  "PrimalGroudon2", "SeaOfFire", "SeaOfFireOpp", "LeechSeed", "Bind", 
+                  "Clamp", "FireSpin", "MagmaStorm", "SandTomb", "Wrap", "Infestation", 
+                  "SnapTrap", "ThunderCage", "Shiny", "HealthUp", "HealthDown", "EatBerry",
+                  "Bind", "UnDynamax", "UltraBurst", "UltraBurst2", "ZPower", "Protect", 
+                  "VineLash", "VineLashOpp", "Wildfire", "WildfireOpp", "Cannonade", 
+                  "CannonadeOpp", "Volcalith", "VolcalithOpp", 
+                  "Sun","Rain","Sandstorm","Hail","HarshSun","HeavyRain","StrongWinds",
+                  "ShadowSky","Fog","Tempest",
+                  "ElectricTerrain","GrassyTerrain","MistyTerrain","PsychicTerrain",
+                  "ZHeal", 
+                  "WarmWelcome", "PhoenixFireEffect", "MindMandala", "WarMandala","MagneticTerrain"
+                  ]
+  
+  missing_common_anims = []
+  
+  for canim in common_anims
+    if !pbFindAnimationIndex(canim, false)
+      # Anim not found. 
+      missing_common_anims.push(canim)
+    end 
+  end 
+  # missing_common_anims.sort! 
+  
+  scToString(missing_common_anims)
+end 
+
+
+
 
 

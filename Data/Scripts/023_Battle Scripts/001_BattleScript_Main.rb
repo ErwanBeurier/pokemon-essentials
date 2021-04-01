@@ -3,7 +3,7 @@
 #==============================================================================#
 #                                                                              #
 #                          Mid Battle Dialogue and Script                      #
-#                                       v1.5                                   #
+#                                       v1.6                                   #
 #                                 By Golisopod User                            #
 #                                                                              #
 #==============================================================================#
@@ -458,23 +458,27 @@ class PokeBattle_Battle
   end
 
 # Item Usage Dialogue
-  def pbUseItemOnBattler(item,idxBattler,userBattler)
+  def pbUseItemOnBattler(item,idxParty,userBattler)
     trainerName = pbGetOwnerName(userBattler.index)
     pbUseItemMessage(item,trainerName)
-    idxBattler = userBattler.index if idxBattler<0
-    battler = @battlers[idxBattler]
+    battler = pbFindBattler(idxParty,userBattler.index)
     ch = @choices[userBattler.index]
-    if ItemHandlers.triggerCanUseInBattle(item,battler.pokemon,battler,ch[3],true,self,@scene,false)
-      ItemHandlers.triggerBattleUseOnBattler(item,battler,@scene)
-      ch[1] = 0
-      if !battler.opposes?
-        TrainerDialogue.display("item",self,@scene)
+    if battler
+      if ItemHandlers.triggerCanUseInBattle(item,battler.pokemon,battler,ch[3],true,self,@scene,false)
+        ItemHandlers.triggerBattleUseOnBattler(item,battler,@scene)
+        ch[1] = 0   # Delete item from choice
+		if !battler.opposes?
+		  TrainerDialogue.display("item",self,@scene)
+		else
+		  TrainerDialogue.display("itemOpp",self,@scene)
+		end
+        return
       else
-        TrainerDialogue.display("itemOpp",self,@scene)
-      end# Delete item from choice
-      return
+        pbDisplay(_INTL("But it had no effect!"))
+      end
+    else
+      pbDisplay(_INTL("But it's not where this item can be used!"))
     end
-    pbDisplay(_INTL("But it's not where this item can be used!"))
     # Return unused item to Bag
     pbReturnUnusedItemToBag(item,userBattler.index)
   end
@@ -758,6 +762,7 @@ end
 class PokeBattle_Battler
 # Faint Dialogue
   alias dialogue_faint pbFaint
+
   def pbFaint(showMessage=true)
     return if @fainted   # Has already fainted properly
     dialogue_faint(showMessage)
@@ -975,60 +980,10 @@ end
 
 class PokeBattle_Scene
 # Sendout Dialogue
+  alias mbd_sendoutBattlers pbSendOutBattlers
   def pbSendOutBattlers(sendOuts,startBattle=false)
     return if sendOuts.length==0
-    # If party balls are still appearing, wait for them to finish showing up, as
-    # the FadeAnimation will make them disappear.
-    while inPartyAnimation?; pbUpdate; end
-    @briefMessage = false
-    # Make all trainers and party lineups disappear (player-side trainers may
-    # animate throwing a Poké Ball)
-    if @battle.opposes?(sendOuts[0][0])
-      fadeAnim = TrainerFadeAnimation.new(@sprites,@viewport,startBattle)
-    else
-      fadeAnim = PlayerFadeAnimation.new(@sprites,@viewport,startBattle)
-    end
-    # For each battler being sent out, set the battler's sprite and create two
-    # animations (the Poké Ball moving and battler appearing from it, and its
-    # data box appearing)
-    sendOutAnims = []
-    sendOuts.each_with_index do |b,i|
-      pkmn = @battle.battlers[b[0]].effects[PBEffects::Illusion] || b[1]
-      pbChangePokemon(b[0],pkmn)
-      pbRefresh
-      if @battle.opposes?(b[0])
-        sendOutAnim = PokeballTrainerSendOutAnimation.new(@sprites,@viewport,
-           @battle.pbGetOwnerIndexFromBattlerIndex(b[0])+1,
-           @battle.battlers[b[0]],startBattle,i)
-      else
-        sendOutAnim = PokeballPlayerSendOutAnimation.new(@sprites,@viewport,
-           @battle.pbGetOwnerIndexFromBattlerIndex(b[0])+1,
-           @battle.battlers[b[0]],startBattle,i)
-      end
-      dataBoxAnim = DataBoxAppearAnimation.new(@sprites,@viewport,b[0])
-      sendOutAnims.push([sendOutAnim,dataBoxAnim,false])
-    end
-    # Play all animations
-    loop do
-      fadeAnim.update
-      sendOutAnims.each do |a|
-        next if a[2]
-        a[0].update
-        a[1].update if a[0].animDone?
-        a[2] = true if a[1].animDone?
-      end
-      pbUpdate
-      if !inPartyAnimation?
-        break if !sendOutAnims.any? { |a| !a[2] }
-      end
-    end
-    fadeAnim.dispose
-    sendOutAnims.each { |a| a[0].dispose; a[1].dispose }
-    # Play shininess animations for shiny Pokémon
-    sendOuts.each do |b|
-      next if !@battle.showAnims || !@battle.battlers[b[0]].shiny?
-      pbCommonAnimation("Shiny",@battle.battlers[b[0]])
-    end
+    mbd_sendoutBattlers(sendOuts,startBattle)
     sendTriggers = []
     sendOuts.each do |b|
       len =  @battle.pbAbleCount(b[0])
@@ -1065,16 +1020,6 @@ module TrainerDialogue
   def self.set(param,data)
     $PokemonTemp.dialogueData[:DIAL]=true
     $PokemonTemp.dialogueData[param]=data
-    $PokemonTemp.dialogueDone[param]=2
-    parCheck=param.split(",")
-    int=parCheck[1].to_i
-    int=1 if !int || !int.is_a?(Numeric)
-    $PokemonTemp.dialogueInstances[parCheck[0]] = 1
-  end
-
-  def self.copy(param,toCopy)
-    $PokemonTemp.dialogueData[:DIAL]=true
-    $PokemonTemp.dialogueData[param]=$PokemonTemp.dialogueData[toCopy]
     $PokemonTemp.dialogueDone[param]=2
     parCheck=param.split(",")
     int=parCheck[1].to_i
@@ -1168,7 +1113,7 @@ module TrainerDialogue
         while turnStart["opp"] >= battle.opponent.length && turnStart["opp"] >= 0
           turnStart["opp"]-=1
         end
-        scene.pbShowOpponent(turnStart["opp"])
+        scene.pbShowOpponent(turnStart["opp"],turnStart["abovePkmn"])
         turnStart["opp"]=0 if turnStart["opp"] < 0
         if turnStart["text"].is_a?(Array)
           for i in 0...turnStart["text"].length
@@ -1259,8 +1204,15 @@ module BattleScripting
     TrainerDialogue.set(param,data)
   end
 
-  def self.copy(param,data)
-    TrainerDialogue.copy(param,data)
+  def self.copy(*args)
+    param = args[0]
+    $PokemonTemp.dialogueData[:DIAL]=true
+    for i in 1...args.length
+      $PokemonTemp.dialogueData[args[i]] = $PokemonTemp.dialogueData[param]
+      $PokemonTemp.dialogueData[args[i]] = 2
+      parCheck=args[i].split(",")
+      $PokemonTemp.dialogueInstances[parCheck[0]] = 1
+    end
   end
 
   def self.setInScript(param,name)
@@ -1292,12 +1244,22 @@ class PokeBattle_Scene
     end
   end
 
-  def pbHideOpponent(idxTrainer=1,filename=nil)
+  def pbShowOpponent(idxTrainer,priority=false)
     # Set up trainer appearing animation
-    disappearAnim = TrainerDisappearAnimation.new(@sprites,@viewport,idxTrainer,filename)
+    @sprites["trainer_#{idxTrainer+1}"].z = 200 if priority && @sprites["trainer_#{idxTrainer+1}"]
+    appearAnim = TrainerAppearAnimation.new(@sprites,@viewport,idxTrainer)
+    @animations.push(appearAnim)
+    # Play the animation
+    while inPartyAnimation?; pbUpdate; end
+  end
+
+  def pbHideOpponent(idxTrainer=1)
+    # Set up trainer appearing animation
+    disappearAnim = TrainerDisappearAnimation.new(@sprites,@viewport,idxTrainer)
     @animations.push(disappearAnim)
     # Play the animation
     while inPartyAnimation?; pbUpdate; end
+    @sprites["trainer_#{idxTrainer+1}"].z = 7 + idxTrainer if @sprites["trainer_#{idxTrainer+1}"]
   end
 
   def disappearDatabox
@@ -1348,7 +1310,7 @@ class PokeBattle_Scene
 end
 
 class TrainerDisappearAnimation < PokeBattle_Animation
-  def initialize(sprites,viewport,idxTrainer,filename)
+  def initialize(sprites,viewport,idxTrainer)
     @idxTrainer = idxTrainer
     super(sprites,viewport)
   end

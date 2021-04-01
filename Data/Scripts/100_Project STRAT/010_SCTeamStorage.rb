@@ -198,7 +198,7 @@ class SCTeamStorage
     
     s.gsub!("\r\n", "\n")
     
-    File.open("PBS/trainers.txt","a") { |f|
+    File.open("PBS/trainers_built_teams.txt","a") { |f|
       f.write(s)
     }
     pbMessage(_INTL("Your team {1} is exported.", @content[index]["Name"]))

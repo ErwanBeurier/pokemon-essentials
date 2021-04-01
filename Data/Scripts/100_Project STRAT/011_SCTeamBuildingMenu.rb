@@ -1116,14 +1116,14 @@ class SCTeamViewer
 				if team_type > -1
 					# didn't cancel. 
 					while team_type > -1
-						pbMessage(_INTL("Generated team will be {1}.",team_types[team_type]))
+						pbMessage(_INTL("Generated team will be {1}.",team_types[team_type+1]))
 						
 						team_type -= 1 
 						# Generate random team for the current tier. 
 						rand_party = scGenerateTeamRand($Trainer, team_type, nil, nil, tier_choice)
 						rand_party = convertPartyToList(rand_party)
 						
-						scTeamStorage.modifyTeam(team_index, team_types[team_type], rand_party, tier_choice)
+						scTeamStorage.modifyTeam(team_index, team_types[team_type+1], rand_party, tier_choice)
 						
 						create_spriteset
 						Graphics.transition
@@ -1548,21 +1548,15 @@ class SCTeamBuilder
         @sprites[i.to_s].zoom_x = 0.75
         @sprites[i.to_s].zoom_y = @sprites[i.to_s].zoom_x
 
-        
-        
-        species_name = PBSpecies.getName(@party[i][SCMovesetsData::SPECIES])
-        nickname = nil
+        nickname = PBSpecies.getName(@party[i][SCMovesetsData::SPECIES])
         
         if @party[i][SCMovesetsData::NICKNAME] && @party[i][SCMovesetsData::NICKNAME] != ""
           nickname = @party[i][SCMovesetsData::NICKNAME]
         end 
         
-        # name_nickname = (nickname ? _INTL("{1} ({2})", species_name, nickname) : species_name)
-        name_nickname = species_name if !nickname
-        
 				pbSetSystemFont(@sprites[k].bitmap)
 				textpos=[          
-					[name_nickname,275,4,2,Color.new(248,248,248),Color.new(40,40,40)],
+					[nickname,275,4,2,Color.new(248,248,248),Color.new(40,40,40)],
 				]
 				pbDrawTextPositions(@sprites[k].bitmap,textpos)
 			end 

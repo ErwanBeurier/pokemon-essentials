@@ -1,4 +1,4 @@
-require 'zlib'
+#require 'zlib'
 
 class Numeric
   def to_digits(num = 3)
@@ -189,5 +189,5 @@ end
 
 #Scripts.dump("D:/Desktop/Scripts", "D:/Desktop/Main Essentials/Data/Scripts.rxdata")
 #Scripts.from_folder("D:/Desktop/Scripts", "D:/Desktop/Main Essentials/Data/Scripts.rxdata")
-Scripts.dump
+Scripts.dump("Data/Scripts - Gen 8 Project", "Data/Scripts - Gen 8 Project.rxdata")
 #Scripts.from_folder
