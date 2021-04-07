@@ -145,6 +145,7 @@ class PokeBattle_Battle
     for side in 0...2
       @assistance[side].each_with_index do |ass,i|
         @assistance[side][i] = -1 if ass>=0
+        @assistanceData[side][i] = [nil, -1] if ass>=0
       end
     end
     pbCommandPhaseLoop(true)

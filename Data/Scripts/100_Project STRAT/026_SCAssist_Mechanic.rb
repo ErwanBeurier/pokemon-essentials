@@ -5,6 +5,7 @@ NO_ASSISTANCE = 88
 # Adding the mechanics of Assistance. 
 class PokeBattle_Battle
   attr_accessor :assistance
+  attr_accessor :assistanceData
   
   alias __assist__init initialize
   def initialize(scene,p1,p2,player,opponent)
@@ -13,20 +14,39 @@ class PokeBattle_Battle
        [-1] * (@player ? @player.length : 1),
        [-1] * (@opponent ? @opponent.length : 1)
     ]
+    @assistanceData = [
+       [nil, -1] * (@player ? @player.length : 1),
+       [nil, -1] * (@opponent ? @opponent.length : 1)
+    ]
   end 
   
   
-  def pbGetAssistingPokemon(idxBattler)
+  def pbGetAssistingData(idxBattler)
+    side  = @battlers[idxBattler].idxOwnSide
+    owner = pbGetOwnerIndexFromBattlerIndex(idxBattler)
+
+    return @assistanceData[side][owner]
+  end 
+  
+  
+  def pbChooseAssistingPokemon(idxBattler)
+    # assisting = nil 
+    # idxParty = nil 
+    # pbParty(idxBattler).each_with_index do |pkmn,i|
+      # next if !pkmn || i==@battlers[idxBattler].pokemonIndex
+      # next if pkmn.egg?
+      # next if pkmn.item != PBItems::SOULLINK
+      # assisting = pkmn
+      # idxParty = i
+    # end
+    idxParty = -1
     assisting = nil 
-    idxParty = nil 
-    pbParty(idxBattler).each_with_index do |pkmn,i|
-      next if !pkmn || i==@battlers[idxBattler].pokemonIndex
-      next if pkmn.egg?
-      next if pkmn.item != PBItems::SOULLINK
-      assisting = pkmn
-      idxParty = i
-    end
-    
+    if @battlers[idxBattler].pbOwnedByPlayer?
+      idxParty = pbPartyScreen(idxBattler,false,true,true)
+    else 
+      idxParty = @battleAI.pbDefaultChooseNewEnemy(idxBattler,pbParty(idxBattler))
+    end 
+    assisting = pbParty(idxBattler)[idxParty] if idxParty >= 0
     return assisting, idxParty
   end 
   
@@ -42,8 +62,8 @@ class PokeBattle_Battle
     return false if battler.effects[PBEffects::SkyDrop]>=0    # No Assistance if in Sky Drop.
     return false if @assistance[side][owner]!=-1              # No Assistance if used this battle.
     # Checks if a Pokémon in the party holds the Soul Link. 
-    assist, idxParty = pbGetAssistingPokemon(idxBattler)
-    return false if !assist || !idxParty
+    # assist, idxParty = pbChooseAssistingPokemon(idxBattler)
+    # return false if !assist || !idxParty
     return @assistance[side][owner]==-1
   end
   
@@ -61,6 +81,14 @@ class PokeBattle_Battle
     side  = @battlers[idxBattler].idxOwnSide
     owner = pbGetOwnerIndexFromBattlerIndex(idxBattler)
     @assistance[side][owner] = idxBattler
+    assisting, idxParty = pbChooseAssistingPokemon(idxBattler)
+    if assisting
+      @assistanceData[side][owner] = [assisting, idxParty]
+    else 
+      # Didn't choose. 
+      @assistance[side][owner] = -1 if @assistance[side][owner]==idxBattler
+      @assistanceData[side][owner] = [nil, -1]
+    end 
     # @choices[idxBattler][0] = :UseMove   # "Use move"
     # @choices[idxBattler][1] = -1         # Index of move to be used
     # @choices[idxBattler][2] = SCAssistMechanic.new(self)  # PokeBattle_Move object to represent the Assistance.
@@ -71,6 +99,7 @@ class PokeBattle_Battle
     side  = @battlers[idxBattler].idxOwnSide
     owner = pbGetOwnerIndexFromBattlerIndex(idxBattler)
     @assistance[side][owner] = -1 if @assistance[side][owner]==idxBattler
+    @assistanceData[side][owner] = [nil, -1]
   end
 
   def pbDisableAssistance(idxBattler)
@@ -84,6 +113,7 @@ class PokeBattle_Battle
     owner = pbGetOwnerIndexFromBattlerIndex(idxBattler)
     if @assistance[side][owner]==idxBattler
       @assistance[side][owner] = -1
+      @assistanceData[side][owner] = [nil, -1]
     else
       pbRegisterAssistance(idxBattler)
     end
@@ -138,6 +168,7 @@ class PokeBattle_Battler
     return false if pokemon.mega?   || hasMega?
     return false if pokemon.primal? || hasPrimal?
     return false if pokemon.ultra?  || hasUltra?
+    return false if !isConst?(self.item, PBItems, :SOULLINK)
     # return false if hasDynamax?
     return true
   end
@@ -323,8 +354,11 @@ class PokeBattle_Move_C007 < PokeBattle_Move
   end 
   
   def pbMoveFailed?(user, targets)
-    assist, idxParty = @battle.pbGetAssistingPokemon(user.index)
-    if !assist || !idxParty
+    # assist, idxParty = @battle.pbChooseAssistingPokemon(user.index)
+    side = user.idxOwnSide
+    owner = @battle.pbGetOwnerIndexFromBattlerIndex(user.index)
+    if !@battle.assistanceData[side][owner][0] || @battle.assistanceData[side][owner][1] < 0 || 
+      @battle.assistanceData[side][owner][0].egg?
       @battle.pbDisplay(_INTL("{1} couldn't find Assistance!",user.pbThis))
       return true 
     end 
@@ -350,7 +384,8 @@ class PokeBattle_Move_C007 < PokeBattle_Move
     choice = [:UseMove, -1, nil, -1]
     
     # Get the assit.
-    assist,idxParty = @battle.pbGetAssistingPokemon(idxBattler)
+    # assist,idxParty = @battle.pbChooseAssistingPokemon(idxBattler)
+    assist, idxParty = @battle.pbGetAssistingData(user.index)
     
     # Check if Pokémon is in battle.
     in_battle = false 

@@ -3,7 +3,7 @@
 #==============================================================================#
 #                                                                              #
 #                          Mid Battle Dialogue and Script                      #
-#                                       v1.6                                   #
+#                                       v1.8                                   #
 #                                 By Golisopod User                            #
 #                                                                              #
 #==============================================================================#
@@ -436,6 +436,32 @@ class PokeBattle_Battle
   end
 
 # Item Usage Dialogue
+  def pbUseItemOnBattler(item,idxParty,userBattler)
+    trainerName = pbGetOwnerName(userBattler.index)
+    pbUseItemMessage(item,trainerName)
+    battler = pbFindBattler(idxParty,userBattler.index)
+    ch = @choices[userBattler.index]
+    if battler
+      if ItemHandlers.triggerCanUseInBattle(item,battler.pokemon,battler,ch[3],true,self,@scene,false)
+        ItemHandlers.triggerBattleUseOnBattler(item,battler,@scene)
+        ch[1] = 0   # Delete item from choice
+        if !battler.opposes?
+          TrainerDialogue.display("item",self,@scene)
+        else
+          TrainerDialogue.display("itemOpp",self,@scene)
+        end
+        return
+      else
+        pbDisplay(_INTL("But it had no effect!"))
+      end
+    else
+      pbDisplay(_INTL("But it's not where this item can be used!"))
+    end
+    # Return unused item to Bag
+    pbReturnUnusedItemToBag(item,userBattler.index)
+  end
+
+# Item Usage Dialogue
   def pbUseItemOnPokemon(item,idxParty,userBattler)
     trainerName = pbGetOwnerName(userBattler.index)
     pbUseItemMessage(item,trainerName)
@@ -453,32 +479,6 @@ class PokeBattle_Battle
       return
     end
     pbDisplay(_INTL("But it had no effect!"))
-    # Return unused item to Bag
-    pbReturnUnusedItemToBag(item,userBattler.index)
-  end
-
-# Item Usage Dialogue
-  def pbUseItemOnBattler(item,idxParty,userBattler)
-    trainerName = pbGetOwnerName(userBattler.index)
-    pbUseItemMessage(item,trainerName)
-    battler = pbFindBattler(idxParty,userBattler.index)
-    ch = @choices[userBattler.index]
-    if battler
-      if ItemHandlers.triggerCanUseInBattle(item,battler.pokemon,battler,ch[3],true,self,@scene,false)
-        ItemHandlers.triggerBattleUseOnBattler(item,battler,@scene)
-        ch[1] = 0   # Delete item from choice
-		if !battler.opposes?
-		  TrainerDialogue.display("item",self,@scene)
-		else
-		  TrainerDialogue.display("itemOpp",self,@scene)
-		end
-        return
-      else
-        pbDisplay(_INTL("But it had no effect!"))
-      end
-    else
-      pbDisplay(_INTL("But it's not where this item can be used!"))
-    end
     # Return unused item to Bag
     pbReturnUnusedItemToBag(item,userBattler.index)
   end
@@ -604,7 +604,8 @@ class PokeBattle_Battle
             idxPartyForName = idxPartyNew
             enemyParty = pbParty(idxBattler)
             if isConst?(enemyParty[idxPartyNew].ability,PBAbilities,:ILLUSION)
-              idxPartyForName = pbLastInTeam(idxBattler)
+              new_index = pbLastInTeam(idxBattler)
+              idxPartyForName = new_index if new_index >= 0
             end
             if pbDisplayConfirm(_INTL("{1} is about to send in {2}. Will you switch your Pokémon?",
                opponent.fullname,enemyParty[idxPartyForName].name))
@@ -645,6 +646,27 @@ class PokeBattle_Battle
       end
       $ShiftSwitch=false
     end
+  end
+
+
+  def pbSwitchInBetween(idxBattler,checkLaxOnly=false,canCancel=false)
+    return pbPartyScreen(idxBattler,checkLaxOnly,canCancel) if pbOwnedByPlayer?(idxBattler)
+    ret = @battleAI.pbDefaultChooseNewEnemy(idxBattler,pbParty(idxBattler))
+    if BattleScripting.hasOrderData?
+      orderArr = BattleScripting.getOrderOf(idxBattler)
+      return ret if orderArr.length == 0
+      numFainted = 0
+      enemyId = (idxBattler-1)/2
+      endL = (enemyId == (@sideSizes[1] - 1)) ? pbParty(1).length : @party2starts[enemyId + 1]
+      for j in @party2starts[enemyId]...endL
+        numFainted += 1 if !pbParty(1)[j].able?
+      end
+      actualIndex = @party2starts[enemyId] + orderArr[numFainted]
+      if pbParty(idxBattler)[actualIndex].able?
+        ret = actualIndex
+      end
+    end
+    return ret
   end
 
 # Loss and Win Dialogue
@@ -691,6 +713,7 @@ class PokeBattle_Battle
       if @internalBattle
         pbDisplayPaused(_INTL("You have no more Pokémon that can fight!"))
         if trainerBattle?
+          TrainerDialogue.display("loss",self,@scene)
           case @opponent.length
           when 1
             pbDisplayPaused(_INTL("You lost against {1}!",@opponent[0].fullname))
@@ -1011,6 +1034,48 @@ class PokeBattle_Scene
   end
 end
 
+class PokeBattle_AI
+  def pbChooseBestNewEnemy(idxBattler,party,enemies)
+    return -1 if !enemies || enemies.length==0
+    best    = -1
+    bestSum = 0
+    movesData = pbLoadMovesData
+    enemies.each do |i|
+      pkmn = party[i]
+      sum  = 0
+      if BattleScripting.hasAceData?
+        aceId = BattleScripting.getAceOf(idxBattler)
+        if aceId > -1
+          anyOther =  false
+          enemyId = (idxBattler-1)/2
+          endL = (enemyId == (@battle.sideSizes[1] - 1)) ? @battle.pbParty(1).length : @battle.party2starts[enemyId + 1]
+          if aceId < (endL - @battle.party2starts[enemyId])
+            for j in @battle.party2starts[enemyId]...endL
+              anyOther = true if party[j] && party[j].able? && j != (aceId + @battle.party2starts[enemyId])
+            end
+            next if anyOther && pkmn == party[aceId + @battle.party2starts[enemyId]]
+          end
+        end
+      end
+      pkmn.moves.each do |m|
+        next if m.id==0
+        moveData = movesData[m.id]
+        next if moveData[MOVE_BASE_DAMAGE]==0
+        @battle.battlers[idxBattler].eachOpposing do |b|
+          bTypes = b.pbTypes(true)
+          sum += PBTypes.getCombinedEffectiveness(moveData[MOVE_TYPE],
+             bTypes[0],bTypes[1],bTypes[2])
+        end
+      end
+      if best==-1 || sum>bestSum
+        best = i
+        bestSum = sum
+      end
+    end
+    return best
+  end
+end
+
 
 #------------------------------------------------------------------------------#
 # Main Trainer Dialogue Module
@@ -1031,6 +1096,7 @@ module TrainerDialogue
     $PokemonTemp.dialogueData={:DIAL=>false}
     $PokemonTemp.dialogueDone={}
     $PokemonTemp.dialogueInstances={}
+    $PokemonTemp.orderData = {}
   end
 
   def self.hasData?
@@ -1093,7 +1159,7 @@ module TrainerDialogue
       scene.pbShowOpponent(0) if !battle.wildBattle?
       scene.disappearDatabox
       scene.sprites["messageWindow"].text = ""
-      Kernel.pbMessage(_INTL(turnStart))
+      pbMessage(_INTL(turnStart))
       if !battle.wildBattle?
         for i in 1..battle.opponent.length
           scene.pbHideOpponent(i)
@@ -1117,20 +1183,20 @@ module TrainerDialogue
         turnStart["opp"]=0 if turnStart["opp"] < 0
         if turnStart["text"].is_a?(Array)
           for i in 0...turnStart["text"].length
-            Kernel.pbMessage(_INTL(turnStart["text"][i]))
+            pbMessage(_INTL(turnStart["text"][i]))
           end
         else
-          Kernel.pbMessage(_INTL(turnStart["text"]))
+          pbMessage(_INTL(turnStart["text"]))
         end
       else
         TrainerDialogue.changeTrainerSprite(turnStart["opp"],scene) if turnStart["opp"].is_a?(String)
         scene.pbShowOpponent(0) if !battle.wildBattle? || (battle.wildBattle? && turnStart["opp"].is_a?(String))
         if turnStart["text"].is_a?(Array)
           for i in 0...turnStart["text"].length
-            Kernel.pbMessage(_INTL(turnStart["text"][i]))
+            pbMessage(_INTL(turnStart["text"][i]))
           end
         else
-          Kernel.pbMessage(_INTL(turnStart["text"]))
+          pbMessage(_INTL(turnStart["text"]))
         end
       end
       if battle.opponent.is_a?(Array)
@@ -1159,7 +1225,7 @@ module TrainerDialogue
       scene.disappearDatabox
       scene.sprites["messageWindow"].text = ""
       for i in 0...turnStart.length
-        Kernel.pbMessage(_INTL(turnStart[i]))
+        pbMessage(_INTL(turnStart[i]))
       end
       if !battle.wildBattle?
         for i in 1..battle.opponent.length
@@ -1221,6 +1287,53 @@ module BattleScripting
       TrainerDialogue.set(param,value)
     end
   end
+
+  def self.hasOrderData?
+    return $PokemonTemp.orderData["hasOrder"]
+  end
+
+  def self.hasAceData?
+    return $PokemonTemp.orderData["hasAce"]
+  end
+
+  def self.getAceOf(id)
+    return $PokemonTemp.orderData["ace#{id}"] if $PokemonTemp.orderData["ace#{id}"]
+    return -1
+  end
+
+  def self.getOrderOf(id)
+    return $PokemonTemp.orderData["order#{id}"] if $PokemonTemp.orderData["order#{id}"]
+    return []
+  end
+
+  def self.setTrainerOrder(*args)
+    fail = false
+    $PokemonTemp.orderData["hasOrder"] = true
+    args.each_with_index do |a,i|
+      if !a.is_a?(Array) || a.length != 6 || $PokemonTemp.orderData["ace#{2*i + 1}"]
+        fail = true
+        break
+      end
+      $PokemonTemp.orderData["order#{2*i +1}"] = a
+    end
+    $PokemonTemp.orderData["hasOrder"] = false if fail
+    p "The script did not accept the Trainer Order Data because it's invalid." if fail
+  end
+
+  def self.setTrainerAce(*args)
+    fail = false
+    $PokemonTemp.orderData["hasAce"] = true
+    args.each_with_index do |a,i|
+      if !a.is_a?(Numeric) || $PokemonTemp.orderData["order#{2*i + 1}"]
+        fail = true
+        break
+      end
+      a = a.clamp(0,6)
+      $PokemonTemp.orderData["ace#{2*i + 1}"] = a
+    end
+    $PokemonTemp.orderData["hasAce"] = false if fail
+    p "The script did not accept the Trainer Ace Data because it's invalid." if fail
+  end
 end
 
 #------------------------------------------------------------------------------#
@@ -1254,7 +1367,7 @@ class PokeBattle_Scene
   end
 
   def pbHideOpponent(idxTrainer=1)
-    # Set up trainer appearing animation
+    # Set up trainer disappearing animation
     disappearAnim = TrainerDisappearAnimation.new(@sprites,@viewport,idxTrainer)
     @animations.push(disappearAnim)
     # Play the animation
@@ -1340,7 +1453,7 @@ class DataboxFadeAnimation < PokeBattle_Animation
     boxes = []
     for i in 0...@battlers
       if @sprites["dataBox_#{i}"]
-        next if @specific.is_a?(Array) && !@specific.include?(i)
+        next if @specific.is_a?(Array) && @specific.include?(i)
         boxes[i]= addSprite(@sprites["dataBox_#{i}"])
         boxes[i].moveOpacity(delay,3,0)
       end
@@ -1361,7 +1474,7 @@ class DataboxUnfadeAnimation < PokeBattle_Animation
     boxes = []
     for i in 0...@battlers
       if @sprites["dataBox_#{i}"]
-        next if @specific.is_a?(Array) && !@specific.include?(i)
+        next if @specific.is_a?(Array) && @specific.include?(i)
         boxes[i]= addSprite(@sprites["dataBox_#{i}"])
         boxes[i].setOpacity(delay,0)
         boxes[i].moveOpacity(delay,3,255)
@@ -1435,7 +1548,7 @@ class PokemonTemp
   attr_accessor :dialogueData
   attr_accessor :dialogueDone
   attr_accessor :dialogueInstances
-
+  attr_accessor :orderData
   def dialogueData
     @dialogueData = {:DIAL=>false} if !@dialogueData
     return @dialogueData
@@ -1450,12 +1563,17 @@ class PokemonTemp
     @dialogueInstances = {} if !@dialogueInstances
     return @dialogueInstances
   end
+
+  def orderData
+    @orderData = {} if !@orderData
+    return @orderData
+  end
 end
 $ShiftSwitch=false
 
 PluginManager.register({
   :name => "Mid Battle Dialogue",
-  :version => "1.5.1",
+  :version => "1.8",
   :credits => ["Golisopod User","Luka SJ"],
   :link => "https://reliccastle.com/resources/483/"
 })
