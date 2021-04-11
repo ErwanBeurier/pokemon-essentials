@@ -468,7 +468,6 @@ class PokeBattle_Battle
   
   def nearBattlersComplete?(idxBattler1,idxBattler2)
     return false if idxBattler1 == idxBattler2
-    return true if @battleRoyale
     
     # If diff_abs is even, then they are from the same side, which will allow for easier characterisations. 
     diff_abs = (idxBattler1 - idxBattler2).abs
@@ -777,7 +776,6 @@ class PokeBattle_Battle
   def pbEORShiftDistantBattlers
     # Makes each side compact when a Pokémon is KO and not replaced. 
     return if singleBattle?
-    return if @battleRoyale
     for side in 0..1
       next if pbSideSize(side) <= 1
       

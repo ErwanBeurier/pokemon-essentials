@@ -274,12 +274,20 @@ class PokeBattle_Battle
     # return __battleroyale__opposes(idxBattler1,idxBattler2)
   # end
   
-  # alias __battleroyale__nearBattlers nearBattlers?
-  # def nearBattlers?(idxBattler1,idxBattler2)
-    # # Everyone is near.
-    # return idxBattler1!=idxBattler2 if @battleRoyale
-    # return __battleroyale__nearBattlers(idxBattler1,idxBattler2)
-  # end 
+  alias __battleroyale__nearBattlers nearBattlers?
+  def nearBattlers?(idxBattler1,idxBattler2)
+    # Everyone is near.
+    return idxBattler1!=idxBattler2 if @battleRoyale
+    return __battleroyale__nearBattlers(idxBattler1,idxBattler2)
+  end 
+  
+  
+  alias __battleroyale__pbEORShiftDistantBattlers pbEORShiftDistantBattlers
+  def pbEORShiftDistantBattlers
+    # No shifting needed in Battle Royale because everyone is close to everyone.
+    return if @battleRoyale 
+    return __battleroyale__pbEORShiftDistantBattlers
+  end 
 end 
 
 class PokeBattle_Battler
