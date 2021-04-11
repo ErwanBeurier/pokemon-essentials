@@ -23,7 +23,7 @@ class PokeBattle_Battle
     #       enough to hit each other if there are multiple trainers on each
     #       side.
     if trainerBattle? && (@sideSizes[0]>2 || @sideSizes[1]>2) &&
-       @player.length>1 && @opponent.length>1
+       @player.length>1 && @opponent.length>1 && !@battleRoyale
       raise _INTL("Can't have battles larger than 2v2 where both sides have multiple trainers")
     end
     # Find out how many Pokémon each trainer has

@@ -3096,7 +3096,10 @@ class PokeBattle_AI
     when "175"
       score += 30 if target.effects[PBEffects::Minimize]
     #---------------------------------------------------------------------------
-    when "C002"
+    # when "C001" # Magnetic Terrain 
+      # score -= 90 
+      # if 
+    when "C002" # Autumn Tempest
       if @battle.pbCheckGlobalAbility(:AIRLOCK) ||
          @battle.pbCheckGlobalAbility(:CLOUDNINE)
         score -= 90
@@ -3152,11 +3155,43 @@ class PokeBattle_AI
         }
       end
     #---------------------------------------------------------------------------
-    when "C004"
-      score -= 90 if user.pbOwnSide.effects[PBEffects::WarMandala]>0
+    when "C004" # War Mandala
+      if user.pbOwnSide.effects[PBEffects::WarMandala]>0
+        score -= 90 
+      else 
+        if !@battle.pbCanChooseNonActive?(user.index)
+          # User's trainer can't switch in any Pokemon
+          score -= 90
+        else
+          score += 40
+        end
+      end 
     #---------------------------------------------------------------------------
-    when "C005"
+    when "C005" # Mind Mandala 
       score -= 90 if user.pbOwnSide.effects[PBEffects::MindMandala]>0
+      if user.pbOwnSide.effects[PBEffects::WarMandala]>0
+        score -= 90 
+      else 
+        if !@battle.pbCanChooseNonActive?(user.index)
+          # User's trainer can't switch in any Pokemon
+          score -= 90
+        else
+          score += 40
+        end
+      end 
+    #---------------------------------------------------------------------------
+    when "C006" # Warm Welcome
+      score -= 90 if user.pbOwnSide.effects[PBEffects::WarmWelcome]
+      if user.pbOwnSide.effects[PBEffects::WarmWelcome]
+        score -= 90 
+      else 
+        if !@battle.pbCanChooseNonActive?(user.index)
+          # User's trainer can't switch in any Pokemon
+          score -= 90
+        else
+          score += 40
+        end
+      end 
     end
     return score
   end

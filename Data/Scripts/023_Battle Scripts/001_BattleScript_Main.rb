@@ -294,6 +294,8 @@ class PokeBattle_Battle
           end
         end
       end
+    elsif @battleRoyale 
+      pbStartBattleRoyaleSendOut
     else   # Trainer battle
       case @opponent.length
       when 1
