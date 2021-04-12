@@ -801,7 +801,7 @@ class PokeBattle_Battle
       i = 0
       while i < @battlers.length
         b1 = @battlers[i]
-        if !b1 || b1.opposes?(side) || !b1.fainted?
+        if !b1 || b1.oppositeSide?(side) || !b1.fainted?
           i += 1
           next 
         end 
@@ -812,7 +812,7 @@ class PokeBattle_Battle
         @battlers.each do |b2|
           # Kind of bubble sort: if b1 is on the right of b2, then ignore; if 
           # b1 is on the left of b2, swap b1 and b2. 
-          next if !b2 || b2.opposes?(b1)
+          next if !b2 || b2.oppositeSide?(b1)
           next if b2.index <= b1.index # b1 is on the right of b2
           next if b1.index >= @sideSizes[side] * 2 + side # b1 was already handled in the previous call of this function
           
@@ -838,7 +838,7 @@ class PokeBattle_Battle
       new_side_size = 0
       @battlers.each do |b|
         # Second scan 
-        next if !b || b.opposes?(side)
+        next if !b || b.oppositeSide?(side)
         
         new_side_size += 1 if !b.fainted?
         
@@ -1152,14 +1152,14 @@ class PokemonDataBox < SpriteWrapper
     if !@largeSideSize
       # Draw shiny icon
       if @battler.shiny?
-        shinyX = (@battler.opposes?(0)) ? 206 : -6   # Foe's/player's
+        shinyX = (@battler.oppositeSide?(0)) ? 206 : -6   # Foe's/player's
         imagePos.push(["Graphics/Pictures/shiny",@spriteBaseX+shinyX,36])
       end
       # Draw Mega Evolution/Primal Reversion icon
       if @battler.mega?
         imagePos.push(["Graphics/Pictures/Battle/icon_mega",@spriteBaseX+8,34])
       elsif @battler.primal?
-        primalX = (@battler.opposes?) ? 208 : -28   # Foe's/player's
+        primalX = (@battler.oppositeSide?) ? 208 : -28   # Foe's/player's
         if @battler.isSpecies?(:KYOGRE)
           imagePos.push(["Graphics/Pictures/Battle/icon_primal_Kyogre",@spriteBaseX+primalX,4])
         elsif @battler.isSpecies?(:GROUDON)

@@ -1,6 +1,36 @@
 # Switch to allow Assistance or not. 
 NO_ASSISTANCE = 88
 
+# Positive effects that the assisting Pokémon can get from the assisted 
+# Pokémon, or conversely. 
+POSITIVE_EFFECTS_BATTLER = [
+  PBEffects::FocusEnergy,
+  PBEffects::FuryCutter, 
+  PBEffects::HelpingHand,
+  PBEffects::LaserFocus, 
+  PBEffects::LockOn,
+  PBEffects::LockOnPos,
+  PBEffects::Metronome,
+  PBEffects::Rage,
+  PBEffects::Rollout,
+  PBEffects::Stockpile, 
+  PBEffects::StockpileDef, 
+  PBEffects::StockpileSpDef]
+# Positive effects that the assisting Pokémon can get from the assisted 
+# Pokémon, or conversely. These effects apply to a position. 
+POSITIVE_EFFECTS_POSITION = [
+  PBEffects::HealingWish, 
+  PBEffects::LunarDance, 
+  PBEffects::Wish, 
+  PBEffects::WishAmount, 
+  PBEffects::WishMaker, 
+  PBEffects::WarmWelcome, 
+  PBEffects::PhoenixFire
+]
+
+
+
+
 
 # Adding the mechanics of Assistance. 
 class PokeBattle_Battle
@@ -15,8 +45,8 @@ class PokeBattle_Battle
        [-1] * (@opponent ? @opponent.length : 1)
     ]
     @assistanceData = [
-       [nil, -1] * (@player ? @player.length : 1),
-       [nil, -1] * (@opponent ? @opponent.length : 1)
+       [nil, -1, false] * (@player ? @player.length : 1),
+       [nil, -1, false] * (@opponent ? @opponent.length : 1)
     ]
   end 
   
@@ -41,13 +71,19 @@ class PokeBattle_Battle
     # end
     idxParty = -1
     assisting = nil 
+    assistAfter = false 
     if @battlers[idxBattler].pbOwnedByPlayer?
-      idxParty = pbPartyScreen(idxBattler,false,true,true)
+      # idxParty = pbPartyScreen(idxBattler,false,true,true)
+      @scene.pbPartyScreenAssist(idxBattler) { |idx,partyScene,after|
+        idxParty = idx 
+        assistAfter = after 
+        next true 
+      }
     else 
-      idxParty = @battleAI.pbDefaultChooseNewEnemy(idxBattler,pbParty(idxBattler))
+      idxParty = @battleAI.pbChooseNonSwitchingPokemon(idxBattler,pbParty(idxBattler))
     end 
     assisting = pbParty(idxBattler)[idxParty] if idxParty >= 0
-    return assisting, idxParty
+    return assisting, idxParty, assistAfter
   end 
   
   
@@ -81,13 +117,13 @@ class PokeBattle_Battle
     side  = @battlers[idxBattler].idxOwnSide
     owner = pbGetOwnerIndexFromBattlerIndex(idxBattler)
     @assistance[side][owner] = idxBattler
-    assisting, idxParty = pbChooseAssistingPokemon(idxBattler)
+    assisting, idxParty, assistAfter = pbChooseAssistingPokemon(idxBattler)
     if assisting
-      @assistanceData[side][owner] = [assisting, idxParty]
+      @assistanceData[side][owner] = [assisting, idxParty, assistAfter]
     else 
       # Didn't choose. 
       @assistance[side][owner] = -1 if @assistance[side][owner]==idxBattler
-      @assistanceData[side][owner] = [nil, -1]
+      @assistanceData[side][owner] = [nil, -1, false]
     end 
     # @choices[idxBattler][0] = :UseMove   # "Use move"
     # @choices[idxBattler][1] = -1         # Index of move to be used
@@ -99,7 +135,7 @@ class PokeBattle_Battle
     side  = @battlers[idxBattler].idxOwnSide
     owner = pbGetOwnerIndexFromBattlerIndex(idxBattler)
     @assistance[side][owner] = -1 if @assistance[side][owner]==idxBattler
-    @assistanceData[side][owner] = [nil, -1]
+    @assistanceData[side][owner] = [nil, -1, false]
   end
 
   def pbDisableAssistance(idxBattler)
@@ -113,7 +149,7 @@ class PokeBattle_Battle
     owner = pbGetOwnerIndexFromBattlerIndex(idxBattler)
     if @assistance[side][owner]==idxBattler
       @assistance[side][owner] = -1
-      @assistanceData[side][owner] = [nil, -1]
+      @assistanceData[side][owner] = [nil, -1, false]
     else
       pbRegisterAssistance(idxBattler)
     end
@@ -157,6 +193,56 @@ class PokeBattle_Battle
 end 
 
 
+class PokeBattle_Scene
+  def pbPartyScreenAssist(idxBattler)
+    # Fade out and hide all sprites
+    visibleSprites = pbFadeOutAndHide(@sprites)
+    # Get player's party
+    partyPos = @battle.pbPartyOrder(idxBattler)
+    partyStart, _partyEnd = @battle.pbTeamIndexRangeFromBattlerIndex(idxBattler)
+    modParty = @battle.pbPlayerDisplayParty(idxBattler)
+    # Start party screen
+    scene = PokemonParty_Scene.new
+    switchScreen = PokemonPartyScreen.new(scene,modParty)
+    switchScreen.pbStartScene(_INTL("Choose an assisting Pokémon."),@battle.pbNumPositions(0,0))
+    # Loop while in party screen
+    loop do
+      # Select a Pokémon
+      scene.pbSetHelpText(_INTL("Choose an assisting Pokémon."))
+      idxParty = switchScreen.pbChoosePokemon
+      break if idxParty<0
+      # Choose a command for the selected Pokémon
+      cmdAssistBefore  = -1
+      cmdAssistAfter  = -1
+      cmdSwitch  = -1
+      cmdSummary = -1
+      commands = []
+      commands[cmdAssistBefore  = commands.length] = _INTL("Assist (before)") if modParty[idxParty].able?
+      commands[cmdAssistAfter = commands.length] = _INTL("Assist (after)") if modParty[idxParty].able?
+      commands[cmdSummary = commands.length] = _INTL("Summary")
+      commands[commands.length]              = _INTL("Cancel")
+      command = scene.pbShowCommands(_INTL("Do what with {1}?",modParty[idxParty].name),commands)
+      if (cmdAssistBefore>=0 && command==cmdAssistBefore) || 
+        cmdAssistAfter>=0 && command==cmdAssistAfter      # Chosen for assistance
+        idxPartyRet = -1
+        partyPos.each_with_index do |pos,i|
+          next if pos!=idxParty+partyStart
+          idxPartyRet = i
+          break
+        end
+        break if yield idxPartyRet, switchScreen, (command==cmdAssistAfter) # True = fater, False = before
+      elsif cmdSummary>=0 && command==cmdSummary   # Summary
+        scene.pbSummary(idxParty,true)
+      end
+    end
+    # Close party screen
+    switchScreen.pbEndScene
+    # Fade back into battle screen
+    pbFadeInAndShow(@sprites,visibleSprites)
+  end
+end 
+
+
 
 class PokeBattle_Battler
   def canCallAssistance?
@@ -187,6 +273,7 @@ class PokeBattle_Battler
     return if !assistPositionsOld || !assistPositionsNew
     
     got_something = false 
+    
     # Get the stat changes.
     PBStats.eachBattleStat { |s| 
       next if assistStagesOld[s] == assistStagesNew[s] # Unchanged 
@@ -195,143 +282,17 @@ class PokeBattle_Battler
       got_something = true 
     }
     
-    # Get the changes in effects:
-    @effects.each_with_index { |value, effect|
+    # Get the changes in effects (Only positive effects carry out)
+    POSITIVE_EFFECTS_BATTLER.each { |effect|
       next if assistEffectsOld[effect] == assistEffectsNew[effect]
       @effects[effect] = assistEffectsNew[effect]
       got_something = true 
     }
     
-    
-    # Attract             = 1
-    # BeakBlast           = 3
-    # Bide                = 4
-    # BideDamage          = 5
-    # BideTarget          = 6
-    # BurnUp              = 7
-    # Charge              = 8
-    # ChoiceBand          = 9
-    # Confusion           = 10
-    # Counter             = 11
-    # CounterTarget       = 12
-    # Curse               = 13
-    # Dancer              = 14
-    # DefenseCurl         = 15
-    # DestinyBond         = 16
-    # DestinyBondPrevious = 17
-    # DestinyBondTarget   = 18
-    # Disable             = 19
-    # DisableMove         = 20
-    # Electrify           = 21
-    # Embargo             = 22
-    # Encore              = 23
-    # EncoreMove          = 24
-    # Endure              = 25
-    # FirstPledge         = 26
-    # FlashFire           = 27
-    # Flinch              = 28
-    # FocusEnergy         = 29
-    # FocusPunch          = 30
-    # FollowMe            = 31
-    # Foresight           = 32
-    # FuryCutter          = 33
-    # GastroAcid          = 34
-    # GemConsumed         = 35
-    # Grudge              = 36
-    # HealBlock           = 37
-    # HelpingHand         = 38
-    # HyperBeam           = 39
-    # Illusion            = 40
-    # Imprison            = 41
-    # Ingrain             = 42
-    # Instruct            = 43
-    # Instructed          = 44
-    # KingsShield         = 45
-    # LaserFocus          = 46
-    # LeechSeed           = 47
-    # LockOn              = 48
-    # LockOnPos           = 49
-    # MagicBounce         = 50
-    # MagicCoat           = 51
-    # MagnetRise          = 52
-    # MeanLook            = 53
-    # MeFirst             = 54
-    # Metronome           = 55
-    # MicleBerry          = 56
-    # Minimize            = 57
-    # MiracleEye          = 58
-    # MirrorCoat          = 59
-    # MirrorCoatTarget    = 60
-    # MoveNext            = 61
-    # MudSport            = 62
-    # Nightmare           = 63
-    # Outrage             = 64
-    # ParentalBond        = 65
-    # PerishSong          = 66
-    # PerishSongUser      = 67
-    # PickupItem          = 68
-    # PickupUse           = 69
-    # Pinch               = 70   # Battle Palace only
-    # Powder              = 71
-    # PowerTrick          = 72
-    # Prankster           = 73
-    # PriorityAbility     = 74
-    # PriorityItem        = 75
-    # Protect             = 76
-    # ProtectRate         = 77
-    # Pursuit             = 78
-    # Quash               = 79
-    # Rage                = 80
-    # RagePowder          = 81   # Used along with FollowMe
-    # Revenge             = 82
-    # Rollout             = 83
-    # Roost               = 84
-    # ShellTrap           = 85
-    # SkyDrop             = 86
-    # SlowStart           = 87
-    # SmackDown           = 88
-    # Snatch              = 89
-    # SpikyShield         = 90
-    # Spotlight           = 91
-    # Stockpile           = 92
-    # StockpileDef        = 93
-    # StockpileSpDef      = 94
-    # Substitute          = 95
-    # Taunt               = 96
-    # Telekinesis         = 97
-    # ThroatChop          = 98
-    # Torment             = 99
-    # Toxic               = 100
-    # Transform           = 101
-    # TransformSpecies    = 102
-    # Trapping            = 103   # Trapping move
-    # TrappingMove        = 104
-    # TrappingUser        = 105
-    # Truant              = 106
-    # TwoTurnAttack       = 107
-    # Type3               = 108
-    # Unburden            = 109
-    # Uproar              = 110
-    # WaterSport          = 111
-    # WeightChange        = 112
-    # Yawn                = 113
-    # GorillaTactics      = 114
-    # BallFetch           = 115
-    # LashOut             = 118
-    # BurningJealousy     = 119
-    # NoRetreat           = 120
-    # Obstruct            = 121
-    # JawLock             = 122
-    # JawLockUser         = 123
-    # TarShot             = 124
-    # Octolock            = 125
-    # OctolockUser        = 126
-    # BlunderPolicy       = 127
-    # SwitchedAlly        = 128
-    
-    
     # Get the changes in effects of the position (e.g. Wish)
-    @battle.positions[@index].effects.each_with_index { |value, effect|
+    # Needed only if the assisting Pokémon was on the field and set something 
+    # to the position. 
+    POSITIVE_EFFECTS_POSITION.each { |effect|
       next if assistPositionsOld[effect] == assistPositionsNew[effect]
       @battle.positions[@index].effects[effect] = assistPositionsNew[effect]
       got_something = true 
@@ -342,6 +303,39 @@ class PokeBattle_Battler
     end 
   end 
   
+  def pbSetAssistanceEffects(effectsOld, stagesOld, positionsOld, isAssist)
+    # isAssist = true if self is the assisting Pokémon, false if it is the 
+    # assisted Pokémon.
+    got_something = false 
+    
+    # Get the stat changes.
+    PBStats.eachBattleStat { |s| 
+      next if @stages[s] == stagesOld[s] # Unchanged 
+      next if stagesOld[s] < 0 # Don't take negative stuff. 
+      @stages[s] = stagesOld[s]
+      got_something = true 
+    }
+    
+    # Get the changes in effects (Only positive effects carry out)
+    POSITIVE_EFFECTS_BATTLER.each { |effect|
+      next if @effects[effect] == effectsOld[effect]
+      @effects[effect] = effectsOld[effect]
+      got_something = true 
+    }
+    
+    # Get the changes in effects of the position (e.g. Wish)
+    # Needed only if the assisting Pokémon was on the field and set something 
+    # to the position. 
+    POSITIVE_EFFECTS_POSITION.each { |effect|
+      next if @battle.positions[@index].effects[effect] == positionsOld[effect]
+      @battle.positions[@index].effects[effect] = positionsOld[effect]
+      got_something = true 
+    }
+    
+    if got_something && isAssist
+      @battle.pbDisplay(_INTL("{1} gained some effects from the caller!", pbThis)) 
+    end 
+  end 
 end 
 
 
@@ -385,112 +379,132 @@ class PokeBattle_Move_C007 < PokeBattle_Move
     
     # Get the assit.
     # assist,idxParty = @battle.pbChooseAssistingPokemon(idxBattler)
-    assist, idxParty = @battle.pbGetAssistingData(user.index)
+    assist, idxParty, assistAfter = @battle.pbGetAssistingData(user.index)
     
-    # Check if Pokémon is in battle.
-    in_battle = false 
-    idxAssist = idxBattler
-    oldAssistChoice = nil # Stores the first choice for the Assist, so that the Assist can attack twice (one with the Assist + the normal turn).
-    lastRoundMovedAssist = nil 
-    
-    @battle.eachBattler { |b| 
-      next if b.opposes?(idxBattler)
-      next if b.pokemonIndex != idxParty
-      in_battle = true
-      idxAssist = b.index 
-      oldAssistChoice = [@battle.choices[idxAssist][0], 
-                        @battle.choices[idxAssist][1], 
-                        @battle.choices[idxAssist][2], 
-                        @battle.choices[idxAssist][3]]
-      lastRoundMovedAssist = b.lastRoundMoved
-      break 
-    }
-    
-    # Set the assist if the assist in not in battle. 
-    if !in_battle
-      @battle.scene.pbHideBattler(idxBattler)
-      @battle.battlers[idxBattler].pbInitialize(assist,idxParty,false)
-      @battle.scene.pbChangePokemon(idxBattler,assist)
-      @battle.scene.pbShowBattler(idxBattler)
-    end 
-    
-    # Store the effects / stages of the Assist before it uses its move. 
-    assistEffectsOld = @battle.battlers[idxAssist].effects.clone 
-    assistStagesOld = @battle.battlers[idxAssist].stages.clone
-    assistPositionsOld = @battle.positions[idxAssist].effects.clone # Effects on the position. 
-    
-    @battle.pbDisplay(_INTL("{1} is here to assist {2}!",@battle.battlers[idxAssist].pbThis, oldName))
-    
-    # @battle.pbUnregisterAssistance(idxAssist) # 
-    # Ask which move the assist should use.
-    chosenCmd = 0 
-    @battle.scene.pbFightMenu(idxAssist,false, false, false, false, false) { |cmd|
-      chosenCmd = cmd 
-      if cmd >= 0 
-        choice[1] = cmd
-        choice[2] = @battle.battlers[idxAssist].moves[cmd]
+    # currentAction = allows to track which, of the assiting and assisted, came first. 
+    for currentAction in 0..1
+      if !assistAfter
+        #------------------------------------
+        # The part of the assisting Pokémon.
+        #------------------------------------
+        # Check if Pokémon is in battle.
+        in_battle = false 
+        idxAssist = idxBattler
+        oldAssistChoice = nil # Stores the first choice for the Assist, so that the Assist can attack twice (one with the Assist + the normal turn).
+        lastRoundMovedAssist = nil 
         
-        @battle.pbChooseTarget(@battle.battlers[idxAssist],choice[2])
-        choice[3] = @battle.choices[idxAssist][3]
+        @battle.eachBattler { |b| 
+          next if b.opposes?(idxBattler)
+          next if b.pokemonIndex != idxParty
+          in_battle = true
+          idxAssist = b.index 
+          oldAssistChoice = [@battle.choices[idxAssist][0], 
+                            @battle.choices[idxAssist][1], 
+                            @battle.choices[idxAssist][2], 
+                            @battle.choices[idxAssist][3]]
+          lastRoundMovedAssist = b.lastRoundMoved
+          break 
+        }
         
-        if choice[3] == idxAssist && idxAssist != idxBattler
-          # Target the other Pokémon instead.
-          choice[3] = idxBattler
+        # Set the assist if the assist in not in battle. 
+        if !in_battle
+          @battle.scene.pbHideBattler(idxBattler)
+          @battle.battlers[idxBattler].pbInitialize(assist,idxParty,false)
+          @battle.scene.pbChangePokemon(idxBattler,assist)
+          @battle.scene.pbShowBattler(idxBattler)
         end 
-        # @battle.pbDisplay(_INTL("choice = [{1}, {2}, {3}, {4}]", choice[0], choice[1], choice[2].name, choice[3]))
-        break 
+        
+        # Store the effects / stages of the Assist before it uses its move. 
+        assistEffectsOld = @battle.battlers[idxAssist].effects.clone 
+        assistStagesOld = @battle.battlers[idxAssist].stages.clone
+        assistPositionsOld = @battle.positions[idxAssist].effects.clone # Effects on the position. 
+        
+        # Transfer the positive effects to the assist. 
+        @battle.battlers[idxAssist].pbSetAssistanceEffects(effectsOld, stagesOld, positionsOld, true)
+        
+        @battle.pbDisplay(_INTL("{1} is here to assist {2}!",@battle.battlers[idxAssist].pbThis, oldName))
+        
+        # Ask which move the assist should use.
+        chosenCmd = 0 
+        @battle.scene.pbFightMenu(idxAssist,false, false, false, false, false) { |cmd|
+          chosenCmd = cmd 
+          if cmd >= 0 
+            choice[1] = cmd
+            choice[2] = @battle.battlers[idxAssist].moves[cmd]
+            
+            @battle.pbChooseTarget(@battle.battlers[idxAssist],choice[2])
+            choice[3] = @battle.choices[idxAssist][3]
+            
+            if choice[3] == idxAssist && idxAssist != idxBattler
+              # Target the other Pokémon instead.
+              choice[3] = idxBattler
+            end 
+            # @battle.pbDisplay(_INTL("choice = [{1}, {2}, {3}, {4}]", choice[0], choice[1], choice[2].name, choice[3]))
+            break 
+          end 
+        }
+        
+        assistEffectsNew = nil 
+        assistStagesNew = nil 
+        assistPositionsNew = nil 
+        
+        if chosenCmd == -1
+          # Chosen to cancel. Cancel the move. 
+          @battle.pbDisplay(_INTL("{1} canceled the Assistance!", oldName))
+        else 
+          # Use the move.
+          @battle.battlers[idxAssist].pbUseMove(choice, true)
+          
+          # Get the new effects gained by the Assist 
+          assistEffectsNew = @battle.battlers[idxAssist].effects.clone 
+          assistStagesNew = @battle.battlers[idxAssist].stages.clone
+          assistPositionsNew = @battle.positions[idxAssist].effects.clone
+        end 
+        
+        # Get back the calling Pokémon. 
+        if !in_battle
+          @battle.scene.pbHideBattler(idxBattler)
+          oldPkmn = @battle.pbParty(idxBattler)[idxCallingPkmn]
+          
+          @battle.battlers[idxBattler].pbInitialize(oldPkmn,idxCallingPkmn,false)
+          
+          @battle.scene.pbChangePokemon(idxBattler,oldPkmn)
+          @battle.scene.pbShowBattler(idxBattler)
+        else 
+          # Reset the choice of the battler. 
+          @battle.battlers[idxAssist].lastRoundMoved = lastRoundMovedAssist
+          @battle.choices[idxAssist] = oldAssistChoice
+          
+          # Reset the battler's effects.
+          @battle.battlers[idxAssist].effects = assistEffectsOld
+          @battle.battlers[idxAssist].stages = assistStagesOld
+        end 
+        
+        # Give back the effects. 
+        # scToString(oldEffects, "oldEffects")
+        # scToString(oldStages, "oldStages")
+        @battle.battlers[idxBattler].pbSetAssistanceChanges(oldEffects, oldStages, oldPositions,
+                                                    assistEffectsOld, assistStagesOld, assistPositionsOld, 
+                                                    assistEffectsNew, assistStagesNew, assistPositionsNew)
+        # scToString(assistEffectsOld, "assistEffectsOld")
+        # scToString(assistEffectsNew, "assistEffectsNew")
+        # scToString(@battle.battlers[idxBattler].effects, "@battle.battlers[idxBattler].effects")
+        # scToString(assistStagesOld, "assistStagesOld")
+        # scToString(assistStagesNew, "assistStagesNew")
+        # scToString(@battle.battlers[idxBattler].stages, "@battle.battlers[idxBattler].stages")
+        # scToString(@battle.battlers[idxAssist].stages, "@battle.battlers[idxAssist].stages")
+      else 
+        #------------------------------------
+        # The part of the assisted Pokémon.
+        #------------------------------------
+        # Let the first Pokémon perform its move (Assistance mechanic, not the move Assistance)
+        # Delcatty cannot abuse this. 
+        @battle.battlers[idxAssist].pbUseMove(@other_choice, true) if @other_choice
+        
       end 
-    }
-    
-    assistEffectsNew = nil 
-    assistStagesNew = nil 
-    assistPositionsNew = nil 
-    
-    if chosenCmd == -1
-      # Chosen to cancel. Cancel the move. 
-      @battle.pbDisplay(_INTL("{1} canceled the Assistance!", oldName))
-    else 
-      # Use the move.
-      @battle.battlers[idxAssist].pbUseMove(choice, true)
       
-      # Get the new effects gained by the Assist 
-      assistEffectsNew = @battle.battlers[idxAssist].effects.clone 
-      assistStagesNew = @battle.battlers[idxAssist].stages.clone
-      assistPositionsNew = @battle.positions[idxAssist].effects.clone
+      assistAfter = !assistAfter
     end 
-    
-    # Get back the calling Pokémon. 
-    if !in_battle
-      @battle.scene.pbHideBattler(idxBattler)
-      oldPkmn = @battle.pbParty(idxBattler)[idxCallingPkmn]
-      
-      @battle.battlers[idxBattler].pbInitialize(oldPkmn,idxCallingPkmn,false)
-      
-      @battle.scene.pbChangePokemon(idxBattler,oldPkmn)
-      @battle.scene.pbShowBattler(idxBattler)
-    else 
-      # Reset the choice of the battler. 
-      @battle.battlers[idxAssist].lastRoundMoved = lastRoundMovedAssist
-      @battle.choices[idxAssist] = oldAssistChoice
-      
-      # Reset the battler's effects.
-      @battle.battlers[idxAssist].effects = assistEffectsOld
-      @battle.battlers[idxAssist].stages = assistStagesOld
-    end 
-    
-    # Give back the effects. 
-    # scToString(oldEffects, "oldEffects")
-    # scToString(oldStages, "oldStages")
-    @battle.battlers[idxBattler].pbSetAssistanceChanges(oldEffects, oldStages, oldPositions,
-                                                assistEffectsOld, assistStagesOld, assistPositionsOld, 
-                                                assistEffectsNew, assistStagesNew, assistPositionsNew)
-    # scToString(assistEffectsOld, "assistEffectsOld")
-    # scToString(assistEffectsNew, "assistEffectsNew")
-    # scToString(@battle.battlers[idxBattler].effects, "@battle.battlers[idxBattler].effects")
-    # scToString(assistStagesOld, "assistStagesOld")
-    # scToString(assistStagesNew, "assistStagesNew")
-    # scToString(@battle.battlers[idxBattler].stages, "@battle.battlers[idxBattler].stages")
-    # scToString(@battle.battlers[idxAssist].stages, "@battle.battlers[idxAssist].stages")
     
     if chosenCmd == -1
       # Cancel; allow Assistance for next turn.
@@ -499,10 +513,6 @@ class PokeBattle_Move_C007 < PokeBattle_Move
       # Disable Assistance for the rest of the battle.
       @battle.pbDisableAssistance(idxBattler)
     end 
-    
-    # Let the first Pokémon perform its move (Assistance mechanic, not the move Assistance)
-    # Delcatty cannot abuse this. 
-    @battle.battlers[idxAssist].pbUseMove(@other_choice, true) if @other_choice
   end 
 end 
 
@@ -513,6 +523,10 @@ class SCAssistMechanic < PokeBattle_Move_C007
   def initialize(battle)
     pbmove = PBMove.new(getConst(PBMoves, :ASSISTANCE))
     super(battle, pbmove)
+  end 
+  
+  def statusMove?
+    return false 
   end 
   
   def registerOtherChoice(choice)
@@ -586,4 +600,20 @@ class BattlerAppearAnimation < PokeBattle_Animation
     end
   end
 end
+
+
+
+class PokeBattle_AI
+  # For Assistance.
+  def pbChooseNonSwitchingPokemon(idxBattler,party)
+    enemies = []
+    idxPkmn = @battle.battlers[idxBattler].pkmn.index
+    party.each_with_index do |_p,i|
+      enemies.push(i) if p.able? && idxPkmn != i 
+    end
+    return -1 if enemies.length==0
+    return pbChooseBestNewEnemy(idxBattler,party,enemies)
+  end
+end 
+
 

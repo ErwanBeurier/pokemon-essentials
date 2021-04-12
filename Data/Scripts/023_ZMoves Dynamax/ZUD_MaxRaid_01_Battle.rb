@@ -1131,13 +1131,13 @@ class PokemonDataBox < SpriteWrapper
     end
     pbDrawTextPositions(self.bitmap,textPos)
     if @battler.shiny?
-      shinyX = (@battler.opposes?(0)) ? 206 : -6   # Foe's/player's
+      shinyX = (@battler.oppositeSide?(0)) ? 206 : -6   # Foe's/player's
       imagePos.push(["Graphics/Pictures/shiny",@spriteBaseX+shinyX,36])
     end
     if @battler.mega?
       imagePos.push(["Graphics/Pictures/Battle/icon_mega",@spriteBaseX+8,34])
     elsif @battler.primal?
-      primalX = (@battler.opposes?) ? 208 : -28   # Foe's/player's
+      primalX = (@battler.oppositeSide?) ? 208 : -28   # Foe's/player's
       if isConst?(@battler.pokemon.species,PBSpecies,:KYOGRE)
         imagePos.push(["Graphics/Pictures/Battle/icon_primal_Kyogre",@spriteBaseX+primalX+16,34])
       elsif isConst?(@battler.pokemon.species,PBSpecies,:GROUDON)

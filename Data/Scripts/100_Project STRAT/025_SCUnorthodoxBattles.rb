@@ -281,6 +281,95 @@ class PokeBattle_Battle
     return __battleroyale__nearBattlers(idxBattler1,idxBattler2)
   end 
   
+  alias __battleroyale__pbGetOwnerIndexFromBattlerIndex pbGetOwnerIndexFromBattlerIndex
+  def pbGetOwnerIndexFromBattlerIndex(idxBattler)
+    if @battleRoyale
+      return (idxBattler - (idxBattler % 2)) / 2
+    end 
+    return __battleroyale__pbGetOwnerIndexFromBattlerIndex(idxBattler)
+  end 
+  
+  alias __battleroyale__pbGetOwnerFromBattlerIndex pbGetOwnerFromBattlerIndex
+  def pbGetOwnerFromBattlerIndex(idxBattler)
+    if @battleRoyale
+      idxTrainer = pbGetOwnerIndexFromBattlerIndex(idxBattler)
+      return (idxBattler % 2 == 1) ? @opponent[idxTrainer] : @player[idxTrainer]
+    end 
+    return __battleroyale__pbGetOwnerFromBattlerIndex(idxBattler)
+  end
+  
+  # Only used for the purpose of an error message when one trainer tries to
+  # switch another trainer's Pokémon.
+  alias __battleroyale__pbGetOwnerFromPartyIndex pbGetOwnerFromPartyIndex
+  def pbGetOwnerFromPartyIndex(idxBattler,idxParty)
+    if @battleRoyale
+      idxTrainer = pbGetOwnerIndexFromPartyIndex(idxBattler,idxParty)
+      return (idxBattler % 2 == 1) ? @opponent[idxTrainer] : @player[idxTrainer]
+    end 
+    return __battleroyale__pbGetOwnerFromPartyIndex(idxBattler,idxParty)
+  end
+  
+  alias __battleroyale__pbGetOwnerName pbGetOwnerName
+  def pbGetOwnerName(idxBattler)
+    if @battleRoyale
+      idxTrainer = pbGetOwnerIndexFromBattlerIndex(idxBattler)
+      return (idxBattler % 2 == 0) ? @player[idxTrainer].name : @opponent[idxTrainer].name
+    end 
+    return __battleroyale__pbGetOwnerName(idxBattler)
+  end
+
+  alias __battleroyale__pbParty pbParty
+  def pbParty(idxBattler)
+    if @battleRoyale
+      return (idxBattler % 2 == 1) ? @party2 : @party1
+    end 
+    return __battleroyale__pbParty(idxBattler)
+  end
+
+  alias __battleroyale__pbOpposingParty pbOpposingParty
+  def pbOpposingParty(idxBattler)
+    if @battleRoyale
+      return (idxBattler % 2 == 1) ? @party1 : @party2
+    end 
+    return __battleroyale__pbOpposingParty(idxBattler)
+  end
+
+  alias __battleroyale__pbPartyOrder pbPartyOrder
+  def pbPartyOrder(idxBattler)
+    if @battleRoyale
+      return (idxBattler % 2 == 1) ? @party2order : @party1order
+    end 
+    return __battleroyale__pbPartyOrder(idxBattler)
+  end
+
+  alias __battleroyale__pbPartyStarts pbPartyStarts
+  def pbPartyStarts(idxBattler)
+    if @battleRoyale
+      return (idxBattler % 2 == 1) ? @party2starts : @party1starts
+    end 
+    return __battleroyale__pbPartyStarts(idxBattler)
+  end
+  
+  # Should I include this ?
+  alias __battleroyale__eachSameSideBattler eachSameSideBattler
+  def eachSameSideBattler(idxBattler=0)
+    idxBattler = idxBattler.index if idxBattler.respond_to?("index")
+    if @battleRoyale
+      @battlers.each { |b| yield b if b && !b.fainted? && b.index%2 == idxBattler%2 }
+    else 
+      __battleroyale__eachSameSideBattler(idxBattler) { |b| yield b }
+    end 
+  end
+
+  alias __battleroyale__eachOtherSideBattler eachOtherSideBattler
+  def eachOtherSideBattler(idxBattler=0)
+    idxBattler = idxBattler.index if idxBattler.respond_to?("index")
+    if @battleRoyale
+      @battlers.each { |b| yield b if b && !b.fainted? && b.index%2 != idxBattler%2 }
+    else 
+      __battleroyale__eachOtherSideBattler(idxBattler) { |b| yield b }
+    end 
+  end
   
   alias __battleroyale__pbEORShiftDistantBattlers pbEORShiftDistantBattlers
   def pbEORShiftDistantBattlers
@@ -297,6 +386,11 @@ class PokeBattle_Battler
     return @index != i if @battle.battleRoyale
     return __battleroyale__opposes2(i)
   end
+  
+  def oppositeSide?(i=0) # New function. 
+    return __battleroyale__opposes2(i)
+  end 
+  
   
   # Returns whether the given position/battler is near to self.
   alias __battleroyale__near near?
@@ -317,12 +411,30 @@ class PokeBattle_Battler
       when 3
         return _INTL("{1}'s {2}",@battle.opponent[1].name, name) 
       when 4
+        return _INTL("{1}'s {2}",@battle.player[2].name, name) 
+      when 5
         return _INTL("{1}'s {2}",@battle.opponent[2].name, name) 
       end 
     end 
     return __battleroyale__pbThis(lowerCase)
   end
-
+  
+  alias __battleroyale__pbTeam pbTeam
+  def pbTeam(lowerCase=false)
+    if @battle.battleRoyale && opposes?
+      trainer_name = (lowerCase ? "the" : "The") + " opponent's"
+      idxTrainer = pbGetOwnerIndexFromBattlerIndex(@index)
+      
+      if idxBattler % 2 == 0
+        trainer_name = @battle.player[idxTrainer].name
+      else 
+        trainer_name = @battle.opponent[idxTrainer].name
+      end 
+      
+      return _INTL("{1}'s team",trainer_name, name)
+    end 
+    return __battleroyale__pbTeam(lowerCase)
+  end 
 end 
 
 alias __battleroyale__prepare pbPrepareBattle

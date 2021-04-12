@@ -275,14 +275,16 @@ class PokemonDataBox < SpriteWrapper
     if !@largeSideSize
       # Draw shiny icon
       if @battler.shiny?
-        shinyX = (@battler.opposes?(0)) ? 206 : -6   # Foe's/player's
+        # shinyX = (@battler.opposes?(0)) ? 206 : -6   # Foe's/player's
+        shinyX = (@battler.oppositeSide?(0)) ? 206 : -6   # Foe's/player's
         imagePos.push(["Graphics/Pictures/shiny",@spriteBaseX+shinyX,36])
       end
       # Draw Mega Evolution/Primal Reversion icon
       if @battler.mega?
         imagePos.push(["Graphics/Pictures/Battle/icon_mega",@spriteBaseX+8,34])
       elsif @battler.primal?
-        primalX = (@battler.opposes?) ? 208 : -28   # Foe's/player's
+        # primalX = (@battler.opposes?) ? 208 : -28   # Foe's/player's
+        primalX = (@battler.oppositeSide?) ? 208 : -28   # Foe's/player's
         if @battler.isSpecies?(:KYOGRE)
           imagePos.push(["Graphics/Pictures/Battle/icon_primal_Kyogre",@spriteBaseX+primalX,4])
         elsif @battler.isSpecies?(:GROUDON)

@@ -3096,9 +3096,15 @@ class PokeBattle_AI
     when "175"
       score += 30 if target.effects[PBEffects::Minimize]
     #---------------------------------------------------------------------------
-    # when "C001" # Magnetic Terrain 
-      # score -= 90 
-      # if 
+    when "C001" # Magnetic Terrain 
+      if @battle.field.terrain==PBBattleTerrains::Magnetic
+        score -= 90
+      else
+        @battle.eachInTeamFromBattlerIndex(user.index) do |pkmn|
+          score += 20 if pkmn.hasType?(:STEEL) || pkmn.hasType?(:ELECTRIC)
+        end
+      end
+    #---------------------------------------------------------------------------
     when "C002" # Autumn Tempest
       if @battle.pbCheckGlobalAbility(:AIRLOCK) ||
          @battle.pbCheckGlobalAbility(:CLOUDNINE)
@@ -3192,6 +3198,25 @@ class PokeBattle_AI
           score += 40
         end
       end 
+    #---------------------------------------------------------------------------
+    # when "C007" # Assistance 
+    #---------------------------------------------------------------------------
+    when "C008" # Relaxing Purring
+      second_score = 0 
+      ally_num = 0
+      user.eachAlly do |b| 
+        ally_num += 1
+        if user.hp < user.totalhp && user.canHeal?
+          if skill>=PBTrainerAI.highSkill && user.hp < user.totalhp * 0.3
+            second_score = 60
+            ally_num = 1 
+            break 
+          else 
+            second_score = 50 - user.hp*100/user.totalhp 
+          end 
+        end 
+      end 
+      score += (second_score / ally_num).floor
     end
     return score
   end
