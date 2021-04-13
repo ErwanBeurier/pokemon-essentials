@@ -241,8 +241,7 @@ class PokeBattle_Move
     for side in 0...2   # side here means "allies first, then foes"
       targets.each do |b|
         next if b.damageState.unaffected || b.damageState.hpLost==0
-        next if !@battle.battleRoyale && ((side==0 && b.opposes?(user)) || (side==1 && !b.opposes?(user)))
-        next if @battle.battleRoyale && (side != (user.index % 2) || side != (b.index % 2))
+        next if ((side==0 && b.oppositeSide?(user)) || (side==1 && !b.oppositeSide?(user)))
         oldHP = b.hp+b.damageState.hpLost
         PBDebug.log("[Move damage] #{b.pbThis} lost #{b.damageState.hpLost} HP (#{oldHP}=>#{b.hp})")
         effectiveness = 0

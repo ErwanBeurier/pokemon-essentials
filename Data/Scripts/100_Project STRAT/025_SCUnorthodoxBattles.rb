@@ -236,7 +236,8 @@ class PokeBattle_Battle
         case TrainerDialogue.eval("battleStart")
         when -1
           pbDisplayPaused(_INTL("You are starting a Battle Royale against {1}, {2}, {3} and {4}!",
-           @opponent[0].fullname,@opponent[1].fullname,@opponent[2].fullname,@player[1].fullname))
+           @opponent[0].fullname,@opponent[1].fullname,@opponent[2].fullname,
+           @player[1].fullname))
         when 0
           battleStart= TrainerDialogue.get("battleStart")
           pbDisplayPaused(_INTL(battleStart,@opponent[0].fullname,
@@ -254,6 +255,34 @@ class PokeBattle_Battle
           for i in 0...battleStart.length
             pbDisplayPaused(_INTL(battleStart[i],@opponent[0].fullname,
               @opponent[1].fullname,@opponent[2].fullname,@player[1].fullname))
+          end
+        end
+      elsif @player.length == 3 # 3v3
+        case TrainerDialogue.eval("battleStart")
+        when -1
+          pbDisplayPaused(_INTL("You are starting a Battle Royale against {1}, {2}, {3}, {4} and {5}!",
+           @opponent[0].fullname, @opponent[1].fullname, @opponent[2].fullname,
+           @player[1].fullname, @player[2].fullname))
+        when 0
+          battleStart= TrainerDialogue.get("battleStart")
+          pbDisplayPaused(_INTL(battleStart,@opponent[0].fullname,
+            @opponent[1].fullname,@opponent[2].fullname,@player[1].fullname, 
+            @player[2].fullname))
+        when 1
+          battleStart= TrainerDialogue.get("battleStart")
+          pbBGMPlay(battleStart["bgm"])
+          pbDisplayPaused(_INTL(battleStart,@opponent[0].fullname,
+            @opponent[1].fullname,@opponent[2].fullname,@player[1].fullname, 
+            @player[2].fullname))
+        when 2
+          battleStart= TrainerDialogue.get("battleStart")
+          battleStart.call(self)
+        when 3
+          battleStart= TrainerDialogue.get("battleStart")
+          for i in 0...battleStart.length
+            pbDisplayPaused(_INTL(battleStart[i],@opponent[0].fullname,
+              @opponent[1].fullname,@opponent[2].fullname,@player[1].fullname, 
+            @player[2].fullname))
           end
         end
       else
@@ -423,9 +452,9 @@ class PokeBattle_Battler
   def pbTeam(lowerCase=false)
     if @battle.battleRoyale && opposes?
       trainer_name = (lowerCase ? "the" : "The") + " opponent's"
-      idxTrainer = pbGetOwnerIndexFromBattlerIndex(@index)
+      idxTrainer = @battle.pbGetOwnerIndexFromBattlerIndex(@index)
       
-      if idxBattler % 2 == 0
+      if @index % 2 == 0
         trainer_name = @battle.player[idxTrainer].name
       else 
         trainer_name = @battle.opponent[idxTrainer].name
@@ -447,51 +476,43 @@ end
 
 
 
+#===============================================================================
+# Allows to register a second partner (Battle Royale only)
+#===============================================================================
+class PokemonGlobalMetadata
+  attr_accessor :partner2
+end 
+def pbRegisterPartner2(trainerid,trainername,partyid=0)
+  if !$PokemonGlobal.partner
+    pbRegisterPartner(trainerid,trainername,partyid)
+  else 
+    trainerid = getID(PBTrainers,trainerid)
+    pbCancelVehicles
+    trainer = pbLoadTrainer(trainerid,trainername,partyid)
+    Events.onTrainerPartyLoad.trigger(nil,trainer)
+    trainerobject = PokeBattle_Trainer.new(_INTL(trainer[0].name),trainerid)
+    trainerobject.setForeignID($Trainer)
+    for i in trainer[2]
+      i.trainerID = trainerobject.id
+      i.ot        = trainerobject.name
+      i.calcStats
+    end
+    $PokemonGlobal.partner2 = [trainerid,trainerobject.name,trainerobject.id,trainer[2]]
+  end 
+end
 
-# def scBattleRoyale(trainerID1, trainerName1, trainerID2, trainerName2, trainerID3 = nil, trainerName3 = nil,
-                  # trainerPartyID1=-1, endSpeech1 = nil, trainerPartyID2=-1, endSpeech2=nil, 
-                  # trainerPartyID3=-1, endSpeech3 = nil, canLose=true, outcomeVar=1)
-  # # Set some battle rules
-  # setBattleRule("outcomeVar",outcomeVar) if outcomeVar!=1
-  # setBattleRule("canLose") if canLose
-  # setBattleRule("notinternal")
-  # setBattleRule("battleRoyale")
-  
-  # # Take care of partners and such.
-  # if $PokemonGlobal.partner
-    # setBattleRule("2v2")
-  # elsif !trainerID3.nil? && !trainerName3.nil?
-    # pbRegisterPartner(trainerID3,trainerName3,trainerPartyID3)
-    # setBattleRule("2v2")
-  # else 
-    # setBattleRule("1v2")
-  # end
-  
-  # # Music management: the default BGM interferes with battle music
-  # bgm = $game_system.getPlayingBGM
-  # $game_system.setDefaultBGM(nil)
-  
-  # # Perform the battle
-  # pbHealAll
-  # decision = pbTrainerBattleCore(
-     # [trainerID1,trainerName1,trainerPartyID1,endSpeech1],
-     # [trainerID2,trainerName2,trainerPartyID2,endSpeech2]
-  # )
-  # pbHealAll
-  
-  # # Music management: the default BGM interferes with battle music
-  # $game_system.setDefaultBGM(bgm)
-  
-  # pbDeregisterPartner
-  # # Return true if the player won the battle, and false if any other result
-  # return (decision==1)
-# end
+def pbDeregisterPartner2
+  $PokemonGlobal.partner2 = nil
+end
+
 
 
 def scBattleRoyale(trainerID1, trainerName1, trainerID2, trainerName2, 
                   trainerID3 = nil, trainerName3 = nil, trainerID4 = nil, trainerName4 = nil,
+                  trainerID5 = nil, trainerName5 = nil, 
                   trainerPartyID1=-1, endSpeech1 = nil, trainerPartyID2=-1, endSpeech2=nil, 
                   trainerPartyID3=-1, endSpeech3 = nil, trainerPartyID4=-1, endSpeech4 = nil, 
+                  trainerPartyID5=-1, endSpeech5 = nil, 
                   canLose=true, outcomeVar=1)
   # Set some battle rules
   setBattleRule("outcomeVar",outcomeVar) if outcomeVar!=1
@@ -501,7 +522,14 @@ def scBattleRoyale(trainerID1, trainerName1, trainerID2, trainerName2,
   
   threeOnOppositeSide = false
   
-  if !trainerID4.nil? && !trainerName4.nil?
+  if !trainerID5.nil? && !trainerName5.nil? && !trainerID4.nil? && !trainerName4.nil?
+    # Five trainers, last two are on the player's side. 
+    pbRegisterPartner(trainerID4,trainerName4,trainerPartyID4)
+    pbRegisterPartner2(trainerID5,trainerName5,trainerPartyID5)
+    setBattleRule("3v3")
+    threeOnOppositeSide = true
+  
+  elsif !trainerID4.nil? && !trainerName4.nil?
     # Four trainers, last one is on the player's side. 
     pbRegisterPartner(trainerID4,trainerName4,trainerPartyID4)
     setBattleRule("2v3")

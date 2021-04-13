@@ -438,7 +438,8 @@ def pbTrainerBattleCore(*args)
   playerTrainers    = [$Trainer]
   playerParty       = $Trainer.party
   playerPartyStarts = [0]
-  room_for_partner = (foeParty.length > 1)
+  room_for_partner  = (foeParty.length > 1)
+  ally              = nil 
   if !room_for_partner && $PokemonTemp.battleRules["size"] &&
      !["single", "1v1", "1v2", "1v3"].include?($PokemonTemp.battleRules["size"])
     room_for_partner = true
@@ -453,6 +454,20 @@ def pbTrainerBattleCore(*args)
     playerPartyStarts.push(playerParty.length)
     ally.party.each { |pkmn| playerParty.push(pkmn) }
     setBattleRule("double") if !$PokemonTemp.battleRules["size"]
+  end
+  if $PokemonGlobal.partner2 && !$PokemonTemp.battleRules["noPartner"] && room_for_partner && 
+      $PokemonTemp.battleRules["battleRoyale"]
+    ally2 = PokeBattle_Trainer.new($PokemonGlobal.partner2[1],$PokemonGlobal.partner2[0])
+    ally2.id    = $PokemonGlobal.partner2[2]
+    ally2.party = $PokemonGlobal.partner2[3]
+    playerTrainers.push(ally2)
+    playerParty = []
+    $Trainer.party.each { |pkmn| playerParty.push(pkmn) }
+    # playerPartyStarts.push(playerParty.length)
+    ally.party.each { |pkmn| playerParty.push(pkmn) }
+    playerPartyStarts.push(playerParty.length)
+    ally2.party.each { |pkmn| playerParty.push(pkmn) }
+    setBattleRule("triple") if !$PokemonTemp.battleRules["size"]
   end
   # Create the battle scene (the visual side of it)
   scene = pbNewBattleScene

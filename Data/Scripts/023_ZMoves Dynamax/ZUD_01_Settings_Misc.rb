@@ -460,6 +460,15 @@ def pbAfterBattle(decision,canLose)
       pkmn.makeUnUltra
     end
   end
+  if $PokemonGlobal.partner2
+    pbHealAll
+    $PokemonGlobal.partner2[3].each do |pkmn|
+      pkmn.heal
+      pkmn.makeUnmega
+      pkmn.makeUnprimal
+      pkmn.makeUnUltra
+    end
+  end
   _ZUD_pbAfterBattle(decision, canLose)
 end
 
