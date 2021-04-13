@@ -2849,6 +2849,11 @@ class PokeBattle_Move_17C < PokeBattle_Move_0BD
     return 1 if targets.length > 1
     return 2
   end
+  
+  def pbShowAnimation(id,user,targets,hitNum=0,showAnimation=true)
+    hitNum += 4 if user.shiny? # Get the shiny animation.
+    super(id,user,targets,hitNum,showAnimation)
+  end 
 end
 
 
