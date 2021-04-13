@@ -164,8 +164,9 @@ module GMaxData
   MetricBattlerPlayerY    = 5
   MetricBattlerEnemyX     = 6
   MetricBattlerEnemyY     = 7
-  MetricBattlerShadowX    = 8
-  MetricBattlerShadowSize = 9
+  MetricBattlerAltitude   = 8
+  MetricBattlerShadowX    = 9
+  MetricBattlerShadowSize = 10
   
   InfoTypes = {
     "MaxMove"             => [0,                       "ee", :PBTypes, :PBMoves],
@@ -175,6 +176,7 @@ module GMaxData
     "BattlerPlayerY"      => [MetricBattlerPlayerY,    "i"],
     "BattlerEnemyX"       => [MetricBattlerEnemyX,     "i"],
     "BattlerEnemyY"       => [MetricBattlerEnemyY,     "i"],
+    "BattlerAltitude"     => [MetricBattlerAltitude,   "i"],
     "BattlerShadowX"      => [MetricBattlerShadowX,    "i"],
     "BattlerShadowSize"   => [MetricBattlerShadowSize, "u"],
     "Height"              => [Height,                  "f"]
@@ -275,6 +277,7 @@ def pbSaveGigantamaxData
       f.write(sprintf("BattlerPlayerY = %d\r\n", data[GMaxData::MetricBattlerPlayerY]))
       f.write(sprintf("BattlerEnemyX = %d\r\n", data[GMaxData::MetricBattlerEnemyX]))
       f.write(sprintf("BattlerEnemyY = %d\r\n", data[GMaxData::MetricBattlerEnemyY]))
+      f.write(sprintf("BattlerAltitude = %d\r\n", data[GMaxData::MetricBattlerAltitude])) if data[GMaxData::MetricBattlerAltitude]!=0
       f.write(sprintf("BattlerShadowX = %d\r\n", data[GMaxData::MetricBattlerShadowX]))
       f.write(sprintf("BattlerShadowSize = %d\r\n", data[GMaxData::MetricBattlerShadowSize]))
       f.write("#-------------------------------\r\n")

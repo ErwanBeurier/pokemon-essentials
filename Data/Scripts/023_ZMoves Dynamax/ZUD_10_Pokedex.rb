@@ -272,7 +272,7 @@ class PokemonPokedexInfo_Scene
   
   def pbPlayCrySpeciesMax
     if @gmax 
-      pbGetDynamaxCry(@species,@form)
+      pbPlayDynamaxCry(@species,@form)
     else 
       pbPlayCrySpecies(@species,@form)
     end 

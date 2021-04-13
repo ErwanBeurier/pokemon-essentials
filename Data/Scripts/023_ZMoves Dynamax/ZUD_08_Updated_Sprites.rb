@@ -27,13 +27,15 @@
 #-------------------------------------------------------------------------------
 def pbApplyBattlerMetricsToSprite(sprite,index,species,shadow=false,metrics=nil,gmax=false)
   metrics = (gmax ? pbLoadGmaxData[species] : pbLoadSpeciesMetrics) if !metrics
-  px = gmax ? metrics[GMaxData::MetricBattlerPlayerX] : metrics[MetricBattlerPlayerX][species]
-  py = gmax ? metrics[GMaxData::MetricBattlerPlayerY] : metrics[MetricBattlerPlayerY][species]
-  ex = gmax ? metrics[GMaxData::MetricBattlerEnemyX]  : metrics[MetricBattlerEnemyX][species]
-  ey = gmax ? metrics[GMaxData::MetricBattlerEnemyY]  : metrics[MetricBattlerEnemyY][species]
+  px = gmax ? metrics[GMaxData::MetricBattlerPlayerX]  : metrics[MetricBattlerPlayerX][species]
+  py = gmax ? metrics[GMaxData::MetricBattlerPlayerY]  : metrics[MetricBattlerPlayerY][species]
+  ex = gmax ? metrics[GMaxData::MetricBattlerEnemyX]   : metrics[MetricBattlerEnemyX][species]
+  ey = gmax ? metrics[GMaxData::MetricBattlerEnemyY]   : metrics[MetricBattlerEnemyY][species]
+  al = gmax ? metrics[GMaxData::MetricBattlerAltitude] : metrics[MetricBattlerAltitude][species]
+  sx = gmax ? metrics[GMaxData::MetricBattlerShadowX]  : metrics[MetricBattlerShadowX][species]
   if shadow
     if (index&1)==1   # Foe Pokémon
-      sprite.x += (metrics[MetricBattlerShadowX][species] || 0)*2
+      sprite.x += (sx || 0)*2
     end
   else
     if (index&1)==0   # Player's Pokémon
@@ -42,7 +44,7 @@ def pbApplyBattlerMetricsToSprite(sprite,index,species,shadow=false,metrics=nil,
     else              # Foe Pokémon
       sprite.x += (ex || 0)*2
       sprite.y += (ey || 0)*2
-      sprite.y -= (metrics[MetricBattlerAltitude][species] || 0)*2
+      sprite.y -= (al || 0)*2
     end
   end
 end
@@ -189,6 +191,39 @@ class PokemonBattlerShadowSprite < RPG::Sprite
     #---------------------------------------------------------------------------
     pbSetPosition
   end
+end
+
+def pbCheckPokemonShadowBitmapFiles(species,form,fullmetrics=nil,gmax=false)
+  if gmax
+    bitmapFileName = sprintf("Graphics/Battlers/%s_gmax_battleshadow",getConstantName(PBSpecies,species)) rescue nil
+    ret = pbResolveBitmap(bitmapFileName)
+    return bitmapFileName if ret
+    bitmapFileName = sprintf("Graphics/Battlers/%03d_gmax_battleshadow",species)
+    ret = pbResolveBitmap(bitmapFileName)
+    return bitmapFileName if ret
+  end
+  if form>0
+    bitmapFileName = sprintf("Graphics/Battlers/%s_%d_battleshadow",getConstantName(PBSpecies,species),form) rescue nil
+    ret = pbResolveBitmap(bitmapFileName)
+    return bitmapFileName if ret
+    bitmapFileName = sprintf("Graphics/Battlers/%03d_%d_battleshadow",species,form)
+    ret = pbResolveBitmap(bitmapFileName)
+    return bitmapFileName if ret
+  end
+  bitmapFileName = sprintf("Graphics/Battlers/%s_battleshadow",getConstantName(PBSpecies,species)) rescue nil
+  ret = pbResolveBitmap(bitmapFileName)
+  return bitmapFileName if ret
+  bitmapFileName = sprintf("Graphics/Battlers/%03d_battleshadow",species)
+  ret = pbResolveBitmap(bitmapFileName)
+  return bitmapFileName if ret
+  # Load metrics and use that graphic
+  fspecies    = pbGetFSpeciesFromForm(species,form)
+  fullmetrics = (gmax ? pbLoadGmaxData[fspecies] : pbLoadSpeciesMetrics) if !fullmetrics
+  shadowsize  = gmax ? fullmetrics[GMaxData::MetricBattlerShadowSize] : fullmetrics[MetricBattlerShadowSize][fspecies]
+  size        = (shadowsize || 2)
+  bitmapFileName = sprintf("Graphics/Pictures/Battle/battler_shadow_%d",size)
+  return bitmapFileName if pbResolveBitmap(bitmapFileName)
+  return nil
 end
 
 class PokeBattle_Scene

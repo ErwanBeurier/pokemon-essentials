@@ -208,6 +208,7 @@ def pbInitRaidBanlist
   #-----------------------------------------------------------------------------
   raid_banlist = [PBSpecies::SMEARGLE,
                   PBSpecies::SHEDINJA,
+                  PBSpecies::PHIONE,
                   PBSpecies::TYPENULL,
                   PBSpecies::COSMOG,
                   PBSpecies::COSMOEM,
@@ -415,16 +416,16 @@ def pbGetMaxRaidSpeciesLists(filters=nil,displayOnly=false,env=nil)
           next if i==PBSpecies::ZYGARDE  && f==1
           next if i==PBSpecies::VIVILLON && f!=$Trainer.secretID%18
           next if i==PBSpecies::SHAYMIN  && f==1 && PBDayNight.isNight?
-          next if formname=="Alolan"     && region!=ALOLA_REGION
-          next if formname=="Galarian"   && region!=GALAR_REGION
+          next if formname=="Alolan"     && (region!=ALOLA_REGION && !pbInDynAdventure?)
+          next if formname=="Galarian"   && (region!=GALAR_REGION && !pbInDynAdventure?)
           next if gender.include?(i)     && f!=g
           next if season.include?(i)     && f!=pbGetSeason
           next if random.include?(i)     && f!=randform
           next if timeday.include?(i)    && f!=1 && PBDayNight.isNight?
           next if timeday.include?(i)    && f!=2 && PBDayNight.isEvening?
           next if enviro.include?(i)     && f!=0 && !(sandy || trash)
-          next if enviro.include?(i)     && f!=1 && sandy
-          next if enviro.include?(i)     && f!=2 && trash
+          next if enviro.include?(i)     && (f!=1 && sandy) && !pbInDynAdventure?
+          next if enviro.include?(i)     && (f!=2 && trash) && !pbInDynAdventure?
         elsif filters
           next if fSpecies!=rfSpecies
         end
@@ -463,7 +464,7 @@ end
 #===============================================================================
 # Used to obtain an eligible Pokemon for a Max Raid Den event.
 #===============================================================================
-def pbGetMaxRaidSpecies(poke,rank,env)
+def pbGetMaxRaidSpecies(poke,rank,env=nil)
   #-----------------------------------------------------------------------------
   # Gets appropriate data to search for species.
   #-----------------------------------------------------------------------------
@@ -474,8 +475,8 @@ def pbGetMaxRaidSpecies(poke,rank,env)
     if enctype>0 || $PokemonEncounters.pbMapHasEncounter?($game_map.map_id,enctype)
       encounter = $PokemonEncounters.pbMapEncounter($game_map.map_id,enctype)
       poke = encounter[0]
-    # else
-      # poke = PBSpecies::DITTO
+    else
+      poke = PBSpecies::DITTO
     end
   end
   #-----------------------------------------------------------------------------
@@ -540,7 +541,7 @@ end
 #===============================================================================
 # Determines compatible moves to build a Max Raid Pokemon's moveset.
 #===============================================================================
-def pbGetMaxRaidMoves(poke,form)
+def pbGetMaxRaidMoves(poke,form,rental=false)
   stabmoves  = []            # List of all eligible STAB moves.
   basemoves  = []            # List of all eligible coverage moves.
   multmoves  = []            # List of all eligible spread moves.
@@ -564,11 +565,32 @@ def pbGetMaxRaidMoves(poke,form)
                 "0DA","0DB", # Aqua Ring, Ingrain
                 "02F","033", # +2 Defense moves, +2 Sp.Def moves
                 "02A","034", # Cosmic Power, Minimize
+                "0A2","0A3", # Reflect, Light Screen
+                "01A","019", # Safeguard, Heal Bell
+                "049","05B", # Defog, Tailwind
+                "0DC","0BA", # Leech Seed, Taunt
+                "148","186", # Powder, Tar Shot
+                "061","197", # Soak, Magic Powder
+                "141","051", # Topsy-Turvy, Haze
+                "0AC","149", # Wide Guard, Mat Block
                 "14B","14C", # King's Shield, Spiky Shield
                 "168","14E", # Baneful Bunker, Geomancy
                 "038","189", # Cotton Guard, Jungle Healing
                 "181","180", # Octolock, Obstruct
                 "17F","17E"] # No Retreat, Life Dew
+  #-----------------------------------------------------------------------------
+  # Additional moves considered only for Rental Pokemon in a Dynamax Adventure.
+  #-----------------------------------------------------------------------------
+  if rental
+    blacklist += ["0C9","0CA", # Fly, Dig
+                  "0CB","158"] # Dive, Belch
+    whitelist += ["117","16A", # Follow Me, Spotlight
+                  "0AF","16B", # Copycat, Instruct
+                  "09C","0AA", # Helping Hand, Protect
+                  "068","064", # Gastro Acid, Worry Seed
+                  "065","0DF", # Role Play, Heal Pulse
+                  "17B","18E"] # Decorate, Coaching
+  end
   #-----------------------------------------------------------------------------
   fSpecies   = pbGetFSpeciesFromForm(poke,form)
   moveData   = pbLoadMovesData
@@ -592,12 +614,16 @@ def pbGetMaxRaidMoves(poke,form)
     next if !function || blacklist.include?(function)
     if whitelist.include?(function)
       healmoves.push(move)  # All eligible support moves.
-    elsif damage>=55 && mult
+    elsif damage>=55 && mult && !rental
       multmoves.push(move)  # All eligible spread moves.
-    elsif damage>=80 && stab
+    elsif damage>=80 && stab && !mult
       stabmoves.push(move)  # All eligible STAB moves.
-    elsif damage>=70 && !stab && type!=0
+    elsif damage>=70 && !stab && !mult && type!=0
       basemoves.push(move)  # All eligible coverage moves.
+    end
+    # Rental Pokemon in a Dynamax Adventure don't get spread moves.
+    if rental && !mult
+      multmoves.push(move) if whitelist.include?(function) || damage>=75
     end
   end
   #-----------------------------------------------------------------------------
@@ -612,11 +638,11 @@ def pbGetMaxRaidMoves(poke,form)
   elsif poke==getID(PBSpecies,:CASTFORM)
     stabmoves.push(getID(PBMoves,:WEATHERBALL))
   elsif poke==getID(PBSpecies,:ROTOM) 
-    healmoves.push(getID(PBMoves,:OVERHEAT))  if form==1
-    healmoves.push(getID(PBMoves,:HYDROPUMP)) if form==2
-    healmoves.push(getID(PBMoves,:BLIZZARD))  if form==3
-    healmoves.push(getID(PBMoves,:AIRSLASH))  if form==4
-    healmoves.push(getID(PBMoves,:LEAFSTORM)) if form==5
+    stabmoves.push(getID(PBMoves,:OVERHEAT))  if form==1
+    stabmoves.push(getID(PBMoves,:HYDROPUMP)) if form==2
+    stabmoves.push(getID(PBMoves,:BLIZZARD))  if form==3
+    stabmoves.push(getID(PBMoves,:AIRSLASH))  if form==4
+    stabmoves.push(getID(PBMoves,:LEAFSTORM)) if form==5
   elsif poke==getID(PBSpecies,:DARKRAI)
     healmoves.push(getID(PBMoves,:DARKVOID))
   elsif poke==getID(PBSpecies,:GENESECT)
@@ -628,7 +654,7 @@ def pbGetMaxRaidMoves(poke,form)
   elsif poke==getID(PBSpecies,:SIRFETCHD)
     stabmoves.push(getID(PBMoves,:METEORASSAULT))
   elsif poke==getID(PBSpecies,:DRAGAPULT)
-    stabmoves.push(getID(PBMoves,:DRAGONDARTS))
+    multmoves.push(getID(PBMoves,:DRAGONDARTS))
   elsif poke==getID(PBSpecies,:URSHIFU)
     stabmoves.push(getID(PBMoves,:SURGINGSTRIKES)) if form==1
   end
@@ -696,6 +722,7 @@ Events.onWildPokemonCreate += proc { |_sender, e|
     # Gets raid boss attributes depending on the type of event.
     #---------------------------------------------------------------------------
     hardmode   = $game_switches[HARDMODE_RAID]
+    hardmode   = false if pbInDynAdventure?
     storedPkmn = pbMapInterpreter.get_character(0).id + MAXRAID_PKMN
     # Debug Raid Pokemon (Max Raid Database)
     if $game_variables[MAXRAID_PKMN].is_a?(Array)
@@ -737,7 +764,7 @@ Events.onWildPokemonCreate += proc { |_sender, e|
     rank = 3 if bosslevel>=40
     rank = 4 if bosslevel>=50
     rank = 5 if bosslevel>=60
-    rank = 6 if bosslevel==70
+    rank = 6 if bosslevel>=70
     dlvl = 5  if rank==1
     dlvl = 10 if rank==2
     dlvl = 20 if rank==3
@@ -780,12 +807,15 @@ Events.onWildPokemonCreate += proc { |_sender, e|
         break if maxIV>=rank
       end
     end
+    pokemon.item = 0
+    pbCustomRaidSets(pokemon,bossform) if raidtype<2
     pokemon.setGender(bossgender)
     pokemon.form = bossform
     pokemon.setDynamaxLvl(dlvl)
     pokemon.giveGMaxFactor if pokemon.hasGmax? && gmax
-    pbCustomRaidSets(pokemon,bossform) if raidtype<2
     pokemon.obtainText = _INTL("Max Raid Den.")
+    pokemon.obtainText = _INTL("Max Lair.") if pbInDynAdventure?
+    pokemon.makeNotShiny if pbInDynAdventure? 
     pokemon.makeDynamax
     pokemon.calcStats
     pokemon.hp = pokemon.totalhp
@@ -1171,6 +1201,8 @@ class MaxRaidScene
             #-------------------------------------------------------------------
             # Finalizes battle rules and begins the raid battle.
             #-------------------------------------------------------------------
+            setBattleRule("canLose")
+            setBattleRule("cannotRun")
             setBattleRule("noPartner")
             setBattleRule(sprintf("%dv%d",@size,1)) # Raid size
             setBattleRule("weather",@weather) if @weather
