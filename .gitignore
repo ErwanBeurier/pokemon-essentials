@@ -18,5 +18,6 @@ RGSS*.dll
 # Word files
 *.docx
 
-
 STRAT/*
+Animations/*
+Animations - GEN8/*

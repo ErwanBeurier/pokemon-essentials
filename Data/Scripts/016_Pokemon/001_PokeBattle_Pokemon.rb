@@ -624,7 +624,7 @@ class PokeBattle_Pokemon
     @trmoves=[] if !@trmoves
     return @trmoves
   end
-  
+
   # Returns this Pokémon's mail.
   def mail
     return nil if !@mail
@@ -637,7 +637,8 @@ class PokeBattle_Pokemon
   #=============================================================================
   def species=(value)
     hasNickname = nicknamed?
-    @species, @form = pbGetSpeciesFromFSpecies(value)
+    @species, new_form = pbGetSpeciesFromFSpecies(value)
+    @form = new_form if @species != value
     @name       = PBSpecies.getName(@species) unless hasNickname
     @level      = nil   # In case growth rate is different for the new species
     @forcedForm = nil
@@ -813,18 +814,18 @@ class PokeBattle_Pokemon
   #=============================================================================
   # Stat calculations, Pokémon creation
   #=============================================================================
-  # Yamask Evolution Method 
+  # Yamask Evolution Method
   def yamaskhp
     @yamaskhp=0 if !@yamaskhp
     return @yamaskhp
   end
-  
+
   # Galarian Farfetch'd Evolution Method
   def criticalHits
-    @criticalHits=0 if !@criticalHits 
+    @criticalHits=0 if !@criticalHits
     return @criticalHits
   end
-  
+
   # Returns this Pokémon's base stats. An array of six values.
   def baseStats
     ret = pbGetSpeciesData(@species,formSimple,SpeciesBaseStats)
@@ -944,6 +945,9 @@ class PokeBattle_Pokemon
         @moves[i] = PBMove.new(0)
       end
     end
+    # Set spinning to false if a new Pokemon in created. Prevents evolution by illegal means
+    $PokemonTemp.clockwiseSpin = false
+    $PokemonTemp.antiClockwiseSpin = false
   end
 end
 

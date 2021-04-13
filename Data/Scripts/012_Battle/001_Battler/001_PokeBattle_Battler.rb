@@ -482,13 +482,6 @@ class PokeBattle_Battler
     return hasActiveAbility?([:MOLDBREAKER, :TERAVOLT, :TURBOBLAZE])
   end
 
-  def isUnnerved?
-    return true if @battle.pbCheckOpposingAbility(:UNNERVE,@index)
-    return true if @battle.pbCheckOpposingAbility(:ASONEICE,@index)
-    return true if @battle.pbCheckOpposingAbility(:ASONEGHOST,@index)
-    return false
-  end
-
   def canChangeType?
     return false if isConst?(@ability,PBAbilities,:MULTITYPE) ||
                     isConst?(@ability,PBAbilities,:RKSSYSTEM)
@@ -512,6 +505,11 @@ class PokeBattle_Battler
     return false if airborne?
     return false if semiInvulnerable?
     return true
+  end
+
+  def hasUtilityUmbrella?
+    return true if hasActiveItem?(:UTILITYUMBRELLA)
+    return false
   end
 
   def takesIndirectDamage?(showMsg=false)
@@ -588,12 +586,12 @@ class PokeBattle_Battler
     return false if @effects[PBEffects::HealBlock]>0
     return true
   end
-  
+
   def canTakeHealingWish?
-	# Also works with Lunar Dance. 
-	return canHeal? || pbHasAnyStatus?
-  end 
-  
+    # Also works with Lunar Dance.
+    return canHeal? || pbHasAnyStatus?
+  end
+
   def affectedByContactEffect?(showMsg=false)
     return false if fainted?
     if hasActiveItem?(:PROTECTIVEPADS)

@@ -119,6 +119,7 @@ class PokeBattle_Battler
     @effects[PBEffects::SlowStart]  = 0 if !isConst?(@ability,PBAbilities,:SLOWSTART)
     # Revert form if Flower Gift/Forecast was lost
     pbCheckFormOnWeatherChange
+    pbCheckFormOnTerrainChange
     # Check for end of primordial weather
     @battle.pbEndPrimordialWeather
   end
@@ -126,8 +127,15 @@ class PokeBattle_Battler
   #=============================================================================
   # Held item consuming/removing
   #=============================================================================
-  def pbCanConsumeBerry?(_item,alwaysCheckGluttony=true)
-    return false if isUnnerved?
+  def canConsumeBerry?
+    return false if @battle.pbCheckOpposingAbility(:UNNERVE,@index)
+    return false if @battle.pbCheckOpposingAbility(:ASONEICE,@index)
+    return false if @battle.pbCheckOpposingAbility(:ASONEGHOST,@index)
+    return true
+  end
+
+  def canConsumePinchBerry?(_item,alwaysCheckGluttony=true)
+    return false if !canConsumeBerry?
     return true if @hp<=@totalhp/4
     if alwaysCheckGluttony || NEWEST_BATTLE_MECHANICS
       return true if @hp<=@totalhp/2 && hasActiveAbility?(:GLUTTONY)

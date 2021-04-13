@@ -63,7 +63,7 @@ module PBEvolution
   TradeSpecies      = 59
   CriticalHits      = 60
   DamageDone        = 61
-  SweetItem       = 62
+  SweetItem         = 62
 
   def self.maxValue; return 62; end
 
@@ -460,7 +460,7 @@ PBEvolution.register(:Happiness, {
   "minimumLevel"  => 1,   # Needs any level up
   "parameterType" => nil,
   "levelUpCheck"  => proc { |pkmn, parameter|
-    next pkmn.happiness >= 220
+    next pkmn.happiness >= 160
   }
 })
 
@@ -468,7 +468,7 @@ PBEvolution.register(:HappinessMale, {
   "minimumLevel"  => 1,   # Needs any level up
   "parameterType" => nil,
   "levelUpCheck"  => proc { |pkmn, parameter|
-    next pkmn.happiness >= 220 && pkmn.male?
+    next pkmn.happiness >= 160 && pkmn.male?
   }
 })
 
@@ -476,7 +476,7 @@ PBEvolution.register(:HappinessFemale, {
   "minimumLevel"  => 1,   # Needs any level up
   "parameterType" => nil,
   "levelUpCheck"  => proc { |pkmn, parameter|
-    next pkmn.happiness >= 220 && pkmn.female?
+    next pkmn.happiness >= 160 && pkmn.female?
   }
 })
 
@@ -484,7 +484,7 @@ PBEvolution.register(:HappinessDay, {
   "minimumLevel"  => 1,   # Needs any level up
   "parameterType" => nil,
   "levelUpCheck"  => proc { |pkmn, parameter|
-    next pkmn.happiness >= 220 && PBDayNight.isDay?
+    next pkmn.happiness >= 160 && PBDayNight.isDay?
   }
 })
 
@@ -492,7 +492,7 @@ PBEvolution.register(:HappinessNight, {
   "minimumLevel"  => 1,   # Needs any level up
   "parameterType" => nil,
   "levelUpCheck"  => proc { |pkmn, parameter|
-    next pkmn.happiness >= 220 && PBDayNight.isNight?
+    next pkmn.happiness >= 160 && PBDayNight.isNight?
   }
 })
 
@@ -500,7 +500,7 @@ PBEvolution.register(:HappinessMove, {
   "minimumLevel"  => 1,   # Needs any level up
   "parameterType" => :PBMoves,
   "levelUpCheck"  => proc { |pkmn, parameter|
-    if pkmn.happiness >= 220
+    if pkmn.happiness >= 160
       next pkmn.moves.any? { |m| m && m.id == parameter }
     end
   }
@@ -510,7 +510,7 @@ PBEvolution.register(:HappinessMoveType, {
   "minimumLevel"  => 1,   # Needs any level up
   "parameterType" => :PBTypes,
   "levelUpCheck"  => proc { |pkmn, parameter|
-    if pkmn.happiness >= 220
+    if pkmn.happiness >= 160
       next pkmn.moves.any? { |m| m && m.id > 0 && m.type == parameter }
     end
   }
@@ -520,7 +520,7 @@ PBEvolution.register(:HappinessHoldItem, {
   "minimumLevel"  => 1,   # Needs any level up
   "parameterType" => :PBItems,
   "levelUpCheck"  => proc { |pkmn, parameter|
-    next pkmn.item == parameter && pkmn.happiness >= 220
+    next pkmn.item == parameter && pkmn.happiness >= 160
   },
   "afterEvolution" => proc { |pkmn, new_species, parameter, evo_species|
     next false if evo_species != new_species || !pkmn.hasItem?(parameter)
@@ -613,7 +613,7 @@ PBEvolution.register(:HoldItemHappiness, {
   "minimumLevel"  => 1,   # Needs any level up
   "parameterType" => :PBItems,
   "levelUpCheck"  => proc { |pkmn, parameter|
-    next pkmn.item == parameter && pkmn.happiness >= 220
+    next pkmn.item == parameter && pkmn.happiness >= 160
   },
   "afterEvolution" => proc { |pkmn, new_species, parameter, evo_species|
     next false if evo_species != new_species || !pkmn.hasItem?(parameter)
@@ -702,7 +702,7 @@ PBEvolution.register(:ItemNight, {
 PBEvolution.register(:ItemHappiness, {
   "parameterType" => :PBItems,
   "levelUpCheck"  => proc { |pkmn, parameter, item|
-    next item == parameter && pkmn.happiness >= 220
+    next item == parameter && pkmn.happiness >= 160
   }
 })
 
@@ -778,5 +778,52 @@ PBEvolution.register(:CriticalHits, {
 PBEvolution.register(:DamageDone, {
   "onFieldCheck" => proc { |pkmn, parameter|
      next true if pkmn.yamaskhp >= parameter
+  }
+})
+
+PBEvolution.register(:SweetItem, {
+  "parameterType" => nil,
+  "alcremieCheck" => proc { |pkmn, parameter|
+    sweet = -1
+    cream = -1
+    time = pbGetTimeNow
+    timeTaken = Graphics.frame_count - $PokemonTemp.startedSpinning
+    if (timeTaken > ((Graphics.frame_rate) * 10)) && PBDayNight.isRainbow?(time)
+      cream = 8
+    elsif timeTaken > ((Graphics.frame_rate) * 5)
+      if PBDayNight.isNight?(time)
+        cream = 4 if $PokemonTemp.clockwiseSpin
+        cream = 5 if $PokemonTemp.antiClockwiseSpin
+      else
+        cream = 6 if $PokemonTemp.antiClockwiseSpin
+        cream = 7 if $PokemonTemp.clockwiseSpin
+      end
+    elsif timeTaken > (Graphics.frame_rate)
+      if PBDayNight.isNight?(time)
+        cream = 2 if $PokemonTemp.clockwiseSpin
+        cream = 3 if $PokemonTemp.antiClockwiseSpin
+      else
+        cream = 0 if $PokemonTemp.clockwiseSpin
+        cream = 1 if $PokemonTemp.antiClockwiseSpin
+      end
+    end
+    if pkmn.hasItem?(:STRAWBERRYSWEET)
+      sweet = 0
+    elsif pkmn.hasItem?(:BERRYSWEET)
+      sweet = 1
+    elsif pkmn.hasItem?(:LOVESWEET)
+      sweet = 2
+    elsif pkmn.hasItem?(:STARSWEET)
+      sweet = 3
+    elsif pkmn.hasItem?(:CLOVERSWEET)
+      sweet = 4
+    elsif pkmn.hasItem?(:FLOWERSWEET)
+      sweet = 5
+    elsif pkmn.hasItem?(:RIBBONSWEET)
+      sweet = 6
+    end
+    pkmn.form = (cream*7) + sweet
+    next true if sweet != -1 && cream != -1
+    next false
   }
 })

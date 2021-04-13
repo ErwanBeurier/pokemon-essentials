@@ -75,7 +75,6 @@ class PokeBattle_Battle
     priority.each do |b|
       # Weather-related abilities
       if b.abilityActive?
-        next if !b.hasActiveAbility?(:ICEBODY)
         BattleHandlers.triggerEORWeatherAbility(b.ability,curWeather,b,self)
         b.pbFaint if b.fainted?
       end
@@ -126,6 +125,7 @@ class PokeBattle_Battle
         pbDisplay(_INTL("The weirdness disappeared from the battlefield!"))
       end
       @field.terrain = PBBattleTerrains::None
+      eachBattler { |b| b.pbCheckFormOnTerrainChange }
       # Start up the default terrain
       pbStartTerrain(nil,@field.defaultTerrain,false) if @field.defaultTerrain!=PBBattleTerrains::None
       return if @field.terrain==PBBattleTerrains::None
@@ -654,6 +654,7 @@ class PokeBattle_Battle
       b.effects[PBEffects::BurningJealousy]          = false
       b.effects[PBEffects::LashOut]          = false
       b.effects[PBEffects::Obstruct]         = false
+      b.effects[PBEffects::SwitchedAlly]     = -1
       b.lastHPLost                           = 0
       b.lastHPLostFromFoe                    = 0
       b.tookDamage                           = false
@@ -679,26 +680,25 @@ class PokeBattle_Battle
     @field.effects[PBEffects::FairyLock]   -= 1 if @field.effects[PBEffects::FairyLock]>0
     @field.effects[PBEffects::FusionBolt]  = false
     @field.effects[PBEffects::FusionFlare] = false
-	
-	# Neutralizing Gas
-	pbCheckNeutralizingGas
-	
+    
+	  # Neutralizing Gas
+	  pbCheckNeutralizingGas
     @endOfRound = false
   end
-  
-  
+
+
   def pbCheckNeutralizingGas(battler=nil)
-    # Battler = the battler to switch out. 
+    # Battler = the battler to switch out.
 	# Should be specified when called from pbAttackPhaseSwitch
 	# Should be nil when called from pbEndOfRoundPhase
     return if !@field.effects[PBEffects::NeutralizingGas]
-    return if battler && (!isConst?(battler.ability,PBAbilities,:NEUTRALIZINGGAS) || 
+    return if battler && (!isConst?(battler.ability,PBAbilities,:NEUTRALIZINGGAS) ||
 		battler.effects[PBEffects::GastroAcid])
     hasabil=false
     eachBattler {|b|
       next if !b || b.fainted?
-	  next if battler && b.index == battler.index 
-	  # if specified, the battler will switch out, so don't consider it.
+      next if battler && b.index == battler.index
+      # if specified, the battler will switch out, so don't consider it.
       # neutralizing gas can be blocked with gastro acid, ending the effect.
       if isConst?(b.ability,PBAbilities,:NEUTRALIZINGGAS) && !b.effects[PBEffects::GastroAcid]
         hasabil=true; break
@@ -706,10 +706,10 @@ class PokeBattle_Battle
     }
     if !hasabil
       @field.effects[PBEffects::NeutralizingGas] = false
-      pbPriority(true).each { |b| 
+      pbPriority(true).each { |b|
 	    next if battler && b.index == battler.index
 	    b.pbEffectsOnSwitchIn
 	  }
     end
-  end 
+  end
 end
