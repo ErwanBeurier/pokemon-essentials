@@ -268,6 +268,10 @@ class PokeBattle_Battler
   end
 end
 
+# Safari Zone compatibility
+class PokeBattle_FakeBattler
+  def dynamax?; return false; end
+end  
 
 ################################################################################
 # SECTION 3 - BATTLE FUNCTIONS
@@ -684,16 +688,14 @@ class PokeBattle_Scene
     pkmnSprite   = @sprites["pokemon_#{idxBattler}"]
     shadowSprite = @sprites["shadow_#{idxBattler}"]
     back         = !@battle.opposes?(idxBattler)
-    # Ensures transformed Pokemon copy the correct sprites vs Dynamax targets.
     battler      = @battle.battlers[idxBattler]
-    changepkmn   = battler.effects[PBEffects::Transform] ? battler : nil
     pkmnSprite.setPokemonBitmap(pkmn,back,battler)
     shadowSprite.setPokemonBitmap(pkmn)
     if shadowSprite && !back
       shadowSprite.visible = showShadow?(pkmn.fSpecies)
     end
     # Reverts to initial sprite once Dynamax ends.
-    if !battler.dynamax?
+    if !battler.dynamax? && !pbInSafari?
       if battler.effects[PBEffects::Transform]
         pkmn = battler.effects[PBEffects::TransformPokemon]
         pkmnSprite.setPokemonBitmap(pkmn,back,battler)
@@ -710,7 +712,7 @@ class PokeBattle_Scene
     end
   end
 end
-
+  
 
 ################################################################################
 # SECTION 4 - AI BATTLERS
@@ -725,28 +727,32 @@ class PokeBattle_AI
     @battle.pbRegisterMegaEvolution(idxBattler) if pbEnemyShouldMegaEvolve?(idxBattler)
     @battle.pbRegisterUltraBurst(idxBattler) if pbEnemyShouldUltraBurst?(idxBattler)
     @battle.pbRegisterDynamax(idxBattler) if pbEnemyShouldDynamax?(idxBattler)
-    if pbEnemyShouldZMove?(idxBattler)
-      ret = pbChooseEnemyZMove(idxBattler) 
-      return if ret 
-    end
-    pbChooseMoves(idxBattler)
+    pbChooseEnemyZMove(idxBattler) if pbEnemyShouldZMove?(idxBattler)
+    pbChooseMoves(idxBattler) if !@battle.pbRegisteredZMove?(idxBattler)
   end
   
   #-----------------------------------------------------------------------------
   # Z-Moves - The AI will use Z-Moves if opponent's HP isn't below half.
   #-----------------------------------------------------------------------------
-  def pbEnemyShouldZMove?(index)
-    return false if !@battle.pbCanZMove?(index)
-    @battle.battlers[index].eachOpposing { |opp|
-      return true if opp.hp>(opp.totalhp/2).round
-    }
+  def pbEnemyShouldZMove?(idxBattler)
+    battler = @battle.battlers[idxBattler]
+    if @battle.pbCanZMove?(idxBattler)
+      battler.eachOpposing { |opp|
+        if opp.hp>(opp.totalhp/2).round
+          PBDebug.log("[AI] #{battler.pbThis} (#{idxBattler}) will use a Z-Move")
+          return true
+          break
+        end
+      }
+    end
     return false 
   end
 
-  def pbChooseEnemyZMove(index) #Put specific cases for trainers using status Z-Moves
+  def pbChooseEnemyZMove(idxBattler) #Put specific cases for trainers using status Z-Moves
     chosenmove  = nil
-    chosenindex =-1
-    attacker = @battle.battlers[index]
+    chosenindex = -1
+    useZMove    = false
+    attacker    = @battle.battlers[idxBattler]
     # Choose the move
     for i in 0...4
       move = attacker.moves[i]
@@ -754,16 +760,15 @@ class PokeBattle_AI
       if attacker.pbCompatibleZMoveFromMove?(move)
         if !chosenmove
           chosenindex = i
-          chosenmove=move
+          chosenmove  = move
         else
           if move.baseDamage>chosenmove.baseDamage
-            chosenindex=i
-            chosenmove=move
+            chosenindex = i
+            chosenmove  = move
           end          
         end
       end
     end
-    return false if !chosenmove
     target_i   = nil
     target_eff = 0 
     # Choose the target
@@ -772,12 +777,14 @@ class PokeBattle_AI
       if temp_eff > target_eff
         target_i   = opp.index
         target_eff = target_eff
+        useZMove   = true
       end 
     }
-    @battle.pbRegisterZMove(index)
-    @battle.pbRegisterMove(index,chosenindex,false)
-    @battle.pbRegisterTarget(index,target_i)
-    return true 
+    if useZMove
+      @battle.pbRegisterZMove(idxBattler)
+      @battle.pbRegisterMove(idxBattler,chosenindex,false)
+      @battle.pbRegisterTarget(idxBattler,target_i)
+    end
   end
   
   #-----------------------------------------------------------------------------

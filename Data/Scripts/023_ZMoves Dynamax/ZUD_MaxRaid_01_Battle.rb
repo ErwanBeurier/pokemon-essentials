@@ -105,6 +105,10 @@ class PokeBattle_Battler
       @effects[PBEffects::RaidShield]    = 0
       @effects[PBEffects::BaseMoves]     = [@moves[0],@moves[1],@moves[2],@moves[3]]
       @effects[PBEffects::MaxRaidBoss]   = true
+      if pbInDynAdventure?
+        @effects[PBEffects::ShieldCounter] = 1
+        @effects[PBEffects::KnockOutCount] = pbDynAdventureState.knockouts
+      end
     end
   end
 
@@ -239,6 +243,7 @@ class PokeBattle_Battler
           shieldLvl += 1 if b.level>55
           shieldLvl += 1 if b.level>65
           shieldLvl += 1 if b.level>=70 || $game_switches[HARDMODE_RAID]
+          shieldLvl  = 5 if pbInDynAdventure?
           shieldLvl  = 1 if shieldLvl<=0
           shieldLvl  = 8 if shieldLvl>8
           shields1   = b.hp <= b.totalhp/2            # Activates at 1/2 HP
@@ -263,7 +268,7 @@ class PokeBattle_Battler
   def pbProcessRaidEffectsOnHit2(move,user,targets) # Added to def pbProcessMoveHit
     showMsg = true
     @battle.eachOtherSideBattler(user) do |b|
-      if $game_switches[HARDMODE_RAID] || user.level>=70
+      if !pbInDynAdventure? && ($game_switches[HARDMODE_RAID] || user.level>=70)
         if user.effects[PBEffects::MaxRaidBoss] &&
            user.effects[PBEffects::KnockOutCount]>0 &&
            user.effects[PBEffects::RaidShield]<=0 &&
@@ -293,13 +298,13 @@ class PokeBattle_Battler
   # Allows a Raid Pokemon to strike multiple times in a turn.
   #-----------------------------------------------------------------------------
   def pbRaidBossUseMove(choice)
-    weakened = true if @effects[PBEffects::ShieldCounter]<2 && level>35
-    weakened = true if @effects[PBEffects::ShieldCounter]==0
-    if @effects[PBEffects::MaxRaidBoss] && weakened && 
+    if @effects[PBEffects::MaxRaidBoss] && 
+       @effects[PBEffects::ShieldCounter]==0 && 
        @battle.pbSideSize(0)>1 && !choice[2].statusMove?
       basemoves = @effects[PBEffects::BaseMoves]
       basemoves = @moves if !basemoves
       for i in 1...@battle.pbSideSize(0)
+        break if @battle.pbAllFainted?
         break if @battle.decision==3
         choice[2] = PokeBattle_Move.pbFromPBMove(@battle,basemoves[rand(basemoves.length)])
         PBDebug.log("[Move usage] #{pbThis} started using #{choice[2].name}")
@@ -315,6 +320,7 @@ class PokeBattle_Battler
 #===============================================================================
   def pbRaidKOCounter(target)
     if target.effects[PBEffects::MaxRaidBoss]
+      pbDynAdventureState.knockouts -= 1 if pbInDynAdventure?
       kocounter = PBEffects::KnockOutCount
       target.effects[kocounter] -= 1
       $game_variables[REWARD_BONUSES][1] = false # Perfect Bonus 
@@ -334,7 +340,7 @@ class PokeBattle_Battler
       #-------------------------------------------------------------------------
       # Max Raid - Hard Mode Bonuses (KO Boost).
       #-------------------------------------------------------------------------
-      if koboost && ($game_switches[HARDMODE_RAID] || target.level>=70)
+      if !pbInDynAdventure? && koboost && ($game_switches[HARDMODE_RAID] || target.level>=70)
         showAnim=true
         if target.pbCanRaiseStatStage?(PBStats::ATTACK,target)
           target.pbRaiseStatStage(PBStats::ATTACK,1,target,showAnim)
@@ -355,15 +361,15 @@ class PokeBattle_Battler
   def pbCatchRaidPokemon(target)
     @battle.pbDisplayPaused(_INTL("{1} is weak!\nThrow a Poké Ball now!",target.pbThis))
     pbWait(20)
-    resetWindowSize if defined?(PCV) # Compatibility for Modular Battle Scene
+	  resetWindowSize if defined?(PCV) # Compatibility for Modular Battle Scene
     scene  = PokemonBag_Scene.new
     screen = PokemonBagScreen.new(scene,$PokemonBag)
     ball   = screen.pbChooseItemScreen(Proc.new{|item| pbIsPokeBall?(item) })
     if ball>0
       if pbIsPokeBall?(ball)
         $PokemonBag.pbDeleteItem(ball,1)
-        target.pokemon.resetMoves
-        if $game_switches[HARDMODE_RAID] || target.level>=70
+        target.pokemon.resetMoves if !pbInDynAdventure?
+        if !pbInDynAdventure? && ($game_switches[HARDMODE_RAID] || target.level>=70)
           randcapture = rand(100)
           if randcapture<20 || ball==getID(PBItems,:MASTERBALL) ||
              ($DEBUG && Input.press?(Input::CTRL))
@@ -486,8 +492,6 @@ class PokeBattle_Battle
   def initialize(scene,p1,p2,player,opponent)
     __MaxRaid__initialize(scene,p1,p2,player,opponent)
     if $game_switches[MAXRAID_SWITCH]
-      @canRun            = false
-      @canLose           = true
       @expGain           = false
       @moneyGain         = false
     end
@@ -513,11 +517,11 @@ class PokeBattle_Battle
       priority.each do |b|
         next if !b.effects[PBEffects::MaxRaidBoss]
         next if b.effects[PBEffects::KnockOutCount]==0
+        for i in b.moves; i.pp = i.totalpp; end
         #-----------------------------------------------------------------------
         # The Raid Pokemon starts using Max Moves after its shield triggers.
         #-----------------------------------------------------------------------
         if b.moves == b.effects[PBEffects::BaseMoves]
-          b.pbDisplayPowerMoves(2) if b.effects[PBEffects::ShieldCounter]<2 && b.level>35
           b.pbDisplayPowerMoves(2) if b.effects[PBEffects::ShieldCounter]==0
         end
         #-----------------------------------------------------------------------
@@ -531,6 +535,7 @@ class PokeBattle_Battle
           shieldLvl += 1 if b.level>55
           shieldLvl += 1 if b.level>65
           shieldLvl += 1 if b.level>=70 || $game_switches[HARDMODE_RAID]
+          shieldLvl  = 5 if pbInDynAdventure?
           shieldLvl  = 1 if shieldLvl<=0
           shieldLvl  = 8 if shieldLvl>8
           shields1   = b.hp <= b.totalhp/2             # Activates at 1/2 HP
@@ -548,7 +553,7 @@ class PokeBattle_Battle
         #-----------------------------------------------------------------------
         # Hard Mode Bonuses (Invigorating Wave).
         #-----------------------------------------------------------------------
-        if $game_switches[HARDMODE_RAID] || b.level>=70      
+        if !pbInDynAdventure? && ($game_switches[HARDMODE_RAID] || b.level>=70)    
           if b.effects[PBEffects::ShieldCounter]==0 && b.hp <= b.totalhp/2
             pbDisplay(_INTL("{1} released an invigorating wave of Dynamax energy!",b.pbThis))
             pbAnimation(getID(PBMoves,:ACIDARMOR),b,b)
@@ -591,6 +596,16 @@ class PokeBattle_Battle
           pbDisplay(_INTL("You were blown out of the den!"))
           pbSEPlay("Battle flee")
           @decision=3
+          pbDynAdventureState.knockouts = 0 if pbInDynAdventure?
+        else
+          # Revives any fainted Pokemon at the end of each turn.
+          for i in pbParty(0)
+            if i.fainted?
+              i.heal
+              pbSEPlay(sprintf("Anim/Lucky Chant"))
+              pbDisplay(_INTL("{1} recovered from fainting!\nIt can be sent back out next turn!",i.name))
+            end
+          end
         end
       end
     end
@@ -630,7 +645,7 @@ class PokeBattle_Battle
       #-------------------------------------------------------------------------
       # Hard Mode Bonuses (Immobilizing Wave)
       #-------------------------------------------------------------------------
-      if $game_switches[HARDMODE_RAID] || b.level>=70
+      if !pbInDynAdventure? && ($game_switches[HARDMODE_RAID] || b.level>=70)
         if b.effects[PBEffects::ShieldCounter]==-1 &&
            b.effects[PBEffects::RaidShield]<=0
           pbDisplay(_INTL("{1} released an immense wave of Dynamax energy!",b.pbThis))
@@ -695,7 +710,8 @@ class PokeBattle_Battle
     cheerHealParty   = 4
     cheerShieldBreak = 5
     cheerDynamax     = 6
-    if $game_variables[REWARD_BONUSES][1]==false
+    if $game_variables[REWARD_BONUSES][1]==false ||
+       boss.effects[PBEffects::KnockOutCount]<pbPlayerBattlerCount
       cheered = 0
       eachSameSideBattler(battler) do |b|
         next if @choices[b.index][0] != :Cheer
@@ -708,11 +724,13 @@ class PokeBattle_Battle
         cheerEffects.push(cheerStatBoost)
         cheerEffects.push(cheerReflect)     if battler.pbOwnSide.effects[PBEffects::Reflect]==0
         cheerEffects.push(cheerLightScreen) if battler.pbOwnSide.effects[PBEffects::LightScreen]==0
-        if boss.effects[PBEffects::KnockOutCount]<2 || boss.effects[PBEffects::Dynamax]<5
+        if boss.effects[PBEffects::KnockOutCount]<3 || boss.effects[PBEffects::Dynamax]<5
           if cheered==pbPlayerBattlerCount
-            cheerEffects.push(cheerHealParty)   if b.hp < b.totalhp/2
             cheerEffects.push(cheerShieldBreak) if boss.effects[PBEffects::RaidShield]>0
             cheerEffects.push(cheerDynamax)     if !dmaxInUse && @dynamax[side][owner]!=-1
+            eachSameSideBattler(battler) do |b|
+              cheerEffects.push(cheerHealParty) if b.hp < b.totalhp/2
+            end
           end
         else
           cheerEffects.push(cheerNoEffect)
@@ -725,7 +743,7 @@ class PokeBattle_Battle
           cheerEffects.push(cheerHealParty) if b.hp < b.totalhp/2
         end
         if cheered==pbPlayerBattlerCount
-          if boss.effects[PBEffects::KnockOutCount]<2 || boss.effects[PBEffects::Dynamax]<5
+          if boss.effects[PBEffects::KnockOutCount]<3 || boss.effects[PBEffects::Dynamax]<5
             cheerEffects.push(cheerShieldBreak) if boss.effects[PBEffects::RaidShield]>0
             cheerEffects.push(cheerDynamax)     if !dmaxInUse && @dynamax[side][owner]!=-1
           end
@@ -1107,6 +1125,7 @@ class PokemonDataBox < SpriteWrapper
         shieldLvl += 1 if @battler.level>55
         shieldLvl += 1 if @battler.level>65
         shieldLvl += 1 if @battler.level>=70 || $game_switches[HARDMODE_RAID]
+        shieldLvl  = 5 if pbInDynAdventure?
         shieldLvl  = 1 if shieldLvl<=0
         shieldLvl  = 8 if shieldLvl>8
         offset     = (121-(2+shieldLvl*30/2))

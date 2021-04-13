@@ -3341,7 +3341,7 @@ def pbDefinePath(canvas)
       end
       while !canceled
         mousepos=Mouse::getMousePos(true)
-        if mouse && !pointpath.isEndPoint?(mousepos[0],mousepos[1])
+        if mousepos && !pointpath.isEndPoint?(mousepos[0],mousepos[1])
           pointpath.addPoint(mousepos[0],mousepos[1])
           points.push(PointSprite.new(mousepos[0],mousepos[1],canvas.viewport))
         end

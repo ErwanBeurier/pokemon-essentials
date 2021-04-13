@@ -562,11 +562,10 @@ end
 #-------------------------------------------------------------------------------
 # Plays the Dynamax cry of a species.
 #-------------------------------------------------------------------------------
-def pbGetDynamaxCry(species,form)
+def pbPlayDynamaxCry(species,form)
   pkmn = getID(PBSpecies,species)
   pbPlayCrySpecies(pkmn,form,100,60)
 end
-
 
 ################################################################################
 # SECTION 5 - COMPATIBILITY
