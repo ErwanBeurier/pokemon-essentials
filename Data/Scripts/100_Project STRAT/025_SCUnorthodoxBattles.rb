@@ -8,6 +8,7 @@
 # - inverse battles (inverses the effectiveness of moves)
 # - random terrain / weather (changes the weather/terrain at the end of a turn)
 # - disallow all mechanics (+ enable them). 
+# - Battle Royale. 
 ################################################################################
 
 
@@ -127,7 +128,6 @@ end
 
 
 
-
 #==============================================================================
 # Control all mechanics.
 #==============================================================================
@@ -151,11 +151,16 @@ end
 
 
 
-
-
 #==============================================================================
 # Battle Royale
-# Every one fight everyone.
+# 
+# Every one fights everyone.
+# 
+# A good part of this code is about making the difference between the two uses 
+# of "opposes?": sometimes it means "is an enemy" and sometimes it means "is on 
+# the opposite side". 
+# The other pieces of code may be found by searching either battleRoyale or 
+# oppositeSide? in the scripts.
 #==============================================================================
 class PokeBattle_Battle
   attr_accessor :battleRoyale

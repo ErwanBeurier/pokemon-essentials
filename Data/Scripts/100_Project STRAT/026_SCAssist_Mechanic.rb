@@ -1,3 +1,14 @@
+################################################################################
+# SCAssist_Mechanic
+# 
+# This script is part of Pokémon Project STRAT by StCooler, and is therefore 
+# not part of Pokémon Essentials. 
+#
+# This script contains the main implementation of the Assistance mechanic.
+# The rest of the code may be found by searching "Assistance" in the files. 
+################################################################################
+
+
 # Switch to allow Assistance or not. 
 NO_ASSISTANCE = 88
 
@@ -58,17 +69,9 @@ class PokeBattle_Battle
     return @assistanceData[side][owner]
   end 
   
-  
+  # If player: calls the Party screen to choose a Pokémon from.
+  # Otherwise, choose a Pokémon in the team. 
   def pbChooseAssistingPokemon(idxBattler)
-    # assisting = nil 
-    # idxParty = nil 
-    # pbParty(idxBattler).each_with_index do |pkmn,i|
-      # next if !pkmn || i==@battlers[idxBattler].pokemonIndex
-      # next if pkmn.egg?
-      # next if pkmn.item != PBItems::SOULLINK
-      # assisting = pkmn
-      # idxParty = i
-    # end
     idxParty = -1
     assisting = nil 
     assistAfter = false 
@@ -112,7 +115,9 @@ class PokeBattle_Battle
   end
   
   
+  #-----------------------------------------------------------------------------
   # Assistance registration
+  #-----------------------------------------------------------------------------
   def pbRegisterAssistance(idxBattler)
     side  = @battlers[idxBattler].idxOwnSide
     owner = pbGetOwnerIndexFromBattlerIndex(idxBattler)
@@ -193,7 +198,133 @@ class PokeBattle_Battle
 end 
 
 
+
+
+class PokeBattle_Battler
+  # Assistance come after Z-moves, Mega, and before Dynamax. 
+  def canCallAssistance?
+    # DEBUG 
+    # return true 
+    # END OF DEBUG
+    return false if shadowPokemon?
+    return false if pbIsZCrystal?(self.item) || hasZMove?
+    return false if pokemon.mega?   || hasMega?
+    return false if pokemon.primal? || hasPrimal?
+    return false if pokemon.ultra?  || hasUltra?
+    return false if !isConst?(self.item, PBItems, :SOULLINK)
+    # return false if hasDynamax?
+    return true
+  end
+  
+  
+  # Get the positive effects gained by the assited Pokémon due to the action 
+  # of the assit.
+  def pbSetAssistanceChanges(effectsOld, stagesOld, positionsOld, 
+            assistEffectsOld, assistStagesOld, assistPositionsOld, 
+            assistEffectsNew, assistStagesNew, assistPositionsNew)
+    
+    # Get back the old effects / stages
+    @effects = effectsOld
+    @stages = stagesOld
+    @battle.positions[@index].effects = positionsOld
+    
+    return if !assistEffectsOld || !assistEffectsNew
+    return if !assistStagesOld || !assistStagesNew
+    return if !assistPositionsOld || !assistPositionsNew
+    
+    got_something = false 
+    
+    # Get the stat changes.
+    PBStats.eachBattleStat { |s| 
+      next if assistStagesOld[s] == assistStagesNew[s] # Unchanged 
+      next if assistStagesNew[s] < 0 # Don't take negative stuff. 
+      @stages[s] += assistStagesNew[s] - assistStagesOld[s]
+      got_something = true 
+    }
+    
+    # Get the changes in effects (Only positive effects carry out)
+    POSITIVE_EFFECTS_BATTLER.each { |effect|
+      next if assistEffectsOld[effect] == assistEffectsNew[effect]
+      @effects[effect] = assistEffectsNew[effect]
+      got_something = true 
+    }
+    
+    # Get the changes in effects of the position (e.g. Wish)
+    # Needed only if the assisting Pokémon was on the field and set something 
+    # to the position. 
+    POSITIVE_EFFECTS_POSITION.each { |effect|
+      next if assistPositionsOld[effect] == assistPositionsNew[effect]
+      @battle.positions[@index].effects[effect] = assistPositionsNew[effect]
+      got_something = true 
+    }
+    
+    if got_something
+      @battle.pbDisplay(_INTL("{1} gained some effects from the Assistance!", pbThis))
+    end 
+  end 
+  
+  
+  # Transfer the positive effects of the calling Pokémon to the assist. 
+  def pbSetAssistanceEffects(effectsOld, stagesOld, positionsOld, isAssist)
+    # isAssist = true if self is the assisting Pokémon, false if it is the 
+    # assisted Pokémon.
+    got_something = false 
+    
+    # Get the stat changes.
+    PBStats.eachBattleStat { |s| 
+      next if @stages[s] == stagesOld[s] # Unchanged 
+      next if stagesOld[s] < 0 # Don't take negative stuff. 
+      @stages[s] = stagesOld[s]
+      got_something = true 
+    }
+    
+    # Get the changes in effects (Only positive effects carry out)
+    POSITIVE_EFFECTS_BATTLER.each { |effect|
+      next if @effects[effect] == effectsOld[effect]
+      @effects[effect] = effectsOld[effect]
+      got_something = true 
+    }
+    
+    # Get the changes in effects of the position (e.g. Wish)
+    # Needed only if the assisting Pokémon was on the field and set something 
+    # to the position. 
+    POSITIVE_EFFECTS_POSITION.each { |effect|
+      next if @battle.positions[@index].effects[effect] == positionsOld[effect]
+      @battle.positions[@index].effects[effect] = positionsOld[effect]
+      got_something = true 
+    }
+    
+    if got_something && isAssist
+      @battle.pbDisplay(_INTL("{1} gained some effects from the caller!", pbThis)) 
+    end 
+  end 
+end 
+
+
+
+
 class PokeBattle_Scene
+  # Used to hide the calling Pokémon.
+  def pbHideBattler(idxBattler)
+    # Set up trainer appearing animation
+    disappearAnim = BattlerDisappearAnimation.new(@sprites,@viewport,idxBattler)
+    @animations.push(disappearAnim)
+    # Play the animation
+    while inPartyAnimation?; pbUpdate; end
+  end
+
+  
+  # Used to move back the calling Pokémon.
+  def pbShowBattler(idxBattler)
+    # Set up trainer appearing animation
+    appearAnim = BattlerAppearAnimation.new(@sprites,@viewport,idxBattler, @battle.sideSizes[idxBattler%2])
+    @animations.push(appearAnim)
+    # Play the animation
+    while inPartyAnimation?; pbUpdate; end
+  end
+  
+  
+  # A Party screen function that allows to choose which Pokémon to use for assist.
   def pbPartyScreenAssist(idxBattler)
     # Fade out and hide all sprites
     visibleSprites = pbFadeOutAndHide(@sprites)
@@ -244,103 +375,55 @@ end
 
 
 
-class PokeBattle_Battler
-  def canCallAssistance?
-    # DEBUG 
-    # return true 
-    # END OF DEBUG
-    return false if shadowPokemon?
-    return false if pbIsZCrystal?(self.item) || hasZMove?
-    return false if pokemon.mega?   || hasMega?
-    return false if pokemon.primal? || hasPrimal?
-    return false if pokemon.ultra?  || hasUltra?
-    return false if !isConst?(self.item, PBItems, :SOULLINK)
-    # return false if hasDynamax?
-    return true
+
+class BattlerDisappearAnimation < PokeBattle_Animation
+  def initialize(sprites,viewport,idxBattler)
+    @idxBattler = idxBattler
+    super(sprites,viewport)
   end
   
-  def pbSetAssistanceChanges(effectsOld, stagesOld, positionsOld, 
-            assistEffectsOld, assistStagesOld, assistPositionsOld, 
-            assistEffectsNew, assistStagesNew, assistPositionsNew)
-    
-    # Get back the old effects / stages
-    @effects = effectsOld
-    @stages = stagesOld
-    @battle.positions[@index].effects = positionsOld
-    
-    return if !assistEffectsOld || !assistEffectsNew
-    return if !assistStagesOld || !assistStagesNew
-    return if !assistPositionsOld || !assistPositionsNew
-    
-    got_something = false 
-    
-    # Get the stat changes.
-    PBStats.eachBattleStat { |s| 
-      next if assistStagesOld[s] == assistStagesNew[s] # Unchanged 
-      next if assistStagesNew[s] < 0 # Don't take negative stuff. 
-      @stages[s] += assistStagesNew[s] - assistStagesOld[s]
-      got_something = true 
-    }
-    
-    # Get the changes in effects (Only positive effects carry out)
-    POSITIVE_EFFECTS_BATTLER.each { |effect|
-      next if assistEffectsOld[effect] == assistEffectsNew[effect]
-      @effects[effect] = assistEffectsNew[effect]
-      got_something = true 
-    }
-    
-    # Get the changes in effects of the position (e.g. Wish)
-    # Needed only if the assisting Pokémon was on the field and set something 
-    # to the position. 
-    POSITIVE_EFFECTS_POSITION.each { |effect|
-      next if assistPositionsOld[effect] == assistPositionsNew[effect]
-      @battle.positions[@index].effects[effect] = assistPositionsNew[effect]
-      got_something = true 
-    }
-    
-    if got_something
-      @battle.pbDisplay(_INTL("{1} gained some effects from the Assistance!", pbThis))
-    end 
-  end 
+  def createProcesses
+    delay = 0
+    # Make old trainer sprite move off-screen first if necessary
+    if @sprites["pokemon_#{@idxBattler}"] && @sprites["pokemon_#{@idxBattler}"].visible
+      oldPokemon = addSprite(@sprites["pokemon_#{@idxBattler}"],PictureOrigin::Bottom)
+      oldPokemon.moveDelta(delay,8,-Graphics.width/2,0)
+      oldPokemon.setVisible(delay+8,false)
+      delay = oldPokemon.totalDuration
+    end
+  end
+end
+
+
+
+
+class BattlerAppearAnimation < PokeBattle_Animation
+  def initialize(sprites,viewport,idxBattler, sideSize)
+    @idxBattler = idxBattler
+    @sideSize = sideSize
+    super(sprites,viewport)
+  end
   
-  def pbSetAssistanceEffects(effectsOld, stagesOld, positionsOld, isAssist)
-    # isAssist = true if self is the assisting Pokémon, false if it is the 
-    # assisted Pokémon.
-    got_something = false 
-    
-    # Get the stat changes.
-    PBStats.eachBattleStat { |s| 
-      next if @stages[s] == stagesOld[s] # Unchanged 
-      next if stagesOld[s] < 0 # Don't take negative stuff. 
-      @stages[s] = stagesOld[s]
-      got_something = true 
-    }
-    
-    # Get the changes in effects (Only positive effects carry out)
-    POSITIVE_EFFECTS_BATTLER.each { |effect|
-      next if @effects[effect] == effectsOld[effect]
-      @effects[effect] = effectsOld[effect]
-      got_something = true 
-    }
-    
-    # Get the changes in effects of the position (e.g. Wish)
-    # Needed only if the assisting Pokémon was on the field and set something 
-    # to the position. 
-    POSITIVE_EFFECTS_POSITION.each { |effect|
-      next if @battle.positions[@index].effects[effect] == positionsOld[effect]
-      @battle.positions[@index].effects[effect] = positionsOld[effect]
-      got_something = true 
-    }
-    
-    if got_something && isAssist
-      @battle.pbDisplay(_INTL("{1} gained some effects from the caller!", pbThis)) 
-    end 
-  end 
-end 
+  def createProcesses
+    delay = 0
+    # Make new trainer sprite move on-screen
+    if @sprites["pokemon_#{@idxBattler}"]
+      battlerX, battlerY = PokeBattle_SceneConstants.pbBattlerPosition(@idxBattler,@sideSize)
+      newBattler = addSprite(@sprites["pokemon_#{@idxBattler}"],PictureOrigin::Bottom)
+      newBattler.setVisible(delay,true)
+      newBattler.setXY(delay,-Graphics.width/2,0)
+      newBattler.moveDelta(delay,8,battlerX + Graphics.width/2,battlerY)
+    end
+  end
+end
 
 
 
-  
+
+#===============================================================================
+# Calls a Pokémon for Assistance. 
+# (Assistance)
+#===============================================================================
 class PokeBattle_Move_C007 < PokeBattle_Move
   def initialize(battle, move)
     super(battle, move)
@@ -518,7 +601,10 @@ end
 
 
 
-
+#===============================================================================
+# This is the placehlder move that is registeered when the player triggers the  
+# assistance mechanic.
+#===============================================================================
 class SCAssistMechanic < PokeBattle_Move_C007
   def initialize(battle)
     pbmove = PBMove.new(getConst(PBMoves, :ASSISTANCE))
@@ -538,68 +624,6 @@ class SCAssistMechanic < PokeBattle_Move_C007
   end 
 end 
 
-
-
-
-class PokeBattle_Scene
-  
-  def pbHideBattler(idxBattler)
-    # Set up trainer appearing animation
-    disappearAnim = BattlerDisappearAnimation.new(@sprites,@viewport,idxBattler)
-    @animations.push(disappearAnim)
-    # Play the animation
-    while inPartyAnimation?; pbUpdate; end
-  end
-
-  
-  def pbShowBattler(idxBattler)
-    # Set up trainer appearing animation
-    appearAnim = BattlerAppearAnimation.new(@sprites,@viewport,idxBattler, @battle.sideSizes[idxBattler%2])
-    @animations.push(appearAnim)
-    # Play the animation
-    while inPartyAnimation?; pbUpdate; end
-  end
-end 
-
-
-
-class BattlerDisappearAnimation < PokeBattle_Animation
-  def initialize(sprites,viewport,idxBattler)
-    @idxBattler = idxBattler
-    super(sprites,viewport)
-  end
-  
-  def createProcesses
-    delay = 0
-    # Make old trainer sprite move off-screen first if necessary
-    if @sprites["pokemon_#{@idxBattler}"] && @sprites["pokemon_#{@idxBattler}"].visible
-      oldPokemon = addSprite(@sprites["pokemon_#{@idxBattler}"],PictureOrigin::Bottom)
-      oldPokemon.moveDelta(delay,8,-Graphics.width/2,0)
-      oldPokemon.setVisible(delay+8,false)
-      delay = oldPokemon.totalDuration
-    end
-  end
-end
-
-class BattlerAppearAnimation < PokeBattle_Animation
-  def initialize(sprites,viewport,idxBattler, sideSize)
-    @idxBattler = idxBattler
-    @sideSize = sideSize
-    super(sprites,viewport)
-  end
-  
-  def createProcesses
-    delay = 0
-    # Make new trainer sprite move on-screen
-    if @sprites["pokemon_#{@idxBattler}"]
-      battlerX, battlerY = PokeBattle_SceneConstants.pbBattlerPosition(@idxBattler,@sideSize)
-      newBattler = addSprite(@sprites["pokemon_#{@idxBattler}"],PictureOrigin::Bottom)
-      newBattler.setVisible(delay,true)
-      newBattler.setXY(delay,-Graphics.width/2,0)
-      newBattler.moveDelta(delay,8,battlerX + Graphics.width/2,battlerY)
-    end
-  end
-end
 
 
 
