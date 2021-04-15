@@ -777,7 +777,7 @@ module SCTB
     
     mvst_commands = ["Cancel"]
     
-    movesetdata[speciesid].each { |mvst|
+    movesetdata[speciesid][0].each { |mvst|
       p = mvst[SCMovesetsData::PATTERN]
       mvst_commands.push(SCMovesetPatterns.getName(p))
     }
@@ -786,7 +786,7 @@ module SCTB
     
     return nil if m == 0
     
-    mvst = movesetdata[speciesid][m - 1]
+    mvst = movesetdata[speciesid][0][m - 1]
     
     return nil if !mvst 
     
@@ -980,10 +980,11 @@ class SCTeamViewer
 		ktt = k+"tt"
 		
 		@sprites[kt].bitmap.clear
-		
+    
 		s = "[" + scTeamStorage.tierAt(@index_upper + displayed_index) + "] "
 		s += scTeamStorage.nameAt(@index_upper + displayed_index)
-		
+
+    
 		pbSetSystemFont(@sprites[kt].bitmap)
 		textpos=[
 			[s, 35, 4, 0, Color.new(248,248,248), Color.new(40,40,40)],
@@ -1083,14 +1084,14 @@ class SCTeamViewer
 			# Choose the type of team: 
 			
 			if res == 0 or res == 1
-				res2 = pbMessage("Use current tier? (" + tier_choice + ")", ["Yes", "No"], -1)
+        tier_choice = scSelectTierMenu
+        tier_choice = scGetTier() if tier_choice == ""
+        # pbMessage("Chosen tier: " + tier_choice + ".")
+				# res2 = pbMessage("Use current tier? (" + tier_choice + ")", ["Yes", "No"], -1)
 				
-				if res2 == 1
-					# Change tier. 
-					tier_choice = scSelectTierMenu
-					tier_choice = scGetTier() if tier_choice == ""
-					pbMessage("Chosen tier: " + tier_choice + ".")
-				end 
+				# if res2 == 1
+					# # Change tier. 
+				# end 
 			end 
 				
 			if res == 0
@@ -1102,7 +1103,12 @@ class SCTeamViewer
 				create_spriteset
 				Graphics.transition
 			elsif res == 1
-				team_types = ["Random", "Hyper-offense", "Offense", "Balanced", "Defensive", "Stall"]
+        team_filters = SCTeamFilters.getList(tier_choice)
+        
+				team_types = []
+        team_filters.each { |f| 
+          team_types.push(f.name)
+        }
         
 				# if < 0: choose at random.
 				# if = 0: Hyper Offense (Lead + 4 offensive + anything)
@@ -1111,30 +1117,33 @@ class SCTeamViewer
 				# if = 3: Defensive (Lead + Offensive + 4 defensive)
 				# if = 4: Stall (5 defensive + Anything)
 				
-				team_type = pbMessage("Generate what type of team?", team_types, -1)
+				# team_type = pbMessage("Generate what type of team?", team_types, -1)
+				team_type = pbMessage(_INTL("Generate what type of team? (Tier: {1})", tier_choice), team_types, -1)
 				
 				if team_type > -1
 					# didn't cancel. 
+          # pbMessage(_INTL("Generated team will be {1}.",team_types[team_type]))
 					while team_type > -1
-						pbMessage(_INTL("Generated team will be {1}.",team_types[team_type+1]))
-						
-						team_type -= 1 
+            # team_type -= 1 
 						# Generate random team for the current tier. 
-						rand_party = scGenerateTeamRand($Trainer, team_type, nil, nil, tier_choice)
+						rand_party = scGenerateTeamRand($Trainer, team_filters[team_type], nil, nil, tier_choice)
 						rand_party = convertPartyToList(rand_party)
 						
-						scTeamStorage.modifyTeam(team_index, team_types[team_type+1], rand_party, tier_choice)
+						scTeamStorage.modifyTeam(team_index, team_types[team_type], rand_party, tier_choice)
 						
 						create_spriteset
 						Graphics.transition
 						
-						keep_team = pbMessage("Keep this team?", ["Yes", "No", "Change"], 0)
+						keep_team = pbMessage(_INTL("Keep this team? (Tier: {1})", tier_choice), ["Yes", "No", "Change"], 0)
 						
 						if keep_team == 0 
 							pbMessage("Generated team for tier " + tier_choice + "!")
 							break
+            # elsif keep_team == 1
+              # Generate again. 
 						elsif keep_team == 2
 							team_type = pbMessage("Generate what type of team?", team_types, -1)
+              # pbMessage(_INTL("Generated team will be {1}.",team_types[team_type]))
 						end 
 					end 
 				end 
@@ -1531,6 +1540,7 @@ class SCTeamBuilder
   end 
 	
 	
+  
 	def drawWantedData
 		drawHeader
 		
@@ -3148,6 +3158,7 @@ class SCWantedDataComplete
     return msg 
   end 
 	
+  
   
   def chooseHiddenPower(move)
     return move if move != PBMoves::HIDDENPOWER

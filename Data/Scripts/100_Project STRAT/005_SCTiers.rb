@@ -62,6 +62,7 @@ class SCTier
 		@banned_items = dictionary["BannedItems"]
 		@banned_moves = dictionary["BannedMoves"]
 		@banned_abilities = dictionary["BannedAbilities"]
+    @allow_specific = dictionary["AllowSpecific"]
     @default_index_menu = 0 # Index in the stratum choice. 
     
     if dictionary["Stratum"]
@@ -100,7 +101,7 @@ class SCTier
 	
   
   
-	def randTeamSpecies(type_of_team = -1, ask_stratum = false)
+	def randTeamSpecies2(type_of_team = -1, ask_stratum = false)
 		# type_of_team:
 		# if < 0: choose at random.
 		# if = 0: Hyper Offense (Lead + 4 offensive + anything)
@@ -193,7 +194,7 @@ class SCTier
 					raise _INTL("No moveset for {1}.", PBSpecies.getName(pk))
 				end 
 				
-				for mv in movesetlog[pk]
+				for mv in movesetlog[pk][0]
 					# mv = []
 					
 					# next if req_item && !mv[3].include?(req_item) # Wrong item.
@@ -296,6 +297,310 @@ class SCTier
 		return [team_pkmns, team_roles, movesets]
 	end 
 	
+  
+	def randTeamSpecies(team_filter = nil, ask_stratum = false)
+    # type_of_team: nil, or constant of SCTeamFilters.
+    team_filter = SCTeamFilters::Random if !team_filter
+    stored_team_filter = team_filter
+    
+    # Type variations to make colorful teams.
+    team_filter = team_filter.vary() if self.numFrequent() > 50 && !["MONO", "BI"].include?(@id)
+    
+    # team_filter = SCTeamFilters::Test1
+    
+    if ask_stratum && @stratum && stored_team_filter.is_a?(SCDummyTeamFilter)
+      # Then the player wants to choose. 
+      @stratum = stratumMenu
+      chooseStratum(@stratum)
+    end 
+    
+		team_roles = team_filter.getShuffledRoles()
+    team_roles_clone = team_roles.clone
+    allowed_errors = 0 
+		team_generation_max_errors = 1
+		# 0 = anything 
+		# 1X = Lead 
+		# 2X = Offensive 
+		# 3X = Defensive 
+		# 4X = Support 
+		# X = 0 if any, 1 if physical, 2 if special, 3 if mixed
+		# Notes: 
+		# - Lead include Offensive (just in case the tier does not have enough Leads).
+		# - Support include Defensive
+		
+		
+		for i in 0...6
+			if team_roles[i] == nil
+				raise _INTL("{1}-{2}-{3}-{4}-{5}-{6}", team_roles[0], team_roles[1], team_roles[2], team_roles[3], team_roles[4], team_roles[5])
+			end 
+		end 
+		# Filter the pokémons per role. 
+		# for each wanted role defined in team_roles, list all the pokémons that 
+    # match this role. 
+		# Normally, Random tiers shouldn't have problems of availability, as each 
+    # tier should have enough both physical and special sweepers and defensive. 
+		
+		
+		team_pkmns = []
+
+		movesets = {} # movesets of the picked Pokemons
+		
+		movesetlog = scLoadMovesetsData
+		
+		list_poke = Array.new(@frequent_pkmns)
+    list_poke = list_poke & @strata if @strata && stored_team_filter.is_a?(SCDummyTeamFilter)
+		i = 0 
+    
+    filtered_movesets = Array.new(6, Array.new(6, [])) # Index in role -> Index in filter -> list of movesets. 
+    filtered_pokemons = Array.new(6, Array.new(6, []))
+    filtered_pokemons_roles = Array.new(6, Array.new(6, []))
+    
+		while i < 6
+			if i == 4
+				list_poke = @frequent_pkmns + @rare_pkmns
+        list_poke = list_poke & @strata if @strata
+				# Rare only for the last two slots. 
+			end 
+			
+			# Loop initialisation
+			choice_of_lead = 10 # Change to 11 if given a physical lead and expect a special sweeper to accompany it. 
+			
+      previous_ind = []
+      # pbMessage(_INTL("list_poke = {1}", list_poke.length))
+			for pk in list_poke
+				# next if team_pkmns.include?(pk)
+        repartition = []
+        f_movesets = {}
+        f_pk = {}
+        f_roles = {}
+        specific = []
+        team_filter.eachFittingMoveset(movesetlog, pk, team_roles[i], allowed_errors) do |mv, ind, filter|
+          repartition.push(ind) if !repartition.include?(ind)
+          specific.push(ind) if filter && filter.specific && !specific.include?(ind)
+          
+          f_movesets[ind] = [] if !f_movesets[ind]
+          f_pk[ind] = [] if !f_pk[ind]
+          f_roles[ind] = [] if !f_roles[ind]
+          
+          f_movesets[ind].push(mv)
+          f_pk[ind].push(mv[SCMovesetsData::BASESPECIES])
+          f_roles[ind].push(mv[SCMovesetsData::ROLE])
+        end 
+        
+        next if repartition.length == 0 
+        
+        list_indices = (specific.length == 0 ? repartition : specific)
+        
+        # Give priority to empty spots. 
+        indc = -1 
+        for r in list_indices
+          next if !filtered_movesets[i][r].empty?
+          indc = r 
+          break 
+        end 
+        # scLog(repartition)
+        indc = scsample(list_indices, 1) if indc == -1 
+        
+        filtered_movesets[i][indc] += f_movesets[indc]
+        filtered_pokemons[i][indc] += f_pk[indc]
+        filtered_pokemons_roles[i][indc] += f_roles[indc]
+			end 
+      
+      found_something = false
+      for ind in 0...6
+        if filtered_movesets[i][ind].length > 0
+          found_something = true 
+          break 
+        end 
+      end 
+      # pbMessage(_INTL("i = {2}, role = {1}, Lengths = {3}-{4}-{5}-{6}-{7}-{8}", team_roles[i], i, 
+        # filtered_pokemons_roles[i][0].length, filtered_pokemons_roles[i][1].length, 
+        # filtered_pokemons_roles[i][2].length, filtered_pokemons_roles[i][3].length, 
+        # filtered_pokemons_roles[i][4].length, filtered_pokemons_roles[i][5].length))
+			
+			if !found_something
+        pbMessage("Coucou")
+				# Ah crap. No Pokémon were found for that given role. Probably the tier
+        # is too shallow. But we don't need to warn the player about the wrong 
+        # choices of tier made by the creator.
+				# Let's quick fix this. 
+				
+				if team_roles[i] == 0
+          if allowed_errors > team_generation_max_errors
+            if team_filter.name == "EMPTY"
+              # There were no movesets! This is a problem. 
+              raise _INTL("Team Filter {1} yielded no movesets for tier {2}!\n i = {3} and list_poke = {4}", team_filter.name, @name, i, list_poke.length)
+            else 
+              # Forget about the filter. Give a dummy pattern.
+              team_filter = SCTeamFilter.new("EMPTY", team_roles_clone)
+            end 
+          else
+            # Try again but allow movesets that do not perfectly fit the filter. 
+            team_roles[i] = team_roles_clone[i]
+            allowed_errors += 1
+          end 
+				end 
+				
+				if team_roles[i] == 10
+					# We couldn't find a lead. Try offensive. 
+					team_roles[i] = 15 
+				elsif team_roles[i] == 21 || team_roles[i] == 22 || team_roles[i] == 23
+					# We couldn't find a specific offensive. Maybe try another offensive. 
+					team_roles[i] = 20
+				elsif team_roles[i] == 31 || team_roles[i] == 32 || team_roles[i] == 33
+					# We couldn't find a specific defensive. Maybe try another defensive or support. 
+					team_roles[i] = 40
+				else 
+					# We tried to replace the lead with an offensive.
+					team_roles[i] = 0 
+				end 
+			else 
+        # Next. 
+        i += 1 
+			end 
+		end 
+    
+    
+    # I don't understand but the resulting filtered_movesets is just the first line repeated 6 times.
+    # I can get rid of combinations for now. 
+    
+    # Start with the fewer movesets.
+    chosen = []
+    team_pkmns = Array.new(6)
+    
+    while chosen.length < 6
+      min_i = 0
+      min_mvsts = 100000
+      
+      for i in 0...6
+        next if chosen.include?(i)
+        min_i, min_mvsts = i, filtered_movesets[0][i].length if filtered_movesets[0][i].length < min_mvsts
+      end 
+      
+      choice = rand(min_mvsts)
+      
+      team_pkmns[min_i] = filtered_pokemons[0][min_i][choice]
+      team_roles[min_i] = filtered_pokemons_roles[0][min_i][choice]
+      movesets[min_i] = filtered_movesets[0][min_i][choice]
+      
+      if !team_roles[min_i]
+        raise diagnoseEmpty(team_filter, filtered_movesets)
+        raise _INTL("min_mvsts = {1}, pokemon = {2}, moveset = {3}", min_mvsts, team_pkmns[min_i], movesets[min_i])
+      end 
+      
+      chosen.push(min_i)
+      
+      
+      # Now avoid repeating the Pokémons.
+      for i in 0...6
+        filtered_pokemons[0][i] = [] if i == min_i
+        
+        new_filtered_pokemons = []
+        new_filtered_pokemons_roles = []
+        new_filtered_movesets = []
+        
+        for m in 0...filtered_pokemons[0][i].length
+          if filtered_pokemons[0][i][m] != team_pkmns[min_i]
+            new_filtered_pokemons.push(filtered_pokemons[0][i][m])
+            new_filtered_pokemons_roles.push(filtered_pokemons_roles[0][i][m])
+            new_filtered_movesets.push(filtered_movesets[0][i][m])
+          end 
+        end 
+        filtered_pokemons[0][i] = new_filtered_pokemons
+        filtered_pokemons_roles[0][i] = new_filtered_pokemons_roles
+        filtered_movesets[0][i] = new_filtered_movesets
+      end 
+    end 
+    
+    
+    # # Now, we have arrays Index in role -> Index in filter -> list of movesets. 
+    # # It's a 6x6 matrix with possibly some empty cells. 
+    # # List all available combinations (I don't know better)
+    # comb = Array.new(6) { |i| i }
+    # combinations = []
+    
+    # # Try a few combinations. 
+    # for xxx in 0...20
+      # comb = scsample(comb, -1)
+      # try_next = false 
+      # for i in 0...6
+        # if filtered_movesets[comb[i]][i].length == 0
+          # try_next = true
+          # break
+        # end 
+      # end 
+      # next if try_next
+      
+      # combinations.push(comb.clone)
+    # end 
+    
+    # if combinations.length == 0
+      # # Exhaustive enumeration. Not complexity friendly. 
+      # $PokemonTemp.eachCombination do |c| 
+        # try_next = false 
+        # for i in 0...6
+          # if filtered_movesets[c[i]][i].length == 0
+            # try_next = true
+            # break
+          # end 
+        # end 
+        # next if try_next
+        
+        # combinations.push(c)
+      # end 
+    # end 
+    
+    
+    # comb = combinations[rand(combinations.length)]
+    
+    # begin 
+    # for i in 0...6
+      # # Choose a poke. 
+      # choice = 0 
+      # for j in 0...10
+        # choice = rand(filtered_pokemons[comb[i]][i].length)
+        # break if !team_pkmns.include?(filtered_pokemons[comb[i]][i][choice])
+      # end 
+      # team_pkmns.push(filtered_pokemons[comb[i]][i][choice])
+      # team_roles[i] = filtered_pokemons_roles[comb[i]][i][choice]
+      # movesets[i] = filtered_movesets[comb[i]][i][choice]
+      # # for k in 0..5
+        # # scLog(scConvertMovesetToString(filtered_movesets[comb[i]][i][k]))
+        # # scLog("========================================================")
+      # # end 
+    # end 
+    
+    # rescue 
+      # raise diagnoseEmpty(team_filter, filtered_movesets, comb)
+    # end 
+    
+		for i in 0...6
+			if team_roles[i] == nil
+				raise _INTL("{1}-{2}-{3}-{4}-{5}-{6}", team_roles[0], team_roles[1], team_roles[2], team_roles[3], team_roles[4], team_roles[5])
+			end 
+		end 
+		
+		
+		return [team_pkmns, team_roles, movesets]
+	end 
+	
+  
+  def diagnoseEmpty(team_filter, filtered_movesets)#, comb)
+    s = _INTL("Team Filter: {1} yielded no movesets.\n", team_filter.name)
+    s += "filtered_movesets = \n"
+    
+    for i in 0...6
+      for j in 0...6
+        s += _INTL("{1}", filtered_movesets[i][j].length)
+        s += "  " if j < 5
+      end
+      s += "\n"
+    end 
+    # s += "comb = " + scToStringRec(comb)
+    
+    return s 
+  end 
+  
   
 	
   def stratumMenu
@@ -440,6 +745,12 @@ class SCTier
 	end 
 	
 	
+  
+  def numFrequent()
+    return @frequent_pkmns.length
+  end 
+  
+  
 	
 	def numBanned()
 		return @banned_pkmns.length 
@@ -537,8 +848,8 @@ class SCMonotypeTier < SCTier
 	
 	
 	
-	def randTeamSpecies(wanted_type = -1, type_of_team = -1)
-		# Choose a type before choosing the team. 
+	def randTeamSpecies(wanted_type = -1, type_of_team = -1) 
+    # Choose a type before choosing the team. 
 		if wanted_type == nil
 			wanted_type = self.menu 
 			# nil = give a chance to choose. 
@@ -1146,6 +1457,21 @@ end
 
 def loadTier(tierid)
 	# Loads the tier from the compiled file. 
+	# Stores a SCTier (or subclass) instance in PokémonTemp, and returns it. 
+  
+  $PokemonTemp = PokemonTemp.new if !$PokemonTemp
+  
+  if !$PokemonTemp.current_tier || $PokemonTemp.current_tier.id != tierid
+    $PokemonTemp.current_tier = loadTierNoStorage(tierid)
+  end
+  
+  return $PokemonTemp.current_tier
+end 
+
+
+
+def loadTierNoStorage(tierid)
+	# Loads the tier from the compiled file. 
 	# Returns a class. 
   
   if tierid.is_a?(Array)
@@ -1166,30 +1492,26 @@ def loadTier(tierid)
 		return SCTier.new(dictionary)
   end 
   
-  $PokemonTemp = PokemonTemp.new if !$PokemonTemp
+  tier_dict = scLoadTierData
   
-  if !$PokemonTemp.current_tier || $PokemonTemp.current_tier.id != tierid
-    tier_dict = scLoadTierData
-    
-    if !tier_dict.key?(tierid)
-      raise _INTL("{1} is not a tier!", tierid)
-    end 
-    
-    case tierid
-    when "MONO"
-      $PokemonTemp.current_tier =  SCMonotypeTier.new(tier_dict[tierid])
-    when "BI"
-      $PokemonTemp.current_tier = SCBitypeTier.new(tier_dict[tierid])
-    when "OTF"
-      $PokemonTemp.current_tier = SCPersonalisedTier.new(tier_dict[tierid])
-    end 
-    
-    $PokemonTemp.current_tier = SCTier.new(tier_dict[tierid])
-  end
+  if !tier_dict.key?(tierid)
+    raise _INTL("{1} is not a tier!", tierid)
+  end 
   
+  case tierid
+  when "MONO"
+    tier =  SCMonotypeTier.new(tier_dict[tierid])
+  when "BI"
+    tier = SCBitypeTier.new(tier_dict[tierid])
+  when "OTF"
+    tier = SCPersonalisedTier.new(tier_dict[tierid])
+  else 
+    tier = SCTier.new(tier_dict[tierid])
+  end 
   
-  return $PokemonTemp.current_tier
+  return tier 
 end 
+
 
 
 

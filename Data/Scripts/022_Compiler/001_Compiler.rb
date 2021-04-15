@@ -1240,7 +1240,8 @@ def pbCompiler
        "sclearnedtranspose.dat",
        "sctiers.dat",
        "scmovemenu.dat",
-       "scformreqs.dat"
+       "scformreqs.dat",
+       "scpatternstopoke.dat"
     ]
     textFiles = [
        "abilities.txt",

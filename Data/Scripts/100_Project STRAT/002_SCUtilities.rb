@@ -395,3 +395,33 @@ end
 
 
 
+
+class PokemonTemp
+  attr_accessor :sc_6x6combination
+  
+  def eachCombination
+    if !@sc_6x6combination
+      @sc_6x6combination = []
+      for pos0 in 0...6
+      for pos1 in 0...6
+        next if pos0 == pos1
+        for pos2 in 0...6
+        next if pos0 == pos2 || pos1 == pos2
+        for pos3 in 0...6
+          next if pos0 == pos3 || pos1 == pos3 || pos2 == pos3
+          for pos4 in 0...6
+          next if pos0 == pos4 || pos1 == pos4 || pos2 == pos4 || pos3 == pos4
+          for pos5 in 0...6
+            next if pos0 == pos5 || pos1 == pos5 || pos2 == pos5 || pos3 == pos5 || pos4 == pos5
+            @sc_6x6combination.push([pos0, pos1, pos2, pos3, pos4, pos5])
+          end 
+          end 
+        end 
+        end 
+      end 
+      end 
+    end 
+    
+    @sc_6x6combination.each { |c| yield c }
+  end 
+end 

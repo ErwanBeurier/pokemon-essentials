@@ -144,7 +144,8 @@ module SCMovesetsData
   BASESPECIES = 21 # If a Pokémon has two forms, and each form has a Mega (0 -> 1 / 2 -> 3)
   ABILITY = 22
   PATTERN = 23
-  MAXINDEX = 23
+  SPECIFIC = 24 # Moveset available only if the Tier is big enough (e.g. avoid Distorsion teams in small tiers)
+  MAXINDEX = 24
   
   MovesIndices = {MOVE1 => "Move1", MOVE2 => "Move2", MOVE3 => "Move3", MOVE4 => "Move4"}
   MovesIndicesList = [MOVE1, MOVE2, MOVE3, MOVE4]
@@ -205,6 +206,7 @@ module SCMovesetsData
     "Gender"    => [GENDER,    "e", { "M" => 0, "m" => 0, "Male" => 0, "male" => 0, "0" => 0,
                                       "F" => 1, "f" => 1, "Female" => 1, "female" => 1, "1" => 1 }],
     "Shiny"     => [SHINY,     "b"],
+    "Specific"  => [SPECIFIC,  "b"],
     "Nature"    => [NATURE,    "e", :PBNatures],
     "Nature1"   => [NATURE,    "e", :PBNatures],
     "Nature2"   => [NATURE,    "e", :PBNatures],
@@ -237,6 +239,7 @@ end
 
 
 
+
 def scCompileMovesets
   mLevel = PBExperience.maxLevel
   trainerindex    = -1
@@ -244,6 +247,7 @@ def scCompileMovesets
   pokemonindex    = -2
   movesets        = {}
   roles_to_poke   = {} # Dictionary: role -> list of poke. 
+  pattern_to_poke = {} # Dictionary: pattern -> list of poke. 
   moveset         = SCMovesetsData.newEmpty()
   moveset_natures = []
   moveset_ev_spreads = []
@@ -278,10 +282,18 @@ def scCompileMovesets
           moveset[SCMovesetsData::SPECIES] = pokemon_id
           moveset[SCMovesetsData::BASESPECIES] = pokemon_id if !moveset[SCMovesetsData::BASESPECIES]
           
-          if movesets[pokemon_id]
-            movesets[pokemon_id].push(moveset)
-          else 
-            movesets[pokemon_id] = [moveset]
+          
+          movesets[pokemon_id] = {} if !movesets[pokemon_id]
+          
+          # Add regardless of roles 
+          movesets[pokemon_id][0] = [] if !movesets[pokemon_id][0] 
+          movesets[pokemon_id][0].push(moveset)
+          
+          # Add a role filter. 
+          role = moveset[SCMovesetsData::ROLE]
+          if role 
+            movesets[pokemon_id][role] = [] if !movesets[pokemon_id][role]
+            movesets[pokemon_id][role].push(moveset)
           end 
           
           moveset         = SCMovesetsData.newEmpty()
@@ -338,9 +350,9 @@ def scCompileMovesets
       when "Form"
         moveset[SCMovesetsData::BASESPECIES] = pokemon_id
         pokemon_id = pbGetFSpeciesFromForm(pokemon_id, record)
-      # when "BaseForm"
-        # pokemon_id = pbGetFSpeciesFromForm(pokemon_id, record)
-        # moveset[SCMovesetsData::BASESPECIES] = pokemon_id
+      when "Pattern"
+        pattern_to_poke[record] = [] if !pattern_to_poke[record]
+        pattern_to_poke[record].push(pokemon_id) if !pattern_to_poke[record].include?(pokemon_id)
       end
       if schema[0] <= SCMovesetsData::MAXINDEX
         moveset[schema[0]] = record
@@ -354,14 +366,22 @@ def scCompileMovesets
     moveset[SCMovesetsData::SPECIES] = pokemon_id
     moveset[SCMovesetsData::BASESPECIES] = pokemon_id if !moveset[SCMovesetsData::BASESPECIES]
     
-    if movesets[pokemon_id]
-      movesets[pokemon_id].push(moveset)
-    else 
-      movesets[pokemon_id] = [moveset]
+    movesets[pokemon_id] = {} if !movesets[pokemon_id]
+    
+    # Add regardless of roles 
+    movesets[pokemon_id][0] = [] if !movesets[pokemon_id][0] 
+    movesets[pokemon_id][0].push(moveset)
+    
+    # Add a role filter. 
+    role = moveset[SCMovesetsData::ROLE]
+    if role 
+      movesets[pokemon_id][role] = [] if !movesets[pokemon_id][role]
+      movesets[pokemon_id][role].push(moveset)
     end 
   end 
   save_data(movesets,"Data/scmovesets.dat")
   save_data(roles_to_poke,"Data/scroles.dat")
+  save_data(pattern_to_poke,"Data/scpatternstopoke.dat")
 end
 
 
@@ -385,7 +405,7 @@ def scSaveMovesets
         Win32API.SetWindowText(_INTL("Processing moveset {1}/{2}...",processed, total_movesets))
       end
       
-      movesets = data[poke]
+      movesets = data[poke][0]
       
       next if !movesets && poke > PBSpecies.maxValue
       
@@ -533,6 +553,9 @@ def scConvertMovesetToString(moveset, with_tab = false, for_compiler = true)
   end
   if moveset[SCMovesetsData::PATTERN] && moveset[SCMovesetsData::PATTERN] != SCMovesetPatterns::NOPATTERN && for_compiler
     s += sprintf(s_tab + "Pattern = %s\r\n",getConstantName(SCMovesetPatterns, moveset[SCMovesetsData::PATTERN]))
+  end
+  if moveset[SCMovesetsData::SPECIFIC]
+    s += sprintf(s_tab + "Specific = Yes\r\n")
   end
   
   return s 
@@ -949,6 +972,7 @@ class PokemonTemp
   attr_accessor :sc_learned
   attr_accessor :sc_learned_transpose
   attr_accessor :sc_stattotals
+  attr_accessor :sc_patterns_to_poke
   attr_accessor :sc_move_menu
   attr_accessor :sc_tiers
   attr_accessor :sc_formreqs
@@ -1016,10 +1040,20 @@ end
 
 
 
+def scLoadPatternsToPoke
+  $PokemonTemp = PokemonTemp.new if !$PokemonTemp
+  if !$PokemonTemp.sc_patterns_to_poke
+    $PokemonTemp.sc_patterns_to_poke = load_data("Data/scpatternstopoke.dat") || []
+  end
+  return $PokemonTemp.sc_patterns_to_poke
+end 
+
+
+
 def scLoadTierData
   $PokemonTemp = PokemonTemp.new if !$PokemonTemp
   if !$PokemonTemp.sc_tiers
-    $PokemonTemp.sc_tiers = load_data("Data/sctiers.dat") || []
+    $PokemonTemp.sc_tiers = load_data("Data/sctiers.dat") || {}
   end
   return $PokemonTemp.sc_tiers
 end 

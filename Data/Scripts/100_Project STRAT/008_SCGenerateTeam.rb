@@ -61,14 +61,8 @@ end
 
 
 
-def scGenerateTeamRand(trainer, type_of_team = -1, type1 = -1, type2 = -1, tierid = nil)
-  # type_of_team:
-  # if < 0: choose at random.
-  # if = 0: Hyper Offense (Lead + 4 offensive + anything)
-  # if = 1: Offensive (Lead + 3 offensive + 2 defensive)
-  # if = 2: Balanced (Lead + 2 Offensive + 3 defensive)
-  # if = 3: Defensive (Lead + Offensive + 4 defensive)
-  # if = 4: Stall (5 defensive + Anything)
+def scGenerateTeamRand(trainer, type_of_team = nil, type1 = -1, type2 = -1, tierid = nil)
+  # type_of_team: nil, or constant of SCTeamFilters.
   
   # Build the team. 
   
@@ -81,6 +75,7 @@ def scGenerateTeamRand(trainer, type_of_team = -1, type1 = -1, type2 = -1, tieri
   
   result_generation = []
   tier = loadTier(tierid)
+  
   
   # Generate the Pokémons. 
   if tierid == "MONO"
@@ -235,6 +230,9 @@ def scGenerateMoveset(pkmn, trainer, tier)
   # Give form if applicable. 
   # form = (pkmn[SCMovesetsData::BASEFORM] ? pkmn[SCMovesetsData::BASEFORM] : pkmn[SCMovesetsData::FORM])
   form = pkmn[SCMovesetsData::FORM]
+  if pkmn[SCMovesetsData::BASEFORM] && pkmn[SCMovesetsData::BASEFORM] != pkmn[SCMovesetsData::FORM]
+    form = pkmn[SCMovesetsData::BASEFORM] 
+  end 
   form = (form ? form : 0)
   sp = pbGetFSpeciesFromForm(pkmn[SCMovesetsData::BASESPECIES], form)
   
