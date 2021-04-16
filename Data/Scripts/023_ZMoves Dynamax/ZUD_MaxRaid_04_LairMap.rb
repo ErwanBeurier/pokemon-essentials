@@ -36,7 +36,7 @@
 #===============================================================================
 # Sets up the initial coordinates of all Max Lair map sprites and tiles.
 #===============================================================================
-class DynAdventureState
+class LairMapScene
   
   def pbSetMapTiles(map)
     #---------------------------------------------------------------------------
@@ -302,8 +302,9 @@ class DynAdventureState
       nextlvl  = (species[0]==@bossSpecies) ? 5 : 0
       level    = $Trainer.party[0].level + nextlvl
       lairpoke = pbGetFSpeciesFromForm(species[0],species[1])
-      $game_variables[MAXRAID_PKMN]  = [species[0],species[1],species[2],level,gmax]
-      $game_switches[MAXRAID_SWITCH] = true
+      pbDynAdventureState.bossBattled = true if lairpoke==@bossSpecies 
+      $game_variables[MAXRAID_PKMN]   = [species[0],species[1],species[2],level,gmax]
+      $game_switches[MAXRAID_SWITCH]  = true
       pbFadeOutIn(99999) {
         pbMessage(_INTL("\\me[Max Raid Intro]You ventured deeper into the lair...\\wt[34] ...\\wt[34] ...\\wt[60]!\\wtnp[8]")) if !($DEBUG && Input.press?(Input::CTRL))
         @sprites["pokemon#{index}"].color.alpha = 0
@@ -311,13 +312,12 @@ class DynAdventureState
         @sprites["poketype#{index}"].visible = false
         pbWildBattle(species[0],level)
       }
-      @bossBattled = true if lairpoke==@bossSpecies
-      advanced = true if !ended?
-      pbUpdateLairHP if advanced
-      pbAutoMapPosition(@player,2) if advanced
+      if !pbDynAdventureState.ended?
+        pbUpdateLairHP 
+        pbAutoMapPosition(@player,2)
+      end
     end
   end
-  
   
 ################################################################################
 # SECTION 3 - MAP SPRITES
@@ -325,7 +325,10 @@ class DynAdventureState
 # Sets up and draws all relevant map sprites for the Max Lair map.
 #===============================================================================
   def pbStartMapScene(map)
-    @size        = @lairSpecies.length
+    @knockouts   = pbDynAdventureState.knockouts
+    @bossSpecies = pbDynAdventureState.bossSpecies
+    @lairSpecies = pbDynAdventureState.lairSpecies
+    @size        = pbDynAdventureState.lairSpecies.length
     @sprites     = {}
     @viewport    = Viewport.new(0,0,Graphics.width,Graphics.height)
     @viewport.z  = 99999
@@ -1198,15 +1201,54 @@ class DynAdventureState
       elsif moveRight; @player.x +=2
       end
       #-------------------------------------------------------------------------
+      # Hidden Trap Tile triggers.
+      #-------------------------------------------------------------------------
+      if pbHiddenTrapTile?
+        pbDynAdventureState.pbLairTraps(pbHiddenTrapType) 
+        pbClearTile
+      end
+      #-------------------------------------------------------------------------
       # Roadblock Tile triggers.
       #-------------------------------------------------------------------------
-      if pbRoadblockTile? && !pbLairObstacles(pbRoadblockType)
-        if    moveUp;    moveDown  = true; moveUp    = false
-        elsif moveDown;  moveUp    = true; moveDown  = false
-        elsif moveLeft;  moveRight = true; moveLeft  = false
-        elsif moveRight; moveLeft  = true; moveRight = false
+      if pbRoadblockTile?
+        if pbDynAdventureState.pbLairObstacles(pbRoadblockType); pbClearTile
+        else
+          if    moveUp;    moveDown  = true; moveUp    = false
+          elsif moveDown;  moveUp    = true; moveDown  = false
+          elsif moveLeft;  moveRight = true; moveLeft  = false
+          elsif moveRight; moveLeft  = true; moveRight = false
+          end
         end
       end
+      #-------------------------------------------------------------------------
+      # Event Tile triggers.
+      #-------------------------------------------------------------------------
+      if pbEventTiles
+        if    pbItemsEventTile?; pbDynAdventureState.pbLairEventItems
+        elsif pbTrainEventTile?; pbDynAdventureState.pbLairEventTrain
+        elsif pbTutorEventTile?; pbDynAdventureState.pbLairEventTutor
+        elsif pbSwapEventTile?;  pbDynAdventureState.pbLairEventSwap;   pbClearTile
+        elsif pbHealEventTile?;  pbDynAdventureState.pbLairEventHeal;   pbClearTile
+        elsif pbWardEventTile? || (pbRandEventTile? && rand(6)==5)
+          pbDynAdventureState.pbLairEventWardIntro
+          @sprites["hpcount#{@maxHearts}"] = IconSprite.new(4+(@maxHearts*34),4,@viewport)
+          @sprites["hpcount#{@maxHearts}"].bitmap = Bitmap.new("Graphics/Pictures/Dynamax/lairmap_hearts")
+          pbDynAdventureState.knockouts+=1
+          @knockouts = pbDynAdventureState.knockouts
+          @maxHearts+=1
+          pbUpdateLairHP
+          pbDynAdventureState.pbLairEventWardOutro
+          pbClearTile
+        elsif pbRandEventTile?;  pbDynAdventureState.pbLairEventRandom(rand(5)); pbClearTile
+        elsif pbBerryEventTile?; pbDynAdventureState.pbLairBerries; pbClearTile
+        end
+      end
+      #-------------------------------------------------------------------------
+      # Other Tile triggers.
+      #-------------------------------------------------------------------------
+      pbBattleLairPokemon(pbPokemonTiles) if pbPokemonTile?
+      pbToggleSwitchTargs if pbSwitchTile?
+      pbWarpPlayer if pbWarpTile?
       #-------------------------------------------------------------------------
       # Turn Tile triggers.
       #-------------------------------------------------------------------------
@@ -1233,32 +1275,14 @@ class DynAdventureState
         end
       end
       #-------------------------------------------------------------------------
-      # Event Tile triggers.
+      # Stop player movement.
       #-------------------------------------------------------------------------
-      if pbEventTiles
-        if    pbSwapEventTile?;  pbLairEventSwap
-        elsif pbItemsEventTile?; pbLairEventItems
-        elsif pbTrainEventTile?; pbLairEventTrain
-        elsif pbTutorEventTile?; pbLairEventTutor
-        elsif pbWardEventTile?;  pbLairEventWard
-        elsif pbHealEventTile?;  pbLairEventHeal
-        elsif pbRandEventTile?;  pbLairEventRandom
-        elsif pbBerryEventTile?; pbLairBerries
-        end
-      end
-      #-------------------------------------------------------------------------
-      # Other Tile triggers.
-      #-------------------------------------------------------------------------
-      pbWarpPlayer if pbWarpTile?
-      pbToggleSwitchTargs if pbSwitchTile?
-      pbLairTraps(pbHiddenTrapType) if pbHiddenTrapTile?
       moveStop = true if pbSelectionTile? || pbStartTile?
-      pbBattleLairPokemon(pbPokemonTiles) if pbPokemonTile?
       pbAutoMapPosition(@player,2) if @player.x<32
       pbAutoMapPosition(@player,2) if @player.x>Graphics.width-32
       pbAutoMapPosition(@player,2) if @player.y<32
       pbAutoMapPosition(@player,2) if @player.y>Graphics.height-32
-      break if moveStop || ended?
+      break if moveStop || pbDynAdventureState.ended?
     end
   end
   
@@ -1462,7 +1486,7 @@ class DynAdventureState
             pbMessage(_INTL("There's a Nurse on this tile.\nNurses will heal your party Pokémon back to full health."))
             pbMessage(_INTL("After encountering a Nurse, they will leave the map and this tile will be cleared."))
           elsif pbEventTiles(newcoords)==6
-            pbMessage(_INTL("It's a mystery who you'll find on this tile.\nYou'll never know who you may run into!"))
+            pbMessage(_INTL("It's a mystery who's on this tile.\nYou'll never know who you'll run into!"))
             pbMessage(_INTL("After encountering this mystery person, they will leave the map and this tile will be cleared."))
           elsif pbEventTiles(newcoords)==7
             pbMessage(_INTL("There's a pile of Berries on this tile.\nIf you land on this tile, you'll feed your party Pokémon the Berries to recover some HP."))
@@ -1502,12 +1526,12 @@ class DynAdventureState
     highlight  = Color.new(255,0,0,200)
     resetcolor = Color.new(0,0,0,0)
     loop do
-      break if ended?
+	  pbResetRaidSettings
+      $PokemonTemp.clearBattleRules
+      break if pbDynAdventureState.ended?
       pbAutoMapPosition(@player,2)
       pbChangePokeOpacity(false)
       pbMessage(_INTL("Which path would you like to take?"))
-      pbResetRaidSettings
-      $PokemonTemp.clearBattleRules
       coords     = [@player.x,@player.y]
       index = 3 if pbCanMoveRight?
       index = 2 if pbCanMoveLeft?
@@ -1581,7 +1605,7 @@ class DynAdventureState
             case cmd
             when -1; break
             when  0; pbLairMapScroll(index); break
-            when  1; pbSummary($Trainer.party,0,@sprites); break
+            when  1; pbDynAdventureState.pbSummary($Trainer.party,0,@sprites); break
             when  2
               if pbConfirmMessage(_INTL("End your Dynamax Adventure?\nAny captured Pokémon will be lost."))
                 endgame = true
@@ -1595,6 +1619,5 @@ class DynAdventureState
       break if endgame  
     end
     pbMessage(_INTL("Your Dynamax Adventure is over!"))
-    pbEndScene
   end
 end

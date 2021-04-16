@@ -185,7 +185,7 @@ class PokeBattle_ZMove < PokeBattle_Move
   # Effects for Z-Status moves.
   # Effects for Gen 8 status moves are added when ADD_NEW_ZMOVES is "true".
   #=============================================================================
-  def PokeBattle_ZMove.pbZStatus(battle, move,attacker)
+  def PokeBattle_ZMove.pbZStatus(battle,move,attacker)
     boost = ""
     #---------------------------------------------------------------------------
     # Z-Status moves that raise Attack.

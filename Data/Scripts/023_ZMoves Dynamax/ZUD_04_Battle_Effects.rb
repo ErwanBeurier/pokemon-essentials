@@ -635,12 +635,11 @@ class PokeBattle_Battler
     # Max Guard blocks all moves except specified moves.
     #---------------------------------------------------------------------------
     if target.effects[PBEffects::MaxGuard]
-      if isConst?(move.id,PBMoves,:MEANLOOK) ||
-         isConst?(move.id,PBMoves,:ROLEPLAY) ||
-         isConst?(move.id,PBMoves,:PERISHSONG) ||
-         isConst?(move.id,PBMoves,:DECORATE) ||
-         # Feint damages, but doesn't remove Max Guard.
-         isConst?(move.id,PBMoves,:FEINT) || 
+      if isConst?(move.id,PBMoves,:MEANLOOK)    ||
+         isConst?(move.id,PBMoves,:ROLEPLAY)    ||
+         isConst?(move.id,PBMoves,:PERISHSONG)  ||
+         isConst?(move.id,PBMoves,:DECORATE)    ||
+         isConst?(move.id,PBMoves,:FEINT)       || # Feint damages, but doesn't remove Max Guard.
          isConst?(move.id,PBMoves,:GMAXONEBLOW) ||
          isConst?(move.id,PBMoves,:GMAXRAPIDFLOW)
         ret = true

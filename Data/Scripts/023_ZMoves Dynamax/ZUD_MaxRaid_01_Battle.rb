@@ -519,7 +519,7 @@ class PokeBattle_Battle
         next if b.effects[PBEffects::KnockOutCount]==0
         for i in b.moves; i.pp = i.totalpp; end
         #-----------------------------------------------------------------------
-        # The Raid Pokemon starts using Max Moves after its shield triggers.
+        # The Raid Pokemon starts using Max Moves after final round of shields.
         #-----------------------------------------------------------------------
         if b.moves == b.effects[PBEffects::BaseMoves]
           b.pbDisplayPowerMoves(2) if b.effects[PBEffects::ShieldCounter]==0
@@ -620,10 +620,10 @@ class PokeBattle_Battle
       #-------------------------------------------------------------------------
       # Neutralizing Wave
       #-------------------------------------------------------------------------
-      randnull=pbRandom(10)
-      neutralize=true if randnull<10
-      neutralize=true if b.status>0 && randnull<6 
-      neutralize=true if b.effects[PBEffects::RaidShield]>0 && randnull<3 
+      randnull   = pbRandom(10)
+      neutralize = true if randnull<=2
+      neutralize = true if b.status>0 && randnull<=5
+      neutralize = true if b.effects[PBEffects::RaidShield]>0 && randnull<=4 
       if neutralize && b.hp < b.totalhp-b.totalhp/5
         pbDisplay(_INTL("{1} released a neutralizing wave of Dynamax energy!",b.pbThis))
         pbAnimation(getID(PBMoves,:ACIDARMOR),b,b)
