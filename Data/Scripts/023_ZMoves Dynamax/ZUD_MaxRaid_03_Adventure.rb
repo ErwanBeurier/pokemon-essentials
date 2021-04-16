@@ -35,17 +35,14 @@
 #===============================================================================
 class DynAdventureState
   attr_accessor :knockouts
-  attr_accessor :lastPokemon
+  attr_accessor :bossBattled
   attr_accessor :bossSpecies
+  attr_accessor :lastPokemon
+  attr_accessor :lairSpecies
   
   # Window skin used for NPC encounter text (not dialogue).
   WINDOWSKIN = "Graphics/Windowskins/sign hgss loc"
   
-  def initialize
-    @markedPkmn  = []
-    clear
-  end
-    
   def clear
     @knockouts   = 0
     @inProgress  = false
@@ -57,8 +54,9 @@ class DynAdventureState
     @party       = []
   end
   
+  def initialize;  clear; end
   def inProgress?; return @inProgress; end
-  def completed?;  return true if @lastPokemon && @lastPokemon.fSpecies==@bossSpecies; end
+  def completed?;  return true if @bossBattled; end
   def defeated?;   return true if @knockouts<=0; end
   def ended?;      return true if completed? || defeated?; end
     
@@ -109,10 +107,10 @@ class DynAdventureState
     pbMessage(_INTL("I have a rental Pokémon here that I could swap with you, if you'd like."))
     trainer = PokeBattle_Trainer.new("RENTAL",0)
     pokemon = pbGetMaxLairRental(5,$Trainer.party[0].level,trainer)
+    pokemon.item = 0
     pbMaxLairMenu([1,pokemon])
     pbMessage(_INTL("I'll head back to study the new data I've gathered."))
     pbMessage(_INTL("Please report any new findings you may discover on your adventure!"))
-    pbClearTile
   end
   
   # Backpacker NPC
@@ -149,7 +147,7 @@ class DynAdventureState
   end
   
   # Channeller NPC
-  def pbLairEventWard
+  def pbLairEventWardIntro
     return if ended?
     return if !inProgress?
     pbMessage(_INTL("You encountered a Channeler!"),nil,0,WINDOWSKIN)
@@ -157,12 +155,12 @@ class DynAdventureState
     pbMessage(_INTL("Let me exorcise the demons that plague your body and soul!"))
     pbMessage(_INTL("...\\wt[10] ...\\wt[10] ...\\wt[20]Begone!"))
     pbSEPlay(sprintf("Anim/Natural Gift"))
-    @sprites["hpcount#{@maxHearts}"] = IconSprite.new(4+(@maxHearts*34),4,@viewport)
-    @sprites["hpcount#{@maxHearts}"].bitmap = Bitmap.new("Graphics/Pictures/Dynamax/lairmap_hearts")
-    @maxHearts+=1
-    @knockouts+=1
-    pbUpdateLairHP
-    pbMessage(_INTL("Your total number of hearts were increased!\\wt[34]"),nil,0,WINDOWSKIN)
+  end
+  
+  def pbLairEventWardOutro
+    return if ended?
+    return if !inProgress?
+    pbMessage(_INTL("Your total number of hearts increased!\\wt[34]"),nil,0,WINDOWSKIN)
     pbMessage(_INTL("What am I even doing here, you ask?\nHaha! Foolish child."))
     randtext = rand(5)
     case randtext
@@ -186,7 +184,6 @@ class DynAdventureState
       pbMessage(_INTL("The exit is back there, you say?\nThank you, child."))
       pbMessage(_INTL("May the spirits guide you better than they have me!"))
     end
-    pbClearTile
   end
   
   # Nurse NPC
@@ -200,21 +197,17 @@ class DynAdventureState
     pbMEPlay("Pkmn healing")
     pbWait(60)
     pbMessage(_INTL("I'll be going now.\nGood luck with the rest of your adventure!"))
-    pbClearTile
   end
   
   # Random NPC
-  def pbLairEventRandom
+  def pbLairEventRandom(event)
     return if ended?
     return if !inProgress?
-    randEvent = rand(6)
-    pbLairEventSwap  if randEvent==0
-    pbLairEventItems if randEvent==1
-    pbLairEventTrain if randEvent==2
-    pbLairEventTutor if randEvent==3
-    pbLairEventWard  if randEvent==4
-    pbLairEventHeal  if randEvent==5
-    pbClearTile
+    pbLairEventSwap      if event==0
+    pbLairEventItems     if event==1
+    pbLairEventTrain     if event==2
+    pbLairEventTutor     if event==3
+    pbLairEventHeal      if event==4
   end
   
   # Berries
@@ -227,7 +220,6 @@ class DynAdventureState
       i.hp += i.totalhp/2
       i.hp = i.totalhp if i.hp>i.totalhp
     end
-    pbClearTile
   end
   
   # Roadblocks
@@ -300,7 +292,6 @@ class DynAdventureState
       if criteria
         pbSEPlay(pbCryFile(i.species,i.form))
         pbMessage(_INTL(text,i.name))
-        pbClearTile
         return true
         break
       end
@@ -371,12 +362,12 @@ class DynAdventureState
         pbSEPlay("Mining found all")
         pbMessage(_INTL(text2,p.name))
       else
-        p.status = value
+        p.status      = value
+        p.statusCount = (value==1) ? 2 : 0
         pbSEPlay("Battle damage normal")
         pbMessage(_INTL(text3,p.name))
       end
     end
-    pbClearTile
   end
   
   #-----------------------------------------------------------------------------
@@ -425,11 +416,11 @@ class DynAdventureState
       break if baselvl>=65
     end
     if pbConfirmMessage(_INTL("Would you like to embark on a Dynamax Adventure?"))
-      if @markedPkmn.length>0
+      if pbSavedLairRoutes.length>0
         pbMessage(_INTL("According to my notes, it seems you might know how to find certain special Pokémon."))
         text = _INTL("Which Pokémon would you like to set out to find today?")
         list = []
-        for i in @markedPkmn; list.push(PBSpecies.getName(i)); end
+        for i in pbSavedLairRoutes; list.push(PBSpecies.getName(i)); end
         list.push(_INTL("Anything is fine"))
         loop do
           cmd = pbMessage(text,list,-1,nil,0)
@@ -439,7 +430,7 @@ class DynAdventureState
             break
           else
             @inProgress  = true
-            @bossSpecies = @markedPkmn[cmd] if cmd<list.length
+            @bossSpecies = pbSavedLairRoutes[cmd] if cmd<list.length
             break
           end
         end
@@ -459,7 +450,7 @@ class DynAdventureState
         else
           previousBGM = $game_system.getPlayingBGM
           pbFadeOutInWithMusic {
-            pbStartMapScene(map)
+            pbMaxLairMap(map)
             pbWait(25)
             $Trainer.party = @party
             pbPrize if @prizes.length>0 && ended?
@@ -480,16 +471,16 @@ class DynAdventureState
     return if !inProgress?
     if defeated?
       bossname = PBSpecies.getName(@bossSpecies)
-      for i in @markedPkmn; marked = true if i==@bossSpecies; end
+      for i in pbSavedLairRoutes; marked = true if i==@bossSpecies; end
       pbMessage(_INTL("Well done facing such a tough opponent!\nVictory seemed so close - I could almost taste it!"))      
       if @bossBattled && !marked && 
          pbConfirmMessage(_INTL("Would you like me to jot down where you found {1} this time so that you might find it again?",bossname))
-        if @markedPkmn.length>=3
+        if pbSavedLairRoutes.length>=3
           pbMessage(_INTL("You already have the maximum number of routes saved..."))
           if pbConfirmMessage(_INTL("Would you like to replace an existing route?"))
             text = _INTL("Which route should be replaced?")
             list = []
-            for i in @markedPkmn; list.push(PBSpecies.getName(i)); end
+            for i in pbSavedLairRoutes; list.push(PBSpecies.getName(i)); end
             list.push(_INTL("Nevermind"))
             loop do
               Input.update
@@ -498,22 +489,22 @@ class DynAdventureState
               case cmd
               when -1,list.length-1; break
               else
-                @markedPkmn.delete_at(cmd)
-                @markedPkmn.push(@bossSpecies)
+                $PokemonGlobal.markedAdvRoutes.delete_at(cmd)
+                $PokemonGlobal.markedAdvRoutes.push(@bossSpecies)
                 pbMessage(_INTL("The route to {1} was saved for future reference.",bossname))
                 break
               end
             end
           end
         else 
-          @markedPkmn.push(@bossSpecies)
+          $PokemonGlobal.markedAdvRoutes.push(@bossSpecies)
           pbMessage(_INTL("The route to {1} was saved for future reference.",bossname))
         end
       end
       pbMessage(_INTL("I hope we'll see you again soon!"))
     elsif completed?
-      for i in 0...@markedPkmn.length
-        @markedPkmn.delete_at(i) if @bossSpecies==@markedPkmn[i]
+      for i in 0...pbSavedLairRoutes.length
+        $PokemonGlobal.markedAdvRoutes.delete_at(i) if @bossSpecies==pbSavedLairRoutes[i]
       end
       pbMessage(_INTL("Well done defeating that tough opponent!\nI hope we'll see you again soon!"))
     else
@@ -536,7 +527,22 @@ end
 # Various utilities used for Dynamax Adventure functions.
 #===============================================================================
 class PokemonGlobalMetadata
+  attr_accessor :markedAdvRoutes
   attr_accessor :dynAdventureState
+  
+  alias _ZUD_initialize initialize
+  def initialize
+    @markedAdvRoutes   = []
+    @dynAdventureState = nil
+    _ZUD_initialize
+  end
+end
+
+def pbSavedLairRoutes
+  if !$PokemonGlobal.markedAdvRoutes
+    $PokemonGlobal.markedAdvRoutes = []
+  end
+  return $PokemonGlobal.markedAdvRoutes
 end
 
 def pbDynAdventureState
@@ -622,7 +628,7 @@ Events.onWildBattleOverride += proc { |_sender,e|
 def pbMaxLairBattle(size,species,level)
   Events.onStartBattle.trigger(nil)
   pkmn = pbGenerateWildPokemon(species,level)
-  foeParty = [pkmn]
+  foeParty          = [pkmn]
   playerTrainer     = [$Trainer]
   playerParty       = $Trainer.party
   playerPartyStarts = [0]
@@ -998,10 +1004,6 @@ class MaxLairEventScene
             oldpoke = $Trainer.party[index]
             olditem = $Trainer.party[index].item
             if pbConfirmMessage(_INTL("Exchange {1} for the new Pokémon?",oldpoke.name))
-              #if olditem>0 && !pbConfirmMessage(_INTL("Would you like to transfer {1}'s held {2} to {3}?",
-              #   oldpoke.name,PBItems.getName(olditem),pokemon.name))
-              #  oldpoke.setItem(pokemon.item)
-              #end
               pbSEPlay(pbCryFile(pokemon.species,pokemon.form))
               pbWait(25)
               @sprites["partysprite#{index}"].dispose
@@ -1010,11 +1012,12 @@ class MaxLairEventScene
               @sprites["helditem"].dispose
               @sprites["slotsel"].visible = false
               @sprites["leftarrow"].visible = false
-              $Trainer.party[index] = nil
               $Trainer.party[index] = pokemon
+              $Trainer.party[index].item = olditem
               pbClearAll
               pbDrawSwapScreen
               pbMessage(_INTL("\\se[]{1} was added to the party!\\se[Pkmn move learnt]",pokemon.name))
+              pbMessage(_INTL("{1}'s {2} was given to {3}.",oldpoke.name,PBItems.getName(olditem),pokemon.name)) if olditem>0
               break
             end
           # View the Summary of the selected party member.
@@ -1106,9 +1109,9 @@ class MaxLairEventScene
         poke     = $Trainer.party[i]
         olditem  = PBItems.getName(poke.item)
         pbMessage(_INTL("Select an item to give to {1}.",poke.name))
-        text = _INTL("{1} is already holding a {2}.",poke.name,olditem)
-        text = _INTL("{1} is already holding an {2}.",poke.name,olditem)   if olditem.starts_with_vowel?
-        text = _INTL("{1} is already holding some {2}.",poke.name,olditem) if poke.hasItem?(:LEFTOVERS)
+        text  = _INTL("{1} is already holding a {2}.",poke.name,olditem)
+        text  = _INTL("{1} is already holding an {2}.",poke.name,olditem)   if olditem.starts_with_vowel?
+        text  = _INTL("{1} is already holding some {2}.",poke.name,olditem) if poke.hasItem?(:LEFTOVERS)
         pairs = [:WISEGLASSES,:CHOICESPECS,:SAFETYGOGGLES,:PROTECTIVEPADS]
         for item in 0...pairs.length
           text = _INTL("{1} is already holding a pair of {2}.",poke.name,olditem) if poke.hasItem?(pairs[item])
@@ -1678,4 +1681,24 @@ class MaxLairScreen
     @scene.pbTutorSelect
     @scene.pbEndScene
   end
+end
+
+#-------------------------------------------------------------------------------
+# Used for accessing the Max Lair Map screen.
+#-------------------------------------------------------------------------------
+class LairMapScreen
+  def initialize(scene)
+    @scene = scene
+  end
+
+  def pbStartScreen(map)
+    @scene.pbStartMapScene(map)
+    @scene.pbEndScene
+  end
+end
+
+def pbMaxLairMap(map)
+  scene  = LairMapScene.new
+  screen = LairMapScreen.new(scene)
+  screen.pbStartScreen(map)
 end

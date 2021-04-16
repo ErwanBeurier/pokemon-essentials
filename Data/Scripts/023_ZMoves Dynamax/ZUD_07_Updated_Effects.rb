@@ -512,7 +512,7 @@ end
 # Copycat
 #===============================================================================
 # If last move used was a Max Move, copies the base move of that Max Move.
-# Move fails if last use move was a Z-Move (handled elsewhere).
+# Move fails if last used move was a Z-Move (handled elsewhere).
 # Some functions were rewritten because Copycat had a bug, and the Gen 8 
 # project does not contain the bugfix for now.
 #-------------------------------------------------------------------------------

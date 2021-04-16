@@ -39,9 +39,9 @@
 # This section contains new additions that don't fit anywhere else in the plugin,
 # such as Ultra Necrozma forms, Max Moves in the summary, and Dynamax cries.
 #===============================================================================
-# SECTION 5 - PLUGIN MANAGER
+# SECTION 5 - COMPATIBILITY
 #-------------------------------------------------------------------------------
-# This section registers the ZUD plugin. 
+# This section adds functionality for other third party scripts.
 #===============================================================================
 
 ################################################################################
@@ -231,12 +231,12 @@ class PokeBattle_Pokemon
   end
 
   def makeDynamax
-    @dynamax = true
+    @dynamax  = true
     @reverted = false
   end
   
   def makeUndynamax
-    @dynamax = false
+    @dynamax  = false
     @reverted = true
   end
 
@@ -245,7 +245,7 @@ class PokeBattle_Pokemon
   end
   
   def pbReversion(revert=false)
-    @reverted = true if revert
+    @reverted = true  if revert
     @reverted = false if !revert
   end
   
@@ -344,6 +344,7 @@ class PokeBattle_Pokemon
   end
   
   def calcStats
+    oldhpDiff = @totalhp-@hp
     bs        = self.baseStats
     usedLevel = self.level
     usedIV    = self.calcIV
@@ -360,9 +361,11 @@ class PokeBattle_Pokemon
     if dynamax? && !reverted? && @totalhp>1
       @totalhp = stats[PBStats::HP]
       @hp      = (@hp*dynamaxCalc).ceil
+      @hp      = @totalhp-oldhpDiff if isSpecies?(:ETERNATUS) && gmaxFactor?
     elsif reverted? && !dynamax? && @totalhp>1
       @totalhp = stats[PBStats::HP]
       @hp      = (@hp/dynamaxCalc).round
+      @hp      = @totalhp-oldhpDiff if isSpecies?(:ETERNATUS) && gmaxFactor?
       @hp     +=1 if !fainted? && @hp<=0
     else
       hpDiff   = @totalhp-@hp
@@ -577,6 +580,7 @@ def pbPlayDynamaxCry(species,form)
   pbPlayCrySpecies(pkmn,form,100,60)
 end
 
+
 ################################################################################
 # SECTION 5 - COMPATIBILITY
 #===============================================================================
@@ -586,8 +590,10 @@ module TrainerDialogue
   def self.setInstance(parameter)
     noIncrement = ["lowHP","lowHPOpp","halfHP","halfHPOpp","bigDamage","bigDamageOpp","smlDamage",
       "smlDamageOpp","attack","attackOpp","superEff","superEffOpp","notEff","notEffOpp",
-      "maxMove", "maxMoveOpp", "zmove", "zmoveOpp", "dynamaxBefore", "dynamaxBeforeOpp", 
-      "dynamaxAfter", "dynamaxAfterOpp", "gmaxBefore", "gmaxBeforeOpp", "gmaxAfter", "gmaxAfterOpp"]
+      "zmove","zmoveOpp","maxMove","maxMoveOpp",
+      "ultraBefore","ultraBeforeOpp","ultraAfter","ultraAfterOpp",
+      "dynamaxBefore","dynamaxBeforeOpp","dynamaxAfter","dynamaxAfterOpp",
+      "gmaxBefore","gmaxBeforeOpp","gmaxAfter","gmaxAfterOpp"]
     return if parameter.include?("rand")
     if !noIncrement.include?(parameter)
        $PokemonTemp.dialogueInstances[parameter] += 1
@@ -600,6 +606,6 @@ end
 #-------------------------------------------------------------------------------
 PluginManager.register({
   :name => "ZUD plugin",
-  :version => "1.0",
+  :version => "1.5",
   :credits => ["Lucidious89", "StCooler"]
 })

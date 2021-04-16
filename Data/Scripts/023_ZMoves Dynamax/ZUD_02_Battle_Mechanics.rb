@@ -402,6 +402,17 @@ class PokeBattle_Battle
     battler = @battlers[idxBattler]
     return if !battler || !battler.pokemon
     return if !battler.hasUltra? || battler.ultra?
+    #---------------------------------------------------------------------------
+    # Compatibility for Mid Battle Dialogue - Prior to Ultra Bursting.
+    #---------------------------------------------------------------------------
+    if defined?(DialogueModule)
+      if !battler.opposes?
+        TrainerDialogue.display("ultraBefore",self,@scene)
+      else
+        TrainerDialogue.display("ultraBeforeOpp",self,@scene)
+      end
+    end
+    #---------------------------------------------------------------------------
     pbDisplay(_INTL("Bright light is about to burst out of {1}!",battler.pbThis(true)))    
     pbCommonAnimation("UltraBurst",battler)
     battler.pokemon.makeUltra
@@ -419,6 +430,17 @@ class PokeBattle_Battle
     side  = battler.idxOwnSide
     owner = pbGetOwnerIndexFromBattlerIndex(idxBattler)
     @ultraBurst[side][owner] = -2
+    #---------------------------------------------------------------------------
+    # Compatibility for Mid Battle Dialogue - After Ultra Bursting.
+    #---------------------------------------------------------------------------
+    if defined?(DialogueModule)
+      if !battler.opposes?
+        TrainerDialogue.display("ultraAfter",self,@scene)
+      else
+        TrainerDialogue.display("ultraAfterOpp",self,@scene)
+      end
+    end
+    #---------------------------------------------------------------------------
   end
   
   def pbDynamax(idxBattler)

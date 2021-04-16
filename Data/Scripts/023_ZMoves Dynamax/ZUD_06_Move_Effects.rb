@@ -144,9 +144,8 @@ end
 class PokeBattle_Move_Z003 < PokeBattle_ZMove_AllStatsUp
   def initialize(battle,move,pbmove)
     super
-    @statUp = [PBStats::ATTACK,2,PBStats::DEFENSE,2,
-               PBStats::SPATK,2,PBStats::SPDEF,2,
-               PBStats::SPEED,2]
+    @statUp = [PBStats::ATTACK,2,PBStats::DEFENSE,2,PBStats::SPATK,2,
+               PBStats::SPDEF,2,PBStats::SPEED,2]
   end
 end 
 
@@ -566,7 +565,7 @@ end
 #===============================================================================
 # G-Max Wind Rage.
 #===============================================================================
-# Blows away effects hazards and opponent side's effects.
+# Blows away hazards, terrain, and effects on the opponent's side.
 #-------------------------------------------------------------------------------
 class PokeBattle_Move_D012 < PokeBattle_MaxMove
   def pbEffectAgainstTarget(user,target)
@@ -780,7 +779,7 @@ class PokeBattle_Move_D017 < PokeBattle_MaxMove
         next if m.id!=b.lastRegularMoveUsed || m.pp==0 || m.totalpp<=0
         reduction = [2,m.pp].min
         b.pbSetPP(m,m.pp-reduction)
-        b.effects[PBEffects::MaxMovePP][i] +=4 if b.dynamax?
+        b.effects[PBEffects::MaxMovePP][i] +=2 if b.dynamax?
         @battle.pbDisplay(_INTL("{1}'s PP was reduced!",b.pbThis))
         break
       end
@@ -869,6 +868,7 @@ end
 class PokeBattle_Move_D023 < PokeBattle_MaxMove
   def pbEffectAgainstTarget(user,target)
     user.eachOpposing do |b|
+      next if b.dynamax?
       next if b.effects[PBEffects::Torment]
       b.effects[PBEffects::Torment] = true
       @battle.pbDisplay(_INTL("{1} was subjected to torment!",b.pbThis))
