@@ -466,13 +466,14 @@ class PokeBattle_Move_C007 < PokeBattle_Move
     
     # currentAction = allows to track which, of the assiting and assisted, came first. 
     for currentAction in 0..1
+      idxAssist = idxBattler
+      
       if !assistAfter
         #------------------------------------
         # The part of the assisting Pokémon.
         #------------------------------------
         # Check if Pokémon is in battle.
         in_battle = false 
-        idxAssist = idxBattler
         oldAssistChoice = nil # Stores the first choice for the Assist, so that the Assist can attack twice (one with the Assist + the normal turn).
         lastRoundMovedAssist = nil 
         
@@ -503,7 +504,7 @@ class PokeBattle_Move_C007 < PokeBattle_Move
         assistPositionsOld = @battle.positions[idxAssist].effects.clone # Effects on the position. 
         
         # Transfer the positive effects to the assist. 
-        @battle.battlers[idxAssist].pbSetAssistanceEffects(effectsOld, stagesOld, positionsOld, true)
+        @battle.battlers[idxAssist].pbSetAssistanceEffects(oldEffects, oldStages, oldPositions, true)
         
         @battle.pbDisplay(_INTL("{1} is here to assist {2}!",@battle.battlers[idxAssist].pbThis, oldName))
         

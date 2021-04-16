@@ -64,6 +64,10 @@ def scSetTierOfTeam(tier)
 end
 
 
+def scLegendaryAllowed?
+  return $game_switches[SCSwitch::AllowLegendary]
+end 
+
 
 #===============================================================================
 # Management of nuzzlocke
@@ -116,6 +120,10 @@ def scSelectTierMenu
     
     cat = tiers[t]["Category"]
     
+    if cat == "Preset tier" && ["FEL", "UBER"].include?(t) && !scLegendaryAllowed?
+      next 
+    end 
+    
     # if (cat != "Random" && cat != "Micro-tier") or scTOTDHandler.was_totd(t)
     if true
       # Add a Random tier only if it was Tier of the Day. (?)
@@ -160,9 +168,13 @@ def scSelectTierMenu
   chosen_type = nil 
   
   # Different list because I want the tiers to follow a certain order. 
-  menu_list = ["FE", "Other presets", "Monotype", "Bitype", "Base stats", "Tier of the day", "Old tier of the day"]
+  menu_list = ["FE", "Other presets", "Monotype", "Bitype", "Base stats", "Tier of the day", "Old tiers of the day"]
   # Theme tier = Micro-tier 
   # Old tier of the day = Random tiers that already appeared
+  
+  if scLegendaryAllowed?
+    menu_list = ["FE+Legendary"] + menu_list
+  end 
   
   while cmd > -2 
     cmd = pbMessage("Choose a category of tier (current tier=" + scGetTier()+ ").", menu_list, -2, nil, 0)
@@ -178,13 +190,39 @@ def scSelectTierMenu
       #elsif category == "OTF Preset"
         # Handled in the "else" case. 
         
-      elsif category == "Monotype"
-        tierid = "MONO"
+      elsif category == "FE+Legendary"
+        tierid = "FEL"
         cmd = -2 
         
+      elsif category == "Monotype"
+        if scLegendaryAllowed?
+          cmd2 = pbMessage(_INTL("Which Monotype?"), ["Normal", "With Legendary"], -1)
+          if cmd2 == 0
+            tierid = "MONO"
+            cmd = -2 
+          elsif cmd2 == 1
+            tierid = "MONOL"
+            cmd = -2 
+          end 
+        else
+          tierid = "MONO"
+          cmd = -2 
+        end 
+        
       elsif category == "Bitype"
-        tierid = "BI"
-        cmd = -2 
+        if scLegendaryAllowed?
+          cmd2 = pbMessage(_INTL("Which Bitype?"), ["Normal", "With Legendary"], -1)
+          if cmd2 == 0
+            tierid = "BI"
+            cmd = -2 
+          elsif cmd2 == 1
+            tierid = "BIL"
+            cmd = -2 
+          end 
+        else
+          tierid = "BI"
+          cmd = -2 
+        end 
         
       elsif category == "Tier of the day"
         cmd2 = pbMessage(_INTL("Choose tier of the day? ({1})", scTOTDHandler.get()), ["Yes", "No"], 1)

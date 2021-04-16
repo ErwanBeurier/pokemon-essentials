@@ -776,6 +776,9 @@ class PokeBattle_Battle
   def pbEORShiftDistantBattlers
     # Makes each side compact when a Pokémon is KO and not replaced. 
     return if singleBattle?
+    
+    size_changed = false
+    
     for side in 0..1
       next if pbSideSize(side) <= 1
       
@@ -849,9 +852,10 @@ class PokeBattle_Battle
       # pbMessage("after=" + debug_log)
       # pbMessage(_INTL("new_side_size={1}", new_side_size))
       
+      size_changed = true if @sideSizes[side] != new_side_size
       @sideSizes[side] = new_side_size
     end 
-    @scene.pbReinitSceneForNewSizes
+    @scene.pbReinitSceneForNewSizes if size_changed
   end 
 end 
 

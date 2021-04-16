@@ -359,6 +359,8 @@ module SCClientBattles
     
     # All tiers appear once. 
     for t in tiers["TierList"]
+      next if ["BIL", "MONOL", "FEL", "UBER"].include?(t) && !scLegendaryAllowed?
+      
       if tiers[t]["Category"] != "Random" and t != "OTF"
         tier_list.push(t)
       end 
@@ -382,6 +384,7 @@ module SCClientBattles
     while tier_list.length < 2 * l 
       # tier_list.push("Random") # Tier of the day. 
       tier_list.push("FE") # Most prestigious tier 
+      tier_list.push("FEL") if scLegendaryAllowed? # Most prestigious tier 
       
       if SCClientBattles.hypedTier
         tier_list.push(SCClientBattles.hypedTier)
@@ -620,6 +623,7 @@ class SCClientBattlesGenerator
     
     @player_map = nil 
     @player_stadium = nil 
+    @special_rules = [] # For the next battle.
     
     @map_names.each { |mp|
       @current_clients[mp] = []
@@ -789,9 +793,35 @@ class SCClientBattlesGenerator
     msg3 = _INTL("The requested tier is {1}.", playerNextStadium.tier)
     msg3 = _INTL("The requested tier is {1} with format {2}.", playerNextStadium.tier, playerNextStadium.format) if !partner
     
+    msg4 = ""
+    first_rule = true
+    @special_rules.each { |s| 
+      msg4 = "Special rule: "
+      if s.length == 1
+        msg4 += ", " if !first_rule
+        case s[0].downcase
+        when "inversebattle"
+          msg4 += "Inverse Battles"
+        when "inversestab"
+          msg4 += "Inverse STABs"
+        when "changingterrain"
+          msg4 += "Changing Terrain"
+        when "changingweather"
+          msg4 += "Changing Weather"
+        when "battleroyale"
+          msg4 += "Battle Royale"
+        end 
+      # elsif s.length == 2
+        first_rule = false
+        
+      end 
+    }
+    msg4 += "." if msg4 != ""
+    
     pbMessage(msg)
     pbMessage(msg2)
     pbMessage(msg3)
+    pbMessage(msg4) if msg4 != ""
     
     if propose_tier_change and playerNextStadium.tier != scGetTier()
       cmd = pbMessage(_INTL("Set current tier to {1}?", playerNextStadium.tier), ["Yes", "No"])
@@ -810,6 +840,10 @@ class SCClientBattlesGenerator
     # Generates a battle from the stored event. 
     res = 0
     pbHealAll
+    @special_rules.each { |s|
+      setBattleRule(s[0]) if s.length == 1
+      setBattleRule(s[0], s[1]) if s.length == 2
+    }
     scSetTier(playerNextStadium.tier, false)
     if clientWantsPartner
       res = scDoubleTrainerBattle(playerNextStadium.client(0), "Client", playerNextStadium.client(1), "Client")
@@ -820,6 +854,7 @@ class SCClientBattlesGenerator
     
     # Rand battle is done
     $game_switches[SCSwitch::RandBattleDone] = true 
+    @special_rules = []
     
     return res 
   end 
@@ -828,6 +863,20 @@ class SCClientBattlesGenerator
   
   def battleIsDone
     return $game_switches[SCSwitch::RandBattleDone]
+  end 
+  
+  
+  
+  def setSpecialRules(spec_rule_name, spec_rule_value = nil)
+    # Rules among: inverse, battleRoyale, changingTerrain and changingWeather
+    # Other things to add in Battle Rule.
+    s = [spec_rule_name]
+    s.push(spec_rule_value) if spec_rule_value
+    @special_rules.push(s)
+    
+    if spec_rule_name.length == 3 && spec_rule_name[1] == "v"
+      playerNextStadium.setFormat(spec_rule_name)
+    end 
   end 
   
   

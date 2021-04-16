@@ -618,4 +618,5 @@ def pbBattleWeatherAbility(weather,battler,battle,ignorePrimal=false)
                           weather!=PBWeather::StrongWinds
   battle.pbStartWeather(battler,weather,fixedDuration)
   # NOTE: The ability splash is hidden again in def pbStartWeather.
+  battle.pbHideAbilitySplash(battler)
 end

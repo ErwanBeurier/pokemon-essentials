@@ -52,6 +52,8 @@ module SCSwitch
   ForcedTier = 81
   # Switch to decide when t show the Manager at the desk.
   ShowManager = 79 
+  # Switch to allow/disallow Legendary Pokémons in big tiers (only in post-game).
+  AllowLegendary = 89 
   
   # ---------------------------------------------------------------------------
   # Other castle stuff.
