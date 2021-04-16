@@ -399,12 +399,17 @@ class SCTeamFilter
   end
   
   
-  def getShuffledRoles()
+  def getShuffledRoles(for_database = false)
     return Array.new(6, 0) if !@fixed_roles && !@roles
     
     ret = @fixed_roles if @fixed_roles && !@roles
     ret = @roles if !@fixed_roles && @roles
-    ret = @fixed_roles + scsample(@roles, @roles.length) if @fixed_roles && @roles
+    
+    if for_database && @fixed_roles && @roles
+      ret = @fixed_roles + @roles
+    elsif @fixed_roles && @roles 
+      ret = @fixed_roles + scsample(@roles, @roles.length)
+    end 
     
     if ret.length != 6 
       raise _INTL("Erroneous Team Filter: {1} doesn't have the right number of roles + fixed roles (got {2}, expected 6)", @name, ret.length)
@@ -485,7 +490,7 @@ class SCDummyTeamFilter < SCTeamFilter
       s += _INTL("{1}", PBTypes.getName(chosen_types[i]))
       s += "-" if i < 5
     end 
-    pbMessage(s)
+    # pbMessage(s)
     
     return variation
   end 
@@ -494,28 +499,20 @@ end
 
 
 
-class SCRandomTeamFilter < SCDummyTeamFilter
-  def initialize(name)
-    super(name, nil, nil)
-    @rand_roles = [
-      [21, 21, 22, 22, 0], # Offensive core + anything
-      [20, 21, 22, 31, 32], # Offensive + Defensive
-      [21, 22, 31, 32, 40], # Offensive + Defensive + one support 
-      [21, 22, 31, 31, 32, 32], # Defensive 
-      [31, 31, 32, 32, 30, 0] # Cancer
-    ]
+class SCRandomTeamFilter
+  attr_reader :name
+  
+  def initialize()
+    @name = "Random"
+    @generating = [SCTeamFilters::HyperOffense, 
+                  SCTeamFilters::Offense, 
+                  SCTeamFilters::Balanced, 
+                  SCTeamFilters::Defensive, 
+                  SCTeamFilters::Stall]
   end 
   
-  
-  def getShuffledRoles()
-    @roles = scsample(@rand_roles, 1)
-    @fixed_roles = [] 
-    if @roles.length == 5
-      @fixed_roles = [10]
-    elsif @roles.length != 6
-      raise _INTL("In Team Filter {1}, given {2} roles.", @name, @roles.length)
-    end 
-    return super
+  def choose()
+    return @generating[rand(@generating.length)]
   end 
 end 
 
@@ -543,7 +540,7 @@ module SCMovesetFilters
   GeneralSpecialSupport = SCMovesetFilter.new(nil, 42, nil, nil)
   GeneralMixedSupport = SCMovesetFilter.new(nil, 43, nil, nil)
   
-  # begin 
+  begin 
   CarboniferousSetter = SCMovesetFilter.new(nil, nil, PBMoves::CARBONIFEROUS, nil)
   CarboniferousSetter.makeSpecific
   CarboniferousBug = SCMovesetFilter.new(nil, nil, nil, PBTypes::BUG)
@@ -559,6 +556,7 @@ module SCMovesetFilters
   RainSetter.makeSpecific
   RainEnjoyer1 = SCMovesetFilter.new(nil, nil, nil, nil)
   RainEnjoyer1.setAbility([PBAbilities::RAINDISH, PBAbilities::HYDRATION, PBAbilities::SWIFTSWIM])
+  RainEnjoyer1.makeSpecific
   RainEnjoyer2 = SCMovesetFilter.new(nil, nil, nil, PBTypes::STEEL)
   
   SunSetter = SCMovesetFilter.new(nil, nil, nil, nil)
@@ -566,6 +564,7 @@ module SCMovesetFilters
   SunSetter.makeSpecific
   SunEnjoyer1 = SCMovesetFilter.new(nil, nil, nil, nil)
   SunEnjoyer1.setAbility([PBAbilities::CHLOROPHYLL, PBAbilities::SOLARPOWER, PBAbilities::LEAFGUARD, PBAbilities::FLOWERGIFT])
+  SunEnjoyer1.makeSpecific
   SunEnjoyer2 = SCMovesetFilter.new(nil, nil, nil, PBTypes::FIRE)
   
   SandSetter = SCMovesetFilter.new(nil, nil, nil, nil)
@@ -580,6 +579,7 @@ module SCMovesetFilters
   HailEnjoyer1 = SCMovesetFilter.new(nil, nil, nil, nil)
   HailEnjoyer1.setAbility([PBAbilities::ICEBODY, PBAbilities::SLUSHRUSH, PBAbilities::ICEFACE])
   HailEnjoyer2 = SCMovesetFilter.new(nil, nil, [PBMoves::HURRICANE, PBMoves::BLIZZARD], nil)
+  HailEnjoyer2.makeSpecific
   
   
   Test1_1 = SCMovesetFilter.new(nil, nil, PBMoves::CALMMIND, nil)
@@ -589,8 +589,8 @@ module SCMovesetFilters
   # Test1_4.debug = true
   Test1_5 = SCMovesetFilter.new(nil, 20, nil, PBTypes::GRASS)
   Test1_6 = SCMovesetFilter.new(nil, nil, nil, PBTypes::FIRE)
-  # rescue
-  # end 
+  rescue
+  end 
 end 
 
 
@@ -602,9 +602,9 @@ module SCTeamFilters
   Balanced = SCDummyTeamFilter.new("Balanced", [10], [21, 22, 31, 32, 40])
   Defensive = SCDummyTeamFilter.new("Defensive", [], [21, 22, 31, 31, 32, 32])
   Stall = SCDummyTeamFilter.new("Stall", [], [31, 31, 32, 32, 30, 0])
-  Random = SCRandomTeamFilter.new("Random")
+  Random = SCRandomTeamFilter.new()
   
-  # begin 
+  begin 
   Carboniferous = SCTeamFilter.new("Carboniferous", [0, 0, 0, 0, 0, 0])
   Carboniferous.setMovesetFilters(SCMovesetFilters::CarboniferousSetter, 
                                   SCMovesetFilters::CarboniferousBug,
@@ -648,8 +648,8 @@ module SCTeamFilters
   Test1.setMovesetFilters(SCMovesetFilters::Test1_1, SCMovesetFilters::Test1_2, 
                           SCMovesetFilters::Test1_3, SCMovesetFilters::Test1_4, 
                           SCMovesetFilters::Test1_5, SCMovesetFilters::Test1_6)
-  # rescue 
-  # end 
+  rescue 
+  end 
   
   
   
