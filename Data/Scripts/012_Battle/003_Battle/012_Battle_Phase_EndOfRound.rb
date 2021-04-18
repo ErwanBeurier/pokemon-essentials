@@ -63,14 +63,14 @@ class PokeBattle_Battle
     # Weather continues
     pbCommonAnimation(PBWeather.animationName(@field.weather))
     case @field.weather
-#    when PBWeather::Sun;         pbDisplay(_INTL("The sunlight is strong."))
-#    when PBWeather::Rain;        pbDisplay(_INTL("Rain continues to fall."))
+    when PBWeather::Sun;         pbDisplay(_INTL("The sunlight is strong."))
+    when PBWeather::Rain;        pbDisplay(_INTL("Rain continues to fall."))
     when PBWeather::Sandstorm;   pbDisplay(_INTL("The sandstorm is raging."))
     when PBWeather::Hail;        pbDisplay(_INTL("The hail is crashing down."))
-#    when PBWeather::HarshSun;    pbDisplay(_INTL("The sunlight is extremely harsh."))
-#    when PBWeather::HeavyRain;   pbDisplay(_INTL("It is raining heavily."))
-   # when PBWeather::StrongWinds; pbDisplay(_INTL("The wind is strong."))
-   when PBWeather::Tempest;       pbTempestRemoveHazards(priority)
+    when PBWeather::HarshSun;    pbDisplay(_INTL("The sunlight is extremely harsh."))
+    when PBWeather::HeavyRain;   pbDisplay(_INTL("It is raining heavily."))
+    when PBWeather::StrongWinds; pbDisplay(_INTL("The wind is strong."))
+    when PBWeather::Tempest;     pbTempestRemoveHazards(priority)
     when PBWeather::ShadowSky;   pbDisplay(_INTL("The shadow sky continues."));
     end
     # Effects due to weather

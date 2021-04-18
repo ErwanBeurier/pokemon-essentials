@@ -83,7 +83,7 @@ class PokeBattle_Battle
         next true 
       }
     else 
-      idxParty = @battleAI.pbChooseNonSwitchingPokemon(idxBattler,pbParty(idxBattler))
+      idxParty = @battleAI.scChooseNonSwitchingPokemon(idxBattler,pbParty(idxBattler))
     end 
     assisting = pbParty(idxBattler)[idxParty] if idxParty >= 0
     return assisting, idxParty, assistAfter
@@ -424,11 +424,13 @@ end
 # Calls a Pokémon for Assistance. 
 # (Assistance)
 #===============================================================================
+
 class PokeBattle_Move_C007 < PokeBattle_Move
   def initialize(battle, move)
     super(battle, move)
     @other_choice = nil 
   end 
+  
   
   def pbMoveFailed?(user, targets)
     # assist, idxParty = @battle.pbChooseAssistingPokemon(user.index)
@@ -442,18 +444,17 @@ class PokeBattle_Move_C007 < PokeBattle_Move
     return false 
   end 
   
+  
   def pbDisplayUseMessage(user)
     @battle.pbDisplay(_INTL("{1} called for Assistance!",user.pbThis))
   end
+  
   
   def pbEffectGeneral(user)
     # Store old data.
     idxBattler = user.index 
     idxCallingPkmn = @battle.battlers[idxBattler].pokemonIndex
     oldName = user.pbThis
-    oldStages = user.stages.clone # Stat stages 
-    oldEffects = user.effects.clone # Effects on the Pokémon 
-    oldPositions = @battle.positions[idxBattler].effects.clone # Effects on the position. 
     # scToString(oldEffects, "oldEffects")
     # scToString(user.effects, "user.effects")
     
@@ -472,6 +473,11 @@ class PokeBattle_Move_C007 < PokeBattle_Move
         #------------------------------------
         # The part of the assisting Pokémon.
         #------------------------------------
+        # Old state of the caller. 
+        oldStages = user.stages.clone # Stat stages 
+        oldEffects = user.effects.clone # Effects on the Pokémon 
+        oldPositions = @battle.positions[idxBattler].effects.clone # Effects on the position. 
+        
         # Check if Pokémon is in battle.
         in_battle = false 
         oldAssistChoice = nil # Stores the first choice for the Assist, so that the Assist can attack twice (one with the Assist + the normal turn).
@@ -629,8 +635,9 @@ end
 
 
 class PokeBattle_AI
-  # For Assistance.
-  def pbChooseNonSwitchingPokemon(idxBattler,party)
+  # For Assistance, teleport...
+  # Allows to choose a Pokémon either in the party or in the battle field.
+  def scChooseNonSwitchingPokemon(idxBattler,party)
     enemies = []
     idxPkmn = @battle.battlers[idxBattler].pkmn.index
     party.each_with_index do |_p,i|

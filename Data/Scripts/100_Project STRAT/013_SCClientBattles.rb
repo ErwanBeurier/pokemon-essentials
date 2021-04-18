@@ -35,9 +35,12 @@ module SCClientBattles
     else 
       filename=sprintf("trchar%03d",trainerid)
     end 
-    bitmap=AnimatedBitmap.new("Graphics/Characters/"+filename)
-    bitmap.dispose
-    event.character_name=filename
+    # bitmap=AnimatedBitmap.new("Graphics/Characters/"+filename)
+    # bitmap.dispose
+    # event.pages[0].graphic.character_name=filename
+    # event.pages[0].graphic.character_name=filename
+    event.pages[0].graphic.character_name=filename
+    # pbMessage(_INTL("Coucou")) if pbResolveBitmap("Graphics/Characters/"+filename)
 	end 
   
   
@@ -50,9 +53,9 @@ module SCClientBattles
     # else
       # filename=sprintf("%03d_%d",species[0],species[1]) # These do not necessarily exist, even if the form exists, because Mega-evolutions are not supposed to be seen overworld.
     # end 
-    bitmap=AnimatedBitmap.new("Graphics/Characters/Following/" + filename)
-    bitmap.dispose
-    event.character_name=filename
+    # bitmap=AnimatedBitmap.new("Graphics/Characters/Following/" + filename)
+    # bitmap.dispose
+    event.pages[0].graphic.character_name="Following/" + filename
 	end 
 
   
@@ -376,7 +379,7 @@ module SCClientBattles
     end 
     
     
-    # FE is more prestigious tier, so most people want this tier. 
+    # FE is the most prestigious tier, so most people want this tier. 
     # However, their may be a hype for another tier throughout the game. 
     # The hyped tier is in a game_variable[205]
     l = tier_list.length
@@ -530,7 +533,250 @@ class SCStadium
   end 
   
   
-
+  
+  def self.spawnClientBusy(x, y, facing, trainer_id) # Not for Player
+    event = RPG::Event.new(x,y)
+    event.name = "Client (Busy)"
+    
+    key_id = ($game_map.events.keys.max || -1) + 1
+    event.id = key_id
+    event.x = x
+    event.y = y
+    event.pages[0].move_type = 0
+    event.pages[0].trigger = 0 # Action Button
+    
+    pbPushText(event.pages[0].list,_INTL("(This client is busy)"))
+    pbPushMoveRoute(event.pages[0].list, 0, [facing])
+    pbPushEnd(event.pages[0].list)
+    
+    SCClientBattles.loadGraphics(event, trainer_id)
+    
+    # creating and adding the Game_Event
+    gameEvent = Game_Event.new($game_map.map_id, event, $game_map)
+    key_id = ($game_map.events.keys.max || -1) + 1
+    gameEvent.id = key_id
+    gameEvent.moveto(x,y)
+    $game_map.events[key_id] = gameEvent
+    
+    # updating the sprites
+    sprite = Sprite_Character.new(Spriteset_Map.viewport,$game_map.events[key_id])
+    $scene.spritesets[$game_map.map_id]=Spriteset_Map.new($game_map) if $scene.spritesets[$game_map.map_id]==nil
+    $scene.spritesets[$game_map.map_id].character_sprites.push(sprite)
+  end 
+  
+  
+  def self.spawnClientWaiting(x, y, facing, trainer_id)
+    event = RPG::Event.new(x,y)
+    event.name = "Client (Waiting)"
+    
+    key_id = ($game_map.events.keys.max || -1) + 1
+    event.id = key_id
+    event.x = x
+    event.y = y
+    event.pages[0].move_type = 0
+    event.pages[0].trigger = 0 # Action Button
+    
+    # tp_x = where to teleport the player rather than making it turn around the trainer. 
+    # Should be "in front" of the trainer. 
+    tp_x = x    
+    tp_y = y
+    
+    facing2 = facing
+    case facing
+    when PBMoveRoute::TurnLeft  ; facing2 = 4 ; tp_x -= 1
+    when PBMoveRoute::TurnDown  ; facing2 = 2 ; tp_y += 1
+    when PBMoveRoute::TurnRight ; facing2 = 6 ; tp_x += 1
+    when PBMoveRoute::TurnUp    ; facing2 = 8 ; tp_y -= 1
+    end 
+    
+    event.pages[0].graphic.direction = facing2
+    
+    # Check if Battle is over: 
+    indent = 0
+    pbPushBranch(event.pages[0].list,"$game_switches[SCSwitch::RandBattleDone]", indent)
+    pbPushText(event.pages[0].list,_INTL("Thank you for your time \\PN!"), indent+1)
+    pbPushExit(event.pages[0].list, indent+1) # Exit event processing.
+    pbPushBranchEnd(event.pages[0].list, indent+1)
+    
+    # Greeting 
+    pbPushText(event.pages[0].list,_INTL("Hi \\PN!\\nReady to fight?"), indent)
+    pbPushShowChoices(event.pages[0].list, [["Yes", "No"], 1], indent)
+    pbPushWhenBranch(event.pages[0].list, 0, indent+1)
+    pbPushWhenBranch(event.pages[0].list, 1, indent+1)
+    pbPushText(event.pages[0].list, _INTL("No problem. I want a good fight!"), indent+1)
+    pbPushExit(event.pages[0].list, indent+1) # Exit event processing.
+    pbPushBranchEnd(event.pages[0].list, indent+1)
+    
+    # Check partner.
+    pbPushBranch(event.pages[0].list,"scClientBattles.clientWantsPartner", indent)
+    indent += 1
+    
+    pbPushBranch(event.pages[0].list,"!scClientBattles.playerHasPartner", indent)
+    pbPushText(event.pages[0].list,_INTL("But... I wanted you to team up with one of your friends..."), indent+1)
+    pbPushExit(event.pages[0].list, indent+1) # Exit event processing.
+    pbPushBranchEnd(event.pages[0].list, indent+1)
+    
+    pbPushBranch(event.pages[0].list,"!scClientBattles.playerHasRightPartner", indent)
+    pbPushScript(event.pages[0].list,"scClientBattles.storeWantedPartner", indent+1)
+    pbPushText(event.pages[0].list,
+      _INTL("But... I wanted you to team up with \\V[{1}]...", SCVar::WantedPartner), indent+1)
+    pbPushExit(event.pages[0].list, indent+1) # Exit event processing.
+    pbPushBranchEnd(event.pages[0].list, indent+1)
+    
+    indent -= 1
+    pbPushBranchEnd(event.pages[0].list, indent + 1) # End of Check partner. 
+    
+    # Check if team is valid.
+    pbPushBranch(event.pages[0].list,"!scClientBattles.playerValidTeam", indent)
+    pbPushText(event.pages[0].list,_INTL("But... Your team is not valid..."), indent+1)
+    pbPushExit(event.pages[0].list, indent+1) # Exit event processing.
+    pbPushBranchEnd(event.pages[0].list, indent+1) 
+    
+    # Move the player to the right place. 
+    # Part 1: teleport the player in front of the trainer. 
+    pbPushBranch(event.pages[0].list,_INTL("$game_player.x != {1} || $game_player.y != {2}", tp_x, tp_y), indent)
+    pbPushEventLocation(event.pages[0].list, -1, 0, tp_x, tp_y, facing, indent+1)
+    pbPushBranchEnd(event.pages[0].list, indent+1)
+    
+    # Part 2: Player walks away // trainer faces the right direction. 
+    pbPushMoveRoute(event.pages[0].list, 0, [facing], indent)
+    
+    route_player = []
+    case facing # Move away in the direction that the trainer faces, and then face backwards. 
+    when PBMoveRoute::TurnLeft
+      route_player = [PBMoveRoute::Left, PBMoveRoute::Left, PBMoveRoute::TurnRight]
+    when PBMoveRoute::TurnDown
+      route_player = [PBMoveRoute::Down, PBMoveRoute::Down, PBMoveRoute::TurnUp]
+    when PBMoveRoute::TurnRight
+      route_player = [PBMoveRoute::Right, PBMoveRoute::Right, PBMoveRoute::TurnLeft]
+    when PBMoveRoute::TurnUp
+      route_player = [PBMoveRoute::Up, PBMoveRoute::Up, PBMoveRoute::TurnDown]
+    end 
+    pbPushMoveRoute(event.pages[0].list, -1, route_player, indent)
+    pbPushWaitForMoveCompletion(event.pages[0].list, indent)
+    
+    # Start the battle
+    pbPushLabel(event.pages[0].list, "Start the battle", indent)
+    
+    pbPushBranch(event.pages[0].list,"scClientBattles.startBattle", indent)
+    # Case 1: victory
+    # Store the result and move the trainer to the player. 
+    indent += 1
+    
+    pbPushScript(event.pages[0].list,
+      _INTL("$game_variables[{1}] = true", SCSwitch::ClientBattleResult), indent)
+    pbPushMoveRoute(event.pages[0].list, 0, route_player[0..1], indent)
+    pbPushWaitForMoveCompletion(event.pages[0].list, indent)
+    pbPushText(event.pages[0].list,_INTL("Well done!"), indent)
+    
+    pbPushElse(event.pages[0].list, indent)
+    # Case 2: Defeat
+    # Store the result and propose to try again.
+    pbPushScript(event.pages[0].list,
+      _INTL("$game_variables[{1}] = false", SCSwitch::ClientBattleResult), indent)
+    
+    pbPushChangeColorTone(event.pages[0].list,-255,-255,-255,20,indent)
+    
+    pbPushText(event.pages[0].list,_INTL("Try again?"), indent)
+    pbPushShowChoices(event.pages[0].list, [["Try again", "Change team", "Accept defeat"], 2], indent)
+    # Defeat: try again 
+    pbPushWhenBranch(event.pages[0].list, 0, indent+1) 
+    pbPushChangeColorTone(event.pages[0].list, 0, 0, 0, 20, indent+1)
+    pbPushJumpToLabel(event.pages[0].list, "Start the battle", indent+1)
+    
+    # Defeat: change team, and try again
+    pbPushWhenBranch(event.pages[0].list, 1, indent+1) 
+    pbPushScript(event.pages[0].list, _INTL("scAdaptCurrentTeam"), indent+1)
+    pbPushChangeColorTone(event.pages[0].list, 0, 0, 0, 20, indent+1)
+    pbPushJumpToLabel(event.pages[0].list, "Start the battle", indent+1)
+    
+    # Defeat: accept defeat
+    pbPushWhenBranch(event.pages[0].list, 2, indent+1)
+    pbPushChangeColorTone(event.pages[0].list, 0, 0, 0, 20, indent+1)
+    pbPushMoveRoute(event.pages[0].list, 0, route_player[0..1], indent+1)
+    pbPushWaitForMoveCompletion(event.pages[0].list, indent+1)
+    pbPushText(event.pages[0].list,_INTL("That's unbelievable, I won!"), indent+1)
+    pbPushBranchEnd(event.pages[0].list, indent+1)
+    
+    indent -= 1
+    pbPushBranchEnd(event.pages[0].list, indent+1)
+    
+    # End of script, log the result. 
+    pbPushScript(event.pages[0].list, _INTL("scLogClientBattleResult()"), indent+1)
+    pbPushEnd(event.pages[0].list)
+    
+    
+    
+    
+    # pbPushBranch(event.pages[0].list,"!scClientBattles.playerHasRightPartner", indent)
+    # pbPushText(event.pages[0].list,_INTL("Can I suck you?"), indent+1)
+    # pbPushElse(event.pages[0].list, indent+1)
+    # pbPushText(event.pages[0].list,_INTL("Can you fuck me?"), 1)
+    # pbPushBranch(event.pages[0].list,"false")
+    # pbPushText(event.pages[0].list,_INTL("Can I suck you?"), 1)
+    # pbPushElse(event.pages[0].list, 1)
+    # pbPushText(event.pages[0].list,_INTL("Can you fuck me?"), 1)
+    # pbPushBranchEnd(event.pages[0].list, 1)
+    # pbPushMoveRoute(event.pages[0].list, 0, [facing])
+    
+    SCClientBattles.loadGraphics(event, trainer_id)
+    
+    # creating and adding the Game_Event
+    gameEvent = Game_Event.new($game_map.map_id, event, $game_map)
+    key_id = ($game_map.events.keys.max || -1) + 1
+    gameEvent.id = key_id
+    gameEvent.moveto(x,y)
+    $game_map.events[key_id] = gameEvent
+    
+    # updating the sprites
+    sprite = Sprite_Character.new(Spriteset_Map.viewport,$game_map.events[key_id])
+    $scene.spritesets[$game_map.map_id]=Spriteset_Map.new($game_map) if $scene.spritesets[$game_map.map_id]==nil
+    $scene.spritesets[$game_map.map_id].character_sprites.push(sprite)
+  end 
+  
+  
+  def self.spawnPokemon(x, y, facing, species) # Not for Player
+    event = RPG::Event.new(x,y)
+    event.name = "Client Pokémon"
+    
+    key_id = ($game_map.events.keys.max || -1) + 1
+    event.id = key_id
+    event.x = x
+    event.y = y
+    event.pages[0].trigger = 0 # Action Button
+    event.pages[0].step_anime = true
+    
+    case facing
+    when PBMoveRoute::TurnLeft ; facing = 4
+    when PBMoveRoute::TurnDown ; facing = 2
+    when PBMoveRoute::TurnRight ; facing = 6
+    when PBMoveRoute::TurnUp ; facing = 8
+    end 
+    
+    event.pages[0].graphic.direction = facing
+    event.pages[0].direction_fix = true
+    
+    SCClientBattles.loadGraphicsPk(event, species)
+    
+    # Event content
+    pbPushText(event.pages[0].list,_INTL("(You should not interfere in a Pokémon battle)"))
+    pbPushEnd(event.pages[0].list)
+    
+    # creating and adding the Game_Event
+    gameEvent = Game_Event.new($game_map.map_id, event, $game_map)
+    key_id = ($game_map.events.keys.max || -1) + 1
+    gameEvent.id = key_id
+    gameEvent.moveto(x,y)
+    $game_map.events[key_id] = gameEvent
+    
+    # updating the sprites
+    sprite = Sprite_Character.new(Spriteset_Map.viewport,$game_map.events[key_id])
+    $scene.spritesets[$game_map.map_id]=Spriteset_Map.new($game_map) if $scene.spritesets[$game_map.map_id]==nil
+    $scene.spritesets[$game_map.map_id].character_sprites.push(sprite)
+  end 
+  
+  
+  
   def showCharacters(client1, client2, employee1, employee2)
     return if !@reserved
     
@@ -603,9 +849,53 @@ class SCStadium
       client_pk2.turn_left
     end 
   end 
+  
+  
 end 
 
 
+def pbPushEventLocation(list,event_id, type_method, x, y, direction, indent = 0)
+  # type_method:
+  #   0 if direct appointment (x and y are the coordinates)
+  #   1 if the real coordinates are stored in $game_variables[x] and $game_variables[y]
+  #   2 if y is nil and x is another event. 
+  # direction: Should be a PBMoveRoute::TurnDown, TurnUp, TurnLeft, TurnRight, or directly the right numbers.
+  case direction
+  when PBMoveRoute::TurnDown ; direction = 2
+  when PBMoveRoute::TurnUp ; direction = 8
+  when PBMoveRoute::TurnRight ; direction = 6
+  when PBMoveRoute::TurnLeft ; direction = 4
+  end 
+  list.push(RPG::EventCommand.new(202,indent,[event_id, type_method, x, y, direction]))
+end
+
+
+def pbPushShowChoices(list,choices, indent = 0)
+  list.push(RPG::EventCommand.new(102,indent,choices))
+end
+
+
+def pbPushWhenBranch(list, param, indent = 0)
+  list.push(RPG::EventCommand.new(0,indent,[]))
+  list.push(RPG::EventCommand.new(402,indent-1,[param]))
+end 
+
+
+def pbPushWaitForMoveCompletion(list, indent=0)
+  pbPushEvent(list,210,[],indent)
+end 
+
+def pbPushLabel(list, label, indent = 0)
+  pbPushEvent(list,118,[label],indent)
+end 
+
+def pbPushJumpToLabel(list, label, indent = 0)
+  pbPushEvent(list,119,[label],indent)
+end 
+
+def pbPushChangeColorTone(list, r, g, b, num_frames, indent = 0)
+  pbPushEvent(list,223,[Tone.new(r,g,b),num_frames], indent)   # Change Screen Color Tone
+end 
 
 
 class SCClientBattlesGenerator
@@ -767,6 +1057,14 @@ class SCClientBattlesGenerator
   
   def playerValidTeam
     return isValidForTier($Trainer.party, false, playerNextStadium.tier)
+  end 
+  
+  
+  
+  def storeWantedPartner
+    employee = self.playerNextStadium.playerPartner
+    partner_name = SCClientBattles.getEmployeeName(employee)
+    pbSet(SCVar::WantedPartner, partner_name)
   end 
   
   

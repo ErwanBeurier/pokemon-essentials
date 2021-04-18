@@ -34,6 +34,8 @@ module SCVar
   # ---------------------------------------------------------------------------
   # Client battles
   # ---------------------------------------------------------------------------
+  # Stores the name of the partner the client wanted. Only the name though. 
+  WantedPartner = 61
   # The required number of client battles before the story continues
   ClientBattlesRequired = 62
   # The number of battles done. 
@@ -66,6 +68,8 @@ module SCSwitch
   # ---------------------------------------------------------------------------
   # Whether the current client battle is done. 
   RandBattleDone = 78
+  # Battle result
+  ClientBattleResult = 77 
 end 
 
 

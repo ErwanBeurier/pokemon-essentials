@@ -1,3 +1,28 @@
+################################################################################
+# SC Complete Formats 
+# 
+# This script is part of Pokémon Project STRAT by StCooler, and is therefore 
+# not part of Pokémon Essentials. 
+#
+# This script contains the implementation of XvY battles, for X and Y any number 
+# between 1 and 6 (so it allows 2v6 battles). Note that this implementation is 
+# completely different to Essentials Modular Battle by Pokeminer. 
+# 
+# Content: 
+# - Some reimplementation of PokeBattle_Battle that rework the opposing indices 
+#   of Pokémons, the "nearness" of battlers, and the update of the side sizes 
+#   when a Pokémon dies.
+# - Same, from the PokeBattle_Scene side.
+# - Reworked shifting so that you can choose to shift left or right.
+# - Reworked the databoxes for those formats. 
+# - Reworked some moves (like Teleport) to allow long-distance switching. 
+################################################################################
+
+
+#=============================================================================
+# Battle-related stuff.
+#=============================================================================
+
 class PokeBattle_Battle 
   
   def self.parseBattleMode(mode)
@@ -18,6 +43,7 @@ class PokeBattle_Battle
     return [1, 1]
   end 
   
+  
   def self.isValidBattleMode?(mode)
     m = mode.match /(\d)v(\d)/
     return false if m.length != 3 
@@ -26,6 +52,7 @@ class PokeBattle_Battle
     m2 = m[2].to_i
     return m1 > 0 && m1 <= 6 && m2 > 0 && m2 <= 6 
   end 
+  
   
   def pbGetOpposingIndicesInOrderComplete(idxBattler)
     # return nil if pbSideSize(0) <= 3 && pbSideSize(1) <= 3 
@@ -466,6 +493,7 @@ class PokeBattle_Battle
     return nil 
   end 
   
+  
   def nearBattlersComplete?(idxBattler1,idxBattler2)
     return false if idxBattler1 == idxBattler2
     
@@ -773,6 +801,7 @@ class PokeBattle_Battle
     return true
   end 
   
+  
   def pbEORShiftDistantBattlers
     # Makes each side compact when a Pokémon is KO and not replaced. 
     return if singleBattle?
@@ -941,11 +970,12 @@ class PokeBattle_Scene
 end 
 
 
+#=============================================================================
+# Shifting a battler to another position in a battle larger than double.
+# Ask which side. 
+#=============================================================================
+
 class PokeBattle_Battle
-  #=============================================================================
-  # Shifting a battler to another position in a battle larger than double.
-  # Ask which side. 
-  #=============================================================================
   
   def pbAskShift(idxBattler)
     return nil if pbSideSize(idxBattler) <= 3
@@ -1000,10 +1030,10 @@ class PokeBattle_Battle
 end 
 
 
-
-
-
+#=============================================================================
 # Compatibility between ZUD and my implementation of multiple battles. 
+#=============================================================================
+
 class PokemonDataBox < SpriteWrapper
   def initializeDataBoxGraphic(sideSize)
     @onPlayerSide = ((@battler.index%2)==0)
@@ -1203,3 +1233,249 @@ class PokemonDataBox < SpriteWrapper
     refreshExp
   end
 end 
+
+#=============================================================================
+# Some moves need reworking (Teleport, U-turn, and so on).
+#=============================================================================
+
+class PokeBattle_Battle
+  # If player: calls the Party screen to choose a Pokémon, either in battle or in the party. 
+  # Otherwise, choose a Pokémon in the team. 
+  def pbChooseTeleportingPokemon(idxBattler)
+    idxParty = -1
+    if @battlers[idxBattler].pbOwnedByPlayer?
+      # idxParty = pbPartyScreen(idxBattler,false,true,true)
+      @scene.pbPartyScreenTeleport(idxBattler) { |idx,partyScene|
+        idxParty = idx 
+        next true 
+      }
+    else 
+      idxParty = @battleAI.scChooseNonSwitchingPokemon(idxBattler,pbParty(idxBattler))
+    end 
+    return idxParty
+  end 
+  
+  def hasOtherBattlerFromSameTrainer?(idxBattler)
+    eachInTeamFromBattlerIndex(idxBattler) { |pkmn,i|
+      idxB = pbFindBattler(i,idxBattler)
+      return true if idxB && idxBattler != idxB
+    }
+    return false 
+  end 
+  
+end 
+
+
+class PokeBattle_Scene
+  # A Party screen function that allows to choose which Pokémon to replace for Teleport and such.
+  # Note that this allows choosing a POkémon that is in battle. 
+  def pbPartyScreenTeleport(idxBattler, allySwitch = false )
+    # Fade out and hide all sprites
+    visibleSprites = pbFadeOutAndHide(@sprites)
+    # Get player's party
+    partyPos = @battle.pbPartyOrder(idxBattler)
+    partyStart, _partyEnd = @battle.pbTeamIndexRangeFromBattlerIndex(idxBattler)
+    modParty = @battle.pbPlayerDisplayParty(idxBattler)
+    # Start party screen
+    scene = PokemonParty_Scene.new
+    switchScreen = PokemonPartyScreen.new(scene,modParty)
+    switchScreen.pbStartScene(_INTL("Choose a replacement."),@battle.pbNumPositions(0,0))
+    # Loop while in party screen
+    loop do
+      # Select a Pokémon
+      scene.pbSetHelpText(_INTL("Choose a replacement."))
+      idxParty = switchScreen.pbChoosePokemon
+      next if idxParty<0 # Cannot cancel.
+      # Choose a command for the selected Pokémon
+      cmdSwitch  = -1
+      cmdSummary = -1
+      commands = []
+      commands[cmdSwitch  = commands.length] = _INTL("Replace") if (modParty[idxParty].able? && !allySwitch) || 
+                                                           (allySwitch && pbFindBattler(idxParty, idxBattler))
+      commands[cmdSummary = commands.length] = _INTL("Summary")
+      commands[commands.length]              = _INTL("Cancel")
+      command = scene.pbShowCommands(_INTL("Do what with {1}?",modParty[idxParty].name),commands)
+      if (cmdSwitch>=0 && command==cmdSwitch) # Chosen for assistance
+        idxPartyRet = -1
+        partyPos.each_with_index do |pos,i|
+          next if pos!=idxParty+partyStart
+          idxPartyRet = i
+          break
+        end
+        break if yield idxPartyRet, switchScreen
+      elsif cmdSummary>=0 && command==cmdSummary   # Summary
+        scene.pbSummary(idxParty,true)
+      end
+    end
+    # Close party screen
+    switchScreen.pbEndScene
+    # Fade back into battle screen
+    pbFadeInAndShow(@sprites,visibleSprites)
+  end
+end 
+
+#===============================================================================
+# User flees from battle. Fails in trainer battles. (Teleport)
+#===============================================================================
+class PokeBattle_Move_0EA < PokeBattle_Move
+  def pbMoveFailed?(user,targets)
+    if (!@battle.pbCanChooseNonActive?(user.index) && 
+      !@battle.hasOtherBattlerFromSameTrainer?(user.index)) || user.fainted?
+      @battle.pbDisplay(_INTL("But it failed!"))
+      return true
+    end
+    return false
+  end
+
+  def pbEndOfMoveUsageEffect(user,targets,numHits,switchedBattlers)
+    return if user.fainted? || numHits==0
+    return if (!@battle.pbCanChooseNonActive?(user.index) && 
+        !@battle.hasOtherBattlerFromSameTrainer?(user.index))
+    @battle.pbDisplay(_INTL("{1} went back to {2}!",user.pbThis,
+       @battle.pbGetOwnerName(user.index)))
+    @battle.pbPursuit(user.index)
+    return if user.fainted?
+    newPkmn = @battle.pbChooseTeleportingPokemon(user.index)   # Owner chooses
+    return if newPkmn<0
+    partner = @battle.pbFindBattler(newPkmn,user.index)
+    if partner
+      # Switch both Pokémons.
+      self.pbShowAnimation(@id, partner, partner, 0)
+      @battle.pbSwapBattlers(user.index,partner.index)
+      @battle.pbCommonAnimation("AppearBattler", user)
+      @battle.pbCommonAnimation("AppearBattler", partner)
+      @battle.pbDisplay(_INTL("{1} and {2} swapped places!",user.pbThis, partner.pbThis))
+      # pbCancelMoves
+      # user.lastRoundMoved = @battle.turnCount   # Done something this round
+      # return true
+    else 
+      @battle.pbRecallAndReplace(user.index,newPkmn)
+      @battle.pbClearChoice(user.index)   # Replacement Pokémon does nothing this round
+      @battle.moldBreaker = false
+      switchedBattlers.push(user.index)
+      user.pbEffectsOnSwitchIn(true)
+    end 
+  end
+end
+
+
+#===============================================================================
+# After inflicting damage, user switches out. Ignores trapping moves.
+# (U-turn, Volt Switch)
+#===============================================================================
+class PokeBattle_Move_0EE < PokeBattle_Move
+  def pbEndOfMoveUsageEffect(user,targets,numHits,switchedBattlers)
+    return if user.fainted? || numHits==0
+    targetSwitched = true
+    targets.each do |b|
+      targetSwitched = false if !switchedBattlers.include?(b.index)
+    end
+    return if targetSwitched
+    return if (!@battle.pbCanChooseNonActive?(user.index) && 
+        !@battle.hasOtherBattlerFromSameTrainer?(user.index))
+    @battle.pbDisplay(_INTL("{1} went back to {2}!",user.pbThis,
+       @battle.pbGetOwnerName(user.index)))
+    @battle.pbPursuit(user.index)
+    return if user.fainted?
+    newPkmn = @battle.pbChooseTeleportingPokemon(user.index)   # Owner chooses
+    return if newPkmn<0
+    partner = @battle.pbFindBattler(newPkmn,user.index)
+    if partner
+      # Switch both Pokémons.
+      self.pbShowAnimation(@id, partner, partner, 0)
+      @battle.pbSwapBattlers(user.index,partner.index)
+      @battle.pbCommonAnimation("AppearBattler", user)
+      @battle.pbCommonAnimation("AppearBattler", partner)
+      @battle.pbDisplay(_INTL("{1} and {2} swapped places!",user.pbThis, partner.pbThis))
+      # pbCancelMoves
+      # user.lastRoundMoved = @battle.turnCount   # Done something this round
+      # return true
+    else 
+      @battle.pbRecallAndReplace(user.index,newPkmn)
+      @battle.pbClearChoice(user.index)   # Replacement Pokémon does nothing this round
+      @battle.moldBreaker = false
+      switchedBattlers.push(user.index)
+      user.pbEffectsOnSwitchIn(true)
+    end
+  end
+end
+
+
+#===============================================================================
+# User switches places with its ally. (Ally Switch)
+#===============================================================================
+class PokeBattle_Move_120 < PokeBattle_Move
+  def pbMoveFailed?(user,targets)
+    numTargets = 0
+    idxUserOwner = @battle.pbGetOwnerIndexFromBattlerIndex(user.index)
+    user.eachAlly do |b|
+      next if @battle.pbGetOwnerIndexFromBattlerIndex(b.index)!=idxUserOwner
+      numTargets += 1
+    end
+    if numTargets == 0 
+      @battle.pbDisplay(_INTL("But it failed!"))
+      return true
+    end
+    return false
+  end
+
+  def pbEffectGeneral(user)
+    idxA = user.index
+    idxB = @battle.pbChooseTeleportingPokemon(user.index, true)
+    return if newPkmn<0
+    user.effects[PBEffects::SwitchedAlly] = idxB
+    if @battle.pbSwapBattlers(idxA,idxB)
+      @battle.pbDisplay(_INTL("{1} and {2} switched places!",
+      @battle.battlers[idxB].pbThis,@battle.battlers[idxA].pbThis(true)))
+		  @battle.pbActivateHealingWish(@battle.battlers[idxA]) if NEWEST_BATTLE_MECHANICS
+		  @battle.pbActivateHealingWish(@battle.battlers[idxB]) if NEWEST_BATTLE_MECHANICS
+    end
+  end
+end
+
+
+#===============================================================================
+# Decreases the target's Attack and Special Attack by 1 stage each. Then, user
+# switches out. Ignores trapping moves. (Parting Shot)
+#===============================================================================
+class PokeBattle_Move_151 < PokeBattle_TargetMultiStatDownMove
+  def initialize(battle,move)
+    super
+    @statDown = [PBStats::ATTACK,1,PBStats::SPATK,1]
+  end
+
+  def pbEndOfMoveUsageEffect(user,targets,numHits,switchedBattlers)
+    switcher = user
+    targets.each do |b|
+      next if switchedBattlers.include?(b.index)
+      switcher = b if b.effects[PBEffects::MagicCoat] || b.effects[PBEffects::MagicBounce]
+    end
+    return if switcher.fainted? || numHits==0
+    return if !@battle.pbCanChooseNonActive?(switcher.index)
+    @battle.pbDisplay(_INTL("{1} went back to {2}!",switcher.pbThis,
+       @battle.pbGetOwnerName(switcher.index)))
+    @battle.pbPursuit(switcher.index)
+    return if switcher.fainted?
+    newPkmn = @battle.pbChooseTeleportingPokemon(user.index)   # Owner chooses
+    return if newPkmn<0
+    partner = @battle.pbFindBattler(newPkmn,user.index)
+    if partner
+      # Switch both Pokémons.
+      self.pbShowAnimation(@id, partner, partner, 0)
+      @battle.pbSwapBattlers(user.index,partner.index)
+      @battle.pbCommonAnimation("AppearBattler", user)
+      @battle.pbCommonAnimation("AppearBattler", partner)
+      @battle.pbDisplay(_INTL("{1} and {2} swapped places!",user.pbThis, partner.pbThis))
+      # pbCancelMoves
+      # user.lastRoundMoved = @battle.turnCount   # Done something this round
+      # return true
+    else 
+      @battle.pbRecallAndReplace(user.index,newPkmn)
+      @battle.pbClearChoice(user.index)   # Replacement Pokémon does nothing this round
+      @battle.moldBreaker = false
+      switchedBattlers.push(user.index)
+      user.pbEffectsOnSwitchIn(true)
+    end
+  end
+end
+
