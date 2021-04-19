@@ -498,8 +498,10 @@ def scConvertMovesetToString(moveset, with_tab = false, for_compiler = true)
         nature = getConstantName(PBNatures,moveset[SCMovesetsData::NATURE][i]) rescue nil
         s += sprintf(s_tab + "Nature%d = %s\r\n",i+1, nature) if nature
       end
-    else 
+    elsif for_compiler
       s += sprintf(s_tab + "Nature1 = %s\r\n", getConstantName(PBNatures,moveset[SCMovesetsData::NATURE]))
+    else
+      s += sprintf(s_tab + "Nature = %s\r\n", getConstantName(PBNatures,moveset[SCMovesetsData::NATURE]))
     end 
   end
   

@@ -610,7 +610,7 @@ end
 # overriding Method pbWildBattleCore in Script PField_Battles
 # to include alternate forms of the wild pokemon
 #===============================================================================
-def pbWildBattleCore2(*args)
+def pbWildBattleCore(*args)
   outcomeVar = $PokemonTemp.battleRules["outcomeVar"] || 1
   canLose    = $PokemonTemp.battleRules["canLose"] || false
   # Skip battle if the player has no able Pokémon, or if holding Ctrl in Debug mode
@@ -721,7 +721,7 @@ end
 # Standard methods that start a wild battle of various sizes
 #===============================================================================
 # Used when walking in tall grass, hence the additional code.
-def pbWildBattle2(species, level, outcomeVar=1, canRun=true, canLose=false,gender = nil,form = nil,shinysprite = nil)
+def pbWildBattle(species, level, outcomeVar=1, canRun=true, canLose=false,gender = nil,form = nil,shinysprite = nil)
   species = getID(PBSpecies,species)
   # Potentially call a different pbWildBattle-type method instead (for roaming
   # Pokémon, Safari battles, Bug Contest battles)
@@ -762,7 +762,7 @@ end
   #end
   #-----------------------------------------------------------------------------
 
-def pbDoubleWildBattle2(species1, level1, species2, level2,
+def pbDoubleWildBattle(species1, level1, species2, level2,
                        outcomeVar=1, canRun=true, canLose=false,
                        gender1 = nil,form1 = nil,shinysprite1 = nil,gender2 = nil,form2 = nil,shinysprite2 = nil)
   # Set some battle rules
