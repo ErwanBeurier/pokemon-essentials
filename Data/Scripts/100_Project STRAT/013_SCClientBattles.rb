@@ -596,6 +596,8 @@ class SCStadium
     event.pages[0].move_type = 0
     event.pages[0].trigger = 0 # Action Button
     
+    dia = scClientBattles.dialogue # Dialogue modifiers.
+    
     # tp_x = where to teleport the player rather than making it turn around the trainer. 
     # Should be "in front" of the trainer. 
     tp_x = x    
@@ -614,16 +616,20 @@ class SCStadium
     # Check if Battle is over: 
     indent = 0
     pbPushBranch(event.pages[0].list,"$game_switches[SCSwitch::RandBattleDone]", indent)
+    # pbPushText(event.pages[0].list,_INTL("Thank you for your time \\PN!"), indent+1)
+    dia.pushBattleOver(event.pages[0].list, indent+1)
     pbPushText(event.pages[0].list,_INTL("Thank you for your time \\PN!"), indent+1)
     pbPushExit(event.pages[0].list, indent+1) # Exit event processing.
     pbPushBranchEnd(event.pages[0].list, indent+1)
     
     # Greeting 
-    pbPushText(event.pages[0].list,_INTL("Hi \\PN!\\nReady to fight?"), indent)
+    # pbPushText(event.pages[0].list,_INTL("Hi \\PN!\\nReady to fight?"), indent)
+    dia.pushGreeting(event.pages[0].list, indent)
     pbPushShowChoices(event.pages[0].list, [["Yes", "No"], 1], indent)
     pbPushWhenBranch(event.pages[0].list, 0, indent+1)
     pbPushWhenBranch(event.pages[0].list, 1, indent+1)
-    pbPushText(event.pages[0].list, _INTL("No problem. I want a good fight!"), indent+1)
+    # pbPushText(event.pages[0].list, _INTL("No problem. I want a good fight!"), indent+1)
+    dia.pushPlayerNotReady(event.pages[0].list, indent+1)
     pbPushExit(event.pages[0].list, indent+1) # Exit event processing.
     pbPushBranchEnd(event.pages[0].list, indent+1)
     
@@ -632,14 +638,16 @@ class SCStadium
     indent += 1
     
     pbPushBranch(event.pages[0].list,"!scClientBattles.playerHasPartner", indent)
-    pbPushText(event.pages[0].list,_INTL("But... I wanted you to team up with one of your friends..."), indent+1)
+    dia.pushPartnerMissing(event.pages[0].list, indent+1)
+    # pbPushText(event.pages[0].list,_INTL("But... I wanted you to team up with one of your friends..."), indent+1)
     pbPushExit(event.pages[0].list, indent+1) # Exit event processing.
     pbPushBranchEnd(event.pages[0].list, indent+1)
     
     pbPushBranch(event.pages[0].list,"!scClientBattles.playerHasRightPartner", indent)
     pbPushScript(event.pages[0].list,"scClientBattles.storeWantedPartner", indent+1)
-    pbPushText(event.pages[0].list,
-      _INTL("But... I wanted you to team up with \\V[{1}]...", SCVar::WantedPartner), indent+1)
+    dia.pushWrongPartner(event.pages[0].list, indent+1)
+    # pbPushText(event.pages[0].list,
+      # _INTL("But... I wanted you to team up with \\V[{1}]...", SCVar::WantedPartner), indent+1)
     pbPushExit(event.pages[0].list, indent+1) # Exit event processing.
     pbPushBranchEnd(event.pages[0].list, indent+1)
     
@@ -649,6 +657,8 @@ class SCStadium
     # Check if team is valid.
     pbPushBranch(event.pages[0].list,"!scClientBattles.playerValidTeam", indent)
     pbPushText(event.pages[0].list,_INTL("But... Your team is not valid..."), indent+1)
+    dia.pushInvalidTeam(event.pages[0].list, indent+1)
+    # pbPushText(event.pages[0].list,_INTL("But... Your team is not valid..."), indent+1)
     pbPushExit(event.pages[0].list, indent+1) # Exit event processing.
     pbPushBranchEnd(event.pages[0].list, indent+1) 
     
@@ -687,7 +697,8 @@ class SCStadium
       _INTL("$game_variables[{1}] = true", SCSwitch::ClientBattleResult), indent)
     pbPushMoveRoute(event.pages[0].list, 0, route_player[0..1], indent)
     pbPushWaitForMoveCompletion(event.pages[0].list, indent)
-    pbPushText(event.pages[0].list,_INTL("Well done!"), indent)
+    # pbPushText(event.pages[0].list,_INTL("Well done!"), indent)
+    dia.pushPlayerWon(event.pages[0].list, indent)
     
     pbPushElse(event.pages[0].list, indent)
     # Case 2: Defeat
@@ -697,7 +708,8 @@ class SCStadium
     
     pbPushChangeColorTone(event.pages[0].list,-255,-255,-255,20,indent)
     
-    pbPushText(event.pages[0].list,_INTL("Try again?"), indent)
+    dia.pushTryAgain(event.pages[0].list, indent)
+    # pbPushText(event.pages[0].list,_INTL("Try again?"), indent)
     pbPushShowChoices(event.pages[0].list, [["Try again", "Change team", "Accept defeat"], 2], indent)
     # Defeat: try again 
     pbPushWhenBranch(event.pages[0].list, 0, indent+1) 
@@ -715,7 +727,8 @@ class SCStadium
     pbPushChangeColorTone(event.pages[0].list, 0, 0, 0, 20, indent+1)
     pbPushMoveRoute(event.pages[0].list, 0, route_player[0..1], indent+1)
     pbPushWaitForMoveCompletion(event.pages[0].list, indent+1)
-    pbPushText(event.pages[0].list,_INTL("That's unbelievable, I won!"), indent+1)
+    # pbPushText(event.pages[0].list,_INTL("That's unbelievable, I won!"), indent+1)
+    dia.pushClientWon(event.pages[0].list, indent+1)
     pbPushBranchEnd(event.pages[0].list, indent+1)
     
     indent -= 1
@@ -926,11 +939,12 @@ end
 
 
 class SCClientBattlesGenerator
-  
+  attr_reader :dialogue
   
   def initialize
     @map_names = ["Castle", "Cliff", "Forest A", "Forest B", "Beach", "Gardens"] # Not Stadium 
     @stadiums = {}
+    @dialogue = nil 
     
     @client_classes = SCClientBattles.clients
     @employee_classes = SCClientBattles.employees
@@ -1061,6 +1075,8 @@ class SCClientBattlesGenerator
       @reserved_stadiums[mp] = []
     end 
     
+    @dialogue = SCClientBattleDialogues.get_random_usual
+    
     @player_map = nil 
     @player_stadium = nil 
     $game_switches[SCSwitch::RandBattleDone] = false 
@@ -1125,6 +1141,13 @@ class SCClientBattlesGenerator
     employee = self.playerNextStadium.playerPartner
     partner_name = SCClientBattles.getEmployeeName(employee)
     pbSet(SCVar::WantedPartner, partner_name)
+  end 
+  
+  
+  
+  def setClientDialogue(dialogue)
+    # dialogue = constant from SCClientBattleDialogues
+    @dialogue = dialogue
   end 
   
   
