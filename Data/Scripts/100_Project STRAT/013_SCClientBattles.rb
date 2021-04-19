@@ -18,8 +18,11 @@
 ################################################################################
 
 
+#-------------------------------------------------------------------------------
 # This module defines the tools, and hard-coded lists of constants that will be 
 # used by SCClientBattlesHandler and SCStadium
+#-------------------------------------------------------------------------------
+
 module SCClientBattles
   Player = -100
   AnyPartner = -200
@@ -35,12 +38,7 @@ module SCClientBattles
     else 
       filename=sprintf("trchar%03d",trainerid)
     end 
-    # bitmap=AnimatedBitmap.new("Graphics/Characters/"+filename)
-    # bitmap.dispose
-    # event.pages[0].graphic.character_name=filename
-    # event.pages[0].graphic.character_name=filename
     event.pages[0].graphic.character_name=filename
-    # pbMessage(_INTL("Coucou")) if pbResolveBitmap("Graphics/Characters/"+filename)
 	end 
   
   
@@ -49,12 +47,6 @@ module SCClientBattles
     species = pbGetSpeciesFromFSpecies(pokemonid)
     filename = ""
     filename=sprintf("%03d",species[0])
-    # if species[1] == 0 
-    # else
-      # filename=sprintf("%03d_%d",species[0],species[1]) # These do not necessarily exist, even if the form exists, because Mega-evolutions are not supposed to be seen overworld.
-    # end 
-    # bitmap=AnimatedBitmap.new("Graphics/Characters/Following/" + filename)
-    # bitmap.dispose
     event.pages[0].graphic.character_name="Following/" + filename
 	end 
 
@@ -415,8 +407,13 @@ end
 
 
 
+#-------------------------------------------------------------------------------
+# This class defines the properties of a Stadium. Also stores the clients / 
+# employees, and contains methods to display them on the map, together with 
+# their Pokémons. 
+#-------------------------------------------------------------------------------
+
 class SCStadium 
-  # This class defines the properties of a Stadium. Also stores the clients/employees. 
   attr_reader(:map_id)
   attr_reader(:name)
   attr_reader(:center_y)
@@ -861,83 +858,15 @@ class SCStadium
     @event_list = []
   end 
   
-  
-  
-  def showCharacters(client1, client2, employee1, employee2)
-    return if !@reserved
-    
-    checks = Array.new(5, false)
-    
-    if @employee_side[0][0] == SCClientBattles::Player
-      pbMapInterpreter.pbSetSelfSwitch(client1.id,"A",true) if @client_side[0]
-      pbMapInterpreter.pbSetSelfSwitch(client2.id,"A",true) if @client_side[1]
-      # pbMessage("Your client is here.")
-      pbUpdateSceneMap # Otherwise the client doesn't appear. 
-    end 
-    
-    if @employee_side[0] && @employee_side[0][0] != SCClientBattles::Player
-      SCClientBattles.loadGraphics(employee1, @employee_side[0][0])
-      employee1.moveto(@employee_side[0][1], @employee_side[0][2])
-      employee1.turn_right
-    end 
-    if @employee_side[1] && @employee_side[0][0] != SCClientBattles::Player
-      SCClientBattles.loadGraphics(employee2, @employee_side[1][0])
-      employee2.moveto(@employee_side[1][1], @employee_side[1][2])
-      employee2.turn_right
-    end 
-    if @client_side[0]
-      SCClientBattles.loadGraphics(client1, @client_side[0][0])
-      client1.moveto(@client_side[0][1], @client_side[0][2])
-      client1.turn_left
-    end 
-    if @client_side[1]
-      SCClientBattles.loadGraphics(client2, @client_side[1][0])
-      client2.moveto(@client_side[1][1], @client_side[1][2])
-      client2.turn_left
-    end 
-  end 
-  
-  
-  
-  def showAudience(*events)
-    return if !@reserved
-    
-    # e = 0 
-    # events.each { |event| 
-      
-    # }
-  end 
-  
-  
-  
-  def showPokemons(employee_pk1, employee_pk2, client_pk1, client_pk2)
-    return if !@reserved
-    return if @for_player
-    
-    if @employee_side[0]
-      SCClientBattles.loadGraphicsPk(employee_pk1, @employee_pokemons[0])
-      employee_pk1.moveto(@employee_side[0][1] + 1, @employee_side[0][2])
-      employee_pk1.turn_right
-    end 
-    if @employee_side[1] || @is_double_single
-      SCClientBattles.loadGraphicsPk(employee_pk2, @employee_pokemons[1])
-      employee_pk2.moveto(@employee_side[0][1] + 1, @employee_side[0][2] + 1)
-      employee_pk2.turn_right
-    end 
-    if @client_side[0]
-      SCClientBattles.loadGraphicsPk(client_pk1, @client_pokemons[0])
-      client_pk1.moveto(@client_side[0][1] - 1, @client_side[0][2])
-      client_pk1.turn_left
-    end 
-    if @client_side[1] || @is_double_single
-      SCClientBattles.loadGraphicsPk(client_pk2, @client_pokemons[1])
-      client_pk2.moveto(@client_side[0][1] - 1, @client_side[0][2] + 1)
-      client_pk2.turn_left
-    end 
-  end 
-  
 end 
 
+
+
+
+#-------------------------------------------------------------------------------
+# A few methods to make Events. 
+# Used in the Stadium "spawn" methods.
+#-------------------------------------------------------------------------------
 
 def pbPushEventLocation(list,event_id, type_method, x, y, direction, indent = 0)
   # type_method:
@@ -956,11 +885,13 @@ end
 
 
 def pbPushShowChoices(list,choices, indent = 0)
+  # Choices = list of choices (should be less than 4)
   list.push(RPG::EventCommand.new(102,indent,choices))
 end
 
 
 def pbPushWhenBranch(list, param, indent = 0)
+  # A branch to handle the choices.
   list.push(RPG::EventCommand.new(0,indent,[]))
   list.push(RPG::EventCommand.new(402,indent-1,[param]))
 end 
@@ -970,17 +901,28 @@ def pbPushWaitForMoveCompletion(list, indent=0)
   pbPushEvent(list,210,[],indent)
 end 
 
+
 def pbPushLabel(list, label, indent = 0)
   pbPushEvent(list,118,[label],indent)
 end 
+
 
 def pbPushJumpToLabel(list, label, indent = 0)
   pbPushEvent(list,119,[label],indent)
 end 
 
+
 def pbPushChangeColorTone(list, r, g, b, num_frames, indent = 0)
-  pbPushEvent(list,223,[Tone.new(r,g,b),num_frames], indent)   # Change Screen Color Tone
+  pbPushEvent(list,223,[Tone.new(r,g,b),num_frames], indent)
 end 
+
+
+
+
+#-------------------------------------------------------------------------------
+# The class that contains the staidums + the final methods to display the 
+# clients and such + the generation of clients. 
+#-------------------------------------------------------------------------------
 
 
 class SCClientBattlesGenerator
