@@ -12,6 +12,9 @@
 # Switch to allow Assistance or not. 
 NO_ASSISTANCE = 88
 
+# Number of turns between Assistance uses. 
+ASSISTANCE_RELOAD_DURATION = 3
+
 # Positive effects that the assisting Pokémon can get from the assisted 
 # Pokémon, or conversely. 
 POSITIVE_EFFECTS_BATTLER = [
@@ -146,7 +149,7 @@ class PokeBattle_Battle
   def pbDisableAssistance(idxBattler)
     side  = @battlers[idxBattler].idxOwnSide
     owner = pbGetOwnerIndexFromBattlerIndex(idxBattler)
-    @assistance[side][owner] = -2 if @assistance[side][owner]==idxBattler
+    @assistance[side][owner] = -2 - ASSISTANCE_RELOAD_DURATION if @assistance[side][owner]==idxBattler
   end
 
   def pbToggleRegisteredAssistance(idxBattler)
@@ -186,6 +189,24 @@ class PokeBattle_Battle
       @choices[b.index][3] = -1        # No target chosen yet
     end
   end
+  
+  
+  def pbEORAssistanceReloading(priority)
+    priority.each do |b|
+      # idxMove = @choices[b.index]
+      next if wildBattle? && b.opposes?
+      # next unless @choices[b.index][0]==:UseMove && !b.fainted?
+      next unless !b.fainted?
+      owner = pbGetOwnerIndexFromBattlerIndex(b.index)
+      next if @assistance[b.idxOwnSide][owner] >= -1 
+      
+      @assistance[b.idxOwnSide][owner] += 1
+      
+      if @assistance[b.idxOwnSide][owner] == -1
+        pbDisplay(_INTL("{1} can use Assistance again!", pbGetOwnerName(b.index)))
+      end 
+    end
+  end 
   
   
   # DEBUG

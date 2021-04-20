@@ -352,6 +352,8 @@ class PokeBattle_Battle
     end
     # Carboniferous healing effect (STRAT)
     scEORCarboniferous
+    # Assistance reloading (STRAT)
+    pbEORAssistanceReloading(priority)
     # Dynamax - End of round effects (G-Max Vine Lash, Wildfire, etc.) (ZUD)
     pbEORMaxMoveEffects(priority)
     # Status-curing effects/abilities and HP-healing items
