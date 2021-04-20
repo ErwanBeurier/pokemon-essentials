@@ -1037,21 +1037,39 @@ end
 class PokemonDataBox < SpriteWrapper
   def initializeDataBoxGraphic(sideSize)
     @onPlayerSide = ((@battler.index%2)==0)
-    # Get the data box graphic and set whether the HP numbers/Exp bar are shown
-    if sideSize==1   # One Pokémon on side, use the regular dara box BG
-      bgFilename = ["Graphics/Pictures/Battle/databox_normal",
-                    "Graphics/Pictures/Battle/databox_normal_foe"][@battler.index%2]
-      if @onPlayerSide
-        @showHP  = true
-        @showExp = true
+    #---------------------------------------------------------------------------
+    # Sets a raid battle box for a Max Raid Pokemon.
+    #---------------------------------------------------------------------------
+    if $game_switches[MAXRAID_SWITCH]
+      if sideSize==1
+        bgFilename = ["Graphics/Pictures/Battle/databox_normal",
+                      "Graphics/Pictures/Dynamax/databox_maxraid"][@battler.index%2]
+        if @onPlayerSide
+          @showHP  = true
+          @showExp = true
+        end
+      else
+        bgFilename = ["Graphics/Pictures/Battle/databox_thin",
+                      "Graphics/Pictures/Dynamax/databox_maxraid"][@battler.index%2]
       end
-    elsif sideSize < 4 # Multiple Pokémon on side, use the thin dara box BG
-      bgFilename = ["Graphics/Pictures/Battle/databox_thin",
-                    "Graphics/Pictures/Battle/databox_thin_foe"][@battler.index%2]
-    else # For a side with 4 Pokémons or more. 
-      bgFilename = ["Graphics/Pictures/Battle/databox_tiny",
-                    "Graphics/Pictures/Battle/databox_tiny_foe"][@battler.index%2]
-    end
+    #---------------------------------------------------------------------------                
+    else
+      # Get the data box graphic and set whether the HP numbers/Exp bar are shown
+      if sideSize==1   # One Pokémon on side, use the regular dara box BG
+        bgFilename = ["Graphics/Pictures/Battle/databox_normal",
+                      "Graphics/Pictures/Battle/databox_normal_foe"][@battler.index%2]
+        if @onPlayerSide
+          @showHP  = true
+          @showExp = true
+        end
+      elsif sideSize < 4 # Multiple Pokémon on side, use the thin dara box BG
+        bgFilename = ["Graphics/Pictures/Battle/databox_thin",
+                      "Graphics/Pictures/Battle/databox_thin_foe"][@battler.index%2]
+      else # For a side with 4 Pokémons or more. 
+        bgFilename = ["Graphics/Pictures/Battle/databox_tiny",
+                      "Graphics/Pictures/Battle/databox_tiny_foe"][@battler.index%2]
+      end
+    end 
     @databoxBitmap  = AnimatedBitmap.new(bgFilename)
     # Determine the co-ordinates of the data box and the left edge padding width
     if @onPlayerSide
@@ -1160,6 +1178,7 @@ class PokemonDataBox < SpriteWrapper
         shieldLvl += 1 if @battler.level>55
         shieldLvl += 1 if @battler.level>65
         shieldLvl += 1 if @battler.level>=70 || $game_switches[HARDMODE_RAID]
+        shieldLvl  = 5 if pbInDynAdventure?
         shieldLvl  = 1 if shieldLvl<=0
         shieldLvl  = 8 if shieldLvl>8
         offset     = (121-(2+shieldLvl*30/2))
@@ -1176,13 +1195,11 @@ class PokemonDataBox < SpriteWrapper
       when 1   # Female
         textPos.push([_INTL("♀"),@spriteBaseX+126,6,false,FEMALE_BASE_COLOR,FEMALE_SHADOW_COLOR])
       end
-      pbDrawTextPositions(self.bitmap,textPos)
-    end
     # Draw Pokémon's level
-    if !@largeSideSize
       imagePos.push(["Graphics/Pictures/Battle/overlay_lv",@spriteBaseX+140,16])
       pbDrawNumber(@battler.level,self.bitmap,@spriteBaseX+162,16)
     end 
+    pbDrawTextPositions(self.bitmap,textPos)
     if !@largeSideSize
       # Draw shiny icon
       if @battler.shiny?

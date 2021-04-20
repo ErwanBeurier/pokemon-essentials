@@ -354,7 +354,7 @@ module SCClientBattles
     
     # All tiers appear once. 
     for t in tiers["TierList"]
-      next if ["BIL", "MONOL", "FEL", "UBER"].include?(t) && !scLegendaryAllowed?
+      next if scTiersWithLegendaries.include?(t) && !scLegendaryAllowed?
       
       if tiers[t]["Category"] != "Random" and t != "OTF"
         tier_list.push(t)
@@ -542,6 +542,113 @@ class SCStadium
   
   
   
+  def spawnAudience(x, y, facing)
+    trainer_id = SCClientBattles.clients
+    trainer_id = trainer_id[rand(trainer_id.length)]
+    
+    
+    audience_text = "Niiiiice!"
+    
+    # For battles without player.
+    audience_texts_not_player = ["This is a nice combat!", 
+                                "What a misplay!", 
+                                "Nice anticipation!", 
+                                "How could you always miss those High Jump Kicks?",
+                                "I've bet on the left player.",
+                                "I've bet on the right player.",
+                                _INTL("This is the tier {1}.", @tier),
+                                "Wooho!"]
+    
+    # For battles with the player - Before the battle
+    audience_texts_before = ["I would love to have the level to battle you!", 
+                            "I expect nothing but perfection from you."]
+                        
+    # For battles with the player - After the battle - Victory
+    audience_texts_victory = ["You're not the best for no reason.", 
+                              "You're brilliant!",
+                              "What a nice battle!"]
+                        
+    # For battles with the player - After the battle - Defeat
+    audience_texts_loss = ["I guess the tier wasn't at your advantage...", 
+                          "What a disappointment..."]
+                        
+    # For battles with the player - After the battle - Both
+    audience_texts_both = ["Nice fight!",
+                          "Twas a nice battle!"]
+    audience_texts_loss += audience_texts_both
+    audience_texts_victory += audience_texts_both
+    
+    
+    # Now create the event. 
+    event = RPG::Event.new(x,y)
+    event.name = "Audience"
+    
+    key_id = ($game_map.events.keys.max || -1) + 1
+    event.id = key_id
+    event.x = x
+    event.y = y
+    event.pages[0].move_type = 0
+    event.pages[0].trigger = 0 # Action Button
+    
+    facing2 = facing
+    case facing
+    when PBMoveRoute::TurnLeft  ; facing2 = 4
+    when PBMoveRoute::TurnDown  ; facing2 = 2
+    when PBMoveRoute::TurnRight ; facing2 = 6
+    when PBMoveRoute::TurnUp    ; facing2 = 8
+    end 
+    
+    event.pages[0].graphic.direction = facing2
+    
+    # Insert the commands. 
+    if @for_player
+      indent = 0
+      pbPushBranch(event.pages[0].list,"$game_switches[SCSwitch::RandBattleDone]", indent)
+      # Battle is over. 
+      
+      pbPushBranch(event.pages[0].list,"$game_switches[SCSwitch::ClientBattleResult]", indent+1)
+      pbPushText(event.pages[0].list,scsample(audience_texts_victory, 1), indent+2) # It was a victory.
+      pbPushElse(event.pages[0].list,indent+2)
+      pbPushText(event.pages[0].list,scsample(audience_texts_loss, 1), indent+2) # It was a loss. 
+      pbPushBranchEnd(event.pages[0].list, indent+2)
+      
+      pbPushElse(event.pages[0].list,indent+1)
+      
+      # Before battle. 
+      pbPushText(event.pages[0].list,scsample(audience_texts_before, 1), indent+1)
+      
+      pbPushBranchEnd(event.pages[0].list, indent+1)
+      pbPushMoveRoute(event.pages[0].list, 0, [facing])
+      
+      pbPushEnd(event.pages[0].list, indent)
+      
+    else 
+      # Just show some text. 
+      pbPushText(event.pages[0].list, scsample(audience_texts_not_player, 1))
+      pbPushMoveRoute(event.pages[0].list, 0, [facing])
+      pbPushEnd(event.pages[0].list)
+    end 
+    
+    
+    
+    SCClientBattles.loadGraphics(event, trainer_id)
+    
+    # creating and adding the Game_Event
+    gameEvent = Game_Event.new($game_map.map_id, event, $game_map)
+    key_id = ($game_map.events.keys.max || -1) + 1
+    gameEvent.id = key_id
+    gameEvent.moveto(x,y)
+    $game_map.events[key_id] = gameEvent
+    @event_list.push(key_id)
+    
+    # updating the sprites
+    sprite = Sprite_Character.new(Spriteset_Map.viewport,$game_map.events[key_id])
+    $scene.spritesets[$game_map.map_id]=Spriteset_Map.new($game_map) if $scene.spritesets[$game_map.map_id]==nil
+    $scene.spritesets[$game_map.map_id].character_sprites.push(sprite)
+  end 
+  
+  
+  
   def spawnClientBusy(x, y, facing, trainer_id) # Not for Player
     event = RPG::Event.new(x,y)
     event.name = "Client (Busy)"
@@ -618,7 +725,7 @@ class SCStadium
     pbPushBranch(event.pages[0].list,"$game_switches[SCSwitch::RandBattleDone]", indent)
     # pbPushText(event.pages[0].list,_INTL("Thank you for your time \\PN!"), indent+1)
     dia.pushBattleOver(event.pages[0].list, indent+1)
-    pbPushText(event.pages[0].list,_INTL("Thank you for your time \\PN!"), indent+1)
+    # pbPushText(event.pages[0].list,_INTL("Thank you for your time \\PN!"), indent+1)
     pbPushExit(event.pages[0].list, indent+1) # Exit event processing.
     pbPushBranchEnd(event.pages[0].list, indent+1)
     
@@ -656,7 +763,7 @@ class SCStadium
     
     # Check if team is valid.
     pbPushBranch(event.pages[0].list,"!scClientBattles.playerValidTeam", indent)
-    pbPushText(event.pages[0].list,_INTL("But... Your team is not valid..."), indent+1)
+    # pbPushText(event.pages[0].list,_INTL("But... Your team is not valid..."), indent+1)
     dia.pushInvalidTeam(event.pages[0].list, indent+1)
     # pbPushText(event.pages[0].list,_INTL("But... Your team is not valid..."), indent+1)
     pbPushExit(event.pages[0].list, indent+1) # Exit event processing.
@@ -707,24 +814,28 @@ class SCStadium
       _INTL("$game_variables[{1}] = false", SCSwitch::ClientBattleResult), indent)
     
     pbPushChangeColorTone(event.pages[0].list,-255,-255,-255,20,indent)
-    
+    pbPushWait(event.pages[0].list,20, indent)
+  
     dia.pushTryAgain(event.pages[0].list, indent)
     # pbPushText(event.pages[0].list,_INTL("Try again?"), indent)
     pbPushShowChoices(event.pages[0].list, [["Try again", "Change team", "Accept defeat"], 2], indent)
     # Defeat: try again 
     pbPushWhenBranch(event.pages[0].list, 0, indent+1) 
     pbPushChangeColorTone(event.pages[0].list, 0, 0, 0, 20, indent+1)
+    pbPushWait(event.pages[0].list,20, indent+1)
     pbPushJumpToLabel(event.pages[0].list, "Start the battle", indent+1)
     
     # Defeat: change team, and try again
     pbPushWhenBranch(event.pages[0].list, 1, indent+1) 
     pbPushScript(event.pages[0].list, _INTL("scAdaptCurrentTeam"), indent+1)
     pbPushChangeColorTone(event.pages[0].list, 0, 0, 0, 20, indent+1)
+    pbPushWait(event.pages[0].list,20, indent+1)
     pbPushJumpToLabel(event.pages[0].list, "Start the battle", indent+1)
     
     # Defeat: accept defeat
     pbPushWhenBranch(event.pages[0].list, 2, indent+1)
     pbPushChangeColorTone(event.pages[0].list, 0, 0, 0, 20, indent+1)
+    pbPushWait(event.pages[0].list,20, indent+1)
     pbPushMoveRoute(event.pages[0].list, 0, route_player[0..1], indent+1)
     pbPushWaitForMoveCompletion(event.pages[0].list, indent+1)
     # pbPushText(event.pages[0].list,_INTL("That's unbelievable, I won!"), indent+1)
@@ -829,9 +940,18 @@ class SCStadium
     
     # Spawn the Pokémons
     displayPokemon(@client_side[0], false, @client_pokemons[0])
-    displayPokemon(@client_side[0], @client_side[1] || @is_double_single, @client_pokemons[1])
+    displayPokemon(@client_side[0], true, @client_pokemons[1]) if @client_side[1] || @is_double_single
     displayPokemon(@employee_side[0], false, @employee_pokemons[0])
-    displayPokemon(@employee_side[0], @employee_side[1] || @is_double_single, @employee_pokemons[1])
+    displayPokemon(@employee_side[0], true, @employee_pokemons[1]) if @employee_side[1] || @is_double_single
+    
+    
+    # Spawn the audience
+    half_audience = (@audience_pos.length / 2).floor
+    real_audience = scsample(@audience_pos, half_audience)
+    
+    for data in real_audience
+      spawnAudience(data[0], data[1], data[2])
+    end 
   end 
   
   
@@ -962,111 +1082,313 @@ class SCClientBattlesGenerator
       @reserved_stadiums[mp] = []
     }
     
+    initStadiums
+  end 
+  
+  
+  
+  def initStadiums
+    # -----------------------
     # Stadiums
+    # -----------------------
     audience = []
+    for i in 0...2
+      audience.push([1, 3+i, PBMoveRoute::TurnRight])
+      audience.push([6, 3+i, PBMoveRoute::TurnLeft])
+    end 
+    for i in 0...4
+      audience.push([2+i, 5, PBMoveRoute::TurnUp]) if i != 2
+    end 
     @stadiums["Castle"].push(SCStadium.new("Castle", 0, "West stadium", 
-                                3, 1, 4, PBMoveRoute::TurnLeft, audience))
+                                3, 2, 5, PBMoveRoute::TurnLeft, audience))
     audience = []
+    for i in 0...2
+      audience.push([8, 3+i, PBMoveRoute::TurnRight])
+      audience.push([13, 3+i, PBMoveRoute::TurnLeft])
+    end 
+    for i in 0...4
+      audience.push([9+i, 5, PBMoveRoute::TurnUp]) if i != 2
+    end 
     @stadiums["Castle"].push(SCStadium.new("Castle", 1, "Center stadium", 
-                                3, 7, 10, PBMoveRoute::TurnLeft, audience))
+                                3, 9, 12, PBMoveRoute::TurnLeft, audience))
     
+    # -----------------------
     # Gardens
+    # -----------------------
+    #                   East 
+    # Near 
+    #
+    #
+    # South 
+    # 
     audience = []
+    for i in 0...3
+      audience.push([12, 13+i, PBMoveRoute::TurnRight])
+      audience.push([17, 13+i, PBMoveRoute::TurnLeft])
+    end 
+    for i in 0...4
+      audience.push([13+i, 16, PBMoveRoute::TurnUp])
+    end 
     @stadiums["Gardens"].push(SCStadium.new("Gardens", 0, "Near stadium", 
                               14, 13, 16, PBMoveRoute::TurnLeft, audience))
     audience = []
+    for i in 0...6
+      next if i == 2 || i == 3
+      audience.push([13 + i, 23, PBMoveRoute::TurnDown])
+      audience.push([13 + i, 25, PBMoveRoute::TurnDown])
+    end 
     @stadiums["Gardens"].push(SCStadium.new("Gardens", 1, "South stadium", 
                               28, 14, 17, PBMoveRoute::TurnLeft, audience))
-    audience = []
+    
     @stadiums["Gardens"].push(SCStadium.new("Gardens", 2, "East stadium", 
-                              11, 32, 35, PBMoveRoute::TurnLeft, audience))
+                              11, 32, 35, PBMoveRoute::TurnLeft, 
+                              SCClientBattlesGenerator.audienceXY(31, 10)))
     
     
+    # -----------------------
     # Cliff 
+    # -----------------------
     #               5
     #         3
     #    2       4 
     # 
     #          1
     audience = []
+    for i in 0...3
+      audience.push([22, 25+i, PBMoveRoute::TurnLeft])
+    end 
+    for i in 0...4
+      audience.push([18+i, 24, PBMoveRoute::TurnDown])
+      audience.push([18+i, 28, PBMoveRoute::TurnUp])
+    end
     @stadiums["Cliff"].push(SCStadium.new("Cliff", 0, "Stadium 1", 
                               26, 18, 21, PBMoveRoute::TurnLeft, audience))
     audience = []
+    for i in 0...3
+      audience.push([10, 17+i, PBMoveRoute::TurnRight])
+      audience.push([15, 17+i, PBMoveRoute::TurnLeft])
+    end 
+    for i in 0...4
+      audience.push([11+i, 20, PBMoveRoute::TurnUp])
+    end
     @stadiums["Cliff"].push(SCStadium.new("Cliff", 1, "Stadium 2", 
                               18, 11, 14, PBMoveRoute::TurnLeft, audience))
-    audience = []
+    # audience = []
+    # for i in 0...3
+      # audience.push([15, 12+i, PBMoveRoute::TurnRight])
+      # audience.push([20, 12+i, PBMoveRoute::TurnLeft])
+    # end 
+    # for i in 0...4
+      # audience.push([16+i, 11, PBMoveRoute::TurnDown])
+      # audience.push([16+i, 15, PBMoveRoute::TurnUp])
+    # end
     @stadiums["Cliff"].push(SCStadium.new("Cliff", 2, "Stadium 3", 
-                              13, 16, 19, PBMoveRoute::TurnLeft, audience))
-    audience = []
+                              13, 16, 19, PBMoveRoute::TurnLeft, 
+                              SCClientBattlesGenerator.audienceXY(15, 12)))
+    # audience = []
+    # for i in 0...3
+      # audience.push([22, 17+i, PBMoveRoute::TurnRight])
+      # audience.push([27, 17+i, PBMoveRoute::TurnLeft])
+    # end 
+    # for i in 0...4
+      # audience.push([23+i, 16, PBMoveRoute::TurnDown])
+      # audience.push([23+i, 20, PBMoveRoute::TurnUp])
+    # end
     @stadiums["Cliff"].push(SCStadium.new("Cliff", 3, "Stadium 4", 
-                              18, 23, 26, PBMoveRoute::TurnLeft, audience))
+                              18, 23, 26, PBMoveRoute::TurnLeft, 
+                              SCClientBattlesGenerator.audienceXY(22, 17)))
     audience = []
+    for i in 0...3
+      audience.push([38, 8+i, PBMoveRoute::TurnLeft])
+    end 
+    for i in 0...2
+      audience.push([33, 9+i, PBMoveRoute::TurnRight])
+    end 
+    for i in 0...4
+      audience.push([34+i, 7, PBMoveRoute::TurnDown])
+      audience.push([34+i, 11, PBMoveRoute::TurnUp])
+    end
     @stadiums["Cliff"].push(SCStadium.new("Cliff", 4, "Stadium 5", 
                               9, 34, 37, PBMoveRoute::TurnLeft, audience))
     
     
+    # -----------------------
     # Forest A 
+    # -----------------------
     #  2
     #      1
     #             4
     #    3 
     audience = []
+    for i in 0...3
+      audience.push([28, 15+i, PBMoveRoute::TurnRight])
+      next if i == 1
+      audience.push([23, 15+i, PBMoveRoute::TurnLeft])
+    end 
+    for i in 0...4
+      audience.push([24+i, 14, PBMoveRoute::TurnDown])
+      audience.push([24+i, 18, PBMoveRoute::TurnUp])
+    end
     @stadiums["Forest A"].push(SCStadium.new("Forest A", 0, "Stadium 1", 
                               16, 24, 27, PBMoveRoute::TurnLeft, audience))
     audience = []
+    for i in 0...3
+      audience.push([17, 9+i, PBMoveRoute::TurnRight])
+      next if i == 1
+      audience.push([12, 9+i, PBMoveRoute::TurnLeft])
+    end 
+    for i in 0...4
+      audience.push([13+i, 8, PBMoveRoute::TurnDown])
+      audience.push([13+i, 12, PBMoveRoute::TurnUp])
+    end
     @stadiums["Forest A"].push(SCStadium.new("Forest A", 1, "Stadium 2", 
                               10, 13, 17, PBMoveRoute::TurnLeft, audience))
-    audience = []
+    # audience = []
+    # for i in 0...3
+      # audience.push([20, 28+i, PBMoveRoute::TurnRight])
+      # audience.push([25, 28+i, PBMoveRoute::TurnLeft])
+    # end 
+    # for i in 0...4
+      # audience.push([21+i, 27, PBMoveRoute::TurnDown])
+      # audience.push([21+i, 31, PBMoveRoute::TurnUp])
+    # end
     @stadiums["Forest A"].push(SCStadium.new("Forest A", 2, "Stadium 3", 
-                              29, 21, 24, PBMoveRoute::TurnLeft, audience))
-    audience = []
+                              29, 21, 24, PBMoveRoute::TurnLeft, 
+                              SCClientBattlesGenerator.audienceXY(20, 28)))
+    # audience = []
+    # for i in 0...3
+      # audience.push([35, 23+i, PBMoveRoute::TurnRight])
+      # audience.push([40, 23+i, PBMoveRoute::TurnLeft])
+    # end 
+    # for i in 0...4
+      # audience.push([36+i, 22, PBMoveRoute::TurnDown])
+      # audience.push([36+i, 26, PBMoveRoute::TurnUp])
+    # end
     @stadiums["Forest A"].push(SCStadium.new("Forest A", 3, "Stadium 4", 
-                              24, 36, 39, PBMoveRoute::TurnLeft, audience))
+                              24, 36, 39, PBMoveRoute::TurnLeft,
+                              SCClientBattlesGenerator.audienceXY(35, 23)))
     
     
+    # -----------------------
     # Forest B 
+    # -----------------------
     #   2   3
     #   1   4 
     #         5
-    audience = []
+    # audience = []
+    # for x in [14, 25]
+      # for y in [13, 19]
+        # audience.push([])
+        # for i in 0...3
+          # audience[-1].push([x, y+i, PBMoveRoute::TurnRight])
+          # audience[-1].push([x+5, y+i, PBMoveRoute::TurnLeft])
+        # end 
+        # for i in 0...4
+          # audience[-1].push([x+1+i, y-1, PBMoveRoute::TurnDown])
+          # audience[-1].push([x+1+i, y+3, PBMoveRoute::TurnUp])
+        # end
+      # end 
+    # end 
     @stadiums["Forest B"].push(SCStadium.new("Forest B", 0, "Stadium 1", 
-                              20, 15, 18, PBMoveRoute::TurnLeft, audience))
-    audience = []
+                              20, 15, 18, PBMoveRoute::TurnLeft,
+                              SCClientBattlesGenerator.audienceXY(14, 19)))
+    # audience = []
     @stadiums["Forest B"].push(SCStadium.new("Forest B", 1, "Stadium 2", 
-                              14, 15, 18, PBMoveRoute::TurnLeft, audience))
-    audience = []
+                              14, 15, 18, PBMoveRoute::TurnLeft,
+                              SCClientBattlesGenerator.audienceXY(14, 13)))
+    # audience = []
     @stadiums["Forest B"].push(SCStadium.new("Forest B", 2, "Stadium 3", 
-                              14, 26, 29, PBMoveRoute::TurnLeft, audience))
-    audience = []
+                              14, 26, 29, PBMoveRoute::TurnLeft,
+                              SCClientBattlesGenerator.audienceXY(25, 13)))
+    # audience = []
     @stadiums["Forest B"].push(SCStadium.new("Forest B", 3, "Stadium 4", 
-                              20, 26, 29, PBMoveRoute::TurnLeft, audience))
+                              20, 26, 29, PBMoveRoute::TurnLeft,
+                              SCClientBattlesGenerator.audienceXY(25, 19)))
     audience = []
+    for i in 0...3
+      audience.push([37, 29+i, PBMoveRoute::TurnRight])
+      next if i == 0
+      audience.push([42, 29+i, PBMoveRoute::TurnLeft])
+    end 
+    for i in 0...4
+      audience.push([38+i, 28, PBMoveRoute::TurnDown])
+      audience.push([38+i, 32, PBMoveRoute::TurnUp])
+    end
     @stadiums["Forest B"].push(SCStadium.new("Forest B", 4, "Remote stadium", 
                               30, 38, 41, PBMoveRoute::TurnLeft, audience))
     
+    # -----------------------
     # Beach 
+    # -----------------------
     #  2
     #     1        3
     audience = []
+    for i in 0...3
+      audience.push([20, 19+i, PBMoveRoute::TurnLeft])
+    end 
+    for i in 0...4
+      audience.push([16+i, 18, PBMoveRoute::TurnDown]) if i != 0
+      audience.push([16+i, 22, PBMoveRoute::TurnUp])
+    end
     @stadiums["Beach"].push(SCStadium.new("Beach", 0, "Stadium 1", 
                               20, 16, 19, PBMoveRoute::TurnLeft, audience))
-    audience = []
+    # audience = []
+    # for i in 0...3
+      # audience.push([10, 14+i, PBMoveRoute::TurnRight])
+      # audience.push([15, 14+i, PBMoveRoute::TurnLeft])
+    # end 
+    # for i in 0...4
+      # audience.push([11+i, 13, PBMoveRoute::TurnDown])
+      # audience.push([11+i, 17, PBMoveRoute::TurnUp])
+    # end
     @stadiums["Beach"].push(SCStadium.new("Beach", 1, "Stadium 2", 
-                              15, 11, 14, PBMoveRoute::TurnLeft, audience))
-    audience = []
+                              15, 11, 14, PBMoveRoute::TurnLeft,
+                              SCClientBattlesGenerator.audienceXY(10, 14)))
+    # audience = []
+    # for i in 0...3
+      # audience.push([31, 18+i, PBMoveRoute::TurnRight])
+      # audience.push([36, 18+i, PBMoveRoute::TurnLeft])
+    # end 
+    # for i in 0...4
+      # audience.push([32+i, 17, PBMoveRoute::TurnDown])
+      # audience.push([32+i, 21, PBMoveRoute::TurnUp])
+    # end
     @stadiums["Beach"].push(SCStadium.new("Beach", 2, "Stadium 3", 
-                              19, 32, 35, PBMoveRoute::TurnLeft, audience))
+                              19, 32, 35, PBMoveRoute::TurnLeft,
+                              SCClientBattlesGenerator.audienceXY(31, 18)))
     
     
+    # -----------------------
     # Stadium 
-    #  2
-    #     1        3
+    # -----------------------
     @stadiums["Stadium"] = []
     audience = []
+    for x in 13..21
+      next if x == 17
+      for y in [9, 11, 13, 15]
+        audience.push([x, y, PBMoveRoute::TurnDown])
+      end 
+    end 
     @stadiums["Stadium"].push(SCStadium.new("", 0, "Great Stadium", 
                               19, 15, 18, PBMoveRoute::TurnLeft, audience))
   end 
   
+  
+  
+  def self.audienceXY(top_x, top_y)
+    audience = []
+    
+    for i in 0...3
+      audience.push([top_x, top_y+i, PBMoveRoute::TurnRight])
+      audience.push([top_x+5, top_y+i, PBMoveRoute::TurnLeft])
+    end 
+    for i in 0...4
+      audience.push([top_x+1+i, top_y-1, PBMoveRoute::TurnDown])
+      audience.push([top_x+1+i, top_y+3, PBMoveRoute::TurnUp])
+    end
+    
+    return audience
+  end 
   
   
   def reinit

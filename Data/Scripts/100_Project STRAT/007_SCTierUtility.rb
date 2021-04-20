@@ -69,6 +69,11 @@ def scLegendaryAllowed?
 end 
 
 
+def scTiersWithLegendaries
+  return ["FEL", "UBER", "ALLLEG", "STRONGLEG", "SMALLLEG", "BIL", "MONOL"]
+end 
+
+
 #===============================================================================
 # Management of nuzzlocke
 #===============================================================================
@@ -120,7 +125,8 @@ def scSelectTierMenu
     
     cat = tiers[t]["Category"]
     
-    if cat == "Preset tier" && ["FEL", "UBER"].include?(t) && !scLegendaryAllowed?
+    if cat == "Preset tier" && !scLegendaryAllowed? && 
+      scTiersWithLegendaries.include?(t)
       next 
     end 
     
@@ -159,8 +165,9 @@ def scSelectTierMenu
   for themed_tier in tier_cats["Micro-tier"]
     random_tiers["Themed tiers"].push(themed_tier)
   end 
+  random_tiers["Themed tiers"] = random_tiers["Themed tiers"].sort
   
-  random_tier_keys = ["Themed tiers"] + random_tier_keys
+  # random_tier_keys = ["Themed tiers"] + random_tier_keys
   
   # The menu. 
   cmd = 0
@@ -168,22 +175,36 @@ def scSelectTierMenu
   chosen_type = nil 
   
   # Different list because I want the tiers to follow a certain order. 
-  menu_list = ["FE", "Other presets", "Monotype", "Bitype", "Base stats", "Tier of the day", "Old tiers of the day"]
+  menu_list = ["FE", "Other presets", "Monotype", "Bitype", "Themed tiers", "Base stats", "Tier of the day", "Old tiers of the day"]
   # Theme tier = Micro-tier 
   # Old tier of the day = Random tiers that already appeared
   
+  # Add the current tier. 
+  current_tier = scGetTier()
+  
   if scLegendaryAllowed?
     menu_list = ["FE+Legendary"] + menu_list
+    
+    if current_tier != "FE" && current_tier != "FE+Legendary"
+      menu_list = [current_tier] + menu_list
+    end 
+  elsif current_tier != "FE"
+    menu_list = [current_tier] + menu_list
   end 
   
   while cmd > -2 
-    cmd = pbMessage("Choose a category of tier (current tier=" + scGetTier()+ ").", menu_list, -2, nil, 0)
+    cmd = pbMessage("Choose a category of tier (current tier=" + current_tier + ").", menu_list, -2, nil, 0)
     
     
     if cmd > -2
       category = menu_list[cmd]
       
-      if category == "FE"
+      
+      if category == current_tier
+        tierid = current_tier
+        cmd = -2 
+        
+      elsif category == "FE"
         tierid = "FE" 
         cmd = -2 
         
@@ -223,6 +244,15 @@ def scSelectTierMenu
           tierid = "BI"
           cmd = -2 
         end 
+      
+      elsif category == "Themed tiers"
+        
+        cmd = pbMessage("Choose a tier.", random_tiers["Themed tiers"], -1, nil, 0)
+        
+        if cmd > -1
+          tierid = random_tiers["Themed tiers"][cmd]
+          cmd = -2
+        end
         
       elsif category == "Tier of the day"
         cmd2 = pbMessage(_INTL("Choose tier of the day? ({1})", scTOTDHandler.get()), ["Yes", "No"], 1)
@@ -234,7 +264,7 @@ def scSelectTierMenu
       # elsif category == "Theme tier"
         # handled in the "else" case 
       
-      elsif category == "Old tier of the day"
+      elsif category == "Old tiers of the day"
         pbMessage("These are tiers that were tier of the day at least once.")
         cmd = pbMessage("Choose a base stat total.", random_tier_keys, -1, nil, 0)
         

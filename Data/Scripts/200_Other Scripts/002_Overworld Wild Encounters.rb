@@ -848,7 +848,9 @@ class Game_Event < Game_Character
     else
       @stepCount=0 if (!@stepCount || @stepCount<0)
       @stepCount+=1
-      original_increase_steps
+      # original_increase_steps
+      @stop_count = 0
+      triggerLeaveTile
     end
   end
   

@@ -222,9 +222,38 @@ end
 
 
 
+# -----------------------------------------------------------------------------
+# Two functions to generate battles: faster Max Raid battle, and more 
+# controlled wild battle.
+# -----------------------------------------------------------------------------
+
+def pbMaxRaidBattleSimple(species, lvl, gmax)
+  # species = PBSpecies constant (of the form: PBSpecies::KABUTOPS for example)
+  # lvl = Pokémon level (will be converted to a rank level).
+  # gmax = boolean
+  pbResetRaidSettings
+  setBattleRule("canLose")
+  setBattleRule("cannotRun")
+  setBattleRule("noPartner")
+  setBattleRule(sprintf("%dv%d",MAXRAID_SIZE,1))
+  
+  s = pbGetSpeciesFromFSpecies(species)
+  # f,g = pbGetMaxRaidForm(s[0],rand(10),nil,nil)
+  s, r = pbGetMaxRaidSpecies(species,1,nil)
+  
+  $game_switches[MAXRAID_SWITCH] = true 
+  $game_variables[MAXRAID_PKMN] = [s[0], s[1], s[2], lvl,gmax]
+  pbWildBattleCore(species, lvl)
+  pbResetBattle
+  pbResetRaidSettings
+  $PokemonTemp.clearBattleRules
+  for i in $Trainer.party; i.heal; end
+end
+
+
 def pbControlledWildBattle(species, level, moves = nil, ability = nil, 
                           nature = nil, gender = nil, item = nil, shiny = nil, 
-                          dynamax = false, gmax = false,
+                          dynamax = false, gmax = false, dyn_level = 5,
                           outcomeVar=1, canRun=true, canLose=false)
   # Create an instance
   species = getConst(PBSpecies, species)
@@ -263,6 +292,8 @@ def pbControlledWildBattle(species, level, moves = nil, ability = nil,
     $game_switches[MAXRAID_SWITCH] = true 
     storedPkmn = pbMapInterpreter.get_character(0).id + MAXRAID_PKMN
     pkmn.giveGMaxFactor if pkmn.hasGmax? && gmax
+    pkmn.makeDynamax
+    pkmn.setDynamaxLvl(dyn_level)
     $game_variables[storedPkmn] = pkmn
   end 
   
@@ -425,3 +456,4 @@ class PokemonTemp
     @sc_6x6combination.each { |c| yield c }
   end 
 end 
+
