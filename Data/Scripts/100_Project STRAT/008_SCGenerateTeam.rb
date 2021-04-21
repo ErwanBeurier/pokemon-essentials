@@ -388,7 +388,21 @@ def scGenerateMoveset(pkmn, trainer, tier)
     end 
     pokemon.item = it 
     
+    # Dynamax stuff
+    pokemon.setDynamaxLvl(pkmn[SCMovesetsData::DYNAMAXLEVEL] || 10)
+    
+    if (pkmn[SCMovesetsData::GMAXFACTOR] || pkmn[SCMovesetsData::GMAXFACTOR].nil?) && pokemon.hasGmax?
+      pokemon.giveGMaxFactor 
+    else 
+      pokemon.removeGMaxFactor 
+    end 
+    
+    # Give other details no one cares about.
+    pokemon.ballused = pkmn[SCMovesetsData::BALL] if pkmn[SCMovesetsData::BALL]
+    pokemon.happiness = (pkmn[SCMovesetsData::HAPPINESS] ? pkmn[SCMovesetsData::HAPPINESS] : 255)
+    
     pokemon.calcStats
+    
   end 
   
   return pokemon

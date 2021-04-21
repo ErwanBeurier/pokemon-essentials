@@ -1867,7 +1867,20 @@ class SCTeamBuilder
 			if pkmn[SCMovesetsData::SHINY] == true
 				pokemon.makeShiny 
 			end 
-			
+        
+      # Dynamax stuff
+      pokemon.setDynamaxLvl(pkmn[SCMovesetsData::DYNAMAXLEVEL] || 10)
+      
+      if (pkmn[SCMovesetsData::GMAXFACTOR] || pkmn[SCMovesetsData::GMAXFACTOR].nil?) && pokemon.hasGmax?
+        pokemon.giveGMaxFactor 
+      else 
+        pokemon.removeGMaxFactor 
+      end 
+      
+      # Give other details no one cares about.
+      pokemon.ballused = pkmn[SCMovesetsData::BALL] if pkmn[SCMovesetsData::BALL]
+      pokemon.happiness = (pkmn[SCMovesetsData::HAPPINESS] ? pkmn[SCMovesetsData::HAPPINESS] : 255)
+      
 			pokemon.calcStats 
 			
 			new_team.push(pokemon)
@@ -2520,10 +2533,14 @@ class SCWantedDataComplete
 			
 			
 			# ----------------------------------
-			# Shiny
+			# Shiny, ther details. 
 			# Line 7, column 2
-			s = "Not shiny"
-			s = "Shiny" if @wanted_data[SCMovesetsData::SHINY]
+			s = @wanted_data[SCMovesetsData::SHINY] ? "Shiny" : "Not shiny"
+			s += " / " 
+      @wanted_data[SCMovesetsData::DYNAMAXLEVEL] = 10 if !@wanted_data[SCMovesetsData::DYNAMAXLEVEL]
+      s += _INTL("Dyn: {1}", @wanted_data[SCMovesetsData::DYNAMAXLEVEL])
+      s += @wanted_data[SCMovesetsData::GMAXFACTOR] ? "G" : ""
+      
 			pbSetSystemFont(@sprites["6t"].bitmap)
 			textpos=[          
 			[s,325,4,2,Color.new(248,248,248),Color.new(40,40,40)],
@@ -3041,15 +3058,11 @@ class SCWantedDataComplete
 					@wanted_data[SCMovesetsData::NICKNAME]=temp
 				end 
 			else 
-				# Shiny 
+        # Details: Shiny, Dynamax level, Gmax factor, happiness, ball
 				if !@wanted_data[SCMovesetsData::SPECIES]
-					pbMessage("Select a species before saying if it is shiny.")
+					pbMessage("Select a species before changing its details.")
 				else
-					cmds = ["Yes", "No"]
-					
-					ans = pbMessage("Should the Pokémon be shiny?", cmds)
-					@wanted_data[SCMovesetsData::SHINY] = false 
-					@wanted_data[SCMovesetsData::SHINY] = true if ans == 0 or ans == "Yes"
+          detailMenu
 				end 
 			end 
 		
@@ -3116,6 +3129,126 @@ class SCWantedDataComplete
 		drawWantedData
 	end
 	
+  
+  
+  def detailMenu
+    # Details: Shiny, Dynamax level, Gmax factor, happiness, ball
+    option_shiny = -1
+    option_dynamax = -1
+    option_gmax = -1
+    option_happiness = -1 
+    option_ball = -1
+    
+    
+    # Safety: 
+    @wanted_data[SCMovesetsData::DYNAMAXLEVEL] = 10 if !@wanted_data[SCMovesetsData::DYNAMAXLEVEL]
+    @wanted_data[SCMovesetsData::HAPPINESS] = 255 if !@wanted_data[SCMovesetsData::HAPPINESS]
+    @wanted_data[SCMovesetsData::BALL] = 0 if !@wanted_data[SCMovesetsData::BALL]
+    # Gmax is handled below. 
+    
+    ball_commands = []
+    ball_names = []
+    for key in $BallTypes.keys
+      item = getID(PBItems,$BallTypes[key])
+      ball_names.push([key.to_i,PBItems.getName(item)]) if item && item>0
+    end
+    ball_names.sort! { |a,b| a[1]<=>b[1] }
+    ball_used = 0
+    for i in 0...ball_names.length
+      if ball_names[i][0]==@wanted_data[SCMovesetsData::BALL]
+        ball_used = i; break
+      end
+    end
+    for i in ball_names
+      ball_commands.push(i[1])
+    end
+    
+    opt = -1
+    
+    while opt != -2
+      option_list = []
+      
+      # Options: 
+      option_list[option_shiny = option_list.length]   = 
+        _INTL("Shiny? ({1})", (@wanted_data[SCMovesetsData::SHINY] ? "yes" : "no"))
+      
+      option_list[option_dynamax = option_list.length] = 
+        _INTL("Dynamax Level ({1})", @wanted_data[SCMovesetsData::DYNAMAXLEVEL])
+      
+      if @wanted_data[SCMovesetsData::BASESPECIES] == PBSpecies::ALCREMIE ||
+        @wanted_data[SCMovesetsData::SPECIES] == PBSpecies::ALCREMIE
+        option_list[option_gmax = option_list.length] = "G-Max factor"
+        @wanted_data[SCMovesetsData::GMAXFACTOR] = true if @wanted_data[SCMovesetsData::GMAXFACTOR].nil?
+      else 
+        gmaxData = pbLoadGmaxData
+        if (gmaxData[@wanted_data[SCMovesetsData::BASESPECIES]] rescue gmaxData[@wanted_data[SCMovesetsData::SPECIES]])
+          option_list[option_gmax = option_list.length] = "G-Max factor"
+          @wanted_data[SCMovesetsData::GMAXFACTOR] = true if @wanted_data[SCMovesetsData::GMAXFACTOR].nil?
+        else 
+          @wanted_data[SCMovesetsData::GMAXFACTOR] = false if !@wanted_data[SCMovesetsData::GMAXFACTOR]
+        end 
+      end 
+      
+      # Happiness
+      option_list[option_happiness = option_list.length]   = 
+        _INTL("Happiness ({1})", @wanted_data[SCMovesetsData::HAPPINESS])
+      
+      # Balls 
+      option_list[option_ball = option_list.length] = 
+        _INTL("Ball ({1})", PBItems.getName($BallTypes[@wanted_data[SCMovesetsData::BALL]]))
+      
+      
+      
+      opt = pbMessage("What do you want to change?", option_list, -2)
+      
+      if opt == option_shiny && option_shiny > -1 
+        # Shiny
+        cmds = ["Yes", "No"]
+        ans = pbMessage("Should the Pokémon be shiny?", cmds)
+        @wanted_data[SCMovesetsData::SHINY] = false 
+        @wanted_data[SCMovesetsData::SHINY] = true if ans == 0 or ans == "Yes"
+      
+      elsif opt == option_dynamax && option_dynamax > -1 
+        # Dynamax 
+        params = ChooseNumberParams.new
+        params.setRange(0,10)
+        params.setDefaultValue(@wanted_data[SCMovesetsData::DYNAMAXLEVEL])
+        params.setCancelValue(@wanted_data[SCMovesetsData::DYNAMAXLEVEL])
+        dyn_str = _INTL("Set the Dynamax Level (current: {1}, max: 10).", @wanted_data[SCMovesetsData::DYNAMAXLEVEL])
+        f=pbMessageChooseNumber(dyn_str, params) { }
+        @wanted_data[SCMovesetsData::DYNAMAXLEVEL]=f
+        
+      elsif opt == option_gmax && option_gmax > -1 
+        # Gigantamax factor
+        cmds = ["Yes", "No"]
+        ans = pbMessage("Give G-Max factor?", cmds, 0)
+        @wanted_data[SCMovesetsData::GMAXFACTOR] = false 
+        @wanted_data[SCMovesetsData::GMAXFACTOR] = true if ans == 0 or ans == "Yes"
+        
+      elsif opt == option_happiness && option_happiness > -1 
+        # Happiness 
+        params = ChooseNumberParams.new
+        params.setRange(0,255)
+        params.setDefaultValue(@wanted_data[SCMovesetsData::HAPPINESS])
+        params.setCancelValue(@wanted_data[SCMovesetsData::HAPPINESS])
+        hap_str = _INTL("Set the Happiness (current: {1}, max: 255).", @wanted_data[SCMovesetsData::HAPPINESS])
+        f=pbMessageChooseNumber(hap_str, params) { }
+        @wanted_data[SCMovesetsData::HAPPINESS]=f
+        
+      elsif opt == option_ball && option_ball > -1 
+        # Ball 
+        loop do
+          oldball = PBItems.getName(pbBallTypeToItem(@wanted_data[SCMovesetsData::BALL]))
+          ball_used = pbMessage(_INTL("{1} used.",oldball),ball_commands,-1, nil, ball_used)
+          break if ball_used<0
+          @wanted_data[SCMovesetsData::BALL] = ball_names[ball_used][0]
+          break 
+        end
+      end 
+    end 
+  end 
+  
+  
   
   
   def filterMessage

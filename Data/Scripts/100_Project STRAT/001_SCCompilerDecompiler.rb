@@ -145,7 +145,9 @@ module SCMovesetsData
   ABILITY = 22
   PATTERN = 23
   SPECIFIC = 24 # Moveset available only if the Tier is big enough (e.g. avoid Distorsion teams in small tiers)
-  MAXINDEX = 24
+  DYNAMAXLEVEL = 25 # Should not appear in scmovesets.txt.
+  GMAXFACTOR = 26
+  MAXINDEX = 26
   
   MovesIndices = {MOVE1 => "Move1", MOVE2 => "Move2", MOVE3 => "Move3", MOVE4 => "Move4"}
   MovesIndicesList = [MOVE1, MOVE2, MOVE3, MOVE4]
@@ -183,56 +185,63 @@ module SCMovesetsData
       moveset[FORM] = sp[1]
       moveset[BASEFORM] = sp[1]
       moveset[FSPECIES] = speciesid
-      moveset[BASESPECIES] = speciesid
+      moveset[BASESPECIES] = sp[0]
     end 
     
     moveset[EV] = Array.new(6, 0)
     moveset[IV] = Array.new(6, 31)
+    
+    moveset[DYNAMAXLEVEL] = 10
+    moveset[GMAXFACTOR] = false
+    moveset[HAPPINESS] = 255
+    moveset[BALL] = 0
     
     return moveset
   end 
   
   
   InfoTypes = {
-    "Pokemon"   => [SPECIES,   "ev", :PBSpecies,nil],   # Species, level
-    "Form"      => [FORM,      "u"],
-    "BaseForm"  => [BASEFORM,  "u"],
-    "Item"      => [ITEM,      "*e", :PBItems], # Several potential items for the moveset
-    "Move1"     => [MOVE1,     "*e", :PBMoves], # Several potneitla moves for the moveset 
-    "Move2"     => [MOVE2,     "*e", :PBMoves], 
-    "Move3"     => [MOVE3,     "*e", :PBMoves],
-    "Move4"     => [MOVE4,     "*e", :PBMoves],
-    "Ability"   => [ABILITYINDEX,   "u"],
-    "Gender"    => [GENDER,    "e", { "M" => 0, "m" => 0, "Male" => 0, "male" => 0, "0" => 0,
-                                      "F" => 1, "f" => 1, "Female" => 1, "female" => 1, "1" => 1 }],
-    "Shiny"     => [SHINY,     "b"],
-    "Specific"  => [SPECIFIC,  "b"],
-    "Nature"    => [NATURE,    "e", :PBNatures],
-    "Nature1"   => [NATURE,    "e", :PBNatures],
-    "Nature2"   => [NATURE,    "e", :PBNatures],
-    "Nature3"   => [NATURE,    "e", :PBNatures],
-    "Nature4"   => [NATURE,    "e", :PBNatures],
-    "Nature5"   => [NATURE,    "e", :PBNatures],
-    "Nature6"   => [NATURE,    "e", :PBNatures],
-    "Nature7"   => [NATURE,    "e", :PBNatures],
-    "Nature8"   => [NATURE,    "e", :PBNatures],
-    "Nature9"   => [NATURE,    "e", :PBNatures],
-    "IV"        => [IV,        "uUUUUU"],
-    "Happiness" => [HAPPINESS, "u"],
-    "Ball"      => [BALL,      "u"],
-    "EV"        => [EV,        "uUUUUU"],
-    "EV1"       => [EV,        "uUUUUU"],
-    "EV2"       => [EV,        "uUUUUU"],
-    "EV3"       => [EV,        "uUUUUU"],
-    "EV4"       => [EV,        "uUUUUU"],
-    "EV5"       => [EV,        "uUUUUU"],
-    "EV6"       => [EV,        "uUUUUU"],
-    "EV7"       => [EV,        "uUUUUU"],
-    "EV8"       => [EV,        "uUUUUU"],
-    "EV9"       => [EV,        "uUUUUU"],
-    "Role"      => [ROLE,      "u"],
-    "Pattern"   => [PATTERN,   "e",  :SCMovesetPatterns],
-    "Name"      => [NICKNAME,  "s"]
+    "Pokemon"    => [SPECIES,      "ev", :PBSpecies,nil],   # Species, level
+    "Form"       => [FORM,         "u"],
+    "BaseForm"   => [BASEFORM,     "u"],
+    "Item"       => [ITEM,         "*e", :PBItems], # Several potential items for the moveset
+    "Move1"      => [MOVE1,        "*e", :PBMoves], # Several potneitla moves for the moveset 
+    "Move2"      => [MOVE2,        "*e", :PBMoves], 
+    "Move3"      => [MOVE3,        "*e", :PBMoves],
+    "Move4"      => [MOVE4,        "*e", :PBMoves],
+    "Ability"    => [ABILITYINDEX, "u"],
+    "Gender"     => [GENDER,       "e", { "M" => 0, "m" => 0, "Male" => 0, "male" => 0, "0" => 0,
+                                          "F" => 1, "f" => 1, "Female" => 1, "female" => 1, "1" => 1 }],
+    "Shiny"      => [SHINY,        "b"],
+    "Specific"   => [SPECIFIC,     "b"],
+    "Nature"     => [NATURE,       "e", :PBNatures],
+    "Nature1"    => [NATURE,       "e", :PBNatures],
+    "Nature2"    => [NATURE,       "e", :PBNatures],
+    "Nature3"    => [NATURE,       "e", :PBNatures],
+    "Nature4"    => [NATURE,       "e", :PBNatures],
+    "Nature5"    => [NATURE,       "e", :PBNatures],
+    "Nature6"    => [NATURE,       "e", :PBNatures],
+    "Nature7"    => [NATURE,       "e", :PBNatures],
+    "Nature8"    => [NATURE,       "e", :PBNatures],
+    "Nature9"    => [NATURE,       "e", :PBNatures],
+    "IV"         => [IV,           "uUUUUU"],
+    "Happiness"  => [HAPPINESS,    "u"],
+    "DynamaxLvl" => [DYNAMAXLEVEL, "u"],
+    "GmaxFactor" => [GMAXFACTOR,   "b"],
+    "Ball"       => [BALL,         "u"],
+    "EV"         => [EV,           "uUUUUU"],
+    "EV1"        => [EV,           "uUUUUU"],
+    "EV2"        => [EV,           "uUUUUU"],
+    "EV3"        => [EV,           "uUUUUU"],
+    "EV4"        => [EV,           "uUUUUU"],
+    "EV5"        => [EV,           "uUUUUU"],
+    "EV6"        => [EV,           "uUUUUU"],
+    "EV7"        => [EV,           "uUUUUU"],
+    "EV8"        => [EV,           "uUUUUU"],
+    "EV9"        => [EV,           "uUUUUU"],
+    "Role"       => [ROLE,         "u"],
+    "Pattern"    => [PATTERN,      "e",  :SCMovesetPatterns],
+    "Name"       => [NICKNAME,     "s"]
   }
   
 end 
@@ -282,6 +291,11 @@ def scCompileMovesets
           moveset[SCMovesetsData::SPECIES] = pokemon_id
           moveset[SCMovesetsData::BASESPECIES] = pokemon_id if !moveset[SCMovesetsData::BASESPECIES]
           
+          # Default values: 
+          moveset[SCMovesetsData::DYNAMAXLEVEL] = 10 if !moveset[SCMovesetsData::DYNAMAXLEVEL]
+          moveset[SCMovesetsData::GMAXFACTOR] = false if !moveset[SCMovesetsData::GMAXFACTOR]
+          moveset[SCMovesetsData::HAPPINESS] = 255 if !moveset[SCMovesetsData::HAPPINESS]
+          moveset[SCMovesetsData::BALL] = 0 if !moveset[SCMovesetsData::BALL]
           
           movesets[pokemon_id] = {} if !movesets[pokemon_id]
           
@@ -353,6 +367,10 @@ def scCompileMovesets
       when "Pattern"
         pattern_to_poke[record] = [] if !pattern_to_poke[record]
         pattern_to_poke[record].push(pokemon_id) if !pattern_to_poke[record].include?(pokemon_id)
+      when "DynamaxLvl"
+        if record>10
+          raise _INTL("Bad Dynamax Level: {1} (must be 0-10).\r\n{2}",record,FileLineData.linereport)
+        end
       end
       if schema[0] <= SCMovesetsData::MAXINDEX
         moveset[schema[0]] = record
@@ -559,7 +577,12 @@ def scConvertMovesetToString(moveset, with_tab = false, for_compiler = true)
   if moveset[SCMovesetsData::SPECIFIC]
     s += sprintf(s_tab + "Specific = Yes\r\n")
   end
-  
+  if moveset[SCMovesetsData::DYNAMAXLEVEL] && moveset[SCMovesetsData::DYNAMAXLEVEL] != 10
+    s += sprintf(s_tab + "DynamaxLvl = %d\r\n",moveset[SCMovesetsData::DYNAMAXLEVEL])
+  end 
+  if moveset[SCMovesetsData::GMAXFACTOR]
+    s += sprintf(s_tab + "GmaxFactor = Yes\r\n")
+  end 
   return s 
 end 
 

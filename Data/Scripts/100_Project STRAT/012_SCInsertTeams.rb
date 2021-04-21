@@ -58,6 +58,8 @@ def scInsertTeamToStorage(tier, id)
       mvstdata[SCMovesetsData::HAPPINESS] = poke[TPHAPPINESS] if poke[TPHAPPINESS]
       mvstdata[SCMovesetsData::NICKNAME] = poke[TPNAME] if poke[TPNAME] && poke[TPNAME]!=""
       mvstdata[SCMovesetsData::BALL] = poke[TPBALL] if poke[TPBALL]
+      mvstdata[SCMovesetsData::DYNAMAXLEVEL] = poke[TPDYNAMAX] if poke[TPDYNAMAX]
+      mvstdata[SCMovesetsData::GMAXFACTOR] = poke[TPGMAX] if poke[TPGMAX]
       
       party.push(mvstdata)
     end
