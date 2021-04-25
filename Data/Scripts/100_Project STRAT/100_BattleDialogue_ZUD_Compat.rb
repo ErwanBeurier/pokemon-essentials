@@ -11,9 +11,9 @@ class PokeBattle_Battler
     __compat__faint(showMessage)
     return if !fainted? # Just in case __compat__faint stops for this reason. 
     if !opposes?
-      TrainerDialogue.display("fainted",@battle,@battle.scene)
+      TrainerDialogue.display("fainted",@battle,@battle.scene, self)
     else
-      TrainerDialogue.display("faintedOpp",@battle,@battle.scene)
+      TrainerDialogue.display("faintedOpp",@battle,@battle.scene, self)
     end
   end
   
@@ -25,16 +25,16 @@ class PokeBattle_Battler
       self.damageState.lowHP = true
       self.damageState.halfHP = true
       if !opposes?
-        TrainerDialogue.display("lowHP",@battle,@battle.scene)
+        TrainerDialogue.display("lowHP",@battle,@battle.scene, [nil, self])
       else
-        TrainerDialogue.display("lowHPOpp",@battle,@battle.scene)
+        TrainerDialogue.display("lowHPOpp",@battle,@battle.scene, [nil, self])
       end
     elsif self.hp < (self.totalhp*0.5).floor && self.hp > (self.totalhp*0.25).floor && !self.damageState.halfHP
       self.damageState.halfHP = true
       if !opposes?
-        TrainerDialogue.display("halfHP",@battle,@battle.scene)
+        TrainerDialogue.display("halfHP",@battle,@battle.scene, [nil, self])
       else
-        TrainerDialogue.display("halfHPOpp",@battle,@battle.scene)
+        TrainerDialogue.display("halfHPOpp",@battle,@battle.scene, [nil, self])
       end
     end
     

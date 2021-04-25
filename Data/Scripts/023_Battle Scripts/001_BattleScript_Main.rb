@@ -448,9 +448,9 @@ class PokeBattle_Battle
         ItemHandlers.triggerBattleUseOnBattler(item,battler,@scene)
         ch[1] = 0   # Delete item from choice
         if !battler.opposes?
-          TrainerDialogue.display("item",self,@scene)
+          TrainerDialogue.display("item",self,@scene, [battler, item])
         else
-          TrainerDialogue.display("itemOpp",self,@scene)
+          TrainerDialogue.display("itemOpp",self,@scene, [battler, item])
         end
         return
       else
@@ -474,9 +474,9 @@ class PokeBattle_Battle
       ItemHandlers.triggerBattleUseOnPokemon(item,pkmn,battler,ch,@scene)
       ch[1] = 0   # Delete item from choice
       if (battler && battler.opposes?) || userBattler.index == 0
-        TrainerDialogue.display("item",self,@scene)
+        TrainerDialogue.display("item",self,@scene, [battler, item])
       else
-        TrainerDialogue.display("itemOpp",self,@scene)
+        TrainerDialogue.display("itemOpp",self,@scene, [battler, item])
       end
       return
     end
@@ -495,9 +495,9 @@ class PokeBattle_Battle
     if ItemHandlers.triggerCanUseInBattle(item,pkmn,battler,ch[3],true,self,@scene,false)
       ItemHandlers.triggerUseInBattle(item,battler,self)
       if !battler.opposes?
-        TrainerDialogue.display("item",self,@scene)
+        TrainerDialogue.display("item",self,@scene, [battler, item])
       else
-        TrainerDialogue.display("itemOpp",self,@scene)
+        TrainerDialogue.display("itemOpp",self,@scene, [battler, item])
       end
       ch[1] = 0   # Delete item from choice
       return
@@ -518,9 +518,9 @@ class PokeBattle_Battle
       BattleHandlers.triggerTargetAbilityOnHit(battler.ability,nil,battler,nil,self)
     end
     if !battler.opposes?
-      TrainerDialogue.display("mega",self,@scene)
+      TrainerDialogue.display("mega",self,@scene, battler)
     else
-      TrainerDialogue.display("megaOpp",self,@scene)
+      TrainerDialogue.display("megaOpp",self,@scene, battler)
     end
     # Mega Evolve
     case battler.pokemon.megaMessage
@@ -570,9 +570,9 @@ class PokeBattle_Battle
     }
     if ret != -1 && !$ShiftSwitch
       if !@battlers[idxBattler].opposes?
-        TrainerDialogue.display("recall",self,@scene)
+        TrainerDialogue.display("recall",self,@scene, @battlers[idxBattler])
       else
-        TrainerDialogue.display("recallOpp",self,@scene)
+        TrainerDialogue.display("recallOpp",self,@scene, @battlers[idxBattler])
       end
     end
     $ShiftSwitch=false
@@ -793,9 +793,9 @@ class PokeBattle_Battler
     dialogue_faint(showMessage)
     return if !fainted? # Just in case dialogue_faint stops for this reason. 
     if !opposes?
-      TrainerDialogue.display("fainted",@battle,@battle.scene)
+      TrainerDialogue.display("fainted",@battle,@battle.scene, self)
     else
-      TrainerDialogue.display("faintedOpp",@battle,@battle.scene)
+      TrainerDialogue.display("faintedOpp",@battle,@battle.scene, self)
     end
   end
 
@@ -815,16 +815,16 @@ class PokeBattle_Battler
       self.damageState.lowHP = true
       self.damageState.halfHP = true
       if !opposes?
-        TrainerDialogue.display("lowHP",@battle,@battle.scene)
+        TrainerDialogue.display("lowHP",@battle,@battle.scene, [nil, self])
       else
-        TrainerDialogue.display("lowHPOpp",@battle,@battle.scene)
+        TrainerDialogue.display("lowHPOpp",@battle,@battle.scene, [nil, self])
       end
     elsif self.hp < (self.totalhp*0.5).floor && self.hp > (self.totalhp*0.25).floor && !self.damageState.halfHP
       self.damageState.halfHP = true
       if !opposes?
-        TrainerDialogue.display("halfHP",@battle,@battle.scene)
+        TrainerDialogue.display("halfHP",@battle,@battle.scene, [nil, self])
       else
-        TrainerDialogue.display("halfHPOpp",@battle,@battle.scene)
+        TrainerDialogue.display("halfHPOpp",@battle,@battle.scene, [nil, self])
       end
     end
     return amt
@@ -837,9 +837,9 @@ class PokeBattle_Move
     if !user.damageState.firstAttack
       user.damageState.firstAttack = true
       if !user.opposes?
-        TrainerDialogue.display("attack",@battle,@battle.scene)
+        TrainerDialogue.display("attack",@battle,@battle.scene, [self, user])
       else
-        TrainerDialogue.display("attackOpp",@battle,@battle.scene)
+        TrainerDialogue.display("attackOpp",@battle,@battle.scene, [self, user])
       end
     end
     @battle.pbDisplayBrief(_INTL("{1} used {2}!",user.pbThis,@name))
@@ -865,16 +865,16 @@ class PokeBattle_Move
     end
     if target.damageState.superEff == 1
       if !target.opposes?
-        TrainerDialogue.display("superEff",@battle,@battle.scene)
+        TrainerDialogue.display("superEff",@battle,@battle.scene, [self, user, target])
       else
-        TrainerDialogue.display("superEffOpp",@battle,@battle.scene)
+        TrainerDialogue.display("superEffOpp",@battle,@battle.scene, [self, user, target])
       end
       target.damageState.superEff = 2
     elsif target.damageState.notEff == 1
       if !target.opposes?
-        TrainerDialogue.display("notEff",@battle,@battle.scene)
+        TrainerDialogue.display("notEff",@battle,@battle.scene, [self, user, target])
       else
-        TrainerDialogue.display("notEffOpp",@battle,@battle.scene)
+        TrainerDialogue.display("notEffOpp",@battle,@battle.scene, [self, user, target])
       end
       target.damageState.notEff = 2
     end
@@ -968,15 +968,15 @@ class PokeBattle_Move
       target.damageState.smlDamage = -1
       target.damageState.halfHP = true
       if !target.opposes?
-        TrainerDialogue.display("bigDamage",@battle,@battle.scene)
+        TrainerDialogue.display("bigDamage",@battle,@battle.scene, [self, target])
       else
-        TrainerDialogue.display("bigDamageOpp",@battle,@battle.scene)
+        TrainerDialogue.display("bigDamageOpp",@battle,@battle.scene, [self, target])
       end
     elsif target.damageState.smlDamage==1
       if !target.opposes?
-        TrainerDialogue.display("smlDamage",@battle,@battle.scene)
+        TrainerDialogue.display("smlDamage",@battle,@battle.scene, [self, target])
       else
-        TrainerDialogue.display("smlDamageOpp",@battle,@battle.scene)
+        TrainerDialogue.display("smlDamageOpp",@battle,@battle.scene, [self, target])
       end
       target.damageState.smlDamage=-1
     end
@@ -985,18 +985,18 @@ class PokeBattle_Move
         target.damageState.lowHP = true
         target.damageState.halfHP = true
         if !target.opposes?
-          TrainerDialogue.display("lowHP",@battle,@battle.scene)
+          TrainerDialogue.display("lowHP",@battle,@battle.scene, [self, target])
         else
-          TrainerDialogue.display("lowHPOpp",@battle,@battle.scene)
+          TrainerDialogue.display("lowHPOpp",@battle,@battle.scene, [self, target])
         end
       end
     elsif target.hp < (target.totalhp*0.5).floor && target.hp>0
       if !target.damageState.halfHP
         target.damageState.halfHP = true
         if !target.opposes?
-          TrainerDialogue.display("halfHP",@battle,@battle.scene)
+          TrainerDialogue.display("halfHP",@battle,@battle.scene, [self, target])
         else
-          TrainerDialogue.display("halfHPOpp",@battle,@battle.scene)
+          TrainerDialogue.display("halfHPOpp",@battle,@battle.scene, [self, target])
         end
       end
     end
@@ -1149,7 +1149,7 @@ module TrainerDialogue
     end
   end
 
-  def self.display(parameter,battle=nil,scene=nil,noPri=false)
+  def self.display(parameter,battle=nil,scene=nil, other_args = nil, noPri=false)
     if $PokemonTemp.dialogueInstances[parameter].is_a?(Numeric) && $PokemonTemp.dialogueInstances[parameter]>1
       param="#{parameter},#{$PokemonTemp.dialogueInstances[parameter]}"
     else
@@ -1217,7 +1217,10 @@ module TrainerDialogue
     when 2
       turnStart= TrainerDialogue.get(param)
       scene.sprites["messageWindow"].text = ""
-      turnStart.call(battle)
+      ret = turnStart.call(battle, other_args)
+      # Do not register if the Proc returned nothing. It means the proc ended 
+      # prematurely because its conditions were not met.
+      return false if ret == false # Do not count ret == nil as a failure. 
       TrainerDialogue.setDone(param)
       TrainerDialogue.setInstance(parameter)
       return true

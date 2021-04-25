@@ -1,6 +1,46 @@
 # Tests for Pokémon STRAT
 
 
+# Arguments des Proc: 
+
+# lowHP / halfHP / smlDamage / bigDamage
+#   Proc { |battle, args| WITH args = [move, target] } 
+#       move is nil in pbReduceHP, because it's HP reduction without moves. 
+# 
+# notEff / superEff
+#  Proc { |battle, args| WITH args = [move, user, target] }
+# 
+# fainted: 
+#   Proc { |battle, battler| ... }
+# 
+# attack / zmove / maxMove: 
+#   Proc { |battle, args| WITH: args = [move, user] }
+# 
+# gmaxBefore / dynamaxBefore / gmaxAfter / dynamaxAfter / ultraBefore / ultraAfter / mega
+#   Proc { |battle, battler| ... }
+# 
+# loss / endspeech:
+#   Proc { |battle, nada| ... }
+# 
+# recall
+#   Proc { |battle, battler| ... }
+#       The battler that leaves. 
+# 
+# item: 
+#   Proc { |battle, args| WITH: args = [battler, item] }
+# 
+# assistAfter / assistBefore # Can be used twice! 
+#   Proc { |battle, battler| ... }
+#       The assistance caller. 
+# 
+# phenixFire
+#   Proc { |battle, battler| ... }
+# 
+
+
+
+
+
 
 class PokeBattle_Scene
   def pbHideOpponen2(idxTrainer=0, filename=nil)

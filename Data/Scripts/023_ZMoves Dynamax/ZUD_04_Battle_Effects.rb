@@ -75,7 +75,7 @@ class PokeBattle_Move
       dialogparam += "Opp"    if user.opposes?
       if !user.damageState.firstAttack
         user.damageState.firstAttack = true
-        TrainerDialogue.display(dialogparam,@battle,@battle.scene)
+        TrainerDialogue.display(dialogparam,@battle,@battle.scene, [self, user])
       end
     end
     #---------------------------------------------------------------------------

@@ -470,16 +470,35 @@ end
 
 
 
+
 class SCDummyTeamFilter < SCTeamFilter
   # Team filters without 
   
-  def vary()
+  SixDifferentTypes = 0
+  ThreeDifferentTypes = 1
+  TripleTypes = 2
+  
+  
+  def vary(mode = 0)
     chosen_types = []
-    for i in 0..PBTypes.maxValue
-      next if PBTypes.isPseudoType?(i) || isConst?(i,PBTypes,:SHADOW)
-      chosen_types.push(i)
-    end
-    chosen_types = scsample(chosen_types, 6)
+    
+    case mode
+    when ThreeDifferentTypes
+      # Three types, appearing twice.
+      chosen_types = scsample(PBTypes.getRegularTypeList(), 3)
+      chosen_types = chosen_types + chosen_types
+      
+    when TripleTypes
+      # Three times the same type, and three other types 
+      # = Four types, one of which appears three times instead of one. 
+      chosen_types = scsample(PBTypes.getRegularTypeList(), 4)
+      chosen_types.push(chosen_types[0])
+      chosen_types.push(chosen_types[0])
+      
+    else #when SixDifferentTypes
+      # Six different types.
+      chosen_types = scsample(PBTypes.getRegularTypeList(), 6)
+    end 
     
     variation = SCTeamFilter.new(@name, @fixed_roles.clone, @roles.clone)
     

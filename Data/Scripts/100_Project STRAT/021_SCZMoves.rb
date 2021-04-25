@@ -83,6 +83,11 @@ class PokeBattle_Battler
       self.status      = PBStatuses::NONE
       self.statusCount = 0
       @battle.pbDisplay(_INTL("{1} was saved by Phoenix Fire!",pbThis))
+      if !opposes?
+        TrainerDialogue.display("phenixFire",@battle,@battle.scene, self)
+      else
+        TrainerDialogue.display("phenixFireOpp",@battle,@battle.scene, self)
+      end
       return 
     end 
     return __phoenix__faint(showMessage)

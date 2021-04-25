@@ -76,6 +76,7 @@ def scGenerateTeamRand(trainer, type_of_team = nil, type1 = -1, type2 = -1, tier
   result_generation = []
   tier = loadTier(tierid)
   
+  for_player = (trainer == $Trainer)
   
   # Generate the Pokémons. 
   if tierid == "MONO"

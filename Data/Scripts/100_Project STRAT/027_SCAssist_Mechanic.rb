@@ -486,6 +486,12 @@ class PokeBattle_Move_C007 < PokeBattle_Move
     # assist,idxParty = @battle.pbChooseAssistingPokemon(idxBattler)
     assist, idxParty, assistAfter = @battle.pbGetAssistingData(user.index)
     
+    if !user.opposes?
+      TrainerDialogue.display("assistBefore",@battle,@battle.scene, user)
+    else
+      TrainerDialogue.display("assistBeforeOpp",@battle,@battle.scene, user)
+    end
+    
     # currentAction = allows to track which, of the assiting and assisted, came first. 
     for currentAction in 0..1
       idxAssist = idxBattler
@@ -624,6 +630,12 @@ class PokeBattle_Move_C007 < PokeBattle_Move
       # Disable Assistance for the rest of the battle.
       @battle.pbDisableAssistance(idxBattler)
     end 
+    
+    if !user.opposes?
+      TrainerDialogue.display("assistAfter",@battle,@battle.scene, user)
+    else
+      TrainerDialogue.display("assistAfterOpp",@battle,@battle.scene, user)
+    end
   end 
 end 
 

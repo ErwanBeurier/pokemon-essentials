@@ -407,9 +407,9 @@ class PokeBattle_Battle
     #---------------------------------------------------------------------------
     if defined?(DialogueModule)
       if !battler.opposes?
-        TrainerDialogue.display("ultraBefore",self,@scene)
+        TrainerDialogue.display("ultraBefore",self,@scene, battler)
       else
-        TrainerDialogue.display("ultraBeforeOpp",self,@scene)
+        TrainerDialogue.display("ultraBeforeOpp",self,@scene, battler)
       end
     end
     #---------------------------------------------------------------------------
@@ -435,9 +435,9 @@ class PokeBattle_Battle
     #---------------------------------------------------------------------------
     if defined?(DialogueModule)
       if !battler.opposes?
-        TrainerDialogue.display("ultraAfter",self,@scene)
+        TrainerDialogue.display("ultraAfter",self,@scene, battler)
       else
-        TrainerDialogue.display("ultraAfterOpp",self,@scene)
+        TrainerDialogue.display("ultraAfterOpp",self,@scene, battler)
       end
     end
     #---------------------------------------------------------------------------
@@ -453,11 +453,17 @@ class PokeBattle_Battle
     #---------------------------------------------------------------------------
     if defined?(DialogueModule)
       if !battler.opposes?
-        TrainerDialogue.display("dynamaxBefore",self,@scene)
-        TrainerDialogue.display("gmaxBefore",self,@scene) if battler.gmaxFactor?
+        if battler.gmaxFactor?
+          TrainerDialogue.display("gmaxBefore",self,@scene, battler)
+        else 
+          TrainerDialogue.display("dynamaxBefore",self,@scene, battler)
+        end 
       else
-        TrainerDialogue.display("dynamaxBeforeOpp",self,@scene)
-        TrainerDialogue.display("gmaxBeforeOpp",self,@scene) if battler.gmaxFactor?
+        if battler.gmaxFactor?
+          TrainerDialogue.display("gmaxBeforeOpp",self,@scene, battler)
+        else 
+          TrainerDialogue.display("dynamaxBeforeOpp",self,@scene, battler)
+        end 
       end
     end
     #---------------------------------------------------------------------------
@@ -507,11 +513,17 @@ class PokeBattle_Battle
     #---------------------------------------------------------------------------
     if defined?(DialogueModule)
       if !battler.opposes?
-        TrainerDialogue.display("dynamaxAfter",self,@scene)
-        TrainerDialogue.display("gmaxAfter",self,@scene) if battler.gmaxFactor?
+        if battler.gmaxFactor?
+          TrainerDialogue.display("gmaxAfter",self,@scene, battler)
+        else 
+          TrainerDialogue.display("dynamaxAfter",self,@scene, battler)
+        end 
       else
-        TrainerDialogue.display("dynamaxAfterOpp",self,@scene)
-        TrainerDialogue.display("gmaxAfterOpp",self,@scene) if battler.gmaxFactor?
+        if battler.gmaxFactor?
+          TrainerDialogue.display("gmaxAfterOpp",self,@scene, battler) 
+        else
+          TrainerDialogue.display("dynamaxAfterOpp",self,@scene, battler)
+        end 
       end
     end
     #---------------------------------------------------------------------------

@@ -34,7 +34,7 @@ module DialogueModule
 
 
   # This is an example of Scene Manipulation where I manipulate the color tone of each individual graphic in the scene to simulate a ""fade to black"
-  FRLG_Turn0 = Proc.new{|battle|
+  FRLG_Turn0 = Proc.new{|battle| # In STRAT: |battle, other_arg|
                 for i in 0...8
                   val = 25+(25*i)
                   battle.scene.sprites["battle_bg"].color=Color.new(-255,-255,-255,val)

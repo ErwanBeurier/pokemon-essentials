@@ -87,4 +87,13 @@ class PBTypes
     e = PBTypes.getCombinedEffectiveness(attackType,targetType1,targetType2,targetType3)
     return e>PBTypeEffectiveness::NORMAL_EFFECTIVE
   end
+  
+  def PBTypes.getRegularTypeList()
+    type_list = []
+    for i in 0..PBTypes.maxValue
+      next if PBTypes.isPseudoType?(i) || isConst?(i,PBTypes,:SHADOW)
+      type_list.push(i)
+    end
+    return type_list
+  end 
 end
