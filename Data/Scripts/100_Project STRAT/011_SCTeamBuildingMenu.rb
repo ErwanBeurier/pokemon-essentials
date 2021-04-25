@@ -500,27 +500,42 @@ module SCTB
 		personal_items_cmds = []
 		sc_normal_type_items_cmds = [] 
     zcrystals_cmds = []
+    
+		useful_items_desc = []
+		berries_desc = []
+		arceus_plates_desc = []
+		other_items_desc = []
+		personal_items_desc = []
+		sc_normal_type_items_desc = [] 
+    zcrystals_desc = []
 		
 		for i in useful_items
 			useful_items_cmds.push("#{PBItems.getName(i)}")
+			useful_items_desc.push(pbGetMessage(MessageTypes::ItemDescriptions,i))
 		end 
 		for i in berries
 			berries_cmds.push("#{PBItems.getName(i)}")
+			berries_desc.push(pbGetMessage(MessageTypes::ItemDescriptions,i))
 		end 
 		for i in arceus_plates
 			arceus_plates_cmds.push("#{PBItems.getName(i)}")
+			arceus_plates_desc.push(pbGetMessage(MessageTypes::ItemDescriptions,i))
 		end 
 		for i in other_items
 			other_items_cmds.push("#{PBItems.getName(i)}")
+			other_items_desc.push(pbGetMessage(MessageTypes::ItemDescriptions,i))
 		end 
 		for i in personal_items
 			personal_items_cmds.push("#{PBItems.getName(i)}")
+			personal_items_desc.push(pbGetMessage(MessageTypes::ItemDescriptions,i))
 		end 
 		for i in sc_normal_type_items
 			sc_normal_type_items_cmds.push("#{PBItems.getName(i)}")
+			sc_normal_type_items_desc.push(pbGetMessage(MessageTypes::ItemDescriptions,i))
 		end 
 		for i in zcrystals_cmds
 			zcrystals_cmds.push("#{PBItems.getName(i)}")
+			zcrystals_desc.push(pbGetMessage(MessageTypes::ItemDescriptions,i))
 		end 
 		
 		
@@ -541,26 +556,33 @@ module SCTB
 			case op
 			when 0
 				# Useful items
-				it = pbMessage("What item?",useful_items_cmds, -1, nil, 0)
+				# it = pbMessage("What item?",useful_items_cmds, -1, nil, 0)
+				it = pbShowCommandsWithHelp(nil, useful_items_cmds, useful_items_desc, -1, 0)
 			when 1
 				# Berries 
-				it = pbMessage("What berry?",berries_cmds, -1, nil, 0)
+				# it = pbMessage("What berry?",berries_cmds, -1, nil, 0)
+				it = pbShowCommandsWithHelp(nil, berries_cmds, berries_desc, -1, 0)
 			when 2
 				# Arceus plates 
-				it = pbMessage("What plate?",arceus_plates_cmds, -1, nil, 0)
+				# it = pbMessage("What plate?",arceus_plates_cmds, -1, nil, 0)
+				it = pbShowCommandsWithHelp(nil, arceus_plates_cmds, arceus_plates_desc, -1, 0)
 			when 3
 				# Other items 
-				it = pbMessage("What item?",other_items_cmds, -1, nil, 0)
+				# it = pbMessage("What item?",other_items_cmds, -1, nil, 0)
+				it = pbShowCommandsWithHelp(nil, other_items_cmds, other_items_desc, -1, 0)
 			when 4
 				# Normal-type items 
-				it = pbMessage("What item?",sc_normal_type_items_cmds, -1, nil, 0)
+				# it = pbMessage("What item?",sc_normal_type_items_cmds, -1, nil, 0)
+				it = pbShowCommandsWithHelp(nil, sc_normal_type_items_cmds, sc_normal_type_items_desc, -1, 0)
 			when 5
 				# Z-Crystals 
-				it = pbMessage("What crystal?",zcrystals_cmds, -1, nil, 0)
+				# it = pbMessage("What crystal?",zcrystals_cmds, -1, nil, 0)
+				it = pbShowCommandsWithHelp(nil, zcrystals_cmds, zcrystals_desc, -1, 0)
 			when 6
 				# Personal items
 				if not personal_items.empty?
-					it = pbMessage("What item?",personal_items_cmds, -1, nil, 0)
+					# it = pbMessage("What item?",personal_items_cmds, -1, nil, 0)
+          it = pbShowCommandsWithHelp(nil, personal_items_cmds, personal_items_desc, -1, 0)
 				else
 					return -1 
 				end 

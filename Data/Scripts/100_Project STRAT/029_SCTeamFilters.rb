@@ -545,6 +545,11 @@ module SCMovesetFilters
   CarboniferousSetter.makeSpecific
   CarboniferousBug = SCMovesetFilter.new(nil, nil, nil, PBTypes::BUG)
   
+  MagneticTerrainSetter = SCMovesetFilter.new(nil, nil, PBMoves::MAGNETICTERRAIN, nil)
+  MagneticTerrainSetter.makeSpecific
+  MagneticTerrainElectric = SCMovesetFilter.new(nil, nil, nil, PBTypes::ELECTRIC)
+  MagneticTerrainSteel = SCMovesetFilter.new(nil, nil, nil, PBTypes::STEEL)
+  
   TrickRoomSetter = SCMovesetFilter.new(nil, nil, PBMoves::TRICKROOM, nil)
   TrickRoomSetter.makeSpecific
   TrickRoomOffense = SCMovesetFilter.new(nil, 20, nil, nil)
@@ -613,37 +618,43 @@ module SCTeamFilters
                                   
   TrickRoom = SCTeamFilter.new("Trick Room", [0, 0, 0, 0, 0, 0])
   TrickRoom.setMovesetFilters(SCMovesetFilters::TrickRoomSetter, 
-                              SCMovesetFilters::TrickRoomSetter,
-                              SCMovesetFilters::TrickRoomSetter,
                               SCMovesetFilters::TrickRoomOffense, 
                               SCMovesetFilters::TrickRoomOffense, 
+                              SCMovesetFilters::TrickRoomSetter,
+                              SCMovesetFilters::TrickRoomSetter,
                               SCMovesetFilters::TrickRoomOffense)
   
   Rain = SCTeamFilter.new("Rain", [0, 0, 20, 20, 20, 0])
   Rain.setMovesetFilters(SCMovesetFilters::RainSetter, 
+                        SCMovesetFilters::RainEnjoyer1,
+                        SCMovesetFilters::RainEnjoyer1,
                         SCMovesetFilters::RainSetter,
-                        SCMovesetFilters::RainEnjoyer1,
-                        SCMovesetFilters::RainEnjoyer1,
                         SCMovesetFilters::RainEnjoyer2)
   
   Sun = SCTeamFilter.new("Sun", [0, 0, 20, 20, 20, 0])
   Sun.setMovesetFilters(SCMovesetFilters::SunSetter, 
+                        SCMovesetFilters::SunEnjoyer1,
+                        SCMovesetFilters::SunEnjoyer1,
                         SCMovesetFilters::SunSetter,
-                        SCMovesetFilters::SunEnjoyer1,
-                        SCMovesetFilters::SunEnjoyer1,
                         SCMovesetFilters::SunEnjoyer2)
   
   Hail = SCTeamFilter.new("Hail", [0, 0, 20, 20, 20, 0])
   Hail.setMovesetFilters(SCMovesetFilters::HailSetter, 
-                        SCMovesetFilters::HailSetter,
                         SCMovesetFilters::HailEnjoyer1,
+                        SCMovesetFilters::HailSetter,
                         SCMovesetFilters::HailEnjoyer2)
   
   Sand = SCTeamFilter.new("Sand", [0, 0, 20, 20, 20, 0])
   Sand.setMovesetFilters(SCMovesetFilters::SandSetter, 
-                        SCMovesetFilters::SandSetter,
-                        SCMovesetFilters::SandEnjoyer)
+                        SCMovesetFilters::SandEnjoyer,
+                        SCMovesetFilters::SandSetter)
   
+  MagneticTerrain = SCTeamFilter.new("Magnetic Terrain", [0, 0, 20, 20, 20, 0])
+  MagneticTerrain.setMovesetFilters(SCMovesetFilters::MagneticTerrainSetter, 
+                                SCMovesetFilters::MagneticTerrainElectric,
+                                SCMovesetFilters::MagneticTerrainSteel, 
+                                SCMovesetFilters::MagneticTerrainSetter)
+
   Test1 = SCTeamFilter.new("Test1", [10], [20, 21, 22, 31, 32])
   Test1.setMovesetFilters(SCMovesetFilters::Test1_1, SCMovesetFilters::Test1_2, 
                           SCMovesetFilters::Test1_3, SCMovesetFilters::Test1_4, 

@@ -457,3 +457,22 @@ class PokemonTemp
   end 
 end 
 
+
+
+
+
+# -----------------------------------------------------------------------------
+# Unlock everything in the Pokédex. 
+# -----------------------------------------------------------------------------
+
+def scDebugUnlockAllPokedex
+  $Trainer.pokedex = true
+  $PokemonGlobal.pokedexUnlocked = [true, true, true]
+  $PokemonGlobal.pokedexDex = - 1 # National dex
+  for s in 0..PBSpecies.maxValue
+    $Trainer.seen[s]  = true
+    $Trainer.owned[s] = true
+    $Trainer.formlastseen[s] = [0, 0]
+  end 
+end 
+
