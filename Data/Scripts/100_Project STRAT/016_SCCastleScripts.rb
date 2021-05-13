@@ -22,30 +22,67 @@ def scCastlePC
     # commands=["Pokémon storage", "Team builder", "Stats"]
     commands=["Team builder", "Stats"]
     commands.push("Change tier") 
+    commands.push("Change real Pokémon") if $game_switches[SCSwitch::AllowTeamChange]
     commands.push("Log off")
     
     command=pbMessage(_INTL("Which PC should be accessed?"), commands,commands.length)
     
-    case command 
-      # when 0 # Pokémon storage 
-        # scene = StorageSystemPC.new
-        # scene.access() 
-      when 0 # Team builder 
-        # scene = SCTeamBuilder.new(true)
-        scene = SCTeamViewer.new
-        scene.main 
-      when 1 # Stats 
-        scBattleStats.menu 
-        # pbMessage("Unimplemented yet.")
-      when 2 
-        temp = scSelectTierMenu
-        scSetTier(temp, false)
-        pbMessage("You are working with the tier: " + scGetTier() + ".")
-      else 
-        break 
+    # case command 
+    # when 0 # Pokémon storage 
+      # scene = StorageSystemPC.new
+      # scene.access() 
+    if command == 0 # Team builder 
+      # scene = SCTeamBuilder.new(true)
+      scene = SCTeamViewer.new
+      scene.main 
+    elsif command == 1 # Stats 
+      scBattleStats.menu 
+    elsif command == 2 # Tier menu
+      temp = scSelectTierMenu
+      scSetTier(temp, false)
+      pbMessage("You are working with the tier: " + scGetTier() + ".")
+    elsif command == 3 && $game_switches[SCSwitch::AllowTeamChange]
+      
+      next if !pbConfirmMessage("Do you want to change the Pokémons that the main character used in his adventure?")
+      pbMessage("You can do this only once per game.")
+      next if !pbConfirmMessage("Do you want to continue?")
+      
+      SCStoryPokemon.export
+      
+      pbMessage("The Pokémons were exported to the file OwnedPokemons.txt in the game folder.")
+      pbMessage("Edit ONLY the Pokémon species.")
+      pbMessage("Write the Pokémon species that you want in CAPITAL letters.")
+      
+      loop do 
+        pbMessage("You can now edit the file OwnedPokemons.txt in the game folder.")
+        
+        next if !pbConfirmMessage("Done?")
+        next if !pbConfirmMessage("Import the changes?")
+        
+        begin 
+          SCStoryPokemon.import
+          break 
+          
+        rescue Exception => e
+          pbMessage("There was an error in the changes.")
+          pbMessage("You most probably made a mistake while editing the file.")
+          pbMessage("The game will show an error.")
+          pbMessage("Don't panic and try to fix the error in the file.")
+          raise e 
+        end 
+      end 
+      
+      pbMessage("The changes were imported.")
+      pbMessage("You can no longer change them in this game.")
+      
+      $game_switches[SCSwitch::AllowTeamChange] = false
+      
+    else 
+      break 
     end 
   end
   pbSEPlay("PC close")
+  $PokemonTemp.dependentEvents.come_back(false)
 end 
 
 

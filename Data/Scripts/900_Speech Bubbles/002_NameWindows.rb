@@ -172,6 +172,9 @@ def pbMessageDisplay(msgwindow,message,letterbyletter=true,commandProc=nil)
   msgback=nil
   linecount=(Graphics.height>400) ? 3 : 2
   ### Text replacement
+  # STRAT addition 
+  text = scMessageDisplaySubstitution(text)
+  # End of STRAT addition 
   text.gsub!(/\\\\/,"\5")
   if $game_actors
     text.gsub!(/\\[Nn]\[([1-8])\]/){ 
@@ -323,14 +326,14 @@ def pbMessageDisplay(msgwindow,message,letterbyletter=true,commandProc=nil)
           string=controls[i][1]
           extra=string.split(",")
           # Feed them 0/nil to pass down and later ignore
-          extra[1]="" if extra[1]=="" || !extra[1]
-          extra[2]="" if extra[2]=="" || !extra[2]
-          extra[3]="0" if extra[3]=="" || !extra[3]
-          extra[4]="0" if extra[4]=="" || !extra[4]
-          extra[5]="nil" if extra[5]=="" || !extra[5]
-          extra[6]="0" if extra[6]=="" || !extra[6]
-          extra[7]="0" if extra[7]=="" || !extra[7]
-          extra[8]="0" if extra[8]=="" || !extra[8]
+          extra[1]="" if extra[1]=="" || !extra[1] # Color base 
+          extra[2]="" if extra[2]=="" || !extra[2] # Color Shadow 
+          extra[3]="0" if extra[3]=="" || !extra[3] # font 
+          extra[4]="0" if extra[4]=="" || !extra[4] # fontSize 
+          extra[5]="nil" if extra[5]=="" || !extra[5] # alignment
+          extra[6]="0" if extra[6]=="" || !extra[6] # X 
+          extra[7]="0" if extra[7]=="" || !extra[7] # Y
+          extra[8]="0" if extra[8]=="" || !extra[8] # Skin 
           colorBase=extra[1]
           colorShadow=extra[2]
           font=extra[3]

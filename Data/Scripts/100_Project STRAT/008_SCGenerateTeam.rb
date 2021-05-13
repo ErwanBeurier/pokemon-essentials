@@ -227,6 +227,36 @@ end
 
 
 
+
+def scGenerateMovesetFast(fspecies, role = 0)
+  # For the owned Pokémns.
+  # But also returns a random moveset of the given role. 
+  movesetdb = scLoadMovesetsData
+  real_filter = SCRealPokemonsFilter.new
+  
+  movesets = []
+  
+  loop do 
+    real_filter.eachFittingMoveset(movesetdb, fspecies, role, 0) do |mv, ind, filter|
+      movesets.push(mv)
+    end 
+    
+    if movesets.length > 0
+      break
+    elsif movesets.length == 0 && role == 0
+      raise _INTL("Error: no moveset found for {1}", PBSpecies.getName(fspecies))
+    elsif movesets.length == 0
+      role = SCTeamFilter.extendRole(role)
+    end 
+  end 
+  
+  moveset = scsample(movesets, 1)
+  
+  return scGenerateMoveset(moveset, $Trainer, loadTierNoStorage("FE"))
+end 
+
+
+
 def scGenerateMoveset(pkmn, trainer, tier)
   # Give form if applicable. 
   # form = (pkmn[SCMovesetsData::BASEFORM] ? pkmn[SCMovesetsData::BASEFORM] : pkmn[SCMovesetsData::FORM])

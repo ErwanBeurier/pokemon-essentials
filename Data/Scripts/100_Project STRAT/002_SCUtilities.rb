@@ -476,3 +476,94 @@ def scDebugUnlockAllPokedex
   end 
 end 
 
+
+
+# -----------------------------------------------------------------------------
+# Check if one Pokémon in the team has the given item.
+# -----------------------------------------------------------------------------
+
+def scTeamHasItem(item)
+  item = getID(PBItems,item)
+  
+  $Trainer.party.each do |pkmn|
+    return true if pkmn.item == item
+  end
+  return false
+end 
+
+
+
+
+# -----------------------------------------------------------------------------
+# Print chapter
+# -----------------------------------------------------------------------------
+
+def scChapterBlackScreen(chapter_header, chapter_name = "")
+  sprites = {}
+  
+  pbFadeOutIn {
+    
+    black_screen = Bitmap.new(Graphics.width, Graphics.height)
+    black_screen.fill_rect(0,0,Graphics.width, Graphics.height, Color.new(0,0,0))
+    
+    sprites["background"] = IconSprite.new
+    sprites["background"].bitmap = black_screen
+    
+    sprites["chapter_number"] = IconSprite.new
+    sprites["chapter_number"].bitmap = Bitmap.new(Graphics.width, 50)
+    sprites["chapter_number"].x = 0
+    sprites["chapter_number"].y = (chapter_name == "" ? 160 : 120)
+    
+    
+    pbSetSystemFont(sprites["chapter_number"].bitmap)
+    textpos=[
+      [chapter_header, Graphics.width / 2, 4, 2, Color.new(248,248,248), Color.new(40,40,40)],
+    ]
+    pbDrawTextPositions(sprites["chapter_number"].bitmap,textpos)
+    
+    if chapter_name != ""
+      sprites["chapter_name"] = IconSprite.new
+      sprites["chapter_name"].bitmap = Bitmap.new(Graphics.width, 50)
+      sprites["chapter_name"].x = 0
+      sprites["chapter_name"].y = 180
+      
+      pbSetSystemFont(sprites["chapter_name"].bitmap)
+      textpos=[
+        [chapter_name, Graphics.width / 2, 4, 2, Color.new(248,248,248), Color.new(40,40,40)],
+      ]
+      pbDrawTextPositions(sprites["chapter_name"].bitmap,textpos)
+    end 
+  }
+  # Graphics.transition
+  
+  loop do
+    Graphics.update
+    Input.update
+    if Input.trigger?(Input::C) || Input.trigger?(Input::B)
+      break 
+    end 
+  end
+  # pbDisposeSpriteHash(sprites)
+  # Graphics.transition
+  
+  pbFadeOutAndHide(sprites)
+end 
+
+
+
+
+# -----------------------------------------------------------------------------
+# Print chapter
+# -----------------------------------------------------------------------------
+
+def scCheckEvents
+  $game_map.events.values.each_with_index do |event, i| 
+    scMessage("Event {1} - {2}", event.id, event.name)
+  end 
+end 
+
+
+
+def scMessage(*args)
+  pbMessage(_INTL(*args))
+end 

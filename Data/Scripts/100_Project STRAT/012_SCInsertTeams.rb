@@ -10,7 +10,7 @@
 
 # Reads the database of Teams and inserts the team it finds. 
 def scInsertTeamToStorage(tier, id)
-  trainerdata = pbLoadTrainer(PBTrainers::POKEMONTRAINER_Red, "Player", id)
+  # trainerdata = pbLoadTrainer(PBTrainers::POKEMONTRAINER_Red, "Player", id)
   
   party = []
   team_name = "Unnamed"
@@ -63,12 +63,33 @@ def scInsertTeamToStorage(tier, id)
       
       party.push(mvstdata)
     end
+    
+    break 
   end
-  
   
 	scTeamStorage.addTeam(team_name, party, tier)
 end 
 
+
+
+# For narrative reasons, force the player to use a specific team.
+def scForceTeam(index, msg)
+  index = scTeamStorage.lastNonEmptyIndex if !index
+  
+  SCSwitch.set(SCSwitch::ForcedTeam, true)
+  
+  SCVar.set(SCVar::ForcedTeamIndex, index)
+  SCVar.set(SCVar::ForcedTeamMessage, msg)
+end 
+
+
+# Unforce the team.
+def scUnforceTeam
+  SCSwitch.set(SCSwitch::ForcedTeam, false)
+  
+  SCVar.set(SCVar::ForcedTeamIndex, -1)
+  SCVar.set(SCVar::ForcedTeamMessage, "")
+end 
 
 
 

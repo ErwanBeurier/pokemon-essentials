@@ -1,0 +1,40 @@
+# This file defines the Pokémons that the main character used during his own
+# adventure, before retiring and making his amusement park.
+# Note that some of these will have a specific role in the story. For immersion
+# purposes, you should choose Pokémons that correspond to the region that you
+# have chosen. Or you can check the file DefaultTeam.txt and choose in the
+# corresponding lists.
+# Please respect the concept of the game and do not put any Legendary or 
+# Mythical Pokémons where not needed.
+# This is your Starter Pokémon, the first Pokémon given to you by the Professor
+# of your region.
+Starter = GRENINJA
+# This is a Pokémon that has a type advantage over your starter.
+# If you have chosen the Grass-type starter, this Pokémon should be Fire-type.
+CoreStrong = GOURGEIST
+# Your starter has a type advantage over the following Pokémon.
+# If you have chosen the Grass-type starter, this Pokémon should be Water-type.
+CoreWeak = PYROAR
+# This is a Pokémon that you find cute. This is typically the Pikachu-like of
+# the region, or some Fairy-type Pokémon.
+Cute = SYLVEON
+# This is a Pokémon that you use to fly.
+Flying = HAWLUCHA
+# This is a Pokémon that looks ordinary and common.
+Ordinary = HELIOLISK
+# This is the strong Pokémon of the region (the likes of Dragonite, Tyranitar).
+HalfLegendary = GOODRA
+# Two Pokémons that look strong and impressive.
+Badass1 = FLORGES
+Badass2 = TYRANTRUM
+# The legendary Pokémon that the main character meets during their journey in
+# his region.
+# If the main character is from Johto, then it should be either Ho-Oh or Lugia.
+# If he is from Hoenn, it should be either Groudon, Kyogre or Rayquaza.
+# If he is from Sinnoh, it should be either Dialga, Palkia or Giratina.
+# If he is from Unova, it should be either Reshiram or Zekrom.
+# If he is from Kalos, it should be either Xerneas or Yveltal.
+# If he is from Alola, it should be either Solgaleo or Lunala.
+# If he is from Galar, it should be either Zacian or Zamazenta.
+# Kanto doesn't have this kind of legendary Pokémon, so put either Mew or Mewtwo.
+Totem = XERNEAS

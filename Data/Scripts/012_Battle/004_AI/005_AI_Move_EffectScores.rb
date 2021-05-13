@@ -993,7 +993,21 @@ class PokeBattle_AI
                      target.pbOwnSide.effects[PBEffects::ToxicSpikes]>0 ||
                      target.pbOwnSide.effects[PBEffects::StealthRock] ||
                      target.pbOwnSide.effects[PBEffects::LavaTrap] ||
-                     target.pbOwnSide.effects[PBEffects::StickyWeb]
+                     target.pbOwnSide.effects[PBEffects::StickyWeb] ||
+                     target.pbOwnSide.effects[PBEffects::Steelsurge]
+      score -= 30 if user.pbOwnSide.effects[PBEffects::AuroraVeil]>0 ||
+                     user.pbOwnSide.effects[PBEffects::Reflect]>0 ||
+                     user.pbOwnSide.effects[PBEffects::LightScreen]>0 ||
+                     user.pbOwnSide.effects[PBEffects::Mist]>0 ||
+                     user.pbOwnSide.effects[PBEffects::Safeguard]>0 || 
+                     user.pbOwnSide.effects[PBEffects::WarMandala]>0 || 
+                     user.pbOwnSide.effects[PBEffects::MindMandala]>0
+      score += 30 if user.pbOwnSide.effects[PBEffects::Spikes]>0 ||
+                     user.pbOwnSide.effects[PBEffects::ToxicSpikes]>0 ||
+                     user.pbOwnSide.effects[PBEffects::StealthRock] ||
+                     user.pbOwnSide.effects[PBEffects::LavaTrap] ||
+                     user.pbOwnSide.effects[PBEffects::StickyWeb] ||
+                     user.pbOwnSide.effects[PBEffects::Steelsurge]
     #---------------------------------------------------------------------------
     when "04A"
       avg =  target.stages[PBStats::ATTACK]*10
@@ -3095,6 +3109,304 @@ class PokeBattle_AI
     #---------------------------------------------------------------------------
     when "175"
       score += 30 if target.effects[PBEffects::Minimize]
+    #---------------------------------------------------------------------------
+    when "176" # Aura Wheel
+      if move.statusMove?
+        if user.statStageAtMax?(PBStats::SPEED)
+          score -= 20
+        else
+          score -= user.stages[PBStats::SPEED]*10
+          if skill>=PBTrainerAI.highSkill
+            aspeed = pbRoughStat(user,PBStats::SPEED,skill)
+            ospeed = pbRoughStat(target,PBStats::SPEED,skill)
+            score += 30 if aspeed<ospeed && aspeed*2>ospeed
+          end
+        end
+      else
+        score += 20 if user.stages[PBStats::SPEED]<0
+      end
+    #---------------------------------------------------------------------------
+    when "177" # Body Press
+    #---------------------------------------------------------------------------
+    when "178" # Beak Bolt, Fishious Rend
+    #---------------------------------------------------------------------------
+    when "179" # Clangorous Soul
+      if user.hp<=user.totalhp*3/4
+        score -= 100
+      else
+        score += 40 if user.turnCount==0
+        PBStats.eachMainBattleStat { |s| score += 10 if user.stages[s]<0 }
+        if skill>=PBTrainerAI.mediumSkill
+          hasDamagingAttack = false
+          user.eachMove do |m|
+            next if !m.damagingMove?
+            hasDamagingAttack = true
+            break
+        end
+          score += 40 if hasDamagingAttack
+        end
+      end
+    #---------------------------------------------------------------------------
+    when "17A" # Court Change, THIS SERIOUSLY NEEDS SOME OPTIMIZATION
+      score += 30 if target.pbOwnSide.effects[PBEffects::AuroraVeil]>0 ||
+                     target.pbOwnSide.effects[PBEffects::Reflect]>0 ||
+                     target.pbOwnSide.effects[PBEffects::LightScreen]>0 ||
+                     target.pbOwnSide.effects[PBEffects::Mist]>0 ||
+                     target.pbOwnSide.effects[PBEffects::Safeguard]>0 || 
+                     target.pbOwnSide.effects[PBEffects::WarMandala]>0 || 
+                     target.pbOwnSide.effects[PBEffects::MindMandala]>0
+      score -= 30 if target.pbOwnSide.effects[PBEffects::Spikes]>0 ||
+                     target.pbOwnSide.effects[PBEffects::ToxicSpikes]>0 ||
+                     target.pbOwnSide.effects[PBEffects::StealthRock] ||
+                     target.pbOwnSide.effects[PBEffects::LavaTrap] ||
+                     target.pbOwnSide.effects[PBEffects::StickyWeb] ||
+                     target.pbOwnSide.effects[PBEffects::Steelsurge]
+      score -= 30 if user.pbOwnSide.effects[PBEffects::AuroraVeil]>0 ||
+                     user.pbOwnSide.effects[PBEffects::Reflect]>0 ||
+                     user.pbOwnSide.effects[PBEffects::LightScreen]>0 ||
+                     user.pbOwnSide.effects[PBEffects::Mist]>0 ||
+                     user.pbOwnSide.effects[PBEffects::Safeguard]>0 || 
+                     user.pbOwnSide.effects[PBEffects::WarMandala]>0 || 
+                     user.pbOwnSide.effects[PBEffects::MindMandala]>0
+      score += 30 if user.pbOwnSide.effects[PBEffects::Spikes]>0 ||
+                     user.pbOwnSide.effects[PBEffects::ToxicSpikes]>0 ||
+                     user.pbOwnSide.effects[PBEffects::StealthRock] ||
+                     user.pbOwnSide.effects[PBEffects::LavaTrap] ||
+                     user.pbOwnSide.effects[PBEffects::StickyWeb] ||
+                     user.pbOwnSide.effects[PBEffects::Steelsurge]
+    #---------------------------------------------------------------------------
+    when "17B" # Decorate
+          if target.statStageAtMax?(PBStats::ATTACK) || 
+            target.statStageAtMax?(PBStats::SPATK)
+            score -= 90
+          else
+            if !target.effects[PBEffects::CraftyShield]  
+              score -= target.stages[PBStats::ATTACK]*10
+              score -= target.stages[PBStats::SPATK]*10
+            else
+              score = 0
+            end
+          end
+      score = 0 if !hasAlly
+    #---------------------------------------------------------------------------
+    when "17C" # Dragon Darts
+    #---------------------------------------------------------------------------
+    when "17D" # Jaw Lock
+      score += 40 if !target.effects[PBEffects::JawLock]
+    #---------------------------------------------------------------------------
+    when "17E" # Life Dew
+      if target.hp>target.totalhp*3/4
+        score = 0 
+      else
+        score += 20
+      end
+    #---------------------------------------------------------------------------
+    when "17F" # No Retreat
+      score = 0 if user.effects[PBEffects::NoRetreat]
+      PBStats.eachMainBattleStat { |s| score += 10 if user.stages[s]<0 }
+    #---------------------------------------------------------------------------
+    when "180" # Obstruct
+      if user.effects[PBEffects::ProtectRate]>1 ||
+         target.effects[PBEffects::HyperBeam]>0
+        score -= 90
+      else
+        if skill>=PBTrainerAI.mediumSkill
+          score -= user.effects[PBEffects::ProtectRate]*40
+        end
+        score += 50 if user.turnCount==0
+        score += 30 if target.effects[PBEffects::TwoTurnAttack]>0
+      end
+    #---------------------------------------------------------------------------
+    when "181" # Octolock
+      if target.effects[PBEffects::Octolock]
+        score = 0
+      else
+        score += 40
+      end
+    #---------------------------------------------------------------------------
+    when "182" # Snipe Shot
+    #---------------------------------------------------------------------------
+    when "183" # Stuff Cheeks
+      if pbIsBerry?(user.item)
+        score += 90
+      else
+        score = 0
+      end
+    #---------------------------------------------------------------------------
+    when "184" # Teatime
+      score += 90 if pbIsBerry?(user.item)
+      score -= 90 if pbIsBerry?(target.item)
+    #---------------------------------------------------------------------------
+    when "185" # Grav Apple
+      if move.statusMove?
+        if !target.pbCanLowerStatStage?(PBStats::DEFENSE,user)
+          score -= 90
+        else
+          score += target.stages[PBStats::DEFENSE]*20
+        end
+      else
+        score += 20 if target.stages[PBStats::DEFENSE]>0
+      end
+    #---------------------------------------------------------------------------
+    when "186" # Tar Shot
+      if move.statusMove?
+        if !target.pbCanLowerStatStage?(PBStats::SPEED,user)
+          score -= 90
+        else
+          score += 20 if user.turnCount==0
+          score += target.stages[PBStats::SPEED]*20
+          if skill>=PBTrainerAI.highSkill
+            aspeed = pbRoughStat(user,PBStats::SPEED,skill)
+            ospeed = pbRoughStat(target,PBStats::SPEED,skill)
+            score += 30 if aspeed<ospeed && aspeed*2>ospeed
+          end
+        end
+      else
+        score += 10 if user.turnCount==0
+        score += 30 if target.stages[PBStats::SPEED]>0
+      end
+    #---------------------------------------------------------------------------
+    when "187" # Shell Side Arm
+      if target.pbCanPoison?(user,false)
+        score += 30
+        if skill>=PBTrainerAI.mediumSkill
+          score += 30 if target.hp<=target.totalhp/4
+          score += 50 if target.hp<=target.totalhp/8
+          score -= 40 if target.effects[PBEffects::Yawn]>0
+        end
+        if skill>=PBTrainerAI.highSkill
+          score += 10 if pbRoughStat(target,PBStats::DEFENSE,skill)>100
+          score += 10 if pbRoughStat(target,PBStats::SPDEF,skill)>100
+          score -= 40 if target.hasActiveAbility?([:GUTS,:MARVELSCALE,:TOXICBOOST])
+        end
+      else
+        if skill>=PBTrainerAI.mediumSkill
+          score -= 90 if move.statusMove?
+        end
+      end
+    #---------------------------------------------------------------------------
+    when "188" # Surging Strikes
+    #---------------------------------------------------------------------------
+    when "189" # Jungle Healing
+      if user.hp<user.totalhp*(3/4) || !user.status==PBStatuses::NONE
+        score += 40 
+      end
+      user.eachAlly do |b|
+        if b.hp<b.totalhp*3/4 || !b.status==PBStatuses::NONE
+          score += 40 
+        end 
+      end
+    #---------------------------------------------------------------------------
+    when "18A" # Terrain Pulse
+    #---------------------------------------------------------------------------
+    when "18B" # Burning Jealousy
+      score += 60 if target.turnCount==0
+      aspeed = pbRoughStat(user,PBStats::SPEED,skill)
+      ospeed = pbRoughStat(target,PBStats::SPEED,skill)
+      score += 40 if aspeed<ospeed
+    #---------------------------------------------------------------------------
+    when "18C" # Grassy Glide
+      aspeed = pbRoughStat(user,PBStats::SPEED,skill)
+      ospeed = pbRoughStat(target,PBStats::SPEED,skill)
+      if @battle.field.terrain==PBBattleTerrains::Grassy && aspeed<ospeed
+        score += 40 
+      end
+    #---------------------------------------------------------------------------
+    when "18D" # Rising Voltage
+    #---------------------------------------------------------------------------
+    when "18E" # Coaching
+      user.eachAlly do |b|
+          if b.statStageAtMax?(PBStats::ATTACK) || 
+            b.statStageAtMax?(PBStats::DEFENSE)
+            score -= 90
+          else
+            score -= target.stages[PBStats::ATTACK]*10
+            score -= target.stages[PBStats::DEFNSE]*10
+          end
+        end
+      score = 0 if !hasAlly
+    #---------------------------------------------------------------------------
+    when "201" # Corrosive Gas
+      if target.item==0 || !target.itemActive? ||
+         target.unlosableItem?(target.item) || pbIsPokeBall?(target.item)
+         score = 0
+      else
+        score += 50
+      end
+    #---------------------------------------------------------------------------
+    when "190" # Expanding Force
+    #---------------------------------------------------------------------------
+    when "191" # Meteor Beam
+       if move.statusMove?
+        if user.statStageAtMax?(PBStats::SPATK)
+          score -= 90
+        else
+          score -= user.stages[PBStats::SPATK]*20
+        end
+      else
+        score += 20 if user.stages[PBStats::SPATK]<0
+      end
+    #---------------------------------------------------------------------------
+    when "192" # Poltergeist
+      if target.item==0 || !target.itemActive? ||
+         target.unlosableItem?(target.item) || pbIsPokeBall?(target.item)
+        score = 0
+      else
+        score += 50
+      end
+    #---------------------------------------------------------------------------
+    when "193" # Scale Shot
+      aspeed = pbRoughStat(user,PBStats::SPEED,skill)
+      ospeed = pbRoughStat(target,PBStats::SPEED,skill)
+      if aspeed<ospeed 
+        score += 40 
+      end
+    #---------------------------------------------------------------------------
+    when "194" # Lash Out
+      aspeed = pbRoughStat(user,PBStats::SPEED,skill)
+      ospeed = pbRoughStat(target,PBStats::SPEED,skill)
+      if aspeed<ospeed && target.hp<user.hp*3
+        score += 40
+      end
+      if aspeed<ospeed && target.turnCount==0
+        score += 40
+      end
+      if target.pbHasMoveFunction?("047","042","04B","0E2","13A","151","160","04A","140","185","04C","043","D003","049","04E","045","046","04F","044","04D","186","159","048") &&
+          aspeed<ospeed  
+          score += 40
+        end
+    #---------------------------------------------------------------------------
+    when "195" # Steel Roller
+      if !@battle.field.terrain==PBBattleTerrains::Grassy &&
+          !@battle.field.terrain==PBBattleTerrains::Electric &&
+          !@battle.field.terrain==PBBattleTerrains::Misty &&
+          !@battle.field.terrain==PBBattleTerrains::Psychic
+          score = 0
+        end
+    #---------------------------------------------------------------------------
+    when "196" # Misty Explosion
+      reserves = @battle.pbAbleNonActiveCount(user.idxOwnSide)
+      foes     = @battle.pbAbleNonActiveCount(user.idxOpposingSide)
+      if @battle.pbCheckGlobalAbility(:DAMP)
+        score -= 100
+      elsif skill>=PBTrainerAI.mediumSkill && reserves==0 && foes>0
+        score -= 100   # don't want to lose
+      elsif skill>=PBTrainerAI.highSkill && reserves==0 && foes==0
+        score += 80   # want to draw
+      else
+        score -= user.hp*100/user.totalhp
+      end
+    #---------------------------------------------------------------------------
+    when "197" # Magic Powder
+      if target.effects[PBEffects::Substitute]>0 ||
+         isConst?(target.ability,PBAbilities,:MULTITYPE) ||
+         isConst?(target.ability,PBAbilities,:RKSSYSTEM)
+        score = 0
+      elsif target.pbHasType?(:PSYCHIC)
+        score = 0
+      end
+    #---------------------------------------------------------------------------
+    when "210" # Eerie Spell
     #---------------------------------------------------------------------------
     when "C001" # Magnetic Terrain 
       if @battle.field.terrain==PBBattleTerrains::Magnetic

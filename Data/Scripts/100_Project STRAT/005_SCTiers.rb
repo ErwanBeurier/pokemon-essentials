@@ -471,20 +471,20 @@ class SCTier
         end 
         
         previous_role = team_roles[i] 
-        
-				if team_roles[i] == 10
-					# We couldn't find a lead. Try offensive. 
-					team_roles[i] = 15 
-				elsif team_roles[i] == 21 || team_roles[i] == 22 || team_roles[i] == 23
-					# We couldn't find a specific offensive. Maybe try another offensive. 
-					team_roles[i] = 20
-				elsif team_roles[i] == 31 || team_roles[i] == 32 || team_roles[i] == 33
-					# We couldn't find a specific defensive. Maybe try another defensive or support. 
-					team_roles[i] = 40
-				else 
-					# We tried to replace the lead with an offensive.
-					team_roles[i] = 0 
-				end 
+        team_roles[i] = SCTeamFilter.extendRole(team_roles[i])
+				# if team_roles[i] == 10
+					# # We couldn't find a lead. Try offensive. 
+					# team_roles[i] = 15 
+				# elsif team_roles[i] == 21 || team_roles[i] == 22 || team_roles[i] == 23
+					# # We couldn't find a specific offensive. Maybe try another offensive. 
+					# team_roles[i] = 20
+				# elsif team_roles[i] == 31 || team_roles[i] == 32 || team_roles[i] == 33
+					# # We couldn't find a specific defensive. Maybe try another defensive or support. 
+					# team_roles[i] = 40
+				# else 
+					# # We tried to replace the lead with an offensive.
+					# team_roles[i] = 0 
+				# end 
 			else 
         # Next. 
         i += 1 

@@ -194,10 +194,10 @@ class PokeBattle_AI
     # Gust, Twister, Venoshock, Smelling Salts, Wake-Up Slap, Facade, Hex, Brine,
     # Retaliate, Weather Ball, Return, Frustration, Eruption, Crush Grip,
     # Stored Power, Punishment, Hidden Power, Fury Cutter, Echoed Voice,
-    # Trump Card, Flail, Electro Ball, Low Kick, Fling, Spit Up
+    # Trump Card, Flail, Electro Ball, Low Kick, Fling, Spit Up, Terrain Pulse
     when "077", "078", "07B", "07C", "07D", "07E", "07F", "080", "085", "087",
          "089", "08A", "08B", "08C", "08E", "08F", "090", "091", "092", "097",
-         "098", "099", "09A", "0F7", "113"
+         "098", "099", "09A", "0F7", "113", "18A"
       baseDmg = move.pbBaseDamage(baseDmg,user,target)
     when "086"   # Acrobatics
       baseDmg *= 2 if user.item==0 || user.hasActiveItem?(:FLYINGGEM)
@@ -216,11 +216,11 @@ class PokeBattle_AI
       baseDmg = move.pbBaseDamage(baseDmg,user,target)
       baseDmg *= 2 if NEWEST_BATTLE_MECHANICS && skill>=PBTrainerAI.mediumSkill &&
                       target.effects[PBEffects::Minimize]
-    when "0A0", "0BD", "0BE"   # Frost Breath, Double Kick, Twineedle
+    when "0A0", "0BD", "0BE", "17C"   # Frost Breath, Double Kick, Twineedle, Dragon Darts
       baseDmg *= 2
     when "0BF"   # Triple Kick
       baseDmg *= 6   # Hits do x1, x2, x3 baseDmg in turn, for x6 in total
-    when "0C0"   # Fury Attack
+    when "0C0", "193"   # Fury Attack, Scale Shot
       if user.hasActiveAbility?(:SKILLLINK)
         baseDmg *= 5
       else
@@ -260,6 +260,14 @@ class PokeBattle_AI
     when "175"   # Double Iron Bash
       baseDmg *= 2
       baseDmg *= 2 if skill>=PBTrainerAI.mediumSkill && target.effects[PBEffects::Minimize]
+    when "178"   # Beak Bolt
+      aspeed = pbRoughStat(user,PBStats::SPEED,skill)
+      ospeed = pbRoughStat(target,PBStats::SPEED,skill)
+      baseDmg *= 2 if aspeed>ospeed
+    when "185"   # Grav Apple
+      baseDmg *= 1.5 if @battle.field.effects[PBEffects::Gravity]>0
+    when "188"   # Surging Strikes
+      baseDmg *= 4.5 # 3 strikes and always crits
     end
     return baseDmg
   end
@@ -421,15 +429,37 @@ class PokeBattle_AI
       case @battle.field.terrain
       when PBBattleTerrains::Electric
         if isConst?(type,PBTypes,:ELECTRIC)
-          multipliers[BASE_DMG_MULT] *= 1.5
+          multipliers[BASE_DMG_MULT] *= 1.3
+        end
+        if isConst?(move.id,PBMoves,:RISINGVOLTAGE)
+          multipliers[BASE_DMG_MULT] *= 2
+        end
+        if isConst?(move.id,PBMoves,:TERRAINPULSE)
+          multipliers[BASE_DMG_MULT] *= 2
         end
       when PBBattleTerrains::Grassy
         if isConst?(type,PBTypes,:GRASS)
+          multipliers[BASE_DMG_MULT] *= 1.3
+        end
+        if isConst?(move.id,PBMoves,:TERRAINPULSE)
+          multipliers[BASE_DMG_MULT] *= 2
+        end
+      when PBBattleTerrains::Misty
+        if isConst?(move.id,PBMoves,:MISTYEXPLOSION)
           multipliers[BASE_DMG_MULT] *= 1.5
+        end
+        if isConst?(move.id,PBMoves,:TERRAINPULSE)
+          multipliers[BASE_DMG_MULT] *= 2
         end
       when PBBattleTerrains::Psychic
         if isConst?(type,PBTypes,:PSYCHIC)
+          multipliers[BASE_DMG_MULT] *= 1.3
+        end
+        if isConst?(move.id,PBMoves,:EXPANDINGFORCE)
           multipliers[BASE_DMG_MULT] *= 1.5
+        end
+        if isConst?(move.id,PBMoves,:TERRAINPULSE)
+          multipliers[BASE_DMG_MULT] *= 2
         end
       end
     end
@@ -462,18 +492,31 @@ class PokeBattle_AI
     if skill>=PBTrainerAI.mediumSkill
       case @battle.pbWeather
       when PBWeather::Sun, PBWeather::HarshSun
+        if isConst?(move.id,PBMoves,:WEATHERBALL)
+          multipliers[BASE_DMG_MULT] *= 2
+        end
         if isConst?(type,PBTypes,:FIRE)
           multipliers[FINAL_DMG_MULT] *= 1.5
         elsif isConst?(type,PBTypes,:WATER)
           multipliers[FINAL_DMG_MULT] /= 2
         end
       when PBWeather::Rain, PBWeather::HeavyRain
+        if isConst?(move.id,PBMoves,:WEATHERBALL)
+          multipliers[BASE_DMG_MULT] *= 2
+        end
         if isConst?(type,PBTypes,:FIRE)
           multipliers[FINAL_DMG_MULT] /= 2
         elsif isConst?(type,PBTypes,:WATER)
           multipliers[FINAL_DMG_MULT] *= 1.5
         end
+      when PBWeather::Hail
+        if isConst?(move.id,PBMoves,:WEATHERBALL)
+          multipliers[BASE_DMG_MULT] *= 2
+        end
       when PBWeather::Sandstorm
+        if isConst?(move.id,PBMoves,:WEATHERBALL)
+          multipliers[BASE_DMG_MULT] *= 2
+        end
         if target.pbHasType?(:ROCK) && move.specialMove?(type) && move.function!="122"   # Psyshock
           multipliers[DEF_MULT] *= 1.5
         end

@@ -765,6 +765,7 @@ class PokeBattle_AI
     return if @battle.pbAutoFightMenu(idxBattler)
     @battle.pbRegisterMegaEvolution(idxBattler) if pbEnemyShouldMegaEvolve?(idxBattler)
     @battle.pbRegisterUltraBurst(idxBattler) if pbEnemyShouldUltraBurst?(idxBattler)
+    @battle.pbRegisterAssistance(idxBattler) if pbEnemyShouldCallForAssistance?(idxBattler)
     @battle.pbRegisterDynamax(idxBattler) if pbEnemyShouldDynamax?(idxBattler)
     pbChooseEnemyZMove(idxBattler) if pbEnemyShouldZMove?(idxBattler)
     pbChooseMoves(idxBattler) if !@battle.pbRegisteredZMove?(idxBattler)

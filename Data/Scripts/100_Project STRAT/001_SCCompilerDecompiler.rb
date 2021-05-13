@@ -446,7 +446,7 @@ def scConvertMovesetToString(moveset, with_tab = false, for_compiler = true)
   
   s = _INTL("Pokemon = {1},{2}\r\n", species, moveset[SCMovesetsData::LEVEL])
   
-  if moveset[SCMovesetsData::FORM] && for_compiler
+  if moveset[SCMovesetsData::FORM] && moveset[SCMovesetsData::FORM] != 0 && for_compiler
     s += sprintf(s_tab + "Form = %d\r\n",moveset[SCMovesetsData::FORM])
   end
   if moveset[SCMovesetsData::BASEFORM]
@@ -565,7 +565,7 @@ def scConvertMovesetToString(moveset, with_tab = false, for_compiler = true)
   if moveset[SCMovesetsData::HAPPINESS] && moveset[SCMovesetsData::HAPPINESS] != 255
     s += sprintf(s_tab + "Happiness = %d\r\n",moveset[SCMovesetsData::HAPPINESS])
   end
-  if moveset[SCMovesetsData::BALL]
+  if moveset[SCMovesetsData::BALL] && moveset[SCMovesetsData::BALL] != 0 
     s += sprintf(s_tab + "Ball = %d\r\n",moveset[SCMovesetsData::BALL])
   end
   if moveset[SCMovesetsData::ROLE] && for_compiler

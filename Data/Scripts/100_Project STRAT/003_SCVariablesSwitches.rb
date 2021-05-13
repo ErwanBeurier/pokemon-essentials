@@ -11,6 +11,35 @@
 
 
 module SCVar
+  def self.set(var, value)
+    $game_variables[var] = value
+  end 
+  
+  def self.get(var)
+    return $game_variables[var]
+  end 
+  
+  
+  # ---------------------------------------------------------------------------
+  # General purpose 
+  # ---------------------------------------------------------------------------
+  GeneralTemp = 3 # Temp Pokémon name but could be used anywhere.
+  
+  
+  # ---------------------------------------------------------------------------
+  # Story information
+  # ---------------------------------------------------------------------------
+  # Region of origin of the player.
+  RegionOfOrigin = 70
+  
+  # ---------------------------------------------------------------------------
+  # Forced team. 
+  # ---------------------------------------------------------------------------
+  # Index of the forced team.
+  ForcedTeamIndex = 71
+  # Message reminding what the team should be.
+  ForcedTeamMessage = 72 
+  
   # ---------------------------------------------------------------------------
   # Tier related stuff. 
   # ---------------------------------------------------------------------------
@@ -46,7 +75,27 @@ module SCVar
 end 
 
 
+def scGetSwitch(s)
+  return SCSwitch.get(getID(SCSwitch,s))
+end 
+def scSetSwitch(s, value)
+  return SCSwitch.set(getID(SCSwitch,s), value)
+end 
+
+
 module SCSwitch
+  def self.set(var, value)
+    $game_switches[var] = value
+  end 
+  
+  def self.get(var)
+    return $game_switches[var]
+  end 
+  
+  def self.isTrue(var)
+    return $game_switches[var]
+  end 
+  
   # ---------------------------------------------------------------------------
   # Tier related stuff
   # ---------------------------------------------------------------------------
@@ -56,6 +105,20 @@ module SCSwitch
   ShowManager = 79 
   # Switch to allow/disallow Legendary Pokémons in big tiers (only in post-game).
   AllowLegendary = 89 
+  # Forced team.
+  ForcedTeam = 91
+  # Switch to allow/disallow Battle Royales.
+  AllowBattleRoyales = 102
+  # Switch to allow/disallow Inverse Battles.
+  AllowInverseBattles = 105
+  # Switch to allow/disallow Changing Terrain.
+  AllowChangingTerrain = 103
+  # Switch to allow/disallow Changing Weather.
+  AllowChangingWeather = 104
+  # Switch to allow/disallow battles with formats bigger than 3v3.
+  AllowBigFormats = 106
+  
+  
   
   # ---------------------------------------------------------------------------
   # Other castle stuff.
@@ -70,6 +133,25 @@ module SCSwitch
   RandBattleDone = 78
   # Battle result
   ClientBattleResult = 77 
+  
+  # ---------------------------------------------------------------------------
+  # Real Pokémon stuff
+  # ---------------------------------------------------------------------------
+  # Whether or not the player is allowed to change their team. (Only once per 
+  # game)
+  AllowTeamChange = 90
+  # Switches to know which is taken.
+  # Can also be accessed by using SCSwitch::StarterFollowing + SCStoryPokemon::XXX
+  StarterFollowing = 92
+  CoreStrongFollowing = 93
+  CoreWeakFollowing = 94
+  HalfLegendaryFollowing = 95
+  OrdinaryFollowing = 96
+  CuteFollowing = 97
+  Badass1Following = 98
+  Badass2Following = 99
+  FlyingFollowing = 100
+  TotemFollowing = 101
 end 
 
 

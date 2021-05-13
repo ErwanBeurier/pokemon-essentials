@@ -1103,6 +1103,13 @@ class SCTeamViewer
 			
 			tier_choice = scGetTier()
 			
+      if SCSwitch.isTrue(SCSwitch::ForcedTeam)
+        pbMessage("Not now.")
+        pbMessage(SCVar.get(SCVar::ForcedTeamMessage))
+        return
+      end 
+      
+      
 			# Choose the type of team: 
 			
 			if res == 0 or res == 1
@@ -1184,6 +1191,20 @@ class SCTeamViewer
 			
 			res = pbMessage("Do what?", options, -1)
 			
+      
+      if SCSwitch.isTrue(SCSwitch::ForcedTeam) && SCVar.get(SCVar::ForcedTeamIndex) > -1
+        if SCVar.get(SCVar::ForcedTeamIndex) != team_index
+          pbMessage("Wrong team.")
+          pbMessage(SCVar.get(SCVar::ForcedTeamMessage))
+          return
+        elsif res != 0
+          pbMessage("Not now.")
+          pbMessage(SCVar.get(SCVar::ForcedTeamMessage))
+          return 
+        end 
+      end 
+      
+      
 			
 			if res == 0
 				# Load 

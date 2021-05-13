@@ -47,7 +47,11 @@ module SCClientBattles
     species = pbGetSpeciesFromFSpecies(pokemonid)
     filename = ""
     filename=sprintf("%03d",species[0])
-    event.pages[0].graphic.character_name="Following/" + filename
+    if event.is_a?(Game_Event)
+      event.character_name="Following/" + filename
+    else 
+      event.pages[0].graphic.character_name="Following/" + filename
+    end 
 	end 
 
   
@@ -288,7 +292,7 @@ module SCClientBattles
     ret.push([PBTrainers::SC_EMPLOYEE_SEREN, "Seren"])
     ret.push([PBTrainers::SC_EMPLOYEE_FOXY, "Foxy"])
     ret.push([PBTrainers::SC_EMPLOYEE_KATE, "Kate"])
-    ret.push([PBTrainers::SC_EMPLOYEE_EVITA, "Evita"])
+    ret.push([PBTrainers::SC_EMPLOYEE_HETTIE, "Hettie"])
     
     return ret 
   end 
@@ -304,7 +308,7 @@ module SCClientBattles
     ret.push(PBTrainers::SC_EMPLOYEE_SEREN)
     ret.push(PBTrainers::SC_EMPLOYEE_FOXY)
     ret.push(PBTrainers::SC_EMPLOYEE_KATE)
-    ret.push(PBTrainers::SC_EMPLOYEE_EVITA)
+    ret.push(PBTrainers::SC_EMPLOYEE_HETTIE)
     
     return ret 
   end 
@@ -348,6 +352,34 @@ module SCClientBattles
   
   
   
+  
+  def self.smallTiers
+    tiers = scLoadTierData
+    tier_list = []
+    
+    # All 
+    for t in tiers["TierList"]
+      next if scTiersWithLegendaries.include?(t) && !scLegendaryAllowed?
+      
+      if tiers[t]["Category"] == "Micro-tier" && tiers[t]["Category"] != "Base stats tiers"
+        tier_list.push(t)
+      end 
+      
+      if t == 0 or t == "0"
+        File.open("log.txt", "w") { |f| 
+          for stuff in tiers[t]
+            f.write stuff + "\n"
+          end 
+        }
+        pbMessage("Some debug is written in log.txt")
+      end 
+    end 
+    
+    return tier_list
+  end 
+  
+  
+  
   def self.biasedTiers
     tiers = scLoadTierData
     tier_list = []
@@ -362,7 +394,7 @@ module SCClientBattles
       
       if t == 0 or t == "0"
         File.open("log.txt", "w") { |f| 
-          for stuff in tier_list[t]
+          for stuff in tiers[t]
             f.write stuff + "\n"
           end 
         }
@@ -393,14 +425,33 @@ module SCClientBattles
   
   
   
-  def self.biasedFormats
+  def self.biasedFormatAll
     ret = Array.new(40, "1v1")
     ret += Array.new(3, "2v2")
     ret += Array.new(2, "3v3")
-    ret += Array.new(1, "4v4")
-    ret += Array.new(1, "5v5")
-    ret += Array.new(3, "6v6")
-    return ret 
+    
+    if SCSwitch.get(SCSwitch::AllowBigFormats)
+      ret += Array.new(1, "4v4")
+      ret += Array.new(1, "5v5")
+      ret += Array.new(3, "6v6")
+    end 
+    
+    return scsample(ret, 1)
+  end 
+  
+  
+  
+  def self.biasedFormat2
+    ret = Array.new(10, "2v2")
+    ret += Array.new(2, "3v3")
+    
+    if SCSwitch.get(SCSwitch::AllowBigFormats)
+      ret += Array.new(1, "4v4")
+      ret += Array.new(1, "5v5")
+      ret += Array.new(3, "6v6")
+    end 
+    
+    return scsample(ret, 1)
   end 
 end 
 
@@ -424,6 +475,8 @@ class SCStadium
   attr_reader(:for_player)
   attr_reader(:format)
   attr_reader(:tier)
+  attr_accessor(:disallowAllMechanics)
+  attr_accessor(:battleRoyale)
   
   
   def initialize(map_id, ind, name, center_y, x_employee, x_client, client_facing, audience_pos)
@@ -438,6 +491,7 @@ class SCStadium
     @audience_pos = audience_pos.clone
     @event_list = []
     @client_facing = client_facing
+    
     case @client_facing
     when PBMoveRoute::TurnLeft  ; @employee_facing = PBMoveRoute::TurnRight
     when PBMoveRoute::TurnRight ; @employee_facing = PBMoveRoute::TurnLeft
@@ -463,6 +517,10 @@ class SCStadium
     @format = "1v1"
     @for_player = false
     @is_double_single = false # Doble battle but with single trainers. (1 per side, but 2 Pokémons per side)
+    @disallowAllMechanics = false
+    @battleRoyale = false
+    
+    @audience_events = {}
   end 
   
   
@@ -470,6 +528,7 @@ class SCStadium
   def playerPartner
     return nil if !@for_player
     return nil if @employee_side.length == 1
+    return nil if @battleRoyale
     
     return @employee_side[1]
   end 
@@ -482,16 +541,23 @@ class SCStadium
     # - A PBTrainers constant defining a real employee of the Castle
     # - The constant SCClientBattles::Player representing the player. 
     
-    raise _INTL("Error: trying to add more than two employees!") if @employee_side.length >= 2
+    raise _INTL("Error: trying to add more than two employees!") if @employee_side.length >= 3
     
     x = @x_employee
     y = @center_y
     y = @center_y + 1 if @employee_side.length == 1
+    y = @center_y - 1 if @employee_side.length == 2
     
     @for_player = true if employee == SCClientBattles::Player
     
     @employee_side.push([employee, x, y, @employee_facing])
     @reserved = true 
+  end 
+  
+  
+  
+  def clientOpp(i)
+    return @employee_side[i][0]
   end 
   
   
@@ -505,11 +571,12 @@ class SCStadium
   def addClient(client)
     # client will be a PBTrainers constant defining an unamed client 
     
-    raise _INTL("Error: trying to add more than two clients!") if @client_side.length >= 2
+    raise _INTL("Error: trying to add more than two clients!") if @client_side.length >= 3
     
     x = @x_client
     y = @center_y
     y = @center_y + 1 if @client_side.length == 1
+    y = @center_y - 1 if @client_side.length == 2
     
     @client_side.push([client, x, y, @client_facing])
     @reserved = true 
@@ -543,6 +610,23 @@ class SCStadium
   
   
   def spawnAudience(x, y, facing)
+    if @audience_events[x] && @audience_events[x][y]
+      # creating and adding the Game_Event
+      gameEvent = Game_Event.new($game_map.map_id, @audience_events[x][y], $game_map)
+      key_id = ($game_map.events.keys.max || -1) + 1
+      gameEvent.id = key_id
+      gameEvent.moveto(x,y)
+      $game_map.events[key_id] = gameEvent
+      @event_list.push(key_id)
+      
+      # updating the sprites
+      sprite = Sprite_Character.new(Spriteset_Map.viewport,$game_map.events[key_id])
+      $scene.spritesets[$game_map.map_id]=Spriteset_Map.new($game_map) if $scene.spritesets[$game_map.map_id]==nil
+      $scene.spritesets[$game_map.map_id].character_sprites.push(sprite)
+      return 
+    end 
+    
+    
     trainer_id = SCClientBattles.clients
     trainer_id = trainer_id[rand(trainer_id.length)]
     
@@ -629,8 +713,6 @@ class SCStadium
       pbPushEnd(event.pages[0].list)
     end 
     
-    
-    
     SCClientBattles.loadGraphics(event, trainer_id)
     
     # creating and adding the Game_Event
@@ -640,6 +722,8 @@ class SCStadium
     gameEvent.moveto(x,y)
     $game_map.events[key_id] = gameEvent
     @event_list.push(key_id)
+    @audience_events[x] = {} if !@audience_events[x]
+    @audience_events[x][y] = event
     
     # updating the sprites
     sprite = Sprite_Character.new(Spriteset_Map.viewport,$game_map.events[key_id])
@@ -692,7 +776,11 @@ class SCStadium
   
   
   
-  def spawnClientWaiting(x, y, facing, trainer_id)
+  def spawnClientWaiting(x, y, facing, trainer_id, employee_side = false)
+    
+    dia = scClientBattles.dialogue # Dialogue modifiers.
+    dia.prepare_formatting(trainer_id)
+    
     event = RPG::Event.new(x,y)
     event.name = "Client (Waiting)"
     
@@ -703,7 +791,6 @@ class SCStadium
     event.pages[0].move_type = 0
     event.pages[0].trigger = 0 # Action Button
     
-    dia = scClientBattles.dialogue # Dialogue modifiers.
     
     # tp_x = where to teleport the player rather than making it turn around the trainer. 
     # Should be "in front" of the trainer. 
@@ -712,10 +799,10 @@ class SCStadium
     
     facing2 = facing
     case facing
-    when PBMoveRoute::TurnLeft  ; facing2 = 4 ; tp_x -= 1
-    when PBMoveRoute::TurnDown  ; facing2 = 2 ; tp_y += 1
-    when PBMoveRoute::TurnRight ; facing2 = 6 ; tp_x += 1
-    when PBMoveRoute::TurnUp    ; facing2 = 8 ; tp_y -= 1
+    when PBMoveRoute::TurnLeft  ; facing2 = 4 ; tp_x += (employee_side ? 1 : -1)
+    when PBMoveRoute::TurnDown  ; facing2 = 2 ; tp_y += (employee_side ? -1 : 1)
+    when PBMoveRoute::TurnRight ; facing2 = 6 ; tp_x += (employee_side ? -1 : 1)
+    when PBMoveRoute::TurnUp    ; facing2 = 8 ; tp_y += (employee_side ? 1 : -1)
     end 
     
     event.pages[0].graphic.direction = facing2
@@ -723,19 +810,15 @@ class SCStadium
     # Check if Battle is over: 
     indent = 0
     pbPushBranch(event.pages[0].list,"$game_switches[SCSwitch::RandBattleDone]", indent)
-    # pbPushText(event.pages[0].list,_INTL("Thank you for your time \\PN!"), indent+1)
     dia.pushBattleOver(event.pages[0].list, indent+1)
-    # pbPushText(event.pages[0].list,_INTL("Thank you for your time \\PN!"), indent+1)
     pbPushExit(event.pages[0].list, indent+1) # Exit event processing.
     pbPushBranchEnd(event.pages[0].list, indent+1)
     
     # Greeting 
-    # pbPushText(event.pages[0].list,_INTL("Hi \\PN!\\nReady to fight?"), indent)
     dia.pushGreeting(event.pages[0].list, indent)
     pbPushShowChoices(event.pages[0].list, [["Yes", "No"], 1], indent)
     pbPushWhenBranch(event.pages[0].list, 0, indent+1)
     pbPushWhenBranch(event.pages[0].list, 1, indent+1)
-    # pbPushText(event.pages[0].list, _INTL("No problem. I want a good fight!"), indent+1)
     dia.pushPlayerNotReady(event.pages[0].list, indent+1)
     pbPushExit(event.pages[0].list, indent+1) # Exit event processing.
     pbPushBranchEnd(event.pages[0].list, indent+1)
@@ -746,15 +829,12 @@ class SCStadium
     
     pbPushBranch(event.pages[0].list,"!scClientBattles.playerHasPartner", indent)
     dia.pushPartnerMissing(event.pages[0].list, indent+1)
-    # pbPushText(event.pages[0].list,_INTL("But... I wanted you to team up with one of your friends..."), indent+1)
     pbPushExit(event.pages[0].list, indent+1) # Exit event processing.
     pbPushBranchEnd(event.pages[0].list, indent+1)
     
     pbPushBranch(event.pages[0].list,"!scClientBattles.playerHasRightPartner", indent)
     pbPushScript(event.pages[0].list,"scClientBattles.storeWantedPartner", indent+1)
     dia.pushWrongPartner(event.pages[0].list, indent+1)
-    # pbPushText(event.pages[0].list,
-      # _INTL("But... I wanted you to team up with \\V[{1}]...", SCVar::WantedPartner), indent+1)
     pbPushExit(event.pages[0].list, indent+1) # Exit event processing.
     pbPushBranchEnd(event.pages[0].list, indent+1)
     
@@ -763,9 +843,7 @@ class SCStadium
     
     # Check if team is valid.
     pbPushBranch(event.pages[0].list,"!scClientBattles.playerValidTeam", indent)
-    # pbPushText(event.pages[0].list,_INTL("But... Your team is not valid..."), indent+1)
     dia.pushInvalidTeam(event.pages[0].list, indent+1)
-    # pbPushText(event.pages[0].list,_INTL("But... Your team is not valid..."), indent+1)
     pbPushExit(event.pages[0].list, indent+1) # Exit event processing.
     pbPushBranchEnd(event.pages[0].list, indent+1) 
     
@@ -804,7 +882,6 @@ class SCStadium
       _INTL("$game_variables[{1}] = true", SCSwitch::ClientBattleResult), indent)
     pbPushMoveRoute(event.pages[0].list, 0, route_player[0..1], indent)
     pbPushWaitForMoveCompletion(event.pages[0].list, indent)
-    # pbPushText(event.pages[0].list,_INTL("Well done!"), indent)
     dia.pushPlayerWon(event.pages[0].list, indent)
     
     pbPushElse(event.pages[0].list, indent)
@@ -817,8 +894,15 @@ class SCStadium
     pbPushWait(event.pages[0].list,20, indent)
   
     dia.pushTryAgain(event.pages[0].list, indent)
-    # pbPushText(event.pages[0].list,_INTL("Try again?"), indent)
-    pbPushShowChoices(event.pages[0].list, [["Try again", "Change team", "Accept defeat"], 2], indent)
+    
+    if dia.client_won
+      # With accept defeat. 
+      pbPushShowChoices(event.pages[0].list, [["Try again", "Change team", "Accept defeat"], 0], indent)
+    else
+      # Without accept defeat.
+      pbPushShowChoices(event.pages[0].list, [["Try again", "Change team"], 0], indent)
+    end 
+    
     # Defeat: try again 
     pbPushWhenBranch(event.pages[0].list, 0, indent+1) 
     pbPushChangeColorTone(event.pages[0].list, 0, 0, 0, 20, indent+1)
@@ -832,14 +916,17 @@ class SCStadium
     pbPushWait(event.pages[0].list,20, indent+1)
     pbPushJumpToLabel(event.pages[0].list, "Start the battle", indent+1)
     
-    # Defeat: accept defeat
-    pbPushWhenBranch(event.pages[0].list, 2, indent+1)
-    pbPushChangeColorTone(event.pages[0].list, 0, 0, 0, 20, indent+1)
-    pbPushWait(event.pages[0].list,20, indent+1)
-    pbPushMoveRoute(event.pages[0].list, 0, route_player[0..1], indent+1)
-    pbPushWaitForMoveCompletion(event.pages[0].list, indent+1)
-    # pbPushText(event.pages[0].list,_INTL("That's unbelievable, I won!"), indent+1)
-    dia.pushClientWon(event.pages[0].list, indent+1)
+    # Defeat: accept defeat, if allowed. 
+    if dia.client_won
+      pbPushWhenBranch(event.pages[0].list, 2, indent+1)
+      pbPushChangeColorTone(event.pages[0].list, 0, 0, 0, 20, indent+1)
+      pbPushWait(event.pages[0].list,20, indent+1)
+      pbPushMoveRoute(event.pages[0].list, 0, route_player[0..1], indent+1)
+      pbPushWaitForMoveCompletion(event.pages[0].list, indent+1)
+      dia.pushClientWon(event.pages[0].list, indent+1)
+    end 
+    
+    # End choices.
     pbPushBranchEnd(event.pages[0].list, indent+1)
     
     indent -= 1
@@ -918,10 +1005,16 @@ class SCStadium
     
     if @for_player
       # Only spawn clients that battle the player.
-      for i in 0..1
+      for i in 0..2
         next if !@client_side[i]
         spawnClientWaiting(@client_side[i][1], @client_side[i][2], 
                           @client_side[i][3], @client_side[i][0])
+      end 
+      for i in 0..2
+        next if !@employee_side[i]
+        next if @employee_side[i][0] == SCClientBattles::Player
+        spawnClientWaiting(@employee_side[i][1], @employee_side[i][2], 
+                          @employee_side[i][3], @employee_side[i][0], true)
       end 
       return 
     end 
@@ -945,12 +1038,22 @@ class SCStadium
     displayPokemon(@employee_side[0], true, @employee_pokemons[1]) if @employee_side[1] || @is_double_single
     
     
-    # Spawn the audience
-    half_audience = (@audience_pos.length / 2).floor
-    real_audience = scsample(@audience_pos, half_audience)
-    
-    for data in real_audience
-      spawnAudience(data[0], data[1], data[2])
+    # Spawn the audience. 
+    if @audience_events.keys.length == 0
+      # Make a new audience 
+      half_audience = (@audience_pos.length / 2).floor
+      real_audience = scsample(@audience_pos, half_audience)
+      
+      for data in real_audience
+        spawnAudience(data[0], data[1], data[2])
+      end 
+    else 
+      # Audience already loaded. 
+      @audience_events.each do |x, other|
+        other.each do |y, event|
+          spawnAudience(x, y, nil)
+        end 
+      end 
     end 
   end 
   
@@ -1081,6 +1184,8 @@ class SCClientBattlesGenerator
       @stadiums[mp] = []
       @reserved_stadiums[mp] = []
     }
+    
+    @panel = nil
     
     initStadiums
   end 
@@ -1391,6 +1496,7 @@ class SCClientBattlesGenerator
   end 
   
   
+  
   def reinit
     for mp in @stadiums.keys
       @stadiums[mp].each { |st| st.reinit }
@@ -1398,6 +1504,7 @@ class SCClientBattlesGenerator
     end 
     
     @dialogue = SCClientBattleDialogues.get_random_usual
+    @panel = Panel.new
     
     @player_map = nil 
     @player_stadium = nil 
@@ -1550,6 +1657,17 @@ class SCClientBattlesGenerator
     scSetTier(playerNextStadium.tier, false)
     if clientWantsPartner
       res = scDoubleTrainerBattle(playerNextStadium.client(0), "Client", playerNextStadium.client(1), "Client")
+      
+    elsif playerNextStadium.battleRoyale && playerNextStadium.format == "2v2"
+      res = scBattleRoyale(playerNextStadium.client(0), "Client", 
+              playerNextStadium.client(1), "Client", 
+              playerNextStadium.clientOpp(1), "Client")
+    elsif playerNextStadium.battleRoyale && playerNextStadium.format == "3v3"
+      res = scBattleRoyale(playerNextStadium.client(0), "Client", 
+              playerNextStadium.client(1), "Client", 
+              playerNextStadium.client(2), "Client", 
+              playerNextStadium.clientOpp(1), "Client", 
+              playerNextStadium.clientOpp(2), "Client")
     else 
       res = scTrainerBattle(playerNextStadium.client(0), "Client", playerNextStadium.format)
     end 
@@ -1584,8 +1702,9 @@ class SCClientBattlesGenerator
   
   
   
-  def generateBattles(mute = false)
-    reinit
+  # def generateBattles(player_tier, player_format, player_with_partner, player_special_rules, mute = false)
+  def generateBattles(player_client, mute = false)
+    # reinit
     
     tier_list = SCClientBattles.biasedTiers
     # @client_classes = SCClientBattles.clients
@@ -1607,15 +1726,24 @@ class SCClientBattlesGenerator
       stadium_indices.each do |si| 
         @reserved_stadiums[mp].push(si)
         # Double Battle but with single trainer.
-        is_double = rand(100) < 30 
-        is_double_with_partner = is_double && rand(100) < 50 
+        is_double = (!@player_map && player_client.format == "2v2") || (@player_map && rand(10) < 3)
+        is_double_with_partner = is_double && ((!@player_map && player_client.withPartner) || (@player_map && rand(10) < 3))
         
         # Choose the tier in the biased list. 
-        tier = scsample(tier_list, 1)
-        @stadiums[mp][si].setTier(tier)
+        if !@player_map
+          @stadiums[mp][si].setTier(player_client.tier)
+        else 
+          tier = scsample(tier_list, 1)
+          @stadiums[mp][si].setTier(tier)
+        end 
         
         # Number of clients per side. 
         num_per_side = (is_double_with_partner ? 2 : 1)
+        
+        if !@player_map && player_client.battleRoyale 
+          num_per_side = 2 if player_client.format == "2v2" 
+          num_per_side = 3 if player_client.format == "3v3" 
+        end 
         
         # Give clients: 
         chosen_clients = scsample(@client_classes, num_per_side)
@@ -1626,10 +1754,20 @@ class SCClientBattlesGenerator
         chosen_opponents = [] 
         
         # player_map will be String (not nil) when the player is affected a battle.
+        # If nil, then it's not affected a battle.
         if !@player_map || (rand(100) < 25 && @available_employees.length >= num_per_side)
-          for num in 0...num_per_side
+          # Choose the guys on the opposite side. 
+          if !@player_map && player_client.battleRoyale
             chosen_opponents.push(@available_employees.pop())
+            for num in 1...num_per_side
+              chosen_opponents.push(scsample(@client_classes, 1))
+            end 
+          else 
+            for num in 0...num_per_side
+              chosen_opponents.push(@available_employees.pop())
+            end 
           end 
+          
           
           # If these are undefined, then we need to set them. The player will always be the first employee chosen. 
           if !@player_map
@@ -1637,8 +1775,10 @@ class SCClientBattlesGenerator
             @player_map = mp 
             @player_stadium = si
             # Formats 
-            @stadiums[mp][si].setFormat(scsample(SCClientBattles.biasedFormats, 1)) if num_per_side == 1 && !is_double
-            @stadiums[mp][si].setFormat("2v2") if num_per_side == 1 && is_double
+            @stadiums[mp][si].setFormat(player_client.format)
+            player_client.setSpecialRules(self)
+            @stadiums[mp][si].disallowAllMechanics = player_client.disallowAllMechanics
+            @stadiums[mp][si].battleRoyale = player_client.battleRoyale
           end 
         else 
           chosen_opponents = scsample(@client_classes, num_per_side)
@@ -1654,11 +1794,165 @@ class SCClientBattlesGenerator
     # Warn the player. 
     playerNextBattleMessage(true) if !mute
   end 
+  
+  
+  
+  def panel
+    return if !pbConfirmMessage("See client requests?")
+    
+    reinit if scGetSwitch(:RandBattleDone)
+    ret = @panel.show
+    self.generateBattles(ret) if ret
+    displayStadiums("Castle") if ret
+  end 
+  
+  
+  class PlayersClient
+    attr_reader :tier
+    attr_reader :format
+    attr_reader :battleRoyale
+    attr_reader :withPartner
+    attr_reader :inverseBattle
+    attr_reader :changingTerrain
+    attr_reader :changingWeather
+    attr_accessor :disallowAllMechanics
+    
+    def initialize(tier, format, withPartner, battleRoyale = false, inverseBattle = false, 
+                  changingTerrain = false, changingWeather = false, disallowAllMechanics = false)
+      @tier = tier 
+      @format = format 
+      @withPartner = withPartner
+      @battleRoyale = battleRoyale
+      @inverseBattle = inverseBattle
+      @changingTerrain = changingTerrain
+      @changingWeather = changingWeather
+      @disallowAllMechanics = disallowAllMechanics
+    end 
+    
+    def panelName
+      s = _INTL("Req: {1} in {2}", @tier, @format)
+      s += " (p)" if @withPartner
+      s += " BR" if @battleRoyale
+      s += " CT" if @changingTerrain
+      s += " CW" if @changingWeather
+      s += " inv" if @inverseBattle
+      s += " DAM" if @disallowAllMechanics
+      return s 
+    end 
+    
+    def panelDesc
+      # The line to be displayed on the panel 
+      s = _INTL("Request: tier {1}", loadTierNoStorage(@tier).name)
+      s += _INTL(" in Battle Royale") if @battleRoyale
+      s += _INTL(" in Inverse Battle") if @inverseBattle
+      s += _INTL(" with Changing Terrain") if @changingTerrain
+      s += _INTL(" with Changing Weather") if @changingWeather
+      s += _INTL(" with format {1}", @format)
+      s += _INTL(" with partner") if @withPartner
+      s += _INTL(" without mechanics") if @disallowAllMechanics
+      s += "." 
+      return s 
+    end 
+    
+    def setSpecialRules(client_battles)
+      client_battles.setSpecialRules("battleRoyale") if @battleRoyale
+      client_battles.setSpecialRules("inverseBattle") if @inverseBattle
+      client_battles.setSpecialRules("changingTerrain") if @changingTerrain
+      client_battles.setSpecialRules("changingWeather") if @changingWeather
+    end 
+  end 
+  
+  
+  class Panel
+    def initialize
+      @content = []
+      @content_names = []
+      @content_desc = []
+      @chosen = nil 
+      
+      ["FEL", "FE"].each do |fe|
+        next if fe == "FEL" && !scLegendaryAllowed?
+        
+        # First case: Always FE, 1v1 
+        @content.push(PlayersClient.new(fe, "1v1", false))
+        
+        # Second case: FE + other format (2v2, etc)
+        format = SCClientBattles.biasedFormat2 # Biased 2v2, 3v3 and so on.
+        with_partner = (format == "2v2" && rand(100)< 50)
+        @content.push(PlayersClient.new(fe, format, with_partner))
+        
+        # Third case: Battle Royale (2v2 or 3v3)
+        format = (rand(2) == 1 ? "2v2" : "3v3")
+        @content.push(PlayersClient.new(fe, format, false, true))
+      end
+      
+      # Two among: Mono / Bi / LC / NFE
+      big_tiers = ["MONO", "BI", "NE", "LC"]
+      num_tiers = 2
+      
+      if scLegendaryAllowed?
+        big_tiers += ["UBER", "MONOL", "BIL"]
+        num_tiers += 1
+      end 
+      
+      chosen_tiers = scsample(big_tiers, num_tiers)
+      chosen_tiers.each do |tier|
+        @content.push(PlayersClient.new(tier, "1v1", false))
+      end 
+      
+      # Two among the small tiers. 
+      small_tiers = SCClientBattles.smallTiers
+      chosen_tiers = scsample(small_tiers, 2)
+      chosen_tiers.each do |tier|
+        @content.push(PlayersClient.new(tier, "1v1", false))
+      end 
+      
+      # The tier of the day.
+      @tier_of_the_day_index = @content.length
+      @content.push(PlayersClient.new(scTOTDHandler.get(), "1v1", false))
+      
+      # Full random
+      @full_random_index = @content.length
+      all_tiers = big_tiers + small_tiers
+      rand_tier = scsample(all_tiers, 1)
+      
+      battle_royale = scGetSwitch(:AllowBattleRoyales) && rand(10) < 3 
+      
+      formats = ["2v2", "3v3"]
+      formats += ["4v4", "5v5", "6v6"] if !battle_royale && scGetSwitch(:AllowBigFormats)
+      format = scsample(formats, 1)
+      
+      @content.push(PlayersClient.new(rand_tier, format, false, battle_royale, 
+                      scGetSwitch(:AllowInverseBattles) && rand(10) < 2, 
+                      scGetSwitch(:AllowChangingTerrain) && rand(10) < 1, 
+                      scGetSwitch(:AllowChangingWeather) && rand(10) < 1,
+                      rand(10) < 1)) # Disallow all mechanics
+      
+      @content_names = []
+      @content_desc = []
+      
+      @content.each_with_index do |c, i|
+        if i == @full_random_index
+          @content_names.push("Surprise client")
+        else
+          @content_names.push(c.panelName)
+        end 
+        
+        @content_desc.push(c.panelDesc)
+      end 
+    end 
+    
+    
+    def show
+      ret = pbShowCommandsWithHelp(nil, @content_names, @content_desc, -1, 0)
+      return if ret == -1
+      return if @chosen
+      @chosen = ret
+      return @content[@chosen]
+    end 
+  end 
 end 
 
 
 
 
-def scTestClientBattles
-  scClientBattles.generateBattles(false)
-end 

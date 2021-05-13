@@ -462,6 +462,31 @@ class SCTeamFilter
   end 
   
   
+  def self.extendRole(role)
+    case role
+    # We couldn't find a lead. Try offensive. 
+    when 10 ; return 15 
+    # We couldn't find a specific offensive. Maybe try another offensive. 
+    when 21 ; return 20
+    when 22 ; return 20
+    when 23 ; return 20
+    # We couldn't find a specific defensive. Maybe try another defensive.
+    when 31 ; return 41
+    when 32 ; return 42
+    when 33 ; return 43
+    # We couldn't find defensive. Try support.
+    when 30 ; return 40
+    # We couldn't find a specific support. Maybe try another support.
+    when 41 ; return 40
+    when 42 ; return 40
+    when 43 ; return 40
+    # We tried everything. Get anything.
+    else 
+      return 0 
+    end 
+  end 
+  
+  
   def vary()
     return self
   end 
@@ -535,6 +560,15 @@ class SCRandomTeamFilter
   end 
 end 
 
+
+
+
+class SCRealPokemonsFilter < SCTeamFilter
+  def initialize
+    super("Owned Pokémons", [20], nil)
+    @filters = Array.new(1)
+  end 
+end 
 
 
 

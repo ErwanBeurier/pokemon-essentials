@@ -72,6 +72,7 @@ class PokeBattle_Battle
     return @assistanceData[side][owner]
   end 
   
+  
   # If player: calls the Party screen to choose a Pokémon from.
   # Otherwise, choose a Pokémon in the team. 
   def pbChooseAssistingPokemon(idxBattler)
@@ -139,6 +140,7 @@ class PokeBattle_Battle
     # @choices[idxBattler][3] = -1         # No target chosen yet
   end
   
+  
   def pbUnregisterAssistance(idxBattler)
     side  = @battlers[idxBattler].idxOwnSide
     owner = pbGetOwnerIndexFromBattlerIndex(idxBattler)
@@ -146,12 +148,14 @@ class PokeBattle_Battle
     @assistanceData[side][owner] = [nil, -1, false]
   end
 
+
   def pbDisableAssistance(idxBattler)
     side  = @battlers[idxBattler].idxOwnSide
     owner = pbGetOwnerIndexFromBattlerIndex(idxBattler)
     @assistance[side][owner] = -2 - ASSISTANCE_RELOAD_DURATION if @assistance[side][owner]==idxBattler
   end
-
+  
+  
   def pbToggleRegisteredAssistance(idxBattler)
     side  = @battlers[idxBattler].idxOwnSide
     owner = pbGetOwnerIndexFromBattlerIndex(idxBattler)
@@ -163,11 +167,13 @@ class PokeBattle_Battle
     end
   end
   
+  
   def pbRegisteredAssistance?(idxBattler)
     side  = @battlers[idxBattler].idxOwnSide
     owner = pbGetOwnerIndexFromBattlerIndex(idxBattler)
     return @assistance[side][owner]==idxBattler
   end
+  
   
   #-----------------------------------------------------------------------------
   # Triggers the use of each battle mechanic during the attack phase.
@@ -215,7 +221,6 @@ class PokeBattle_Battle
   # def pbCanUltraBurst?(idxBattler) ; return false ; end 
   # def pbCanZMove?(idxBattler) ; return false ; end 
   # def pbCanDynamax?(idxBattler) ; return false ; end 
-
 end 
 
 
@@ -322,6 +327,10 @@ class PokeBattle_Battler
 end 
 
 
+
+#===============================================================================
+# Visual animations (appear/disappear)
+#===============================================================================
 
 
 class PokeBattle_Scene
@@ -476,14 +485,11 @@ class PokeBattle_Move_C007 < PokeBattle_Move
     idxBattler = user.index 
     idxCallingPkmn = @battle.battlers[idxBattler].pokemonIndex
     oldName = user.pbThis
-    # scToString(oldEffects, "oldEffects")
-    # scToString(user.effects, "user.effects")
     
     # Reset choice. 
     choice = [:UseMove, -1, nil, -1]
     
     # Get the assit.
-    # assist,idxParty = @battle.pbChooseAssistingPokemon(idxBattler)
     assist, idxParty, assistAfter = @battle.pbGetAssistingData(user.index)
     
     if !user.opposes?
@@ -543,23 +549,28 @@ class PokeBattle_Move_C007 < PokeBattle_Move
         
         # Ask which move the assist should use.
         chosenCmd = 0 
-        @battle.scene.pbFightMenu(idxAssist,false, false, false, false, false) { |cmd|
-          chosenCmd = cmd 
-          if cmd >= 0 
-            choice[1] = cmd
-            choice[2] = @battle.battlers[idxAssist].moves[cmd]
-            
-            @battle.pbChooseTarget(@battle.battlers[idxAssist],choice[2])
-            choice[3] = @battle.choices[idxAssist][3]
-            
-            if choice[3] == idxAssist && idxAssist != idxBattler
-              # Target the other Pokémon instead.
-              choice[3] = idxBattler
+        
+        if user.opposes?
+          @battle.battleAI.pbChooseMoves(idxAssist)
+          choice = @battle.choices[idxAssist]
+        else 
+          @battle.scene.pbFightMenu(idxAssist,false, false, false, false, false) { |cmd|
+            chosenCmd = cmd 
+            if cmd >= 0 
+              choice[1] = cmd
+              choice[2] = @battle.battlers[idxAssist].moves[cmd]
+              
+              @battle.pbChooseTarget(@battle.battlers[idxAssist],choice[2])
+              choice[3] = @battle.choices[idxAssist][3]
+              
+              if choice[3] == idxAssist && idxAssist != idxBattler
+                # Target the other Pokémon instead.
+                choice[3] = idxBattler
+              end 
+              break 
             end 
-            # @battle.pbDisplay(_INTL("choice = [{1}, {2}, {3}, {4}]", choice[0], choice[1], choice[2].name, choice[3]))
-            break 
-          end 
-        }
+          }
+        end 
         
         assistEffectsNew = nil 
         assistStagesNew = nil 
@@ -598,18 +609,9 @@ class PokeBattle_Move_C007 < PokeBattle_Move
         end 
         
         # Give back the effects. 
-        # scToString(oldEffects, "oldEffects")
-        # scToString(oldStages, "oldStages")
         @battle.battlers[idxBattler].pbSetAssistanceChanges(oldEffects, oldStages, oldPositions,
                                                     assistEffectsOld, assistStagesOld, assistPositionsOld, 
                                                     assistEffectsNew, assistStagesNew, assistPositionsNew)
-        # scToString(assistEffectsOld, "assistEffectsOld")
-        # scToString(assistEffectsNew, "assistEffectsNew")
-        # scToString(@battle.battlers[idxBattler].effects, "@battle.battlers[idxBattler].effects")
-        # scToString(assistStagesOld, "assistStagesOld")
-        # scToString(assistStagesNew, "assistStagesNew")
-        # scToString(@battle.battlers[idxBattler].stages, "@battle.battlers[idxBattler].stages")
-        # scToString(@battle.battlers[idxAssist].stages, "@battle.battlers[idxAssist].stages")
       else 
         #------------------------------------
         # The part of the assisted Pokémon.
@@ -651,9 +653,11 @@ class SCAssistMechanic < PokeBattle_Move_C007
     super(battle, pbmove)
   end 
   
+  
   def statusMove?
     return false 
   end 
+  
   
   def registerOtherChoice(choice)
     @other_choice = []
@@ -665,6 +669,15 @@ class SCAssistMechanic < PokeBattle_Move_C007
 end 
 
 
+
+
+#===============================================================================
+# AI stuff: choose an assisting Pokémon + make the AI accessible frm outside.
+#===============================================================================
+
+class PokeBattle_Battle
+  attr_accessor :battleAI
+end 
 
 
 class PokeBattle_AI
@@ -679,6 +692,9 @@ class PokeBattle_AI
     return -1 if enemies.length==0
     return pbChooseBestNewEnemy(idxBattler,party,enemies)
   end
+  
+  def pbEnemyShouldCallForAssistance?(idxBattler)
+    return @battle.pbCanCallAssitance?(idxBattler)
+  end 
 end 
-
 
