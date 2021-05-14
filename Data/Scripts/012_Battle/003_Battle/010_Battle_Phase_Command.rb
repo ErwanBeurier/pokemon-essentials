@@ -200,6 +200,14 @@ class PokeBattle_Battle
         @battleAI.pbDefaultChooseEnemyCommand(idxBattler)
         next
       end
+      # Scripted battles.
+      if @battleAI.commandIndex > 0 && pbOwnedByPlayer?(idxBattler)
+        ret = TrainerDialogue.display("command#{@battleAI.commandIndex}",self, @scene, idxBattler)
+        if ret 
+          @battleAI.commandIndex = 0
+          next 
+        end 
+      end 
       # Player chooses an action
       actioned.push(idxBattler)
       commandsEnd = false   # Whether to cancel choosing all other actions this round

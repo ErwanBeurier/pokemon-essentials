@@ -14,6 +14,7 @@ $SCFormattingPersonalities["\\PN"] = "\\xn[\\PN]"
 $SCFormattingPersonalities["Player"] = $SCFormattingPersonalities["\\PN"]
 # Rachel (Manager)
 $SCFormattingPersonalities["Rachel"] = "\\xn[Rachel,ad26d4,3b2a40]"
+$SCFormattingPersonalities["Manager"] = $SCFormattingPersonalities["Rachel"]
 # Cindy
 $SCFormattingPersonalities["Cindy"] = "\\xn[Cindy]"
 # Weston (best friend)

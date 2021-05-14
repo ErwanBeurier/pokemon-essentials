@@ -1156,7 +1156,7 @@ module TrainerDialogue
       param=parameter
     end
     case TrainerDialogue.eval(param,noPri)
-    when 0
+    when 0 # String 
       turnStart= TrainerDialogue.get(param)
       scene.pbShowOpponent(0) if !battle.wildBattle?
       scene.disappearDatabox
@@ -1171,7 +1171,7 @@ module TrainerDialogue
       TrainerDialogue.setDone(param)
       TrainerDialogue.setInstance(parameter)
       return true
-    when 1
+    when 1 # Hash
       turnStart= TrainerDialogue.get(param)
       pbBGMPlay(turnStart["bgm"]) if turnStart["bgm"].is_a?(String)
       scene.disappearDatabox if !turnStart["bar"]
@@ -1214,17 +1214,17 @@ module TrainerDialogue
       TrainerDialogue.setDone(param)
       TrainerDialogue.setInstance(parameter)
       return true
-    when 2
+    when 2 # Proc 
       turnStart= TrainerDialogue.get(param)
       scene.sprites["messageWindow"].text = ""
-      ret = turnStart.call(battle, other_args)
+      ret = (other_args ? turnStart.call(battle, other_args) : turnStart.call(battle))
       # Do not register if the Proc returned nothing. It means the proc ended 
       # prematurely because its conditions were not met.
       return false if ret == false # Do not count ret == nil as a failure. 
       TrainerDialogue.setDone(param)
       TrainerDialogue.setInstance(parameter)
       return true
-    when 3
+    when 3 # Array of strings.
       turnStart= TrainerDialogue.get(param)
       scene.pbShowOpponent(0) if !battle.wildBattle?
       scene.disappearDatabox

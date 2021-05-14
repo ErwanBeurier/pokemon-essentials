@@ -202,7 +202,7 @@ class PokeBattle_Battle
       # idxMove = @choices[b.index]
       next if wildBattle? && b.opposes?
       # next unless @choices[b.index][0]==:UseMove && !b.fainted?
-      next unless !b.fainted?
+      next if b.fainted?
       owner = pbGetOwnerIndexFromBattlerIndex(b.index)
       next if @assistance[b.idxOwnSide][owner] >= -1 
       
@@ -685,9 +685,9 @@ class PokeBattle_AI
   # Allows to choose a Pokémon either in the party or in the battle field.
   def scChooseNonSwitchingPokemon(idxBattler,party)
     enemies = []
-    idxPkmn = @battle.battlers[idxBattler].pkmn.index
-    party.each_with_index do |_p,i|
-      enemies.push(i) if p.able? && idxPkmn != i 
+    idPkmn = @battle.battlers[idxBattler].pokemon.personalID
+    party.each_with_index do |p,i|
+      enemies.push(i) if p.able? && p.personalID != idPkmn
     end
     return -1 if enemies.length==0
     return pbChooseBestNewEnemy(idxBattler,party,enemies)

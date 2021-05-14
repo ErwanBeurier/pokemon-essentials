@@ -42,3 +42,31 @@ class PokeBattle_Battler
   end 
 end 
 
+# Addition of switching.
+class PokeBattle_AI
+  attr_accessor :commandIndex
+  attr_accessor :commandOppIndex
+  
+  alias __scripted__initialize initialize
+  def initialize(battle)
+    __scripted__initialize(battle)
+    @commandIndex = 0
+    @commandOppIndex = 0
+  end 
+  
+  # STRAT Addition: Force a certain command from the enemy.
+  alias __scripted__pbDefaultChooseEnemyCommand pbDefaultChooseEnemyCommand
+  def pbDefaultChooseEnemyCommand(idxBattler)
+    if @commandOppIndex > 0 
+      # Specify the index of the command to use. 
+      ret = TrainerDialogue.display("commandOpp#{@commandOppIndex}",@battle, @battle.scene, idxBattler)
+      if ret 
+        @commandOppIndex = 0
+        return 
+      end 
+    end 
+    __scripted__pbDefaultChooseEnemyCommand(idxBattler)
+  end 
+end 
+
+
