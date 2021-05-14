@@ -1797,11 +1797,13 @@ class SCClientBattlesGenerator
   
   
   
-  def panel
-    return if !pbConfirmMessage("See client requests?")
+  def panel(canCancel=true)
+    return if canCancel && !pbConfirmMessage("See client requests?")
     
     reinit if scGetSwitch(:RandBattleDone)
-    ret = @panel.show
+    
+    ret = @panel.show(canCancel)
+    
     self.generateBattles(ret) if ret
     displayStadiums("Castle") if ret
   end 
@@ -1943,10 +1945,16 @@ class SCClientBattlesGenerator
     end 
     
     
-    def show
-      ret = pbShowCommandsWithHelp(nil, @content_names, @content_desc, -1, 0)
+    def show(canCancel)
+      if @chosen && !@content_desc[@chosen].include?("(Picked)")
+        @content_desc[@chosen] = "(Picked)" + @content_desc[@chosen]
+      end 
+      
+      ret = pbShowCommandsWithHelp(nil, @content_names, @content_desc, (canCancel ? -1 : 0), 0)
+      
       return if ret == -1
       return if @chosen
+      
       @chosen = ret
       return @content[@chosen]
     end 

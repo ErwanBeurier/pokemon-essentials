@@ -305,7 +305,7 @@ module DialogueModule
           else 
             pbMessage("\\SC[Rachel]As you wish!")
             battle.decision = 5 # Draw 
-            battle.pbEndOfBattle
+            # battle.pbEndOfBattle
           end 
       })
       

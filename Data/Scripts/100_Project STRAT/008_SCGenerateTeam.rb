@@ -265,6 +265,7 @@ def scGenerateMoveset(pkmn, trainer, tier)
     form = pkmn[SCMovesetsData::BASEFORM] 
   end 
   form = (form ? form : 0)
+  # scMessage("species = {2}, form = {1}", form, pkmn[SCMovesetsData::BASESPECIES])
   sp = pbGetFSpeciesFromForm(pkmn[SCMovesetsData::BASESPECIES], form)
   
   # pbMessage(_INTL("Base species: {1}", PBSpecies.getName(pkmn[SCMovesetsData::SPECIES] ? pkmn[SCMovesetsData::SPECIES] : pkmn[SCMovesetsData::BASESPECIES]))) 

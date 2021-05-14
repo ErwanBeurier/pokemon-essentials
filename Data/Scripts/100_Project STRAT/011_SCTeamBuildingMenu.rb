@@ -1866,7 +1866,14 @@ class SCTeamBuilder
 		for pkmn in party
 			next if !pkmn[0]
       # Form is handled at the creation of the Pokémon. 
-      base_species = pkmn[SCMovesetsData::BASESPECIES] != nil ? pkmn[SCMovesetsData::BASESPECIES] : pkmn[SCMovesetsData::SPECIES]
+      # base_species = pkmn[SCMovesetsData::BASESPECIES] != nil ? pkmn[SCMovesetsData::BASESPECIES] : pkmn[SCMovesetsData::SPECIES]
+      form = pkmn[SCMovesetsData::FORM]
+      if pkmn[SCMovesetsData::BASEFORM] && pkmn[SCMovesetsData::BASEFORM] != pkmn[SCMovesetsData::FORM]
+        form = pkmn[SCMovesetsData::BASEFORM] 
+      end 
+      form = (form ? form : 0)
+      # scMessage("species = {2}, form = {1}", form, pkmn[SCMovesetsData::BASESPECIES])
+      base_species = pbGetFSpeciesFromForm(pkmn[SCMovesetsData::BASESPECIES], form)
 			pokemon = PokeBattle_Pokemon.new(base_species,pkmn[SCMovesetsData::LEVEL], $Trainer)
 			
 			# Give gender; 0 if male and 1 if female 

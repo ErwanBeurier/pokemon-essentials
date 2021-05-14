@@ -707,11 +707,10 @@ class PokeBattle_Battle
       pbGainMoney if @decision!=4
       # Hide remaining trainer
       @scene.pbShowOpponent(@opponent.length) if trainerBattle? && @caughtPokemon.length>0
-    ##### LOSE, DRAW #####
-    when 2, 5
+    ##### LOSE #####
+    when 2
       PBDebug.log("")
       PBDebug.log("***Player lost***") if @decision==2
-      PBDebug.log("***Player drew with opponent***") if @decision==5
       if @internalBattle
         pbDisplayPaused(_INTL("You have no more Pokémon that can fight!"))
         if trainerBattle?
@@ -730,7 +729,7 @@ class PokeBattle_Battle
         # Lose money from losing a battle
         pbLoseMoney
         pbDisplayPaused(_INTL("You blacked out!")) if !@canLose
-      elsif @decision==2
+      else
         if @opponent
           ret = TrainerDialogue.eval("loss")
           if ret == -1
@@ -744,6 +743,19 @@ class PokeBattle_Battle
           end
         end
       end
+    ##### DRAW #####
+    when 5
+      PBDebug.log("")
+      PBDebug.log("***Player drew with opponent***")
+      if trainerBattle?
+        ret = TrainerDialogue.eval("loss")
+        if ret == -1
+          pbDisplayPaused(_INTL("The battle finished in a draw!"))
+        else 
+          TrainerDialogue.display("loss",self,@scene)
+        end 
+      end
+      pbDisplayPaused(_INTL("You blacked out!")) if !@canLose
     ##### CAUGHT WILD POKÉMON #####
     when 4
       @scene.pbWildBattleSuccess if !GAIN_EXP_FOR_CAPTURE

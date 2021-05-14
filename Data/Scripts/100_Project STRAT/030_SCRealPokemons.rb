@@ -121,7 +121,7 @@ module SCStoryPokemon
     s = -1 
     
     while s == -1 
-      reg = pbMessage("Where are you from?", @@regions)
+      reg = pbMessage("\\SC[Player]I am from...", @@regions)
       region = @@regions[reg]
       SCVar.set(SCVar::RegionOfOrigin, reg)
       # 0 = Kanto ; 1 = Johto ; 2 = Hoenn ; 3 = Sinnoh ; 4 = Unova ; 5 = Kalos ; 6 = Alola ; 7 = Galar. 
@@ -131,7 +131,7 @@ module SCStoryPokemon
       starters.push(PBSpecies.getName(@@db[region]["StarterFire"][0]))
       starters.push(PBSpecies.getName(@@db[region]["StarterWater"][0]))
       
-      s = pbMessage("Which was your starter? (final evolution)", starters, -1)
+      s = pbMessage("\\SC[Player]... and my starter (final evolution) was...", starters, -1)
     end 
     
     $Trainer.sc_realpokemon_species = Array.new(Totem+1)

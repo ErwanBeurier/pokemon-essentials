@@ -45,6 +45,7 @@ $SCFormattingPersonalities["ClientF"] = [
             "\\xn[Client,d15289,2e111e]"]
 # Client (Undefined/Other)
 $SCFormattingPersonalities["Client"] = "\\xn[Client]"
+$SCFormattingPersonalities["Tutorial"] = "\\xn[Tutorial]"
 
 
 def scMessageDisplaySubstitution(text)
