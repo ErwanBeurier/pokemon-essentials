@@ -194,10 +194,10 @@ def scGenerateTeamRand(trainer, type_of_team = nil, type1 = -1, type2 = -1, tier
       # Nobody died. 
       message = "" 
     end 
-    $game_variables[SCVar::NuzzlockeChanges] = message
+    SCVar.set(:NuzzlockeChanges, message)
     
   else
-    $game_variables[SCVar::NuzzlockeChanges] = ""
+    SCVar.set(:NuzzlockeChanges, "")
   end
   
   

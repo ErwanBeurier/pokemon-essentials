@@ -3515,7 +3515,7 @@ class PokeBattle_AI
     #---------------------------------------------------------------------------
     when "C008" # Relaxing Purring
       second_score = 0 
-      ally_num = 0
+      ally_num = 1
       user.eachAlly do |b| 
         ally_num += 1
         if user.hp < user.totalhp && user.canHeal?

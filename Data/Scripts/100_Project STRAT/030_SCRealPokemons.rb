@@ -123,7 +123,7 @@ module SCStoryPokemon
     while s == -1 
       reg = pbMessage("\\SC[Player]I am from...", @@regions)
       region = @@regions[reg]
-      SCVar.set(SCVar::RegionOfOrigin, reg)
+      SCVar.set(:RegionOfOrigin, reg)
       # 0 = Kanto ; 1 = Johto ; 2 = Hoenn ; 3 = Sinnoh ; 4 = Unova ; 5 = Kalos ; 6 = Alola ; 7 = Galar. 
       
       starters = []
@@ -325,7 +325,7 @@ module SCStoryPokemon
       poke_id = triple[4]
       
       next if $game_map.map_id != map_id
-      next if SCSwitch.get(SCSwitch::StarterFollowing + poke_id)
+      next if SCSwitch.get(:StarterFollowing + poke_id)
       
       # event_id = ($game_map.events.keys.max || -1) + 1
       

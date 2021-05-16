@@ -680,13 +680,11 @@ module SCTeamFilters
   Rain = SCTeamFilter.new("Rain", [0, 0, 20, 20, 20, 0])
   Rain.setMovesetFilters(SCMovesetFilters::RainSetter, 
                         SCMovesetFilters::RainEnjoyer1,
-                        SCMovesetFilters::RainEnjoyer1,
                         SCMovesetFilters::RainSetter,
                         SCMovesetFilters::RainEnjoyer2)
   
   Sun = SCTeamFilter.new("Sun", [0, 0, 20, 20, 20, 0])
   Sun.setMovesetFilters(SCMovesetFilters::SunSetter, 
-                        SCMovesetFilters::SunEnjoyer1,
                         SCMovesetFilters::SunEnjoyer1,
                         SCMovesetFilters::SunSetter,
                         SCMovesetFilters::SunEnjoyer2)

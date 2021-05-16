@@ -78,8 +78,8 @@ def scForceTeam(index, msg)
   
   SCSwitch.set(SCSwitch::ForcedTeam, true)
   
-  SCVar.set(SCVar::ForcedTeamIndex, index)
-  SCVar.set(SCVar::ForcedTeamMessage, msg)
+  SCVar.set(:ForcedTeamIndex, index)
+  SCVar.set(:ForcedTeamMessage, msg)
 end 
 
 
@@ -87,8 +87,8 @@ end
 def scUnforceTeam
   SCSwitch.set(SCSwitch::ForcedTeam, false)
   
-  SCVar.set(SCVar::ForcedTeamIndex, -1)
-  SCVar.set(SCVar::ForcedTeamMessage, "")
+  SCVar.set(:ForcedTeamIndex, -1)
+  SCVar.set(:ForcedTeamMessage, "")
 end 
 
 

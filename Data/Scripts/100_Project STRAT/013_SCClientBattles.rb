@@ -334,14 +334,14 @@ module SCClientBattles
   
   
   def self.hypedTier
-    return nil if !$game_variables[SCVar::HypedTier].is_a?(String)
-    return $game_variables[SCVar::HypedTier]
+    return nil if !SCVar.get(:HypedTier).is_a?(String)
+    return SCVar.get(:HypedTier)
   end 
   
   
   
   def self.setHypedTier(tier)
-    $game_variables[SCVar::HypedTier] = tier
+    SCVar.set(:HypedTier, tier)
   end 
   
   
@@ -430,7 +430,7 @@ module SCClientBattles
     ret += Array.new(3, "2v2")
     ret += Array.new(2, "3v3")
     
-    if SCSwitch.get(SCSwitch::AllowBigFormats)
+    if SCSwitch.get(:AllowBigFormats)
       ret += Array.new(1, "4v4")
       ret += Array.new(1, "5v5")
       ret += Array.new(3, "6v6")
@@ -445,7 +445,7 @@ module SCClientBattles
     ret = Array.new(10, "2v2")
     ret += Array.new(2, "3v3")
     
-    if SCSwitch.get(SCSwitch::AllowBigFormats)
+    if SCSwitch.get(:AllowBigFormats)
       ret += Array.new(1, "4v4")
       ret += Array.new(1, "5v5")
       ret += Array.new(3, "6v6")
@@ -809,7 +809,7 @@ class SCStadium
     
     # Check if Battle is over: 
     indent = 0
-    pbPushBranch(event.pages[0].list,"$game_switches[SCSwitch::RandBattleDone]", indent)
+    pbPushBranch(event.pages[0].list,"SCSwitch.get(:RandBattleDone)", indent)
     dia.pushBattleOver(event.pages[0].list, indent+1)
     pbPushExit(event.pages[0].list, indent+1) # Exit event processing.
     pbPushBranchEnd(event.pages[0].list, indent+1)
@@ -1508,7 +1508,7 @@ class SCClientBattlesGenerator
     
     @player_map = nil 
     @player_stadium = nil 
-    $game_switches[SCSwitch::RandBattleDone] = false 
+    SCSwitch.set(:RandBattleDone, false) 
   end 
   
   
@@ -1674,7 +1674,7 @@ class SCClientBattlesGenerator
     pbHealAll
     
     # Rand battle is done
-    $game_switches[SCSwitch::RandBattleDone] = true 
+    SCSwitch.set(:RandBattleDone, true) 
     @special_rules = []
     
     return res 
@@ -1683,7 +1683,7 @@ class SCClientBattlesGenerator
   
   
   def battleIsDone
-    return $game_switches[SCSwitch::RandBattleDone]
+    return SCSwitch.get(:RandBattleDone)
   end 
   
   
@@ -1800,7 +1800,7 @@ class SCClientBattlesGenerator
   def panel(canCancel=true)
     return if canCancel && !pbConfirmMessage("See client requests?")
     
-    reinit if scGetSwitch(:RandBattleDone)
+    reinit if SCSwitch.get(:RandBattleDone)
     
     ret = @panel.show(canCancel)
     
@@ -1883,9 +1883,11 @@ class SCClientBattlesGenerator
         with_partner = (format == "2v2" && rand(100)< 50)
         @content.push(PlayersClient.new(fe, format, with_partner))
         
-        # Third case: Battle Royale (2v2 or 3v3)
-        format = (rand(2) == 1 ? "2v2" : "3v3")
-        @content.push(PlayersClient.new(fe, format, false, true))
+        # Third case: Battle Royale (2v2 or 3v3), if allowed.
+        if SCSwitch.get(:AllowBattleRoyales)
+          format = (rand(2) == 1 ? "2v2" : "3v3")
+          @content.push(PlayersClient.new(fe, format, false, true))
+        end 
       end
       
       # Two among: Mono / Bi / LC / NFE
@@ -1918,16 +1920,16 @@ class SCClientBattlesGenerator
       all_tiers = big_tiers + small_tiers
       rand_tier = scsample(all_tiers, 1)
       
-      battle_royale = scGetSwitch(:AllowBattleRoyales) && rand(10) < 3 
+      battle_royale = SCSwitch.get(:AllowBattleRoyales) && rand(10) < 3 
       
       formats = ["2v2", "3v3"]
-      formats += ["4v4", "5v5", "6v6"] if !battle_royale && scGetSwitch(:AllowBigFormats)
+      formats += ["4v4", "5v5", "6v6"] if !battle_royale && SCSwitch.get(:AllowBigFormats)
       format = scsample(formats, 1)
       
       @content.push(PlayersClient.new(rand_tier, format, false, battle_royale, 
-                      scGetSwitch(:AllowInverseBattles) && rand(10) < 2, 
-                      scGetSwitch(:AllowChangingTerrain) && rand(10) < 1, 
-                      scGetSwitch(:AllowChangingWeather) && rand(10) < 1,
+                      SCSwitch.get(:AllowInverseBattles) && rand(10) < 2, 
+                      SCSwitch.get(:AllowChangingTerrain) && rand(10) < 1, 
+                      SCSwitch.get(:AllowChangingWeather) && rand(10) < 1,
                       rand(10) < 1)) # Disallow all mechanics
       
       @content_names = []
@@ -1935,7 +1937,7 @@ class SCClientBattlesGenerator
       
       @content.each_with_index do |c, i|
         if i == @full_random_index
-          @content_names.push("Surprise client")
+          @content_names.push("Surprise request")
         else
           @content_names.push(c.panelName)
         end 

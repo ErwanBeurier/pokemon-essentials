@@ -21,8 +21,8 @@ def scCastlePC
   loop do
     # commands=["Pokémon storage", "Team builder", "Stats"]
     commands=["Team builder", "Stats"]
-    commands.push("Change tier") 
-    commands.push("Change real Pokémon") if $game_switches[SCSwitch::AllowTeamChange]
+    commands.push("Change tier") if SCSwitch.get(:ForcedTier)
+    commands.push("Change real Pokémon") if SCSwitch.get(:AllowTeamChange)
     commands.push("Log off")
     
     command=pbMessage(_INTL("Which PC should be accessed?"), commands,commands.length)
@@ -41,7 +41,7 @@ def scCastlePC
       temp = scSelectTierMenu
       scSetTier(temp, false)
       pbMessage("You are working with the tier: " + scGetTier() + ".")
-    elsif command == 3 && $game_switches[SCSwitch::AllowTeamChange]
+    elsif command == 3 && SCSwitch.get(:AllowTeamChange)
       
       next if !pbConfirmMessage("Do you want to change the Pokémons that the main character used in his adventure?")
       pbMessage("You can do this only once per game.")
@@ -75,7 +75,7 @@ def scCastlePC
       pbMessage("The changes were imported.")
       pbMessage("You can no longer change them in this game.")
       
-      $game_switches[SCSwitch::AllowTeamChange] = false
+      SCSwitch.set(:AllowTeamChange, false)
       
     else 
       break 

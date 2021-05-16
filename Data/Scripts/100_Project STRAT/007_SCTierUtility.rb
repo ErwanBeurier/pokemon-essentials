@@ -17,7 +17,7 @@
 #===============================================================================
 
 def scCanChangeTier?
-  return !$game_switches[SCSwitch::ForcedTier] # If forced, can't change. 
+  return !SCSwitch.get(:ForcedTier) # If forced, can't change. 
 end 
 
 
@@ -29,8 +29,8 @@ def scSetTier(tier, forced)
     raise _INTL("Given tier \"{1}\" was set but does not exist.", tier)
   end 
   
-  $game_variables[SCVar::Tier] = tier 
-  $game_switches[SCSwitch::ForcedTier] = forced
+  SCVar.set(:Tier, tier)
+  SCSwitch.set(:ForcedTier, forced)
 end 
 
 
@@ -38,34 +38,34 @@ end
 def scUnforceTier()
   # The tier is not forced anymore. 
   # The player can battle random players or take clients. 
-  $game_switches[SCSwitch::ForcedTier] = false
+  SCSwitch.set(:ForcedTier, false)
 end 
 
 
 
 def scGetTier(simple = true)
-  $game_variables[SCVar::Tier] = "FE" if !$game_variables[SCVar::Tier] || $game_variables[SCVar::Tier] == 0
+  SCVar.set(:Tier, "FE") if !SCVar.get(:Tier)|| SCVar.get(:Tier) == 0
   
-  return $game_variables[SCVar::Tier] if simple 
+  return SCVar.get(:Tier) if simple 
   # Current tier ID + is it forced (for narrative reasons)
-  return [$game_variables[SCVar::Tier], $game_switches[SCSwitch::ForcedTier]]
+  return [SCVar.get(:Tier), SCSwitch.get(:ForcedTier)]
 end 
 
 
 
 def scGetTierOfTeam()
-  return $game_variables[SCVar::TierOfTeam]
+  return SCVar.get(:TierOfTeam)
 end 
 
 
 
 def scSetTierOfTeam(tier)
-  $game_variables[SCVar::TierOfTeam] = tier
+  SCVar.set(:TierOfTeam, tier)
 end
 
 
 def scLegendaryAllowed?
-  return $game_switches[SCSwitch::AllowLegendary]
+  return SCSwitch.get(:AllowLegendary)
 end 
 
 
@@ -81,17 +81,17 @@ end
 
 
 def scIsNuzzlocke()
-  return ($game_switches[SCSwitch::IsNuzzlocke] != nil && $game_switches[SCSwitch::IsNuzzlocke])
+  return (SCSwitch.get(:IsNuzzlocke) != nil && SCSwitch.get(:IsNuzzlocke))
 end 
 
 
 def scSetNuzzlocke()
-  $game_switches[SCSwitch::IsNuzzlocke] = true 
+  SCSwitch.set(:IsNuzzlocke, true) 
 end 
 
 
 def scUnsetNuzzlocke()
-  $game_switches[SCSwitch::IsNuzzlocke] = false 
+  SCSwitch.set(:IsNuzzlocke, false) 
 end 
 
 

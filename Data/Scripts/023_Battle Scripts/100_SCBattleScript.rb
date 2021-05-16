@@ -189,14 +189,14 @@ module DialogueModule
         if battle.battlers[0].item != PBItems::SOULLINK
           battle.battleAI.commandIndex = 3
           battle.battleAI.commandOppIndex = 3
-          SCVar.set(SCVar::GeneralTemp, 3)
+          SCVar.set(:GeneralTemp, 3)
           DialogueModule.scDisplayMessage(battle, 0, 
             "\\SC[Rachel]Oh, you don't! Switch to a Pokémon with the Soul-Link!",
             "\\SC[Rachel]I will skip my turn."
             )
         else 
           battle.battleAI.commandIndex = 4
-          SCVar.set(SCVar::GeneralTemp, 4)
+          SCVar.set(:GeneralTemp, 4)
           DialogueModule.scDisplayMessage(battle, 0, 
             "\\SC[Rachel]Oh, you do!",
             "\\SC[Rachel]Now press the Z button to trigger the Assistance!"
@@ -230,7 +230,7 @@ module DialogueModule
       
       # After switch
       BattleScripting.set("turnEnd2", Proc.new { |battle| 
-        if SCVar.get(SCVar::GeneralTemp) == 3
+        if SCVar.get(:GeneralTemp) == 3
           # The previous turn, the player switched.
           battle.battleAI.commandIndex = 4
           DialogueModule.scDisplayMessage(battle, 0, 

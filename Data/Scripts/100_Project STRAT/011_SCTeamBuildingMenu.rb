@@ -1105,7 +1105,7 @@ class SCTeamViewer
 			
       if SCSwitch.isTrue(SCSwitch::ForcedTeam)
         pbMessage("Not now.")
-        pbMessage(SCVar.get(SCVar::ForcedTeamMessage))
+        pbMessage(SCVar.get(:ForcedTeamMessage))
         return
       end 
       
@@ -1192,14 +1192,14 @@ class SCTeamViewer
 			res = pbMessage("Do what?", options, -1)
 			
       
-      if SCSwitch.isTrue(SCSwitch::ForcedTeam) && SCVar.get(SCVar::ForcedTeamIndex) > -1
-        if SCVar.get(SCVar::ForcedTeamIndex) != team_index
+      if SCSwitch.isTrue(SCSwitch::ForcedTeam) && SCVar.get(:ForcedTeamIndex) > -1
+        if SCVar.get(:ForcedTeamIndex) != team_index
           pbMessage("Wrong team.")
-          pbMessage(SCVar.get(SCVar::ForcedTeamMessage))
+          pbMessage(SCVar.get(:ForcedTeamMessage))
           return
         elsif res != 0
           pbMessage("Not now.")
-          pbMessage(SCVar.get(SCVar::ForcedTeamMessage))
+          pbMessage(SCVar.get(:ForcedTeamMessage))
           return 
         end 
       end 

@@ -12,11 +12,18 @@
 
 module SCVar
   def self.set(var, value)
+    var = getID(SCVar,var)
     $game_variables[var] = value
   end 
   
   def self.get(var)
+    var = getID(SCVar,var)
     return $game_variables[var]
+  end 
+  
+  def self.increment(var)
+    var = getID(SCVar,var)
+    $game_variables[var] += 1
   end 
   
   
@@ -75,24 +82,20 @@ module SCVar
 end 
 
 
-def scGetSwitch(s)
-  return SCSwitch.get(getID(SCSwitch,s))
-end 
-def scSetSwitch(s, value)
-  return SCSwitch.set(getID(SCSwitch,s), value)
-end 
-
 
 module SCSwitch
   def self.set(var, value)
+    var = getID(SCSwitch,var)
     $game_switches[var] = value
   end 
   
   def self.get(var)
+    var = getID(SCSwitch,var)
     return $game_switches[var]
   end 
   
   def self.isTrue(var)
+    var = getID(SCSwitch,var)
     return $game_switches[var]
   end 
   
