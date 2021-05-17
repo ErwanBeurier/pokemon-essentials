@@ -1,0 +1,139 @@
+maroon;128;0;0;dark red+brown
+dark red;139;0;0;dark red+brown
+brown;165;42;42;dark red+brown
+firebrick;178;34;34;dark red+brown
+crimson;220;20;60;red
+red;255;0;0;red
+tomato;255;99;71;red
+coral;255;127;80;pink+orange
+indian red;205;92;92;pink+orange
+light coral;240;128;128;pink+orange
+dark salmon;233;150;122;pink+orange
+salmon;250;128;114;pink+orange
+light salmon;255;160;122;pink+orange
+orange red;255;69;0;orange
+dark orange;255;140;0;orange
+orange;255;165;0;orange+yellow
+gold;255;215;0;yellow
+dark golden rod;184;134;11;brown+orange
+golden rod;218;165;32;brown+orange
+pale golden rod;238;232;170;pale+orange+brown
+dark khaki;189;183;107;darkgreen+pale
+khaki;240;230;140;orange+brown+pale
+olive;128;128;0;olive+green
+yellow;255;255;0;yellow
+yellow green;154;205;50;lightgreen
+dark olive green;85;107;47;olive+green
+olive drab;107;142;35;olive
+lawn green;124;252;0;green
+chart reuse;127;255;0;green
+green yellow;173;255;47;green+yellow
+dark green;0;100;0;darkgreen
+green;0;128;0;darkgreen
+forest green;34;139;34;darkgreen
+lime;0;255;0;green
+lime green;50;205;50;green
+light green;144;238;144;turquoise+green
+pale green;152;251;152;turquoise+green
+dark sea green;143;188;143;turquoise+green
+medium spring green;0;250;154;turquoise+green
+spring green;0;255;127;turquoise+green
+sea green;46;139;87;turquoise+blue
+medium aqua marine;102;205;170;turquoise+blue
+medium sea green;60;179;113;turquoise+blue
+light sea green;32;178;170;turquoise+blue
+dark slate gray;47;79;79;turquoise+blue
+teal;0;128;128;turquoise+blue
+dark cyan;0;139;139;turquoise+blue
+aqua;0;255;255;blue
+cyan;0;255;255;blue
+light cyan;224;255;255;blue+white
+dark turquoise;0;206;209;blue
+turquoise;64;224;208;turquoise+blue
+medium turquoise;72;209;204;turquoise+blue
+pale turquoise;175;238;238;turquoise+grey+pale
+aqua marine;127;255;212;turquoise+green
+powder blue;176;224;230;turquoise+grey+pale
+cadet blue;95;158;160;turquoise+grey
+steel blue;70;130;180;blue
+corn flower blue;100;149;237;blue+violet
+deep sky blue;0;191;255;blue
+dodger blue;30;144;255;blue
+light blue;173;216;230;blue+pale+grey
+sky blue;135;206;235;blue
+light sky blue;135;206;250;blue
+midnight blue;25;25;112;blue+dark
+navy;0;0;128;blue+dark
+dark blue;0;0;139;blue+dark
+medium blue;0;0;205;blue+dark
+blue;0;0;255;blue+dark
+royal blue;65;105;225;blue+grey
+blue violet;138;43;226;violet
+indigo;75;0;130;violet
+dark slate blue;72;61;139;violet
+slate blue;106;90;205;violet
+medium slate blue;123;104;238;violet
+medium purple;147;112;219;violet
+dark magenta;139;0;139;violet+red+dark
+dark violet;148;0;211;violet
+dark orchid;153;50;204;violet
+medium orchid;186;85;211;violet
+purple;128;0;128;violet+red+dark
+thistle;216;191;216;violet+pale+grey
+plum;221;160;221;violet+pink
+violet;238;130;238;pink
+magenta fuchsia;255;0;255;pink
+orchid;218;112;214;pink
+medium violet red;199;21;133;pink+dark
+pale violet red;219;112;147;pink
+deep pink;255;20;147;pink
+hot pink;255;105;180;pink
+light pink;255;182;193;pink+orange
+pink;255;192;203;pink
+antique white;250;235;215;beige+pale
+beige;245;245;220;beige+pale
+bisque;255;228;196;beige+pale
+blanched almond;255;235;205;beige+pale
+wheat;245;222;179;beige+brown
+corn silk;255;248;220;beige+pale
+lemon chiffon;255;250;205;beige+pale
+light golden rod yellow;250;250;210;beige+pale
+light yellow;255;255;224;beige+pale
+saddle brown;139;69;19;brown
+sienna;160;82;45;brown
+chocolate;210;105;30;brown+orange
+peru;205;133;63;brown
+sandy brown;244;164;96;brown+orange
+burly wood;222;184;135;brown
+tan;210;180;140;brown
+rosy brown;188;143;143;brown+grey
+moccasin;255;228;181;beige
+navajo white;255;222;173;beige
+peach puff;255;218;185;beige
+misty rose;255;228;225;pink+pale
+lavender blush;255;240;245;pink+pale
+linen;250;240;230;beige
+old lace;253;245;230;beige
+papaya whip;255;239;213;beige
+sea shell;255;245;238;beige
+mint cream;245;255;250;green+white
+slate gray;112;128;144;grey
+light slate gray;119;136;153;grey
+light steel blue;176;196;222;grey+blue
+lavender;230;230;250;grey+blue+pale
+floral white;255;250;240;beige+white
+alice blue;240;248;255;blue+white
+ghost white;248;248;255;blue+white
+honeydew;240;255;240;green+white
+ivory;255;255;240;yellow+white
+azure;240;255;255;blue+white
+snow;255;250;250;beige+white
+black;0;0;0;black
+dim grey;105;105;105;grey
+grey;128;128;128;grey
+dark grey;169;169;169;grey
+silver;192;192;192;grey
+light grey;211;211;211;grey
+gainsboro;220;220;220;grey
+white smoke;245;245;245;grey+white
+white;255;255;255;white

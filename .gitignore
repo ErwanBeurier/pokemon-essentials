@@ -21,5 +21,10 @@ errorlog.txt - Raccourci.lnk
 
 # My stuff
 STRAT/*
+!STRAT/Python
+STRAT/Python/__pycache__
+STRAT/Python/Color variants
+STRAT/Python/Papillusion Blancs
+STRAT/Python/*.lnk
 Animations/*
 Animations - GEN8/*
