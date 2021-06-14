@@ -807,6 +807,7 @@ class PokeBattle_Battle
     return if singleBattle?
     
     size_changed = false
+    old_sizes = []
     
     for side in 0..1
       next if pbSideSize(side) <= 1
@@ -816,7 +817,7 @@ class PokeBattle_Battle
         # # first scan before 
         # next if !b || b.opposes?(side)
         
-        # debug_log += "," if debug_log == ""
+        # debug_log += "," if debug_log != ""
         # debug_log += "KO" if b.fainted?
         # debug_log += "--" if !b.fainted?
       # end 
@@ -830,67 +831,128 @@ class PokeBattle_Battle
       # And then:     0 - 4 - 8 - 10
       # Reduce the side size accordingly. 
       
-      i = 0
-      while i < @battlers.length
-        b1 = @battlers[i]
-        if !b1 || b1.oppositeSide?(side) || !b1.fainted?
-          i += 1
-          next 
+      
+      # fainted_battlers = []
+      alive_battlers = []
+      side_battlers = []
+      
+      # For example:  0 - 2 - 4 - 6 - 8 - 10
+      #                   KO      KO
+      @battlers.each { |b|
+        next if !b 
+        next if b.oppositeSide?(side)
+        if !b.fainted?
+          # fainted_battlers.push(b.index)
+        # else 
+          alive_battlers.push(b.index)
         end 
+        side_battlers.push(b.index)
+      }
+      # alive_battlers   :  0 - 4 - 8 - 10
+      # fainted_battlers :  2 - 6
+      
+      # new_order = alive_battlers + fainted_battlers
+      # side_battlers :  0 - 2 - 4 - 6 - 8 - 10
+      # new_order     :  0 - 4 - 8 - 10 - 2 - 6
+      # done_swapping = []
+      i = 0 
+      while i < side_battlers.length
+        b1 = side_battlers[i]
         
-        some_right_alive = false 
-        # checks if some battler on the right of battlers[i] is still alive, 
-        # in which case continue to loop.
-        @battlers.each do |b2|
-          # Kind of bubble sort: if b1 is on the right of b2, then ignore; if 
-          # b1 is on the left of b2, swap b1 and b2. 
-          next if !b2 || b2.oppositeSide?(b1)
-          next if b2.index <= b1.index # b1 is on the right of b2
-          next if b1.index >= @sideSizes[side] * 2 + side # b1 was already handled in the previous call of this function
+        if @battlers[b1].fainted?
+          # First check if all the fainted Pokémons are at the end.
+          all_fainted = true 
+          for j in i...side_battlers.length
+            b2 = side_battlers[j]
+            all_fainted = false if !@battlers[b2].fainted?
+          end 
           
-          # Here, b1 is on the left of b2. 
-          some_right_alive = some_right_alive || !b2.fainted?
+          break if all_fainted
           
-          pbSwapBattlers(b1.index, b2.index)
-        end 
-        
-        if some_right_alive
-          if !@battlers[i].fainted?
-            i += 1
-          # else 
-            # Else the new battler at index i is also fainted, we need to 
-            # handle that index i again. No update of i. 
+          # Push the fainted battler to the end of the indices.
+          current = b1
+          for j in i...side_battlers.length
+            b2 = side_battlers[j]
+            # pbSwapBattlers(@battlers[b1].index, @battlers[b2].index, true)
+            pbSwapBattlers(current, b2, true)
+            current = b2 
           end 
         else 
-          break 
+          i += 1 
         end 
       end 
+      # fainted_battlers.each { |f| 
+        # alive_battlers.each { |a|
+          # next if a < f 
+        # }
+      # }
+      size_changed = true if @sideSizes[side] != alive_battlers.length
+      old_sizes[side] = @sideSizes[side]
+      @sideSizes[side] = alive_battlers.length
       
-      debug_log = ""
-      new_side_size = 0
-      @battlers.each do |b|
-        # Second scan 
-        next if !b || b.oppositeSide?(side)
+      # i = 0
+      # while i < @battlers.length
+        # b1 = @battlers[i]
+        # if !b1 || b1.oppositeSide?(side) || !b1.fainted?
+          # i += 1
+          # next 
+        # end 
+        # scMessage("battler: {1}", b1.pbThis)
         
-        new_side_size += 1 if !b.fainted?
+        # some_right_alive = false 
+        # # checks if some battler on the right of battlers[i] is still alive, 
+        # # in which case continue to loop.
+        # @battlers.each do |b2|
+          # # Kind of bubble sort: if b1 is on the right of b2, then ignore; if 
+          # # b1 is on the left of b2, swap b1 and b2. 
+          # next if !b2 || b2.oppositeSide?(b1)
+          # next if b2.index <= b1.index # b1 is on the right of b2
+          # next if b1.index >= @sideSizes[side] * 2 + side # b1 was already handled in the previous call of this function
+          
+          # # Here, b1 is on the left of b2. 
+          # some_right_alive = some_right_alive || !b2.fainted?
+          
+          # pbSwapBattlers(b1.index, b2.index)
+        # end 
         
-        debug_log += "," if debug_log == ""
-        debug_log += "KO" if b.fainted?
-        debug_log += "--" if !b.fainted?
-      end 
+        # if some_right_alive
+          # if !@battlers[i].fainted?
+            # i += 1
+          # # else 
+            # # Else the new battler at index i is also fainted, we need to 
+            # # handle that index i again. No update of i. 
+          # end 
+        # else 
+          # break 
+        # end 
+      # end 
+      
+      # debug_log = ""
+      # # new_side_size = 0
+      # @battlers.each do |b|
+        # # Second scan 
+        # next if !b || b.oppositeSide?(side)
+        
+        # # new_side_size += 1 if !b.fainted?
+        
+        # debug_log += "," if debug_log != ""
+        # debug_log += "KO" if b.fainted?
+        # debug_log += "--" if !b.fainted?
+      # end 
       # pbMessage("after=" + debug_log)
       # pbMessage(_INTL("new_side_size={1}", new_side_size))
       
-      size_changed = true if @sideSizes[side] != new_side_size
-      @sideSizes[side] = new_side_size
+      # size_changed = true if @sideSizes[side] != new_side_size
+      # @sideSizes[side] = new_side_size
     end 
-    @scene.pbReinitSceneForNewSizes if size_changed
+    
+    @scene.pbReinitSceneForNewSizes(old_sizes) if size_changed
   end 
 end 
 
 class PokeBattle_Scene
   
-  def pbReinitSceneForNewSizes
+  def pbReinitSceneForNewSizes(old_sizes)
     @sprites["targetWindow"].dispose
     @sprites["targetWindow"] = TargetMenuDisplay.new(@viewport,200,@battle.sideSizes)
     @sprites["targetWindow"].visible = false 
@@ -900,13 +962,19 @@ class PokeBattle_Scene
       # @sprites["dataBox_#{i}"] = PokemonDataBox.new(b,@battle.pbSideSize(i),@viewport)
     # end
     # pbRefresh
-    pbResetSceneAfterSizeChange(0)
-    pbResetSceneAfterSizeChange(1)
+    # @battle.battlers.each_with_index do |b,i|
+      # next if !b
+      # @sprites["dataBox_#{i}"] = PokemonDataBox.new(b,@battle.pbSideSize(i),@viewport)
+      # pbCreatePokemonSprite(i)
+    # end
+    pbResetSceneAfterSizeChange(0, old_sizes[0])
+    pbResetSceneAfterSizeChange(1, old_sizes[1])
+    pbRefresh
   end 
   
   
-  def pbResetSceneAfterSizeChange(battlerindex)
-    pbRefresh
+  def pbResetSceneAfterSizeChange(battlerindex, old_size)
+    # pbRefresh
     sendOutAnims=[]
     adjustAnims=[]
     # setupbox=false
@@ -946,7 +1014,8 @@ class PokeBattle_Scene
     # and that breaks the reference link.
     @battle.battlers[battlerindex].eachAlly{|b|
       sendanim=SOSAdjustAnimation.new(@sprites,@viewport,
-        @battle.pbGetOwnerIndexFromBattlerIndex(b.index)+1,b)
+        # @battle.pbGetOwnerIndexFromBattlerIndex(b.index)+1, b, old_size)
+        @battle.pbGetOwnerIndexFromBattlerIndex(b.index), b, old_size)
       dataanim=DataBoxAppearAnimation.new(@sprites,@viewport,b.index)
       sendOutAnims.push([sendanim,dataanim,false,b])
     }

@@ -72,19 +72,19 @@ class SCBattleStatistics
     d = self.data(tier)
     
     if d == nil 
-      Kernel.pbMessage(_INTL("You haven't done any battle in this tier!"))
+      pbMessage(_INTL("You haven't done any battle in this tier!"))
       return 
     end 
     
-    Kernel.pbMessage(_INTL("Tier {1}: {2}% of victories ({3} victories in {4} matches).", tier, d[3], d[0], d[2]) )
-    Kernel.pbMessage(_INTL("{1}% of matches ({2} matches in {3} in total).", d[5], d[2], @total_matches))
+    pbMessage(_INTL("Tier {1}: {2}% of victories ({3} victories in {4} matches).", tier, d[3], d[0], d[2]) )
+    pbMessage(_INTL("{1}% of matches ({2} matches in {3} in total).", d[5], d[2], @total_matches))
   end 
   
   def menu
     tier_commands = ["Cancel"] + @tier_list
     
     loop do 
-      c = Kernel.pbMessage("Choose a tier.", tier_commands, 0)
+      c = pbMessage("Choose a tier.", tier_commands, 0)
       
       if c == 0
         return 
@@ -98,30 +98,111 @@ end
 
 
 
-def scRequireClients(num, next_switch)
+def scRequireClients(num, next_switch, next_value = true)
 	# Tell the game that the story will move after having fought at least a certain number of clients. 
 	# num = minimum number of clients to fight.
 	# next_switch = the ID of the switch that, when set to "true", will trigger the next event in the story. 
 	
 	SCVar.set(:ClientBattlesRequired, num) # Required number of clients 
-	SCVar.set(:ClientBattlesDone, 0) # reset the number of clients alread fought. 
+	SCVar.set(:NumberClientBattlesDone, 0) # reset the number of clients alread fought. 
 	SCVar.set(:NextSwitch, next_switch)
-	
+	SCSwitch.set(:NextSwitchValue, next_value)
+  
 	# Show Manager.
-  SCSwitch.set(:ShowManager, true)
+  # SCSwitch.set(:ShowManager, true)
+end 
+
+
+def scRequireClients2(num, next_switch, next_value = true)
+	SCVar.set(:ClientBattlesRequired2, num) # Required number of clients 
+	SCVar.set(:NumberClientBattlesDone2, 0) # reset the number of clients alread fought. 
+	SCVar.set(:NextSwitch2, next_switch)
+	SCSwitch.set(:NextSwitchValue2, next_value)
+end 
+
+def scRequireClients3(num, next_switch, next_value = true)
+	SCVar.set(:ClientBattlesRequired3, num) # Required number of clients 
+	SCVar.set(:NumberClientBattlesDone3, 0) # reset the number of clients alread fought. 
+	SCVar.set(:NextSwitch3, next_switch)
+	SCSwitch.set(:NextSwitchValue3, next_value)
+end 
+
+def scRequireClients4(num, next_switch, next_value = true)
+	SCVar.set(:ClientBattlesRequired4, num) # Required number of clients 
+	SCVar.set(:NumberClientBattlesDone4, 0) # reset the number of clients alread fought. 
+	SCVar.set(:NextSwitch4, next_switch)
+	SCSwitch.set(:NextSwitchValue4, next_value)
 end 
 
 
 
 
 def scLogClientBattleResult()
-	SCVar.increment(:ClientBattlesDone)
-	
-	if SCVar.get(:ClientBattlesRequired) <= SCVar.get(:ClientBattlesDone)
-		# if True, then the next event in the story should start. 
-		SCSwitch.set(SCVar.get(:NextSwitch), true)
-		
-		# Remove Manager. 
-		SCSwitch.set(:ShowManager, false)
-	end
+  shouldRefresh = false
+  
+  if SCVar.get(:ClientBattlesRequired) > 0
+    SCVar.increment(:NumberClientBattlesDone)
+    
+    if SCVar.get(:ClientBattlesRequired) == SCVar.get(:NumberClientBattlesDone)
+      # if True, then the next event in the story should start. 
+      SCSwitch.set(SCVar.get(:NextSwitch), SCSwitch.get(:NextSwitchValue))
+      SCVar.set(:ClientBattlesRequired, 0) # Reinint. 
+      shouldRefresh = true 
+    end
+  end 
+  
+  if SCVar.get(:ClientBattlesRequired2) > 0
+    SCVar.increment(:NumberClientBattlesDone2)
+    
+    if SCVar.get(:ClientBattlesRequired2) == SCVar.get(:NumberClientBattlesDone2)
+      SCSwitch.set(SCVar.get(:NextSwitch2), SCSwitch.get(:NextSwitchValue2))
+      SCVar.set(:ClientBattlesRequired2, 0) # Reinint. 
+      shouldRefresh = true 
+    end
+  end 
+  
+  if SCVar.get(:ClientBattlesRequired3) > 0
+    SCVar.increment(:NumberClientBattlesDone3)
+    
+    if SCVar.get(:ClientBattlesRequired3) == SCVar.get(:NumberClientBattlesDone3)
+      SCSwitch.set(SCVar.get(:NextSwitch3), SCSwitch.get(:NextSwitchValue3))
+      SCVar.set(:ClientBattlesRequired3, 0) # Reinint. 
+      shouldRefresh = true 
+    end
+  end 
+  
+  if SCVar.get(:ClientBattlesRequired4) > 0
+    SCVar.increment(:NumberClientBattlesDone4)
+    
+    if SCVar.get(:ClientBattlesRequired4) == SCVar.get(:NumberClientBattlesDone4)
+      SCSwitch.set(SCVar.get(:NextSwitch4), SCSwitch.get(:NextSwitchValue4))
+      SCVar.set(:ClientBattlesRequired4, 0) # Reinint. 
+      shouldRefresh = true 
+    end
+  end 
+  
+  $game_map.need_refresh = true if shouldRefresh
+  
+	SCVar.increment(:NumberOfBattlesToday)
+  
+  scLogResultForStoryProgression()
+end 
+
+
+
+def scLogResultForStoryProgression() 
+  # Now, story additions.
+  # if !SCSwitch.get(:AllowBigFormats)
+    # format = scClientBattles.playerNextStadium.format
+    
+    # if ["2v2", "3v3", "double", "triple"].include?(format)
+      # SCVar.increment(:NumberOfDoubleBattles)
+      # unlocking_big_formats = 5
+      
+      # if SCVar.get(:NumberOfDoubleBattles) > unlocking_big_formats
+        # # Unlock dialogue with Hettie. 
+        # SCSwitch.set(:StartQuestUnlockingBigFormats, true)
+      # end 
+    # end 
+  # end 
 end 

@@ -519,11 +519,28 @@ def scBattleRoyale(trainerID1, trainerName1, trainerID2, trainerName2,
                   trainerPartyID3=-1, endSpeech3 = nil, trainerPartyID4=-1, endSpeech4 = nil, 
                   trainerPartyID5=-1, endSpeech5 = nil, 
                   canLose=true, outcomeVar=1)
+  setBattleRule("battleRoyale")
+
+  return scTrainerBattleHigh(trainerID1, trainerName1, trainerID2, trainerName2, 
+                  trainerID3, trainerName3, trainerID4, trainerName4,
+                  trainerID5, trainerName5, 
+                  trainerPartyID1, endSpeech1, trainerPartyID2, endSpeech2, 
+                  trainerPartyID3, endSpeech3, trainerPartyID4, endSpeech4, 
+                  trainerPartyID5, endSpeech5, 
+                  canLose, outcomeVar)
+end 
+
+def scTrainerBattleHigh(trainerID1, trainerName1, trainerID2, trainerName2, 
+                  trainerID3 = nil, trainerName3 = nil, trainerID4 = nil, trainerName4 = nil,
+                  trainerID5 = nil, trainerName5 = nil, 
+                  trainerPartyID1=-1, endSpeech1 = nil, trainerPartyID2=-1, endSpeech2=nil, 
+                  trainerPartyID3=-1, endSpeech3 = nil, trainerPartyID4=-1, endSpeech4 = nil, 
+                  trainerPartyID5=-1, endSpeech5 = nil, 
+                  canLose=true, outcomeVar=1)
   # Set some battle rules
   setBattleRule("outcomeVar",outcomeVar) if outcomeVar!=1
   setBattleRule("canLose") if canLose
   setBattleRule("notinternal")
-  setBattleRule("battleRoyale")
   
   threeOnOppositeSide = false
   
@@ -558,7 +575,7 @@ def scBattleRoyale(trainerID1, trainerName1, trainerID2, trainerName2,
   # Take care of partners and such.
   if !trainerID4.nil? && !trainerName4.nil?
   elsif $PokemonGlobal.partner.nil?
-    raise _INTL("Error: scBattleRoyale5 either requires 4 trainers or a partner.\nSpecify a partner or give trainerID4 and trainerName4.")
+    raise _INTL("Error: scTrainerBattleHigh either requires 4 trainers or a partner.\nSpecify a partner or give trainerID4 and trainerName4.")
   end
   
   # Music management: the default BGM interferes with battle music
@@ -585,6 +602,7 @@ def scBattleRoyale(trainerID1, trainerName1, trainerID2, trainerName2,
   $game_system.setDefaultBGM(bgm)
   
   pbDeregisterPartner
+  pbDeregisterPartner2
   # Return true if the player won the battle, and false if any other result
   return (decision==1)
 end

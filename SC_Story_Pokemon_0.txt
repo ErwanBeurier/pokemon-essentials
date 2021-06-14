@@ -5,7 +5,7 @@ StarterGrass = VENUSAUR
 StarterFire = CHARIZARD
 StarterWater = BLASTOISE
 # Big legendaries 
-Totems = MEWTWO
+Totems = ARCEUS, REGIGIGAS
 # All fire-type
 Fire = NINETALES, ARCANINE, RAPIDASH, MAGMORTAR
 # All water-type

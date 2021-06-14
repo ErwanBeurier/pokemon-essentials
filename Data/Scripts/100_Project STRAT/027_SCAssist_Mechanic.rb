@@ -12,6 +12,12 @@
 # Switch to allow Assistance or not. 
 NO_ASSISTANCE = 88
 
+# Assistance debuff that applies to moves (otherwise it's OP).
+ASSISTANCE_DEBUFF = 70
+
+# If the moves are used in Assistance, so we apply the debuff.
+MOVE_USED_IN_ASSISTANCE = 109
+
 # Number of turns between Assistance uses. 
 ASSISTANCE_RELOAD_DURATION = 3
 
@@ -198,6 +204,7 @@ class PokeBattle_Battle
   
   
   def pbEORAssistanceReloading(priority)
+    owner_done = []
     priority.each do |b|
       # idxMove = @choices[b.index]
       next if wildBattle? && b.opposes?
@@ -205,8 +212,10 @@ class PokeBattle_Battle
       next if b.fainted?
       owner = pbGetOwnerIndexFromBattlerIndex(b.index)
       next if @assistance[b.idxOwnSide][owner] >= -1 
+      next if owner_done.include?(owner)
       
       @assistance[b.idxOwnSide][owner] += 1
+      owner_done.push(owner)
       
       if @assistance[b.idxOwnSide][owner] == -1
         pbDisplay(_INTL("{1} can use Assistance again!", pbGetOwnerName(b.index)))
@@ -449,6 +458,20 @@ end
 
 
 
+#===============================================================================
+# Move debuff if used in Assistance. 
+#===============================================================================
+
+class PokeBattle_Move
+  alias __assist__pbCalcDamageMultipliers pbCalcDamageMultipliers
+  def pbCalcDamageMultipliers(user,target,numTargets,type,baseDmg,multipliers)
+    __assist__pbCalcDamageMultipliers(user,target,numTargets,type,baseDmg,multipliers)
+    
+    multipliers[FINAL_DMG_MULT] *= ASSISTANCE_DEBUFF / 100.0 if $game_switches[MOVE_USED_IN_ASSISTANCE]
+  end 
+end 
+
+
 
 #===============================================================================
 # Calls a Pokémon for Assistance. 
@@ -489,9 +512,13 @@ class PokeBattle_Move_C007 < PokeBattle_Move
     # Reset choice. 
     choice = [:UseMove, -1, nil, -1]
     
+    # Prepare the debuff.
+    $game_switches[MOVE_USED_IN_ASSISTANCE] = true if @other_choice
+    
     # Get the assit.
     assist, idxParty, assistAfter = @battle.pbGetAssistingData(user.index)
     
+    # Mid-Battle dialogue
     if !user.opposes?
       TrainerDialogue.display("assistBefore",@battle,@battle.scene, user)
     else
@@ -610,29 +637,36 @@ class PokeBattle_Move_C007 < PokeBattle_Move
         
         # Give back the effects. 
         @battle.battlers[idxBattler].pbSetAssistanceChanges(oldEffects, oldStages, oldPositions,
-                                                    assistEffectsOld, assistStagesOld, assistPositionsOld, 
-                                                    assistEffectsNew, assistStagesNew, assistPositionsNew)
+                                        assistEffectsOld, assistStagesOld, assistPositionsOld, 
+                                        assistEffectsNew, assistStagesNew, assistPositionsNew)
+        
+        if chosenCmd == -1
+          # Cancel; allow Assistance for next turn.
+          @battle.pbUnregisterAssistance(idxBattler)
+        else 
+          # Disable Assistance for the rest of the battle.
+          @battle.pbDisableAssistance(idxBattler)
+        end 
+        
       else 
         #------------------------------------
         # The part of the assisted Pokémon.
         #------------------------------------
         # Let the first Pokémon perform its move (Assistance mechanic, not the move Assistance)
         # Delcatty cannot abuse this. 
-        @battle.battlers[idxAssist].pbUseMove(@other_choice, true) if @other_choice
-        
+        if @other_choice
+          @battle.battlers[idxAssist].pbUseMove(@other_choice, true)
+        end 
       end 
       
       assistAfter = !assistAfter
     end 
     
-    if chosenCmd == -1
-      # Cancel; allow Assistance for next turn.
-      @battle.pbUnregisterAssistance(idxBattler)
-    else 
-      # Disable Assistance for the rest of the battle.
-      @battle.pbDisableAssistance(idxBattler)
-    end 
+    # Reset stuff. 
+    @other_choice = nil 
+    $game_switches[MOVE_USED_IN_ASSISTANCE] = false
     
+    # Mid-Battle dialogue. 
     if !user.opposes?
       TrainerDialogue.display("assistAfter",@battle,@battle.scene, user)
     else

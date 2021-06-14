@@ -425,6 +425,9 @@ end
 
 
 
+# -----------------------------------------------------------------------------
+# Deprecated. 
+# -----------------------------------------------------------------------------
 
 
 class PokemonTemp
@@ -498,6 +501,44 @@ end
 # Print chapter
 # -----------------------------------------------------------------------------
 
+def scChapter(num)
+  # Just in case I want to change the name or whatever.
+  
+  chapter_header = _INTL("Chapter {1}", num)
+  chapter_name = ""
+  
+  case num
+  when 0
+    chapter_header = "Introduction"
+  when 1
+    chapter_name = "White Butterfree"
+  when 2 
+    chapter_name = "Poaching and hunting"
+  when 3 
+    chapter_name = "Withdrawn"
+  when 4
+    chapter_name = "Marriage"
+  when 5
+    chapter_name = "Assault"
+  when 6
+    chapter_name = "Vacation"
+  when 7
+    chapter_name = "Mourning"
+  when 8
+    chapter_name = "Genetic weapon"
+  when 9 
+    chapter_name = "Assault again"
+  when 10 
+    # chapter_name = "Stronger than you"
+    chapter_header = "Epilogue"
+    chapter_name = "Stronger than you"
+  else 
+    raise _INTL("Wrong chapter number: {1}", num)
+  end 
+  
+  scChapterBlackScreen(chapter_header, chapter_name)
+end 
+
 def scChapterBlackScreen(chapter_header, chapter_name = "")
   sprites = {}
   
@@ -553,7 +594,7 @@ end
 
 
 # -----------------------------------------------------------------------------
-# Print chapter
+# Check events 
 # -----------------------------------------------------------------------------
 
 def scCheckEvents
@@ -561,9 +602,92 @@ def scCheckEvents
     scMessage("Event {1} - {2}", event.id, event.name)
   end 
 end 
+def scLogEvents(title = "")
+  event_names = []
+  $game_map.events.each do |i, event| 
+    event_names.push(_INTL("Event {1} - {2} (key = {3})", event.id, event.name, i))
+  end 
+  scLog(event_names, title)
+end 
+
+
+
+
+
+
+
+alias __essentials__pbGetTimeNow pbGetTimeNow
+def pbGetTimeNow
+  time_now = __essentials__pbGetTimeNow
+  new_time = nil 
+  
+  if SCSwitch.get(:TimeNight)
+    new_time = Time.local(time_now.year, time_now.month, time_now.day, 0)
+  elsif SCSwitch.get(:TimeAfternoon)
+    new_time = Time.local(time_now.year, time_now.month, time_now.day, 19)
+  elsif SCSwitch.get(:TimeMorning)
+    new_time = Time.local(time_now.year, time_now.month, time_now.day, 8)
+  else 
+    new_time = Time.local(time_now.year, time_now.month, time_now.day, 12)
+  end 
+  
+  return new_time
+end
+
+
+
+
+
 
 
 
 def scMessage(*args)
   pbMessage(_INTL(*args))
 end 
+
+
+# -----------------------------------------------------------------------------
+# Facing direction. Just for avoiding magic numbers when I manipulate events. 
+# -----------------------------------------------------------------------------
+module SCDirection
+  Down = 2
+  Up = 8
+  Left = 4
+  Right = 6
+end 
+
+# -----------------------------------------------------------------------------
+# Facing direction. Just for avoiding magic numbers when I manipulate events. 
+# -----------------------------------------------------------------------------
+
+def scPlayerInCell?(x ,y)
+  return $game_player.x == x && $game_player.y == y 
+end 
+
+def scPlayerInSquare?(x1, y1, x2, y2)
+  # x1,y1 ------------------- +
+  #   |                       |
+  #   |                       |
+  #   + ------------------- x2, y2
+  if x1 > x2
+    temp = x1 
+    x1 = x2 
+    x2 = temp 
+  end 
+  if y1 > y2
+    temp = y1 
+    y1 = y2 
+    y2 = temp 
+  end 
+  
+  return false if $game_player.x < x1 
+  return false if $game_player.x > x2
+  return false if $game_player.y < y1 
+  return false if $game_player.y > y2
+  return true 
+end 
+# scPlayerInSquare?(8, 20, 10, 21) # West entrance
+# scPlayerInSquare?(15, 9, 18, 11) # North staidum 
+# scPlayerInSquare?(26, 15, 29, 17) # Middle stadium 
+# scPlayerInSquare?(23, 8, 26, 30) # South stadium 
+# scPlayerInSquare?(38, 23, 41, 25) # East stadium

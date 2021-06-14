@@ -3303,7 +3303,7 @@ class PokeBattle_AI
       score += 60 if target.turnCount==0
       aspeed = pbRoughStat(user,PBStats::SPEED,skill)
       ospeed = pbRoughStat(target,PBStats::SPEED,skill)
-      score += 40 if aspeed<ospeed
+      score += 60 if aspeed<ospeed && target.turnCount==0
     #---------------------------------------------------------------------------
     when "18C" # Grassy Glide
       aspeed = pbRoughStat(user,PBStats::SPEED,skill)
@@ -3329,7 +3329,7 @@ class PokeBattle_AI
     when "201" # Corrosive Gas
       if target.item==0 || !target.itemActive? ||
          target.unlosableItem?(target.item) || pbIsPokeBall?(target.item)
-         score = 0
+        score -= 90
       else
         score += 50
       end
@@ -3350,7 +3350,7 @@ class PokeBattle_AI
     when "192" # Poltergeist
       if target.item==0 || !target.itemActive? ||
          target.unlosableItem?(target.item) || pbIsPokeBall?(target.item)
-        score = 0
+        score -= 90
       else
         score += 50
       end
@@ -3361,6 +3361,7 @@ class PokeBattle_AI
       if aspeed<ospeed 
         score += 40 
       end
+      score += user.stages[PBStats::DEFENSE]*10
     #---------------------------------------------------------------------------
     when "194" # Lash Out
       aspeed = pbRoughStat(user,PBStats::SPEED,skill)
@@ -3401,9 +3402,9 @@ class PokeBattle_AI
       if target.effects[PBEffects::Substitute]>0 ||
          isConst?(target.ability,PBAbilities,:MULTITYPE) ||
          isConst?(target.ability,PBAbilities,:RKSSYSTEM)
-        score = 0
+        score -= 90
       elsif target.pbHasType?(:PSYCHIC)
-        score = 0
+        score -= 90
       end
     #---------------------------------------------------------------------------
     when "210" # Eerie Spell

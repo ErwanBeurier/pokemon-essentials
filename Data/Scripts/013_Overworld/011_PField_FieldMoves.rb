@@ -504,7 +504,7 @@ HiddenMoveHandlers::UseMove.add(:FLASH,proc { |move,pokemon|
 # Fly
 #===============================================================================
 HiddenMoveHandlers::CanUseMove.add(:FLY,proc { |move,pkmn,showmsg|
-  next false if !pbCheckHiddenMoveBadge(BADGE_FOR_FLY,showmsg)
+  # next false if !pbCheckHiddenMoveBadge(BADGE_FOR_FLY,showmsg)
   if $game_player.pbHasDependentEvents?
     pbMessage(_INTL("It can't be used when you have someone with you.")) if showmsg
     next false
@@ -775,6 +775,7 @@ Events.onAction += proc { |_sender,_e|
 }
 
 HiddenMoveHandlers::CanUseMove.add(:SURF,proc { |move,pkmn,showmsg|
+  next false # STRAT: can't Surf.
   next false if !pbCheckHiddenMoveBadge(BADGE_FOR_SURF,showmsg)
   if $PokemonGlobal.surfing
     pbMessage(_INTL("You're already surfing.")) if showmsg

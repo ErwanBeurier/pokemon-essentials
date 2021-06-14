@@ -152,12 +152,12 @@ def scSelectTierMenu
   random_tiers = {}
   random_tier_keys = []
   
-  for rand_tier in tier_cats["Random"]
-    rand_section = "Base stats " + rand_tier[4..6] # RANDXXX-YY => Base stats XXX
-    random_tier_keys.push(rand_section) if !random_tiers.keys.include?(rand_section)
-    random_tiers[rand_section] = [] if !random_tiers.keys.include?(rand_section)
-    random_tiers[rand_section].push(rand_tier)
-  end 
+  # for rand_tier in tier_cats["Random"]
+    # rand_section = "Base stats " + rand_tier[4..6] # RANDXXX-YY => Base stats XXX
+    # random_tier_keys.push(rand_section) if !random_tiers.keys.include?(rand_section)
+    # random_tiers[rand_section] = [] if !random_tiers.keys.include?(rand_section)
+    # random_tiers[rand_section].push(rand_tier)
+  # end 
   
   random_tier_keys = random_tier_keys.sort 
   random_tiers["Themed tiers"] = []
@@ -175,7 +175,9 @@ def scSelectTierMenu
   chosen_type = nil 
   
   # Different list because I want the tiers to follow a certain order. 
-  menu_list = ["FE", "Other presets", "Monotype", "Bitype", "Themed tiers", "Base stats", "Tier of the day", "Old tiers of the day"]
+  menu_list = ["FE", "Other presets", "Monotype"]
+  menu_list.push("Bitype") if SCSwitch.get(:AllowBitype)
+  menu_list += ["Themed tiers", "Base stats", "Tier of the day", "Old tiers of the day"]
   # Theme tier = Micro-tier 
   # Old tier of the day = Random tiers that already appeared
   
@@ -193,7 +195,7 @@ def scSelectTierMenu
   end 
   
   while cmd > -2 
-    cmd = pbMessage("Choose a category of tier (current tier=" + current_tier + ").", menu_list, -2, nil, 0)
+    cmd = pbMessage("Choose a category of tier (next client=" + current_tier + ").", menu_list, -2, nil, 0)
     
     
     if cmd > -2

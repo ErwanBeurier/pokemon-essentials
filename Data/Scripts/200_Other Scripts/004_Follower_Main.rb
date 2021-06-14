@@ -20,6 +20,18 @@ def followingMoveRoute(commands,waitComplete=false)
   $PokemonTemp.dependentEvents.setMoveRoute(commands,waitComplete)
 end
 
+# STRAT 
+def followingIsFacing?(dir)
+  return false if !$Trainer.scGetFollowing || !$PokemonGlobal.followerToggled
+  return $PokemonTemp.dependentEvents.isFacing?(dir)
+end 
+
+# STRAT 
+def followingIsAt?(x,y)
+  return false if !$Trainer.scGetFollowing || !$PokemonGlobal.followerToggled
+  return $PokemonTemp.dependentEvents.isAtPosition?(x,y)
+end 
+
 #-------------------------------------------------------------------------------
 # Script Command to toggle Following Pokemon
 #-------------------------------------------------------------------------------
@@ -226,6 +238,7 @@ class DependentEvents
            (tryShiny) ? "s" : "",
            (tryForm!=0) ? "_"+tryForm.to_s : "",
            (tryShadow) ? "_shadow" : "") rescue nil
+        # scMessage("bitmap={1}", bitmapFileName)
         ret = [0,bitmapFileName] if pbResolveBitmap("Graphics/Characters/"+bitmapFileName)
         ret = [1,bitmapFileName] if pbResolveBitmap("Graphics/Characters/Following/"+bitmapFileName)
       end
@@ -319,6 +332,28 @@ class DependentEvents
       end
     end
   end
+
+# Command to check the direction in which the follower is facing. (STRAT)
+  def isFacing?(dir)
+    events=$PokemonGlobal.dependentEvents
+    for i in 0...events.length
+      if events[i] && events[i][8]== "FollowerPkmn"
+        return @realEvents[i].direction == dir
+      end
+    end
+    return false 
+  end
+
+# Command to check the position of the following. (STRAT)
+  def isAtPosition?(x,y)
+    events=$PokemonGlobal.dependentEvents
+    for i in 0...events.length
+      if events[i] && events[i][8]== "FollowerPkmn"
+        return @realEvents[i].x == x && @realEvents[i].y == y
+      end
+    end
+    return false 
+  end
 end
 
 #-------------------------------------------------------------------------------
@@ -329,6 +364,7 @@ end
 alias follow_surf pbSurf
 
 def pbSurf
+  return false # STRAT: can't Surf.
   return false if $game_player.pbFacingEvent
   return false if $game_player.pbHasDependentEvents?
   move = getID(PBMoves,:SURF)
@@ -655,7 +691,11 @@ class PokeballPlayerSendOutAnimation < PokeBattle_Animation
     @idxOrder       = idxOrder
     @trainer        = @battler.battle.pbGetOwnerFromBattlerIndex(@battler.index)
     @followAnim     = false
-    @followAnim     = true if $PokemonTemp.dependentEvents.refresh_sprite(false,true) && battler.index == 0 && startBattle
+    if $PokemonTemp.dependentEvents.refresh_sprite(false,true) && battler.index == 0 && startBattle && 
+      $Trainer.scGetFollowing && $Trainer.scGetFollowing.personalID == battler.pokemon.personalID
+      # If the following Pokémon is actually the first Pokémon of the team. 
+      @followAnim     = true 
+    end 
     sprites["pokemon_#{battler.index}"].visible = false
     @shadowVisible = sprites["shadow_#{battler.index}"].visible
     sprites["shadow_#{battler.index}"].visible = false

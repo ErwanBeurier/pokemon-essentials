@@ -38,6 +38,12 @@ def scTrainerBattle(trainerID, trainerName, format = "single", endSpeech=nil,
   
   # Music management: the default BGM interferes with battle music
   $game_system.setDefaultBGM(bgm)
+  # Save the result of the battle in a Game Variable (1 by default)
+  #    0 - Undecided or aborted
+  #    1 - Player won
+  #    2 - Player lost
+  #    3 - Player or wild Pokémon ran from battle, or player forfeited the match
+  #    5 - Draw
   return res 
 end 
 

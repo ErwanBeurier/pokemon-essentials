@@ -17,63 +17,73 @@
 # - Tier statistics. 
 #----------------------------------------------------------
 def scCastlePC
-  pbMessage(_INTL("\\se[PC open]{1} booted up the PC.",$Trainer.name))
+  pbMessage(_INTL("\\SC[Computer]\\se[PC open]{1} booted up the PC.",$Trainer.name))
   loop do
     # commands=["Pokémon storage", "Team builder", "Stats"]
-    commands=["Team builder", "Stats"]
-    commands.push("Change tier") if SCSwitch.get(:ForcedTier)
-    commands.push("Change real Pokémon") if SCSwitch.get(:AllowTeamChange)
+    cmdTeamBuilder = -1 
+    cmdStatistics = -1
+    cmdChangeTier = -1 
+    cmdRealPokemon = -1
+    
+    commands = []
+    commands[cmdTeamBuilder = commands.length] = "Team builder"
+    # commands[cmdStatistics = commands.length] = "Battle stats"
+    # commands[cmdChangeTier = commands.length] = "Change tier" if !SCSwitch.get(:ForcedTier) 
+    commands[cmdRealPokemon = commands.length] = "Change real Pokémon" if SCSwitch.get(:AllowTeamChange)
     commands.push("Log off")
     
-    command=pbMessage(_INTL("Which PC should be accessed?"), commands,commands.length)
+    command=pbMessage(_INTL("\\SC[Computer]Which PC should be accessed?"), commands,-1)
     
     # case command 
     # when 0 # Pokémon storage 
       # scene = StorageSystemPC.new
       # scene.access() 
-    if command == 0 # Team builder 
+    if cmdTeamBuilder > -1 && command == cmdTeamBuilder # Team builder 
       # scene = SCTeamBuilder.new(true)
       scene = SCTeamViewer.new
       scene.main 
-    elsif command == 1 # Stats 
+      
+    elsif cmdStatistics > -1 && command == cmdStatistics # Stats 
       scBattleStats.menu 
-    elsif command == 2 # Tier menu
+      
+    elsif cmdChangeTier >-1 && command == cmdChangeTier # Tier menu
       temp = scSelectTierMenu
       scSetTier(temp, false)
-      pbMessage("You are working with the tier: " + scGetTier() + ".")
-    elsif command == 3 && SCSwitch.get(:AllowTeamChange)
+      pbMessage("\\SC[Computer]You are working with the tier: " + scGetTier() + ".")
       
-      next if !pbConfirmMessage("Do you want to change the Pokémons that the main character used in his adventure?")
-      pbMessage("You can do this only once per game.")
-      next if !pbConfirmMessage("Do you want to continue?")
+    elsif cmdRealPokemon > -1 && command == cmdRealPokemon # Change the Real Pokémons. 
+      
+      next if !pbConfirmMessage("\\SC[Computer]Do you want to change the Pokémons that the main character used in his adventure?")
+      pbMessage("\\SC[Computer]You can do this only once per game.")
+      next if !pbConfirmMessage("\\SC[Computer]Do you want to continue?")
       
       SCStoryPokemon.export
       
-      pbMessage("The Pokémons were exported to the file OwnedPokemons.txt in the game folder.")
-      pbMessage("Edit ONLY the Pokémon species.")
-      pbMessage("Write the Pokémon species that you want in CAPITAL letters.")
+      pbMessage("\\SC[Computer]The Pokémons were exported to the file SC_Story_Pokemon_Chosen.txt in the game folder.")
+      pbMessage("\\SC[Computer]Edit ONLY the Pokémon species.")
+      pbMessage("\\SC[Computer]Write the Pokémon species that you want in CAPITAL letters.")
       
       loop do 
-        pbMessage("You can now edit the file OwnedPokemons.txt in the game folder.")
+        pbMessage("\\SC[Computer]You can now edit the file SC_Story_Pokemon_Chosen.txt in the game folder.")
         
-        next if !pbConfirmMessage("Done?")
-        next if !pbConfirmMessage("Import the changes?")
+        next if !pbConfirmMessage("\\SC[Computer]Done?")
+        next if !pbConfirmMessage("\\SC[Computer]Import the changes?")
         
         begin 
           SCStoryPokemon.import
           break 
           
         rescue Exception => e
-          pbMessage("There was an error in the changes.")
-          pbMessage("You most probably made a mistake while editing the file.")
-          pbMessage("The game will show an error.")
-          pbMessage("Don't panic and try to fix the error in the file.")
+          pbMessage("\\SC[Computer]There was an error in the changes.")
+          pbMessage("\\SC[Computer]You most probably made a mistake while editing the file.")
+          pbMessage("\\SC[Computer]The game will show an error.")
+          pbMessage("\\SC[Computer]Don't panic and try to fix the error in the file.")
           raise e 
         end 
       end 
       
-      pbMessage("The changes were imported.")
-      pbMessage("You can no longer change them in this game.")
+      pbMessage("\\SC[Computer]The changes were imported.")
+      pbMessage("\\SC[Computer]You can no longer change them in this game.")
       
       SCSwitch.set(:AllowTeamChange, false)
       

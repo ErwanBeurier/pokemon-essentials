@@ -570,11 +570,11 @@ class PokeBattle_Battle
     end
   end
 
-  def pbSwapBattlers(idxA,idxB)
+  def pbSwapBattlers(idxA,idxB, force_swap = false)
     return false if !@battlers[idxA] || !@battlers[idxB]
     # Can't swap if battlers aren't owned by the same trainer
     return false if opposes?(idxA,idxB)
-    return false if pbGetOwnerIndexFromBattlerIndex(idxA)!=pbGetOwnerIndexFromBattlerIndex(idxB)
+    return false if !force_swap && pbGetOwnerIndexFromBattlerIndex(idxA)!=pbGetOwnerIndexFromBattlerIndex(idxB)
     @battlers[idxA],       @battlers[idxB]       = @battlers[idxB],       @battlers[idxA]
     @battlers[idxA].index, @battlers[idxB].index = @battlers[idxB].index, @battlers[idxA].index
     @choices[idxA],        @choices[idxB]        = @choices[idxB],        @choices[idxA]

@@ -25,7 +25,7 @@ class SCMovesetFilter
   attr_accessor :debug
   attr_reader :specific
   
-  def initialize(pattern, role, move, type1)
+  def initialize(pattern, role, move, type1, forbidden_move = false)
     # The rest of the attributes is to be set later. 
     
     # Constraint on the Pokémon
@@ -41,6 +41,7 @@ class SCMovesetFilter
     @pattern = pattern
     @specific = false
     @move = move # Only ONE move, or a list of possible move and if one fits, it's ok. 
+    @move_is_forbidden = forbidden_move
   end 
   
   
@@ -208,7 +209,6 @@ class SCMovesetFilter
   def hasTheRightMoves(moveset)
     # Note: only checks if contains at least ONE of the wanted moves. 
     return true if !@move
-    
     for j in SCMovesetsData::MOVE1..SCMovesetsData::MOVE4
       next if !moveset[j]
       if @move.is_a?(Array)
@@ -218,6 +218,31 @@ class SCMovesetFilter
         return true if moveset[j].include?(@move)
       end 
     end 
+    
+    # if @move_is_forbidden
+      # # Check if the move. 
+      # for j in SCMovesetsData::MOVE1..SCMovesetsData::MOVE4
+        # next if !moveset[j]
+        # if @move.is_a?(Array)
+          # # If contains one of the unwanted moves. 
+          # return false if (@move & moveset[j]).length > 0
+        # else 
+          # return false if moveset[j].include?(@move)
+        # end 
+      # end 
+      
+      # return true 
+    # else 
+      # for j in SCMovesetsData::MOVE1..SCMovesetsData::MOVE4
+        # next if !moveset[j]
+        # if @move.is_a?(Array)
+          # # If contains one of the wanted moves. 
+          # return true if (@move & moveset[j]).length > 0
+        # else 
+          # return true if moveset[j].include?(@move)
+        # end 
+      # end 
+    # end 
     
     return false
   end 
@@ -419,25 +444,28 @@ class SCTeamFilter
   end 
   
   
-  def eachFittingMoveset(movesetdata, fspecies, role, allowed_errors)
+  def eachFittingMoveset(movesetdata, fspecies, role, allowed_errors, extended = false)
     # pk_movesets = The list of Movesets of the given Pokémon 
-    # pbMessage("Coucou Ledian") if fspecies == PBSpecies::LEDIAN
     @filters.each_with_index { |filter, ind|
       next if filter && !filter.fitsRole?(role)
       
       if role == 0 # Then we don't care about the role. 
         movesetdata[fspecies][0].each { |mv|
           mv = mv.clone
-          # pbMessage("LEDIANNNNNNNN") if fspecies == PBSpecies::LEDIAN && mv[SCMovesetsData::MOVE1][0] == PBMoves::CARBONIFEROUS
           res = checkFilter(ind, mv, allowed_errors)
           yield mv, ind, filter if res
-          # pbMessage(_INTL("res = {1}", res)) if fspecies == PBSpecies::LEDIAN && mv[SCMovesetsData::MOVE1][0] == PBMoves::CARBONIFEROUS
+        }
+      elsif extended
+        SCTeamFilter.eachExtendedRole(role) { |r| 
+          next if !movesetdata[fspecies][r]
+          movesetdata[fspecies][r].each { |mv| 
+            mv = mv.clone
+            yield mv, ind, filter if checkFilter(ind, mv, allowed_errors)
+          }
         }
       else 
         SCTeamFilter.eachConvertedRole(role) { |r| 
           next if !movesetdata[fspecies][r]
-          # pbMessage("Gladyyyyyyyyyyys") if fspecies == PBSpecies::LEDIAN
-          
           movesetdata[fspecies][r].each { |mv| 
             mv = mv.clone
             yield mv, ind, filter if checkFilter(ind, mv, allowed_errors)
@@ -451,14 +479,22 @@ class SCTeamFilter
   def self.eachConvertedRole(role)
     role_convert = [] 
     case role
-    when 10, 20, 30, 40
+    when 10, 20
       role_convert = [role + 1, role + 2, role + 3]
+    when 30, 40
+      role_convert = [31, 32, 33, 41, 42, 43]
     when 15 # Means wanted a lead but couldn't find any. Try offensive.
       role_convert = [21, 22, 23]
     else 
       role_convert = [role]
     end 
     role_convert.each { |r| yield r }
+  end 
+  
+  
+  def self.eachExtendedRole(role)
+    big_role = (role / 10).floor * 10 
+    self.eachConvertedRole(big_role) { |r| yield r }
   end 
   
   
@@ -605,8 +641,10 @@ module SCMovesetFilters
   
   TrickRoomSetter = SCMovesetFilter.new(nil, nil, PBMoves::TRICKROOM, nil)
   TrickRoomSetter.makeSpecific
+  # TrickRoomOffense = SCMovesetFilter.new(nil, 20, PBMoves::TRICKROOM, nil, true)
   TrickRoomOffense = SCMovesetFilter.new(nil, 20, nil, nil)
   TrickRoomOffense.setStatInterval(PBStats::SPEED, 0, 60)
+  
   
   
   RainSetter = SCMovesetFilter.new(nil, nil, nil, nil)
@@ -663,7 +701,7 @@ module SCTeamFilters
   Random = SCRandomTeamFilter.new()
   
   begin 
-  Carboniferous = SCTeamFilter.new("Carboniferous", [0, 0, 0, 0, 0, 0])
+  Carboniferous = SCTeamFilter.new("Carboniferous", [0, 0, 20, 20, 20, 0])
   Carboniferous.setMovesetFilters(SCMovesetFilters::CarboniferousSetter, 
                                   SCMovesetFilters::CarboniferousBug,
                                   SCMovesetFilters::CarboniferousBug, 
@@ -724,7 +762,7 @@ module SCTeamFilters
     
     if ["FE", "FEL", "UBER"].include?(tierid)
       # Allowed for very big tiers.
-      ret.push(SCTeamFilters::Carboniferous)
+      ret.push(SCTeamFilters::Carboniferous) if SCSwitch.get(:AllowCarboniferous)
       ret.push(SCTeamFilters::TrickRoom)
       ret.push(SCTeamFilters::Rain)
       ret.push(SCTeamFilters::Sun)

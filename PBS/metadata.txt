@@ -390,3 +390,117 @@ MapPosition = 0,12,10
 BattleBack = city
 MapPosition = 1,13,16
 Outdoor = true
+################################
+# STRAT
+################################
+[033]
+# Castle - Floor 1
+ShowArea = true 
+#-------------------------------
+[043]
+# Castle - Player's room.
+ShowArea = true 
+#-------------------------------
+[080]
+# Castle - Manager's room
+ShowArea = true 
+#-------------------------------
+[097]
+# Castle - Foxy's room
+ShowArea = true 
+#-------------------------------
+[077]
+# Castle - Seren's room
+ShowArea = true 
+#-------------------------------
+[079]
+# Castle - Hettie's room
+ShowArea = true 
+#-------------------------------
+[048]
+# Castle - Empty room 
+ShowArea = false
+#-------------------------------
+[096]
+# Castle - Mikhail's room
+ShowArea = true 
+#-------------------------------
+[098]
+# Castle - Yves' room
+ShowArea = true 
+#-------------------------------
+[076]
+# Castle - Living room
+ShowArea = true 
+#-------------------------------
+[081]
+# Castle - Gardens
+ShowArea = true 
+Outdoor = true
+#-------------------------------
+[082]
+# Castle - Stadium
+ShowArea = true 
+Outdoor = true
+#-------------------------------
+[083]
+# Castle - Cliff
+ShowArea = true 
+Outdoor = true
+#-------------------------------
+[084]
+# Castle - Beach
+ShowArea = true 
+Outdoor = true
+#-------------------------------
+[085]
+# Castle - Forest A 
+ShowArea = true 
+Outdoor = true
+#-------------------------------
+[086]
+# Castle - Forest B
+ShowArea = true 
+Outdoor = true
+#-------------------------------
+[099]
+# Castle - Path in the forest
+ShowArea = true 
+Outdoor = true
+#-------------------------------
+[095]
+# Castle - Redwood
+ShowArea = true 
+Outdoor = true
+#-------------------------------
+[100]
+# Castle - Redwood House
+ShowArea = true 
+#-------------------------------
+[101]
+# Castle - Grotto (White)
+ShowArea = true 
+#-------------------------------
+[106]
+# Castle - Grotto (Brown)
+ShowArea = true 
+#-------------------------------
+[108]
+# Castle - Underwater Grotto
+ShowArea = true 
+#-------------------------------
+[109]
+# Castle - Summit
+ShowArea = true 
+Outdoor = true
+#-------------------------------
+[110]
+# Castle - Lava Grotto
+ShowArea = true 
+#-------------------------------
+[111]
+# Castle - Deep Forest
+ShowArea = true 
+Outdoor = true
+#-------------------------------
+

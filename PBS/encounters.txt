@@ -469,3 +469,19 @@ Land
     CUBONE,11,14
     CUBONE,11,14
     CUBONE,11,14
+#-------------------------------
+086 # Forest B
+25,10,10
+Land
+    RATTATA_1,11,14
+    GEODUDE_1,11,14
+    SANDSHREW_1,11,14
+    VULPIX_1,11,14
+    DIGLETT_1,11,14
+    MEOWTH_1,11,14
+    PIKACHU,11,14
+    PIKACHU,11,14
+    CUBONE,11,14
+    CUBONE,11,14
+    CUBONE,11,14
+    CUBONE,11,14

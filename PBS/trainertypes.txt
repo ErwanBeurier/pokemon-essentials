@@ -268,13 +268,20 @@
 262,RSE_TWINS,Twins,30,,,,Mixed,,
 263,RSE_YOUNGCOUPLE,Young Couple,30,,,,Mixed,,
 264,RSE_YOUNGSTER,Youngster,30,,,,Male,,
-# STRAT Trainers
+# STRAT 
+# Employees
 500,SC_EMPLOYEE_WESTON,Employee,100,,,,Male,,
 501,SC_EMPLOYEE_YVES,Employee,100,,,,Male,,
-502,SC_EMPLOYEE_CONNOR,Employee,100,,,,Male,,
+502,SC_EMPLOYEE_MIKHAIL,Employee,100,,,,Male,,
 503,SC_EMPLOYEE_SEREN,Employee,100,,,,Female,,
 504,SC_EMPLOYEE_FOXY,Employee,100,,,,Female,,
-505,SC_EMPLOYEE_KATE,Employee,100,,,,Female,,
-506,SC_EMPLOYEE_HETTIE,Employee,100,,,,Female,,
-507,SC_EMPLOYEE_CINDY,Employee,100,,,,Female,,
-508,SC_EMPLOYEE_RACHEL,Manager,100,,,,Female,,
+505,SC_EMPLOYEE_HETTIE,Employee,100,,,,Female,,
+506,SC_EMPLOYEE_RACHEL,Manager,100,,,,Female,,
+# Lorant / Maeve
+507,SC_CHARACTER_LORANT,Client,100,,,,Male,,
+508,SC_CHARACTER_LORANT2,Trainer,100,,,,Male,,
+509,SC_CHARACTER_MAEVE,Office Woman,50,,,,Female,,
+# Specific clients
+510,SC_CHARACTER_BEATRIZ,Beauty,100,,,,Female,,
+511,SC_CHARACTER_DEREK,C.E.O.,100,,,,Male,,
+512,SC_CHARACTER_EDDIE,Ninja-Boy,100,,,,Male,,

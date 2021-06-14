@@ -157,7 +157,8 @@ def scGenerateTeamRand(trainer, type_of_team = nil, type1 = -1, type2 = -1, tier
           delsp = party_species.delete_at(j)
           deleted_species.push(delsp)
           
-          party_movesets.delete(delsp)
+          # party_movesets.delete(delsp)
+          party_movesets.delete_at(j)
         end 
       else
         party_survivors.push(pk)
@@ -216,9 +217,14 @@ def scGenerateTeamRand(trainer, type_of_team = nil, type1 = -1, type2 = -1, tier
   
   
   # And then, create the actual party: create the Pokemons + choose a moveset. 
+  mandatory_zmove = Array.new(party_species.length) { |i| scMovesetHasMandatoryZMove?(party_movesets[i]) }
+  zmove_total = false 
+  mandatory_zmove.each { |z| zmove_total = zmove_total || z }
+  mandatory_zmove.push(zmove_total)
+  
   for i_sp in 0...party_species.length
     pkmn = party_movesets[i_sp]
-    pokemon = scGenerateMoveset(pkmn, trainer, tier)
+    pokemon = scGenerateMoveset(pkmn, trainer, tier, mandatory_zmove, i_sp)
     party.push(pokemon)
   end
   
@@ -252,12 +258,12 @@ def scGenerateMovesetFast(fspecies, role = 0)
   
   moveset = scsample(movesets, 1)
   
-  return scGenerateMoveset(moveset, $Trainer, loadTierNoStorage("FE"))
+  return scGenerateMoveset(moveset, $Trainer, loadTierNoStorage("FE"), nil, nil, 100)
 end 
 
 
 
-def scGenerateMoveset(pkmn, trainer, tier)
+def scGenerateMoveset(pkmn, trainer, tier, mandatory_zmove = nil, i_sp = nil, wanted_level = nil)
   # Give form if applicable. 
   # form = (pkmn[SCMovesetsData::BASEFORM] ? pkmn[SCMovesetsData::BASEFORM] : pkmn[SCMovesetsData::FORM])
   form = pkmn[SCMovesetsData::FORM]
@@ -270,7 +276,8 @@ def scGenerateMoveset(pkmn, trainer, tier)
   
   # pbMessage(_INTL("Base species: {1}", PBSpecies.getName(pkmn[SCMovesetsData::SPECIES] ? pkmn[SCMovesetsData::SPECIES] : pkmn[SCMovesetsData::BASESPECIES]))) 
   # For each species, choose one moveset.
-  pokemon = PokeBattle_Pokemon.new(sp,pkmn[SCMovesetsData::LEVEL], trainer)
+  lvl = (wanted_level ? wanted_level : pkmn[SCMovesetsData::LEVEL])
+  pokemon = PokeBattle_Pokemon.new(sp, lvl, trainer)
   
   # Check if it has moves. If not, then the moves will be given by the level. 
   # Allow Ditto that has only one move, but also EVs/IVs and such. 
@@ -411,14 +418,36 @@ def scGenerateMoveset(pkmn, trainer, tier)
     pokemon.setGender(pkmn[SCMovesetsData::GENDER]) if pkmn[SCMovesetsData::GENDER]
     
     # Give item.
-    it = scsample(pkmn[SCMovesetsData::ITEM], 1)
-    
-    if it == PBItems::GENERICZCRYSTAL
-      # Then choose the right crystal.
-      potential_crystals = scGetFittingZCrystals(pokemon, true)
-      it = scsample(potential_crystals, 1)
+    if mandatory_zmove && mandatory_zmove[-1] && !mandatory_zmove[i_sp]
+      # One moveset in the team has a mandatory Z-move, and this moveset doesn't. 
+      # Avoid giving a Z-move here.
+      it = pkmn[SCMovesetsData::ITEM].clone
+      it.delete(PBItems::GENERICZCRYSTAL)
+      begin 
+      it = scsample(it, 1)
+      rescue 
+        s = _INTL("Pokémon: {1} form {2}; Moveset: {3}\n", PBSpecies.getName(pkmn[SCMovesetsData::SPECIES]), 
+              pkmn[SCMovesetsData::FORM], SCMovesetPatterns.getName(pkmn[SCMovesetsData::PATTERN]))
+        s += _INTL("mandatory_zmove = {1}", scToStringRec(mandatory_zmove))
+        raise s 
+      end 
+      pokemon.item = it 
+      
+    else 
+      # No mandatory Z-move OR this moveset has a mandatory Z-move. 
+      it = scsample(pkmn[SCMovesetsData::ITEM], 1)
+      
+      if it == PBItems::GENERICZCRYSTAL
+        # Then choose the right crystal.
+        potential_crystals = scGetFittingZCrystals(pokemon, true)
+        it = scsample(potential_crystals, 1)
+        
+        mandatory_zmove[6] = true if mandatory_zmove
+        mandatory_zmove[i_sp] = true if mandatory_zmove
+      end 
+      
+      pokemon.item = it 
     end 
-    pokemon.item = it 
     
     # Dynamax stuff
     pokemon.setDynamaxLvl(pkmn[SCMovesetsData::DYNAMAXLEVEL] || 10)
@@ -531,3 +560,8 @@ def scGetFittingZCrystals(pokemon, strict)
 end 
 
 
+
+def scMovesetHasMandatoryZMove?(moveset)
+  return moveset[SCMovesetsData::PATTERN] >= SCMovesetPatterns::ZMOVEFASTPHYSOFF && 
+          moveset[SCMovesetsData::PATTERN] < SCMovesetPatterns::ASSISTANCESUPPORT
+end 

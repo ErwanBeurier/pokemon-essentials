@@ -38,6 +38,11 @@ module SCVar
   # ---------------------------------------------------------------------------
   # Region of origin of the player.
   RegionOfOrigin = 70
+  RegionOfOriginName = 86
+  # The number of double battles done (condition to allow 6v6). 
+  NumberOfDoubleBattles = 73
+  # The number of battles done today (condition to allow the player to sleep). 
+  NumberOfBattlesToday = 74
   
   # ---------------------------------------------------------------------------
   # Forced team. 
@@ -57,6 +62,9 @@ module SCVar
   TierOfTeam = 66
   # Contains the tier that clients like at the moment. 
   HypedTier = 60 
+  # Stores whether the player is asked the strength of the team when generating 
+  # a team. 0 = Do ask, 1 = don't ask (default)
+  AskStrataForTeamGeneration = 76 
   
   # ---------------------------------------------------------------------------
   # Other castle stuff.
@@ -74,11 +82,20 @@ module SCVar
   WantedPartner = 61
   # The required number of client battles before the story continues
   ClientBattlesRequired = 62
+  ClientBattlesRequired2 = 77
+  ClientBattlesRequired3 = 78
+  ClientBattlesRequired4 = 79
   # The number of battles done. 
-  ClientBattlesDone = 63
+  NumberClientBattlesDone = 63
+  NumberClientBattlesDone2 = 80
+  NumberClientBattlesDone3 = 81
+  NumberClientBattlesDone4 = 82
   # Index of the next switch to activate, when the required number of client 
   # battles is done.
   NextSwitch = 64 
+  NextSwitch2 = 83 
+  NextSwitch3 = 84 
+  NextSwitch4 = 85 
 end 
 
 
@@ -120,22 +137,43 @@ module SCSwitch
   AllowChangingWeather = 104
   # Switch to allow/disallow battles with formats bigger than 3v3.
   AllowBigFormats = 106
-  
-  
+  # Allow White Butterfree and new forms.
+  AllowWhiteButterfree = 107
+  # Allow new fossil forms.
+  AllowNewFossils = 108
+  # Puts Carboniferous archetype in the generation of teams.
+  AllowCarboniferous = 124
+  # Allows Bitype in the requests.
+  AllowBitype = 125 
   
   # ---------------------------------------------------------------------------
   # Other castle stuff.
   # ---------------------------------------------------------------------------
   # Stores whether the player is doing a nuzzlocke challenge.
   IsNuzzlocke = 82
+  # Force loading the trainers in the park (I put these constants here because 
+  # I set these variables to false upon saving).
+  LoadCastle = 111
+  LoadCastleMusic = 117
+  LoadGardens = 110
+  LoadStadium = 112
+  LoadCliff = 113
+  LoadBeach = 114
+  LoadForestA = 115
+  LoadForestB = 116
   
   # ---------------------------------------------------------------------------
   # Client battles
   # ---------------------------------------------------------------------------
   # Whether the current client battle is done. 
-  RandBattleDone = 78
+  ClientBattleDone = 78
   # Battle result
   ClientBattleResult = 77 
+  # True or False, to give to the next Switch. Defaults to True. 
+  NextSwitchValue = 118
+  NextSwitchValue2 = 119
+  NextSwitchValue3 = 120
+  NextSwitchValue4 = 121
   
   # ---------------------------------------------------------------------------
   # Real Pokémon stuff
@@ -155,6 +193,25 @@ module SCSwitch
   Badass2Following = 99
   FlyingFollowing = 100
   TotemFollowing = 101
+  # Forces the player to use their real Pokémons. 
+  # Blocks the PC into cleaning the team + the real Pokémon now can enter the 
+  # team. 
+  UseRealPokemons = 122 
+  
+  # ---------------------------------------------------------------------------
+  # Story related stuff
+  # ---------------------------------------------------------------------------
+  # Start the dialogue with Hettie for unlocking Big Formats.
+  StartQuestUnlockingBigFormats = 209
+  # We are at night:
+  TimeNight = 211
+  TimeAfternoon = 212
+  TimeMorning = 235 
+  # Unlocks the Flying Pokémon in the Castle Gardens.
+  UnlockFlyingInGardens = 123 
 end 
+
+
+
 
 

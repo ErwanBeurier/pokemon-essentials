@@ -67,11 +67,13 @@ class SCTier
     @default_index_menu = 0 # Index in the stratum choice. 
     @tier_args = []
     
+    updateToStory
+    
     if dictionary["Stratum"]
       @stratum_range = dictionary["Stratum"]
-      @stratum = 450
+      @stratum = 500
       @strata = nil
-      @list_strata = [600, 550, 500, 450, 400]
+      @list_strata = [600, 500, 400]
       chooseStratum(@stratum)
     else 
       @stratum_range = nil 
@@ -83,6 +85,34 @@ class SCTier
 		@dict_of_species = nil 
 	end 
 	
+  
+  
+  def updateToStory
+    # Few tier changes to reflect what's going on in the story.
+    if !SCSwitch.get(:AllowWhiteButterfree)
+      new_forms = [PBSpecies::BUTTERFREE_4]
+      
+      new_forms.each { |form| 
+        @frequent_pkmns.delete(form)
+        @rare_pkmns.delete(form)
+        @allowed_pkmns.delete(form)
+        @banned_pkmns.push(form)
+      }
+    end 
+    
+    if !SCSwitch.get(:AllowNewFossils)
+      # new_forms = [PBSpecies::KABUTO_1,PBSpecies::KABUTOPS_1, PBSpecies::OMANYTE_1, PBSpecies::OMASTAR_1]
+      new_forms = []
+      
+      new_forms.each { |form| 
+        @frequent_pkmns.delete(form)
+        @rare_pkmns.delete(form)
+        @allowed_pkmns.delete(form)
+        @banned_pkmns.push(form)
+      }
+    end 
+  end 
+  
 	
 	# Just for extorior display, we don't need fully built teams.
 	def fastRandSpecies(num_species)
@@ -93,7 +123,7 @@ class SCTier
   # Stratum of base stats.
   # When the tier is crowded, allow for the use of a range of base stats, to 
   # prevent generating a team with Dunsparce and Tyranitar.
-  def chooseStratum(new_stratum)
+  def chooseStratum(new_stratum, store = true)
     return if !@stratum_range || ! @stratum
     if new_stratum == 0
       @strata = nil 
@@ -108,7 +138,7 @@ class SCTier
     if @strata.length < 14
       @strata = nil 
     else 
-      @tier_args = [stratum]
+      @tier_args = [stratum] if store
     end 
   end 
 	
@@ -311,7 +341,8 @@ class SCTier
 	end 
 	
   
-	def randTeamSpecies(team_filter = nil, ask_stratum = false, for_database = false)
+  
+	def randTeamSpecies(team_filter = nil, ask_stratum = false, for_database = false, extended = false)
     # type_of_team: nil, or constant of SCTeamFilters.
     team_filter = SCTeamFilters::Random if !team_filter
     team_filter = team_filter.choose() if team_filter.is_a?(SCRandomTeamFilter)
@@ -321,8 +352,6 @@ class SCTier
     # Type variations to make colorful teams.
     team_filter = team_filter.vary() if self.numFrequent() > 50 && !["MONO", "BI"].include?(@id) && !for_database
     
-    # team_filter = SCTeamFilters::Test1
-    
     if ask_stratum && @stratum && stored_team_filter.is_a?(SCDummyTeamFilter)
       # Then the player wants to choose. 
       @stratum = stratumMenu
@@ -330,6 +359,7 @@ class SCTier
     end 
     
 		team_roles = team_filter.getShuffledRoles()
+    
     team_roles_clone = team_roles.clone
     allowed_errors = 0 
 		team_generation_max_errors = 1
@@ -349,8 +379,6 @@ class SCTier
     # match this role. 
 		# Normally, Random tiers shouldn't have problems of availability, as each 
     # tier should have enough both physical and special sweepers and defensive. 
-		
-		
 		team_pkmns = []
 
 		movesets = {} # movesets of the picked Pokemons
@@ -359,31 +387,31 @@ class SCTier
 		
 		list_poke = Array.new(@frequent_pkmns)
     list_poke = list_poke & @strata if @strata && stored_team_filter.is_a?(SCDummyTeamFilter)
-		i = 0 
     
-    filtered_movesets = Array.new(6, Array.new(6, [])) # Index in role -> Index in filter -> list of movesets. 
-    filtered_pokemons = Array.new(6, Array.new(6, []))
-    filtered_pokemons_roles = Array.new(6, Array.new(6, []))
+    filtered_movesets = Array.new(6) { |j| Array.new(6, []) } # Index in role -> Index in filter -> list of movesets. 
+    filtered_pokemons = Array.new(6) { |j| Array.new(6, []) }
+    filtered_pokemons_roles = Array.new(6) { |j| Array.new(6, []) }
     
     previous_role = team_roles[0]
     use_allowed = false 
     use_rare = false
     
+    
+		i = 0 
 		while i < 6
 			# Loop initialisation
 			choice_of_lead = 10 # Change to 11 if given a physical lead and expect a special sweeper to accompany it. 
 			
       previous_ind = []
-      # pbMessage(_INTL("list_poke = {1}", list_poke.length))
+      
 			for pk in list_poke
-				# next if team_pkmns.include?(pk)
         repartition = []
         f_movesets = {}
         f_pk = {}
         f_roles = {}
         specific = []
-        team_filter.eachFittingMoveset(movesetlog, pk, team_roles[i], allowed_errors) do |mv, ind, filter|
-          repartition.push(ind) if !repartition.include?(ind)
+        team_filter.eachFittingMoveset(movesetlog, pk, team_roles[i], allowed_errors, extended) do |mv, ind, filter|
+          repartition.push(ind) if !repartition.include?(ind) # ind = index of the filter. 
           specific.push(ind) if filter && filter.specific && !specific.include?(ind)
           
           f_movesets[ind] = [] if !f_movesets[ind]
@@ -401,14 +429,12 @@ class SCTier
         
         # Give priority to empty spots. 
         indc = -1 
-        for r in list_indices
-          next if !filtered_movesets[i][r].empty?
-          indc = r 
+        for ind_f in list_indices # list of indices of filters.
+          next if !filtered_movesets[i][ind_f].empty?
+          indc = ind_f
           break 
         end 
-        # scLog(repartition)
         indc = scsample(list_indices, 1) if indc == -1 
-        
         
         filtered_movesets[i][indc] += f_movesets[indc]
         filtered_pokemons[i][indc] += f_pk[indc]
@@ -422,13 +448,8 @@ class SCTier
           break 
         end 
       end 
-      # pbMessage(_INTL("i = {2}, role = {1}, Lengths = {3}-{4}-{5}-{6}-{7}-{8}", team_roles[i], i, 
-        # filtered_pokemons_roles[i][0].length, filtered_pokemons_roles[i][1].length, 
-        # filtered_pokemons_roles[i][2].length, filtered_pokemons_roles[i][3].length, 
-        # filtered_pokemons_roles[i][4].length, filtered_pokemons_roles[i][5].length))
-			
+      
 			if !found_something
-        # pbMessage("Coucou")
 				# Ah crap. No Pokémon were found for that given role. Probably the tier
         # is too shallow. But we don't need to warn the player about the wrong 
         # choices of tier made by the creator.
@@ -453,7 +474,6 @@ class SCTier
         # First: check rare. 
         # Second: go back to frequent, but reduce the constraint on the team roles. 
         
-        
         if previous_role == team_roles[i]
         
           use_allowed = true if use_rare
@@ -472,19 +492,6 @@ class SCTier
         
         previous_role = team_roles[i] 
         team_roles[i] = SCTeamFilter.extendRole(team_roles[i])
-				# if team_roles[i] == 10
-					# # We couldn't find a lead. Try offensive. 
-					# team_roles[i] = 15 
-				# elsif team_roles[i] == 21 || team_roles[i] == 22 || team_roles[i] == 23
-					# # We couldn't find a specific offensive. Maybe try another offensive. 
-					# team_roles[i] = 20
-				# elsif team_roles[i] == 31 || team_roles[i] == 32 || team_roles[i] == 33
-					# # We couldn't find a specific defensive. Maybe try another defensive or support. 
-					# team_roles[i] = 40
-				# else 
-					# # We tried to replace the lead with an offensive.
-					# team_roles[i] = 0 
-				# end 
 			else 
         # Next. 
         i += 1 
@@ -496,55 +503,86 @@ class SCTier
 		end 
     
     
-    # I don't understand but the resulting filtered_movesets is just the first line repeated 6 times.
-    # I can get rid of combinations for now. 
-    
     # Start with the fewer movesets.
-    chosen = []
+    chosen_roles = []
     team_pkmns = Array.new(6)
+    zmove_given = -1 # -1 = not given ; 0 = given and not filtered ; 1 = given and filtered. 
     
-    while chosen.length < 6
-      min_i = 0
-      min_mvsts = 100000
-      
+    
+    
+    while chosen_roles.length < 6
+      # Note here: finding a combination of (roles, filters) such that no role is 
+      # repeating, and no filter is repeating, amounts to choosing non-repeating 
+      # paris of indices in list_filters.
+      # It's very similar to a Traveller Salesman, if we convert that list_filters 
+      # into an adjacence matrix.
+      # Precompute: role -> list of indices of filters that gave something to this role. 
+      raise_diagnosis = false 
+      list_filters = Array.new(6)
       for i in 0...6
-        next if chosen.include?(i)
-        min_i, min_mvsts = i, filtered_movesets[0][i].length if filtered_movesets[0][i].length < min_mvsts
-      end 
-      
-      choice = rand(min_mvsts)
-      
-      team_pkmns[min_i] = filtered_pokemons[0][min_i][choice]
-      team_roles[min_i] = filtered_pokemons_roles[0][min_i][choice]
-      movesets[min_i] = filtered_movesets[0][min_i][choice]
-      
-      if !team_roles[min_i]
-        raise diagnoseEmpty(team_filter, filtered_movesets)
-        raise _INTL("min_mvsts = {1}, pokemon = {2}, moveset = {3}", min_mvsts, team_pkmns[min_i], movesets[min_i])
-      end 
-      
-      chosen.push(min_i)
-      
-      
-      # Now avoid repeating the Pokémons.
-      for i in 0...6
-        filtered_pokemons[0][i] = [] if i == min_i
-        
-        new_filtered_pokemons = []
-        new_filtered_pokemons_roles = []
-        new_filtered_movesets = []
-        
-        for m in 0...filtered_pokemons[0][i].length
-          if filtered_pokemons[0][i][m] != team_pkmns[min_i]
-            new_filtered_pokemons.push(filtered_pokemons[0][i][m])
-            new_filtered_pokemons_roles.push(filtered_pokemons_roles[0][i][m])
-            new_filtered_movesets.push(filtered_movesets[0][i][m])
-          end 
+        # i = index of role
+        # j = index of filter. 
+        list_filters[i] = []
+        for j in 0...6
+          list_filters[i].push(j) if filtered_movesets[i][j].length > 0 #&& !chosen_roles.include?(j)
         end 
-        filtered_pokemons[0][i] = new_filtered_pokemons
-        filtered_pokemons_roles[0][i] = new_filtered_pokemons_roles
-        filtered_movesets[0][i] = new_filtered_movesets
+        raise_diagnosis = true if list_filters[i].length == 0 && !chosen_roles.include?(i)
       end 
+      
+      if raise_diagnosis
+        # return self.randTeamSpecies(team_filter, false, false, true) if !extended
+        return self.emergencyGeneration(team_filter) if !extended
+        raise diagnoseEmpty(team_filter, filtered_movesets) + "\nlist_filters = " +  scToStringRec(list_filters) +  "\nchosen_roles = " +  scToStringRec(chosen_roles) + _INTL("\ni={1}", i)
+      end 
+      
+      role_i = 0 
+      role_i_length = 100000
+      
+      for i in 0...6
+        next if chosen_roles.include?(i)
+        role_i = i if list_filters[i].length < role_i_length
+      end 
+      # Let's tackle role_i because it satisfies the fewest filters. 
+      # Choose among the available filters: 
+      choice_f = scsample(list_filters[role_i], 1)
+      
+      # And choose among the movesets for that role + filter:
+      choice = rand(filtered_pokemons[role_i][choice_f].length)
+      
+      team_pkmns[role_i] = filtered_pokemons[role_i][choice_f][choice]
+      team_roles[role_i] = filtered_pokemons_roles[role_i][choice_f][choice]
+      movesets[role_i] = filtered_movesets[role_i][choice_f][choice]
+      chosen_roles.push(role_i)
+      
+      # Notice the Z-Move if it is mandatory for the moveset.
+      zmove_given = 0 if zmove_given == -1 && scMovesetHasMandatoryZMove?(movesets[role_i])
+      
+      # Now avoid repeating the Pokémons + avoid giving two Z-crystals 
+      # I should also check for Mega-stones but meh. 
+      for i in 0...6
+        for j in 0...6
+          new_filtered_pokemons = []
+          new_filtered_pokemons_roles = []
+          new_filtered_movesets = []
+          
+          for m in 0...filtered_pokemons[i][j].length
+            # Avoid giving twice the same species.
+            next if team_pkmns[role_i] == filtered_pokemons[i][j][m]
+            # Avoid giving twice a Moveset with Z-moves. 
+            next if zmove_given == 0 && scMovesetHasMandatoryZMove?(filtered_movesets[i][j][m])
+            
+            new_filtered_pokemons.push(filtered_pokemons[i][j][m])
+            new_filtered_pokemons_roles.push(filtered_pokemons_roles[i][j][m])
+            new_filtered_movesets.push(filtered_movesets[i][j][m])
+          end 
+          
+          filtered_pokemons[i][j] = new_filtered_pokemons
+          filtered_pokemons_roles[i][j] = new_filtered_pokemons_roles
+          filtered_movesets[i][j] = new_filtered_movesets
+        end 
+      end 
+      
+      zmove_given = 1 if zmove_given == 0 # Already filtered. 
     end 
     
     
@@ -552,12 +590,12 @@ class SCTier
 			if team_roles[i] == nil
 				raise _INTL("{1}-{2}-{3}-{4}-{5}-{6}", team_roles[0], team_roles[1], team_roles[2], team_roles[3], team_roles[4], team_roles[5])
 			end 
-		end 
-		
+		end 		
 		
 		return [team_pkmns, team_roles, movesets]
 	end 
 	
+  
   
   # Deprecated. At the moment I have trouble with successive generations; everytime, 
   # the second generation comes up with empty filtered_movesets.
@@ -837,6 +875,7 @@ class SCTier
 	end 
 	
   
+  
   def diagnoseEmpty(team_filter, filtered_movesets)#, comb)
     s = _INTL("Team Filter: {1} yielded no movesets.\n", team_filter.name)
     s += "filtered_movesets = \n"
@@ -854,12 +893,24 @@ class SCTier
   end 
   
   
+  
+  def emergencyGeneration(team_filter)
+    return self.randTeamSpecies(team_filter, false, false, true)
+  end 
+  
+  
 	
   def stratumMenu
-		@list_strata = [600, 550, 500, 450, 400]
-    list_strata_str = ["Very strong", "Strong", "Medium", "Weak", "Very weak"]
+		@list_strata = [600, 500, 400]
+    list_strata_str = ["Strong", "Medium", "Weak"]
+    cmd = 0
     
-		cmd = pbMessage("How strong do you want your team?", list_strata_str, -1, nil, @default_index_menu)
+    if SCVar.get(:AskStrataForTeamGeneration) == 1
+      # Don't ask. Choose at random between strong and very strong.
+      cmd = 1
+    else 
+      cmd = pbMessage("How strong do you want your team?", list_strata_str, -1, nil, @default_index_menu)
+    end 
 		
 		if cmd > -1 
       @default_index_menu = cmd 
@@ -1055,6 +1106,7 @@ end
 
 
 
+
 # =============================================================================
 # SCMonotypeTier 
 # Special class for the Monotype tier. Along with the list of banned/allowed/
@@ -1100,7 +1152,7 @@ class SCMonotypeTier < SCTier
 	
 	
 	
-	def randTeamSpecies(wanted_type = -1, team_filter = nil, for_database = false) 
+	def randTeamSpecies(wanted_type = -1, team_filter = nil, for_database = false, extended = false) 
     # Choose a type before choosing the team. 
 		if wanted_type == nil
 			wanted_type = self.menu 
@@ -1115,11 +1167,11 @@ class SCMonotypeTier < SCTier
 		end 
 		
     # pbMessage(_INTL("@pkmns_per_type length: is {1}", @pkmns_per_type.keys.length))
-    @tier_args.push(wanted_type)
+    @tier_args = [wanted_type]
 		@frequent_pkmns = @untyped_frequent_pkmns & @pkmns_per_type[wanted_type]
 		@rare_pkmns = @untyped_rare_pkmns & @pkmns_per_type[wanted_type]
 		
-		res = super(team_filter, for_database)
+		res = super(team_filter, false, for_database, extended)
 		
 		@frequent_pkmns = @untyped_frequent_pkmns
 		@rare_pkmns = @untyped_rare_pkmns 
@@ -1127,7 +1179,13 @@ class SCMonotypeTier < SCTier
 		return res 
 	end 
 	
-	
+  
+  
+  def emergencyGeneration(team_filter)
+    return self.randTeamSpecies(@tier_args[0], team_filter, false, true)
+  end 
+  
+  
 	
 	def findType(party)
 		# Finds the type of this Monotype party. 
@@ -1465,6 +1523,7 @@ end
 
 
 
+
 # =============================================================================
 # SCBitypeTier 
 # Special class for the Bitype tier. Along with the list of banned/allowed/
@@ -1522,7 +1581,7 @@ class SCBitypeTier < SCTier
 	
 	
 	
-	def randTeamSpecies(type1 = -1, type2 = -1, team_filter = nil, for_database = false)
+	def randTeamSpecies(type1 = -1, type2 = -1, team_filter = nil, for_database = false, extended = false)
 		# Choose the two types before choosing the team. 
 		if type1 == nil || type2 == nil 
 			wanted_types = self.menu 
@@ -1569,12 +1628,12 @@ class SCBitypeTier < SCTier
 			raise _INTL("@pkmns_bitype[type1][type2] is nil")
 		end 
 		
-    @tier_args.push(type1)
-    @tier_args.push(type2)
+    @tier_args = [type1, type2]
+    # @tier_args.push(type2)
 		@frequent_pkmns = @untyped_frequent_pkmns & @pkmns_bitype[type1][type2]
 		@rare_pkmns = @untyped_rare_pkmns & @pkmns_bitype[type1][type2]
 		
-		res = super(team_filter, for_database)
+		res = super(team_filter, false, for_database, extended)
 		
 		@frequent_pkmns = @untyped_frequent_pkmns
 		@rare_pkmns = @untyped_rare_pkmns 
@@ -1582,8 +1641,12 @@ class SCBitypeTier < SCTier
 		return res 
 	end 
 	
+  
+  def emergencyGeneration(team_filter)
+    return self.randTeamSpecies(@tier_args[0], @tier_args[1], team_filter, false, true)
+  end 
 	
-	
+  
 	def findTypes(party)
 		# Finds the double-type of this Bitype party. 
 		list_species = []
@@ -1702,6 +1765,48 @@ end
 
 
 # =============================================================================
+# SCRandomTier 
+# Special class for the Random tier. Chooses a list of Pokémons on 
+# initialisation.
+# =============================================================================
+class SCRandomTier < SCTier
+  
+  def initialize(dictionary)
+    # Should be a tier with stratums.
+    # dictionary["Name"] = "Random Tier"
+    # dictionary["ID"] = "RAND"
+    # dictionary["Category"] = "Random"
+    # dictionary["AllowSpecific"] = false 
+    
+    # Prepare strata
+    new_stratum = scsample([400, 450, 500, 550], 1)
+    stratum_range = 50
+    num_poke = 40 
+    
+    # Get the Pokémons by stat
+    list_poke = []
+    data = scLoadStatTotals
+    data.each_pair { |bs, pokes|
+      list_poke += pokes if bs >= new_stratum - stratum_range && bs <= new_stratum + stratum_range
+    }
+    
+    # Choose the Pokémons. 
+    if SCSwitch.get(:AllowLegendary)
+      dictionary["FrequentPokemons"] = dictionary["FrequentPokemons"] + dictionary["AllowedPokemons"]
+    end 
+    dictionary["AllowedPokemons"] = []
+    frequent_pkmns = scsample(list_poke & dictionary["FrequentPokemons"], num_poke)
+    dictionary["BannedPokemons"] += (dictionary["FrequentPokemons"] - frequent_pkmns)
+    dictionary["FrequentPokemons"] = frequent_pkmns
+    
+    super(dictionary)
+  end 
+end 
+
+
+
+
+# =============================================================================
 # Functions
 # =============================================================================
 
@@ -1709,6 +1814,8 @@ class PokemonTemp
   attr_accessor :current_tier
   attr_accessor :tier_gene_database
 end 
+
+
 
 
 def scGenerateTierAllDatabase(tierid)
@@ -1836,6 +1943,7 @@ end
 
 
 
+
 def scGenerateTierDatabase(tier, filter, tier_args)
   tierid = tier.id 
   
@@ -1896,6 +2004,8 @@ def scGenerateTierDatabase(tier, filter, tier_args)
 end 
 
 
+
+
 def scGetFromTierDatabase(tier, filter, tier_args)
   if tier.is_a?(String)
     tier = loadTierNoStorage(tier)
@@ -1936,14 +2046,15 @@ def loadTier(tierid)
 	# Loads the tier from the compiled file. 
 	# Stores a SCTier (or subclass) instance in PokémonTemp, and returns it. 
   
-  $PokemonTemp = PokemonTemp.new if !$PokemonTemp
+  $CastleHandler = SCCastleData.new if !$CastleHandler
   
-  if !$PokemonTemp.current_tier || $PokemonTemp.current_tier.id != tierid
-    $PokemonTemp.current_tier = loadTierNoStorage(tierid)
+  if !$CastleHandler.current_tier || $CastleHandler.current_tier.id != tierid
+    $CastleHandler.current_tier = loadTierNoStorage(tierid)
   end
   
-  return $PokemonTemp.current_tier
+  return $CastleHandler.current_tier
 end 
+
 
 
 
@@ -1974,6 +2085,9 @@ def loadTierNoStorage(tierid)
   if !tier_dict.key?(tierid)
     raise _INTL("{1} is not a tier!", tierid)
   end 
+  if tierid == "ALL"
+    raise _INTL("Cannot load ALL for other purposes than Random tier generation.")
+  end 
   
   case tierid
   when "MONO"
@@ -1982,6 +2096,8 @@ def loadTierNoStorage(tierid)
     tier = SCBitypeTier.new(tier_dict[tierid])
   when "OTF"
     tier = SCPersonalisedTier.new(tier_dict[tierid])
+  when "RAND"
+    tier = SCRandomTier.new(tier_dict[tierid])
   else 
     tier = SCTier.new(tier_dict[tierid])
   end 
@@ -1992,10 +2108,11 @@ end
 
 
 
-def trainerPartyIsValid
+def trainerPartyIsValid(tier = nil)
   # Checks if the party of the player is valid for the current tier.
-  return isValidForTier($Trainer.party, false, nil)
+  return isValidForTier($Trainer.party, false, tier)
 end 
+
 
 
 
@@ -2005,8 +2122,21 @@ end
 
 
 
+
+def trainerHasEmptyTeam
+  return !$Trainer.party || $Trainer.party.length == 0
+end 
+
+
+
+
 def isValidForTier(party, show_messages, tierid = nil)
 	# Checks if the given party is valid for the given tierid.
+  if trainerHasEmptyTeam
+    pbMessage("\\SC[Game]You don't have a team.")
+    return false 
+  end 
+  
   tierid = scGetTier() if !tierid
 	tier = loadTier(tierid)
 	
@@ -2014,16 +2144,17 @@ def isValidForTier(party, show_messages, tierid = nil)
 	
 	if show_messages
 		if res[0]
-			pbMessage("The team is valid.")
+			pbMessage("\\SC[Game]The team is valid.")
 		else
 			for explanation in res[1]
-				pbMessage(explanation)
+				pbMessage("\\SC[Game]" + explanation)
 			end 
 		end 
 	end 
 	
 	return res[0]
 end 
+
 
 
 
@@ -2046,10 +2177,6 @@ def partyListIsValidForTier(party_list, show_messages, tierid = nil)
 	
 	return res[0]
 end 
-
-
-
-
 
 
 

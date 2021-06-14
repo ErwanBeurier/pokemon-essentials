@@ -811,7 +811,7 @@ class PokeBattle_AI
     end   
     return false if !chosenmove
     target_i   = nil
-    target_eff = 0 
+    target_eff = 4 # Only use Z-move if it's better than not effective. 
     # Choose the target
     attacker.eachOpposing { |opp|
       temp_eff = chosenmove.pbCalcTypeMod(chosenmove.type,attacker,opp)        

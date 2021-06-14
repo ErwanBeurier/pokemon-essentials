@@ -16,14 +16,22 @@ class SCCastleData
 	attr_reader(:stats)
 	attr_reader(:totd_handler)
   attr_reader(:client_battles)
+  attr_accessor(:current_tier)
+  attr_accessor(:current_random_tier)
 	
 	def initialize
 		@storage = SCTeamStorage.new 
 		@stats = SCBattleStatistics.new
 		@totd_handler = SCTierOfTheDayHandler.new 
     @client_battles = SCClientBattlesGenerator.new
+    @current_tier = nil 
+    @current_random_tier = nil 
 	end 
-	
+  
+  
+	def reinitBattleGen
+    @client_battles = SCClientBattlesGenerator.new
+  end 
 end 
 
 

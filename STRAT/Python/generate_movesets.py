@@ -50,7 +50,7 @@ class SCUsefulMoves:
 		"GRASS": ["GRAVAPPLE", "POWERWHIP", "WOODHAMMER", "DRUMBEATING", "PETALBLIZZARD", "LEAFBLADE", "SEEDBOMB", "HORNLEECH"],
 		"GROUND": ["PRECIPICEBLADES", "THOUSANDARROWS", "EARTHQUAKE", "HIGHHORSEPOWER", "BONEMERANG", "BONERUSH", "LANDSWRATH"],
 		"ICE": ["GLACIALLANCE", "ICICLECRASH", "ICEHAMMER", "ICEPUNCH", "AVALANCHE", "ICICLESPEAR"],
-		"NORMAL": ["DOUBLEEDGE", "RETURN", "BODYSLAM", "FACADE"],
+		"NORMAL": ["CRUSHGRIP", "DOUBLEEDGE", "RETURN", "BODYSLAM", "FACADE"],
 		"POISON": ["GUNKSHOT", "POISONJAB"],
 		"PSYCHIC": ["ZENHEADBUTT", "PSYCHICFANGS", "PSYCHOCUT"],
 		"ROCK": ["DIAMONDSTORM", "PALEODRAIN", "HEADSMASH", "STONEEDGE", "ROCKSLIDE"],
@@ -62,7 +62,7 @@ class SCUsefulMoves:
 	SPECIAL = {
 		"BUG": ["BUGBUZZ", "POLLENPUFF", "SIGNALBEAM"],
 		"DARK": ["FIERYWRATH", "NIGHTDAZE", "DARKPULSE"],
-		"DRAGON": ["CLANGINGSCALES", "DYNAMAXCANNON", "SPACIALREND", "DRAKONVOICE", "ANCIENTROAR", "DEVOUR", "COREENFORCER", "DRAGONPULSE", "DRAGONENERGY", "DRACOMETEOR"],
+		"DRAGON": ["CLANGINGSCALES", "DYNAMAXCANNON", "SPACIALREND", "ROAROFTIME", "DRAKONVOICE", "ANCIENTROAR", "DEVOUR", "COREENFORCER", "DRAGONPULSE", "DRAGONENERGY", "DRACOMETEOR"],
 		"ELECTRIC": ["OVERDRIVE", "THUNDERCAGE", "THUNDERBOLT", "DISCHARGE", "PARABOLICCHARGE"],
 		"FAIRY": ["LIGHTOFRUIN", "STRANGESTEAM", "MOONBLAST", "DRAININGKISS", "DAZZLINGGLEAM", "SPIRITBREAK", "FLEURCANNON"],
 		"FIGHTING": ["SECRETSWORD", "AURASPHERE", "FOCUSBLAST"],
@@ -74,7 +74,7 @@ class SCUsefulMoves:
 		"ICE": ["FREEZESHOCK", "ICEBEAM", "FREEZEDRY", "BLIZZARD"],
 		"NORMAL": ["BOOMBURST", "JUDGMENT", "MULTIATTACK", "RELICSONG", "TRIATTACK", "HYPERVOICE"],
 		"POISON": ["SHELLSIDEARM", "SLUDGEWAVE", "SLUDGEBOMB", "CORRODE"],
-		"PSYCHIC": ["FREEZINGGLARE", "PHOTONGEYSER", "PSYCHOBOOST", "PSYSTRIKE", "PSYSHOCK", "PSYCHIC", "EXTRASENSORY"],
+		"PSYCHIC": ["FREEZINGGLARE", "PHOTONGEYSER", "PSYCHOBOOST", "HYPERSPACEHOLE", "PSYSTRIKE", "PSYSHOCK", "PSYCHIC", "EXTRASENSORY"],
 		"ROCK": ["POWERGEM", "METEORBEAM"],
 		"STEEL": ["FLEURCANNON", "STEELBEAM", "FLASHCANNON"],
 		"WATER": ["SURGINGSTRIKES", "STEAMERUPTION", "ORIGINPULSE", "SPARKLINGARIA", "WATERSHURIKEN", "HYDROPUMP", "SCALD", "SURF", "WATERSPOUT", "SNIPESHOT"]
@@ -173,7 +173,7 @@ class SCUsefulMoves:
 	PHYSICALMULTIHIT = {
 		"BUG": ["PINMISSILE"],
 		"DARK": [],
-		"DRAGON": [],
+		"DRAGON": ["SCALESHOT"],
 		"ELECTRIC": [],
 		"FAIRY": [],
 		"FIGHTING": [],
@@ -181,8 +181,8 @@ class SCUsefulMoves:
 		"FLYING": [],
 		"GHOST": [],
 		"GRASS": ["BULLETSEED"],
-		"GROUND": [],
-		"ICE": ["ICICLESPEAR"],
+		"GROUND": ["BONERUSH"],
+		"ICE": ["TRIPLEAXEL", "ICICLESPEAR"],
 		"NORMAL": ["TAILSLAP", "SPIKECANNON", "FURYSWIPES", "DOUBLESLAP", "FURYATTACK"],
 		"POISON": [],
 		"PSYCHIC": [],
@@ -310,9 +310,20 @@ class SCUsefulMoves:
 	def shouldCheckSTABs(move_specs):
 		# For Patterns, checks if the given move_specs is a dictionary type -> move list that should consider STABS. 
 		if isinstance(move_specs, dict):
-			return move_specs == SCUsefulMoves.PHYSICAL or move_specs == SCUsefulMoves.SPECIAL or move_specs == SCUsefulMoves.PHYSICALMULTIHIT
+			if move_specs == SCUsefulMoves.PHYSICAL:
+				return True 
+			elif move_specs == SCUsefulMoves.SPECIAL:
+				return True 
+			elif move_specs == SCUsefulMoves.PULSES:
+				return True 
+			elif move_specs == SCUsefulMoves.PHYSICALMULTIHIT:
+				return True 
+			elif "IS_ONE_MOVE" in move_specs.keys():
+				# Check if it's a one-move dictionary
+				return True
 		
 		return False 
+	
 	
 	
 	@staticmethod
@@ -364,6 +375,13 @@ class SCUsefulMoves:
 			"STEEL": [],
 			"WATER": []
 			}
+	
+	@staticmethod
+	def oneTypeHash(type, move_list):
+		h = SCUsefulMoves.newEmptyMoveSpecHash()
+		h[type] = move_list if isinstance(move_list, list) else [move_list]
+		h["IS_ONE_MOVE"] = True
+		return h
 
 	
 	
@@ -516,7 +534,10 @@ class SCPattern:
 		
 		# Specific moveset (cannot appear in Team that don't require this pattern specifically). 
 		self.is_specific = False
-	
+		
+		# Types given by SCUsefulMoves.PHYSICAL or SCUsefulMoves.SPECIAL, to avoid repeating 
+		# them with SCUsefulMoves.PHYSICALCOVERAGE and SCUsefulMoves.SPECIALCOVERAGE
+		self.move_types_given = []
 	
 	
 	def checkDoubleOffense(self):
@@ -646,6 +667,12 @@ class SCPattern:
 		f_moves = []
 		f_moves_types = [] 
 		
+		# Avoid Coverage repeating types already given by SCUsefulMoves.PHYSICAL or SCUsefulMoves.SPECIAL
+		is_main_useful_moves = (move_specs_hash == SCUsefulMoves.PHYSICAL or move_specs_hash == SCUsefulMoves.SPECIAL)
+		is_coverage_moves = (move_specs_hash == SCUsefulMoves.PHYSICALCOVERAGE or move_specs_hash == SCUsefulMoves.SPECIALCOVERAGE)
+		if is_main_useful_moves:
+			self.move_types_given = []
+		
 		# ORICORIO's special case:
 		revelation_dance = self.giveRevelationDance(pokemon) if move_specs_hash == SCUsefulMoves.SPECIAL else "" 
 		hidden_power_given = False 
@@ -655,6 +682,8 @@ class SCPattern:
 		
 		for tp in move_specs_hash.keys():
 			# Do not give normal type attacks to a Pokémon that's not Normal. 
+			if tp == "IS_ONE_MOVE":
+				continue
 			if tp == "NORMAL" and not tp in self.required_stabs:
 				continue 
 			# if tp in pokemon.types and len(self.required_stabs) == 0:
@@ -679,6 +708,10 @@ class SCPattern:
 				elif tp in self.type_stabs_given:
 					continue 
 			
+			# Then, avoid giving covergae moves for types that were already given.
+			if is_coverage_moves and tp in self.move_types_given:
+				continue
+			
 			# else: we are in one of those two cases: 
 			# Either tp is a STAB that was not given yet, in which case we will give a move of type tp 
 			# Or tp is not a STAB and the Pokémon already has STABs, in which case we just give moves. 
@@ -691,7 +724,6 @@ class SCPattern:
 				f_moves.append("REVELATIONDANCE")
 				f_moves_types.append(tp)
 				revelation_dance = "" 
-				
 			
 			# Increment by 1 everytime a move of type "tp" is learnable. 
 			for mv in move_specs_hash[tp]:
@@ -795,10 +827,14 @@ class SCPattern:
 						f_moves.append("HIDDENPOWER" + tp)
 						f_moves_types.append(tp)
 						hidden_power_given = True 
-		
+			
+			
 		if hidden_power_given:
 			# input()
 			self.hidden_power = []
+		
+		if is_main_useful_moves:
+			self.move_types_given = f_moves_types
 		
 		return f_moves, f_moves_types
 	
@@ -843,7 +879,7 @@ class SCPattern:
 	
 	def isValid(self, pokemon, check_stats = True):
 		# Checks if the pokemon has the right stats for the given Pattern.
-		# self.debug = self.name == "Welcome Bulky 1" and pokemon.name == "MAGCARGO"
+		# self.debug = self.name == "Skill Link Sweeper" and pokemon.name == "CLOYSTER"
 		
 		# Cheks if the Pokemon is made for using physical or special moves.
 		if self.is_for_physical_offensive and not self.is_for_special_offensive and pokemon.bs[4] > pokemon.bs[1] + 10:
@@ -873,7 +909,8 @@ class SCPattern:
 			return False
 		
 		# Check stats (speed requirements and then, stats for the pattern)
-		if pokemon.bs[3] > self.maximum_speed or self.minimum_speed > pokemon.bs[3]:
+		# if pokemon.bs[3] > self.maximum_speed or self.minimum_speed > pokemon.bs[3] :
+		if pokemon.bs[3] + (25 * (pokemon.evolution_stage_max - pokemon.evolution_stage)) > self.maximum_speed or self.minimum_speed > pokemon.bs[3] + (25 * (pokemon.evolution_stage_max - pokemon.evolution_stage)):
 			if self.debug:
 				input("isValid (step 6): not the right speed")
 			return False 
@@ -1317,22 +1354,6 @@ class SCSpecificPatterns:
 	ALL = []
 	
 	
-	#-----------------------------------
-	# Geomancer 
-	#-----------------------------------
-	
-	GEOMANCER = SCPattern(
-		"GEOMANCY",
-		SCUsefulMoves.SPECIAL,
-		SCUsefulMoves.SPECIAL,
-		"FS+S+SP+SC",
-		[SCStatPatterns.HP, SCStatPatterns.SPA])
-	GEOMANCER.ev = [252, 0, 0, 6, 252, 0]
-	GEOMANCER.nature = ["MODEST"]
-	GEOMANCER.items = ["POWERHERB"]
-	GEOMANCER.isSnotP()
-	GEOMANCER.name = "Geomancer"
-	ALL.append(GEOMANCER)
 	
 	
 	
@@ -1354,39 +1375,6 @@ class SCSpecificPatterns:
 	MEGALAUNCHER.name = "Mega-Launcher"
 	ALL.append(MEGALAUNCHER)
 	
-	
-	
-	#-----------------------------------
-	# Prankster
-	#-----------------------------------
-	
-	PRANKSTER = SCPattern(
-		SCUsefulMoves.SPECIAL,
-		"FSNH+S",
-		SCUsefulMoves.FULLSUPPORTNOHEALING + ["LIGHTSCREEN", "REFLECT"],
-		SCUsefulMoves.FULLSUPPORT + ["LIGHTSCREEN", "REFLECT"],
-		[SCStatPatterns.DEF, SCStatPatterns.SPA])
-	PRANKSTER.ev = [6,0,0,252,252,0]
-	PRANKSTER.nature = ["TIMID", "MODEST"]
-	PRANKSTER.items = ["LEFTOVERS", "LIFEORB"]
-	PRANKSTER.isSnotP()
-	PRANKSTER.ability = ["PRANKSTER"]
-	PRANKSTER.name = "Prankster (Spe)"
-	ALL.append(PRANKSTER)
-	
-	PRANKSTER2 = SCPattern(
-		SCUsefulMoves.PHYSICAL,
-		"FSNH+P",
-		SCUsefulMoves.FULLSUPPORTNOHEALING + ["LIGHTSCREEN", "REFLECT"],
-		SCUsefulMoves.FULLSUPPORT + ["LIGHTSCREEN", "REFLECT"],
-		[SCStatPatterns.DEF, SCStatPatterns.SPA])
-	PRANKSTER2.ev = [6,252,0,252,0,0]
-	PRANKSTER2.nature = ["JOLLY", "ADAMANT"]
-	PRANKSTER2.items = ["LEFTOVERS", "LIFEORB"]
-	PRANKSTER2.isPnotS()
-	PRANKSTER2.ability = ["PRANKSTER"]
-	PRANKSTER2.name = "Prankster (Phy)"
-	ALL.append(PRANKSTER2)
 	
 	
 	
@@ -1455,7 +1443,7 @@ class SCSpecificPatterns:
 		"MULTIATTACK",
 		SCUsefulMoves.PHYSICAL,
 		"P+FS",
-		[SCStatPatterns.HP]) # Stat patterns don't matter because it's only for Arceus.
+		[SCStatPatterns.HP]) # Stat patterns don't matter because it's only for Silvally.
 	RKSSYSTEM.ev = [[6,252,0,252,0,0], [240,252,0,16,0,0], [252,6,0,252,0,0], [6,252,0,252,0,0]]
 	RKSSYSTEM.nature = ["ADAMANT", "ADAMANT", "JOLLY", "JOLLY"]
 	RKSSYSTEM.items = ["FIGHTINGMEMORY", "FLYINGMEMORY", "POISONMEMORY", "GROUNDMEMORY", "ROCKMEMORY", "BUGMEMORY", "GHOSTMEMORY", "STEELMEMORY", "FIREMEMORY", "WATERMEMORY", "GRASSMEMORY", "ELECTRICMEMORY", "PSYCHICMEMORY", "ICEMEMORY", "DRAGONMEMORY", "DARKMEMORY", "FAIRYMEMORY"]
@@ -1465,42 +1453,6 @@ class SCSpecificPatterns:
 	RKSSYSTEM.setRole(SCPattern.OFFENSIVE, SCPattern.PHYSICAL)
 	RKSSYSTEM.name = "RKS System"
 	ALL.append(RKSSYSTEM)
-	
-	
-	
-	#-----------------------------------
-	# Skill link
-	#-----------------------------------
-	
-	# Skill link
-	SKILLLINK1 = SCPattern(
-		["COIL", "BULKUP", "SWORDSDANCE", "FELLSTINGER", "DRAGONDANCE", "SHELLSMASH"],
-		SCUsefulMoves.PHYSICALMULTIHIT,
-		SCUsefulMoves.PHYSICALMULTIHIT,
-		"P+PMH+FS+PP",
-		[SCStatPatterns.SPE, SCStatPatterns.ATK])
-	SKILLLINK1.ev = [6,252,0,252,0,0]
-	SKILLLINK1.nature = ["ADAMANT", "JOLLY"]
-	SKILLLINK1.items = ["LEFTOVERS", "LIFEORB", "MUSCLEBAND"]
-	SKILLLINK1.isPnotS()
-	SKILLLINK1.ability = ["SKILLLINK"]
-	SKILLLINK1.name = "Skill Link Set-Up"
-	ALL.append(SKILLLINK1)
-	
-	# Skill link
-	SKILLLINK2 = SCPattern(
-		SCUsefulMoves.PHYSICALMULTIHIT,
-		SCUsefulMoves.PHYSICALMULTIHIT,
-		"PMH+P",
-		"P+PMH+PP+V",
-		[SCStatPatterns.SPE, SCStatPatterns.ATK])
-	SKILLLINK2.ev = [6,252,0,252,0,0]
-	SKILLLINK2.nature = ["ADAMANT", "JOLLY"]
-	SKILLLINK2.items = ["CHOICEBAND", "LIFEORB", "MUSCLEBAND"]
-	SKILLLINK2.isPnotS()
-	SKILLLINK2.ability = ["SKILLLINK"]
-	SKILLLINK2.name = "Skill Link Sweeper"
-	ALL.append(SKILLLINK2)
 	
 	
 	
@@ -1599,16 +1551,98 @@ class SCAllPatterns:
 	# SPECIFICPATTERNS = [] # Priority patterns for Pokémons with special abilities or moves. 
 	
 	
+	#-----------------------------------
+	# Geomancer 
+	#-----------------------------------
+	
+	GEOMANCER = SCPattern(
+		"GEOMANCY",
+		SCUsefulMoves.SPECIAL,
+		SCUsefulMoves.SPECIAL,
+		"FS+S+SP",
+		[SCStatPatterns.HP, SCStatPatterns.SPA])
+	GEOMANCER.ev = [252, 0, 0, 6, 252, 0]
+	GEOMANCER.nature = ["MODEST"]
+	GEOMANCER.items = ["POWERHERB"]
+	GEOMANCER.isSnotP()
+	GEOMANCER.name = "Geomancer"
+	ALL.append(GEOMANCER)
+	
+	#-----------------------------------
+	# Prankster
+	#-----------------------------------
+	
+	PRANKSTER = SCPattern(
+		SCUsefulMoves.SPECIAL,
+		"FSNH+S",
+		SCUsefulMoves.FULLSUPPORTNOHEALING + ["LIGHTSCREEN", "REFLECT"],
+		SCUsefulMoves.FULLSUPPORT + ["LIGHTSCREEN", "REFLECT"],
+		[SCStatPatterns.DEF, SCStatPatterns.SPA])
+	PRANKSTER.ev = [6,0,0,252,252,0]
+	PRANKSTER.nature = ["TIMID", "MODEST"]
+	PRANKSTER.items = ["LEFTOVERS", "LIFEORB"]
+	PRANKSTER.isSnotP()
+	PRANKSTER.ability = ["PRANKSTER"]
+	PRANKSTER.name = "Prankster (Spe)"
+	ALL.append(PRANKSTER)
+	
+	PRANKSTER2 = SCPattern(
+		SCUsefulMoves.PHYSICAL,
+		"FSNH+P",
+		SCUsefulMoves.FULLSUPPORTNOHEALING + ["LIGHTSCREEN", "REFLECT"],
+		SCUsefulMoves.FULLSUPPORT + ["LIGHTSCREEN", "REFLECT"],
+		[SCStatPatterns.DEF, SCStatPatterns.SPA])
+	PRANKSTER2.ev = [6,252,0,252,0,0]
+	PRANKSTER2.nature = ["JOLLY", "ADAMANT"]
+	PRANKSTER2.items = ["LEFTOVERS", "LIFEORB"]
+	PRANKSTER2.isPnotS()
+	PRANKSTER2.ability = ["PRANKSTER"]
+	PRANKSTER2.name = "Prankster (Phy)"
+	ALL.append(PRANKSTER2)
+
+	#-----------------------------------
+	# Skill link
+	#-----------------------------------
+	
+	# Skill link
+	SKILLLINK1 = SCPattern(
+		["COIL", "BULKUP", "SWORDSDANCE", "FELLSTINGER", "DRAGONDANCE", "SHELLSMASH"],
+		SCUsefulMoves.PHYSICALMULTIHIT,
+		"PMH+P",
+		"P+PMH+FS+PP",
+		[SCStatPatterns.SPE, SCStatPatterns.ATK])
+	SKILLLINK1.ev = [6,252,0,252,0,0]
+	SKILLLINK1.nature = ["ADAMANT", "JOLLY"]
+	SKILLLINK1.items = ["LEFTOVERS", "LIFEORB", "MUSCLEBAND"]
+	SKILLLINK1.isPnotS()
+	SKILLLINK1.ability = ["SKILLLINK"]
+	SKILLLINK1.name = "Skill Link Set-Up"
+	ALL.append(SKILLLINK1)
+	
+	# Skill link
+	SKILLLINK2 = SCPattern(
+		SCUsefulMoves.PHYSICALMULTIHIT,
+		"PMH+P",
+		"PMH+P",
+		"P+PMH+PP+V",
+		[SCStatPatterns.SPE, SCStatPatterns.ATK])
+	SKILLLINK2.ev = [6,252,0,252,0,0]
+	SKILLLINK2.nature = ["ADAMANT", "JOLLY"]
+	SKILLLINK2.items = ["CHOICEBAND", "LIFEORB", "MUSCLEBAND"]
+	SKILLLINK2.isPnotS()
+	SKILLLINK2.ability = ["SKILLLINK"]
+	SKILLLINK2.name = "Skill Link Sweeper"
+	ALL.append(SKILLLINK2)
 	
 	#-----------------------------------
 	# Stored power for the lol 
 	#-----------------------------------
 	
 	COSMICPOWER = SCPattern(
-		"STOREDPOWER",
-		["BODYPRESS", "CALMMIND", "KINDLING"],
+		SCUsefulMoves.oneTypeHash("PSYCHIC", "STOREDPOWER"),
+		["BODYPRESS", "CALMMIND", "KINDLING", "NASTYPLOT", "QUIVERDANCE", "AMNESIA"],
 		["COSMICPOWER", "DEFENDORDER", "STOCKPILE", "IRONDEFENSE"],
-		SCUsefulMoves.HEALING,
+		"S+H+ST",
 		[SCStatPatterns.HP, SCStatPatterns.DEF, SCStatPatterns.SPD])
 	COSMICPOWER.ev = [[252, 0, 0, 252, 6, 0],[252, 0, 252, 0, 6, 0],[252, 0, 0, 0, 6, 252]]
 	COSMICPOWER.nature = ["TIMID", "BOLD", "CALM"]
@@ -1617,7 +1651,7 @@ class SCAllPatterns:
 	COSMICPOWER.allow_sc_crystals = False 
 	COSMICPOWER.for_type = "PSYCHIC"
 	COSMICPOWER.name = "Stored Power"
-	COSMICPOWER.isPnotS()
+	COSMICPOWER.isSnotP()
 	COSMICPOWER.setRole(SCPattern.OFFENSIVE, SCPattern.SPECIAL)
 	ALL.append(COSMICPOWER)
 	
@@ -2828,7 +2862,7 @@ class SCAllPatterns:
 	ALL.append(ZANCIENTPOWERPHY)
 	
 	ZPALEODRAINPHY = ZCELEBRATEPHY.clone(None, None, "Z-Paleo Drain")
-	ZPALEODRAINPHY.move_specs[0] = "PALEODRAIN"
+	ZPALEODRAINPHY.move_specs[0] = SCUsefulMoves.oneTypeHash("ROCK", "PALEODRAIN")
 	ZPALEODRAINPHY.items = ["FOSSILIUMZ"]
 	ZPALEODRAINPHY.for_pokemons = ["KABUTO", "KABUTOPS"]
 	ZPALEODRAINPHY.forced_move_probably_stab = 0
@@ -3952,7 +3986,7 @@ if __name__ == "__main__":
 	main_generate_movesets(pku.POKEMONS, pku.ALL_FORMS)
 	main_generate_sc_tiers()
 	# main_generate_new_sc_tiers() # I don't want OTF. 
-	main_generate_random_tiers() 
+	main_generate_random_tiers()
 	main_generate_micro_tiers()
 	main_generate_trainers(pku.POKEMONS, pku.ALL_FORMS)
 	main_generate_pattern_list()

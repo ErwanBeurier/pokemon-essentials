@@ -1,8 +1,18 @@
-# Tests for Pokémon STRAT
+###############################################################################
+# SCBattleScript
+# 
+# This script is part of Pokémon Project STRAT by StCooler, and is therefore 
+# not part of Pokémon Essentials. 
+# 
+# This script defines constants that are used to tell a story in the middle of 
+# the battle.
+###############################################################################
 
 
-# Arguments des Proc: 
 
+###############################################################################
+# Arguments of Proc : 
+# -----------------------------------------------------------------------------
 # lowHP / halfHP / smlDamage / bigDamage
 #   Proc { |battle, args| WITH args = [move, target] } 
 #       move is nil in pbReduceHP, because it's HP reduction without moves. 
@@ -191,14 +201,15 @@ module DialogueModule
           battle.battleAI.commandOppIndex = 3
           SCVar.set(:GeneralTemp, 3)
           DialogueModule.scDisplayMessage(battle, 0, 
-            "\\SC[Rachel]Oh, you don't! Switch to a Pokémon with the Soul-Link!",
+            "\\SC[Rachel]Oh, your current Pokémon doesn't have the Soul-Link!",
+            "\\SC[Rachel]Ninetales had the Soul-Link! Switch it in!",
             "\\SC[Rachel]I will skip my turn."
             )
         else 
           battle.battleAI.commandIndex = 4
           SCVar.set(:GeneralTemp, 4)
           DialogueModule.scDisplayMessage(battle, 0, 
-            "\\SC[Rachel]Oh, you do!",
+            "\\SC[Rachel]Oh, your current Pokémon does have the Soul-Link!",
             "\\SC[Rachel]Now press the Z button to trigger the Assistance!"
             )
         end 
@@ -316,15 +327,15 @@ module DialogueModule
         if battle.decision == 5
           # Draw (prematurely stopped)
           DialogueModule.scDisplayMessage(battle, 0, 
-            "Ok, I have some work today.",
-            "So do you, boss!"
+            "\\SC[Rachel]Ok, I have some work today.",
+            "\\SC[Rachel]So do you, boss!"
           )
         else 
           # Loss
           DialogueModule.scDisplayMessage(battle, 0, 
-            "Admit it, you let me win!",
-            "Ok, I have some work today.",
-            "So do you, boss!"
+            "\\SC[Rachel]Admit it, you let me win!",
+            "\\SC[Rachel]Ok, I have some work today.",
+            "\\SC[Rachel]So do you, boss!"
           )
         end 
       })

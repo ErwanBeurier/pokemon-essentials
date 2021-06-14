@@ -178,7 +178,7 @@
 #                             Settings            
 #===============================================================================
 
-OVERWORLD_ENCOUNTER_VARIABLE = 26 # default is an ID which is not used anywhere else
+OVERWORLD_ENCOUNTER_VARIABLE = 75 # default is an ID which is not used anywhere else
 # This parameter stores the ID of the $game_variable which holds the propability
 # of normal to overworld encountering.
 # Make sure that no other script uses the $game_variable with this ID,
@@ -257,7 +257,7 @@ ENCMOVEFREQ = 3 # default 3
 #1   - means lowest movement
 #6   - means highest movement
 
-AGGRESSIVEENCOUNTERPROBABILITY = 20 # default 20 
+AGGRESSIVEENCOUNTERPROBABILITY = 0 # default 20 
 #this is the probability in percent of spawning of an agressive encounter
 #0   - means that there are no aggressive encounters
 #100 - means that all encounter are aggressive
@@ -404,7 +404,7 @@ def pbChooseEncounter(x,y,repel=false)
   # trigger event on spawning of pokemon
   Events.onWildPokemonCreateForSpawning.trigger(nil,pokemon)
   $PokemonGlobal.creatingSpawningPokemon = false
-  encounter = [pokemon.species,pokemon.level]
+  encounter = [pokemon.fSpecies,pokemon.level]
   gender = pokemon.gender if USEFEMALESPRITES==true
   form = pokemon.form if USEALTFORMS == true  
   form = 0 if USEALTFORMS == true and form==nil
@@ -492,27 +492,32 @@ class Game_Map
     event.id = key_id
     event.x = x
     event.y = y
-    #event.pages[0].graphic.tile_id = 0
-    if encounter[0] < 10
-      character_name = "00"+encounter[0].to_s
-    elsif encounter[0] < 100
-      character_name = "0"+encounter[0].to_s
-    else
-      character_name = encounter[0].to_s
-    end
-    # use sprite of female pokemon
-    character_name = character_name+"f" if USEFEMALESPRITES == true and gender==1 and pbResolveBitmap("Graphics/Characters/"+character_name+"f")
-    # use shiny-sprite if probability & killcombo is high or shiny-switch is on
-    shinysprite = nil
-    if isShiny==true
-      character_name = character_name+"s" if USESHINYSPRITES == true and pbResolveBitmap("Graphics/Characters/"+character_name+"s")
-      shinysprite = true
-    end
-    # use sprite of alternative form
-    if USEALTFORMS==true and form!=nil and form!=0
-      character_name = character_name+"_"+form.to_s if pbResolveBitmap("Graphics/Characters/"+character_name+"_"+form.to_s)
-    end
-    event.pages[0].graphic.character_name = character_name
+    # #event.pages[0].graphic.tile_id = 0
+    # if encounter[0] < 10
+      # character_name = "00"+encounter[0].to_s
+    # elsif encounter[0] < 100
+      # character_name = "0"+encounter[0].to_s
+    # else
+      # character_name = encounter[0].to_s
+    # end
+    # # use sprite of female pokemon
+    # character_name = character_name+"f" if USEFEMALESPRITES == true and gender==1 and pbResolveBitmap("Graphics/Characters/"+character_name+"f")
+    # # use shiny-sprite if probability & killcombo is high or shiny-switch is on
+    # shinysprite = nil
+    # if isShiny==true
+      # character_name = character_name+"s" if USESHINYSPRITES == true and pbResolveBitmap("Graphics/Characters/"+character_name+"s")
+      # shinysprite = true
+    # end
+    # # use sprite of alternative form
+    # if USEALTFORMS==true and form!=nil and form!=0
+      # character_name = character_name+"_"+form.to_s if pbResolveBitmap("Graphics/Characters/"+character_name+"_"+form.to_s)
+    # end
+    # event.pages[0].graphic.character_name = character_name
+    species, form2 = pbGetSpeciesFromFSpecies(encounter[0])
+    form2 = form if form 
+    isFemale = false if !gender || gender != 1
+    isShiny = false if !isShiny
+    event.pages[0].graphic.character_name = pbCheckPokemonOverworldFiles([species, isFemale, isShiny,form2,false])
     # we configure the movement of the overworld encounter
     if rand(100) < AGGRESSIVEENCOUNTERPROBABILITY
       event.pages[0].move_type = 3
@@ -527,8 +532,12 @@ class Game_Map
     end
     event.pages[0].step_anime = true if USESTOPANIMATION
     event.pages[0].trigger = 2
-    #------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # we add the event commands to the event of the overworld encounter
+    # STRAT ADDITION: 
+    # Do not trigger battles. Just play the cry. 
+    # pbPushScript(event.pages[0].list,_INTL("pbPlayCryOnOverworld({1})", encounter[0]))
+    
     # set roamer
     if $PokemonGlobal.roamEncounter!=nil
       #[i,species,poke[1],poke[4]]

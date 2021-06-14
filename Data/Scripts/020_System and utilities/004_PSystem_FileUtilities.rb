@@ -218,6 +218,67 @@ end
 
 
 #===============================================================================
+# Load Pokémon Overworlds
+#===============================================================================
+
+def pbPokemonOverworldFile(pokemon)
+  return pbCheckPokemonOverworldFiles([pokemon.species,pokemon.female?,
+     pokemon.shiny?,(pokemon.form rescue 0),pokemon.shadowPokemon?],
+     pokemon.egg?)
+end
+
+
+
+def pbCheckPokemonOverworldFilesG(params,egg=false)
+  return "Graphics/Characters/" + pbCheckPokemonOverworldFiles(params,egg)
+end 
+
+
+
+def pbCheckPokemonOverworldFiles(params,egg=false)
+  factors = []
+  factors.push([4,params[4],false]) if params[4] && params[4]!=false   # shadow
+  factors.push([1,params[1],false]) if params[1] && params[1]!=false  # gender
+  factors.push([2,params[2],false]) if params[2] && params[2]!=false   # shiny
+  factors.push([3,params[3],0]) if params[3] && params[3]!=0           # form
+  factors.push([0,params[0],0])                                        # species
+  trySpecies = 0
+  tryGender = false
+  tryShiny  = false
+  tryForm   = 0
+  tryShadow = false
+  for i in 0...2**factors.length
+    factors.each_with_index do |factor,index|
+      newVal = ((i/(2**index))%2==0) ? factor[1] : factor[2]
+      case factor[0]
+      when 0; trySpecies = newVal
+      when 1; tryGender  = newVal
+      when 2; tryShiny   = newVal
+      when 3; tryForm    = newVal
+      when 4; tryShadow  = newVal
+      end
+    end
+    ret = ""
+    for j in 0...2   # Try using the species' internal name and then its ID number
+      next if trySpecies==0 && j==0
+      trySpeciesText = (j==0) ? getConstantName(PBSpecies,trySpecies) : sprintf("%03d",trySpecies)
+      bitmapFileName = sprintf("%s%s%s%s%s",
+         trySpeciesText,
+         (tryGender) ? "f" : "",
+         (tryShiny) ? "s" : "",
+         (tryForm!=0) ? "_"+tryForm.to_s : "",
+         (tryShadow) ? "_shadow" : "") rescue nil
+      # scMessage("bitmap={1}", bitmapFileName)
+      return bitmapFileName if pbResolveBitmap("Graphics/Characters/"+bitmapFileName)
+      return "Following/" + bitmapFileName if pbResolveBitmap("Graphics/Characters/Following/"+bitmapFileName)
+    end
+  end 
+  return nil 
+end 
+
+
+
+#===============================================================================
 # Load Pokémon footprint graphics
 #===============================================================================
 def pbPokemonFootprintFile(pokemon,form=0)   # Used by the Pokédex

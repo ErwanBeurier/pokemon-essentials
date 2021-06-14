@@ -72,7 +72,7 @@ class PokeBattle_AI
           badMoves = false
           break
         end
-        badMoves = false if badMoves && pbAIRandom(100)<10
+        badMoves = false if badMoves && pbAIRandom(100)<80
       end
       if badMoves && pbEnemyShouldWithdrawEx?(idxBattler,true)
         if $INTERNAL
@@ -204,14 +204,14 @@ class PokeBattle_AI
       if user.status==PBStatuses::SLEEP && !move.usableWhenAsleep?
         user.eachMove do |m|
           next unless m.usableWhenAsleep?
-          score -= 60
+          score -= 100
           break
         end
       end
       # If user is frozen, prefer a move that can thaw the user
       if user.status==PBStatuses::FROZEN
         if move.thawsUser?
-          score += 40
+          score += 100
         else
           user.eachMove do |m|
             next unless m.thawsUser?
@@ -284,9 +284,10 @@ class PokeBattle_AI
 #    damagePercentage /= 2 if damagePercentage<20
     # Prefer damaging attack if level difference is significantly high
     damagePercentage *= 1.2 if user.level-10>target.level
+                                                         
     # Adjust score
     damagePercentage = 120 if damagePercentage>120   # Treat all lethal moves the same
-    damagePercentage += 40 if damagePercentage>100   # Prefer moves likely to be lethal
+    damagePercentage += 100 if damagePercentage>100   # Prefer moves likely to be lethal
     score += damagePercentage.to_i
     return score
   end

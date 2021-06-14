@@ -1138,17 +1138,22 @@ class PokemonPartyScreen
       cmdSwitch  = -1
       cmdMail    = -1
       cmdItem    = -1
+      flying_given = false 
       # Build the commands
       commands[cmdSummary = commands.length]      = _INTL("Summary")
       commands[cmdDebug = commands.length]        = _INTL("Debug") if $DEBUG
       for i in 0...pkmn.moves.length
         move = pkmn.moves[i]
         # Check for hidden moves and add any that were found
-        if !pkmn.egg? && (isConst?(move.id,PBMoves,:MILKDRINK) ||
+        # STRAT: Always allow Fly on the Flying Pokémon.
+        if SCStoryPokemon.pkmnIs(:Flying, pkmn) && flying_given
+          flying_given = true 
+          commands[cmdMoves[i] = commands.length] = ["Fly",1]
+        elsif !pkmn.egg? && (isConst?(move.id,PBMoves,:MILKDRINK) ||
                           isConst?(move.id,PBMoves,:SOFTBOILED) ||
                           HiddenMoveHandlers.hasHandler(move.id))
           commands[cmdMoves[i] = commands.length] = [PBMoves.getName(move.id),1]
-        end
+        end 
       end
       commands[cmdSwitch = commands.length]       = _INTL("Switch") if @party.length>1
       if !pkmn.egg?
@@ -1195,6 +1200,10 @@ class PokemonPartyScreen
             end
             @scene.pbSelect(oldpkmnid)
             pbRefresh
+            break
+          # STRAT 
+          elsif SCStoryPokemon.pkmnIs(:Flying, pkmn)
+            SCStoryPokemon.fly(:AlreadyInParty, nil)
             break
           elsif pbCanUseHiddenMove?(pkmn,pkmn.moves[i].id)
             if pbConfirmUseHiddenMove(pkmn,pkmn.moves[i].id)

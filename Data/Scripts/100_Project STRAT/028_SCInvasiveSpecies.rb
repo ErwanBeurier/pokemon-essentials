@@ -331,18 +331,19 @@ end
 class SOSAdjustAnimation < PokeBattle_Animation
   include PokeBattle_BallAnimationMixin
  
-  def initialize(sprites,viewport,idxTrainer,battler)
+  def initialize(sprites,viewport,idxTrainer,battler, old_size = nil)
     @idxTrainer     = idxTrainer
     @battler        = battler
     @shadowVisible = sprites["shadow_#{battler.index}"].visible
+    @old_size = old_size
     super(sprites,viewport)
   end
  
   def createProcesses
     batSprite = @sprites["pokemon_#{@battler.index}"]
     shaSprite = @sprites["shadow_#{@battler.index}"]
-    batSprite.sideSize=@battler.battle.pbSideSize(@battler.index)
-    shaSprite.sideSize=@battler.battle.pbSideSize(@battler.index)
+    batSprite.sideSize=(@old_size ? @old_size : @battler.battle.pbSideSize(@battler.index))
+    shaSprite.sideSize=(@old_size ? @old_size : @battler.battle.pbSideSize(@battler.index))
     batSprite.pbSetPosition
     shaSprite.pbSetPosition if @shadowVisible
     battler = addSprite(batSprite,PictureOrigin::Bottom)

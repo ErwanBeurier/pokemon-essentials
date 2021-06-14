@@ -158,6 +158,7 @@ module SCTB
   end 
   
   
+  
   def self.filterSpeciesByTypeMoveRole(tier, type, move, role)
 		all_species = tier.alphabeticSpecies()
 		# pbMessage(_INTL("length: {1}", all_species.keys.length))
@@ -533,7 +534,7 @@ module SCTB
 			sc_normal_type_items_cmds.push("#{PBItems.getName(i)}")
 			sc_normal_type_items_desc.push(pbGetMessage(MessageTypes::ItemDescriptions,i))
 		end 
-		for i in zcrystals_cmds
+		for i in zcrystals
 			zcrystals_cmds.push("#{PBItems.getName(i)}")
 			zcrystals_desc.push(pbGetMessage(MessageTypes::ItemDescriptions,i))
 		end 
@@ -1098,7 +1099,7 @@ class SCTeamViewer
 		team_index = @index_upper + @index
 		
 		if scTeamStorage.isEmptyTeam?(team_index)
-			options = ["New", "Random", "Import current", "Cancel"]
+			options = ["New", "Randomly generate", "Import current", "Cancel"]
 			res = pbMessage("Do what?", options, -1)
 			
 			tier_choice = scGetTier()
@@ -1167,6 +1168,14 @@ class SCTeamViewer
 						
 						if keep_team == 0 
 							pbMessage("Generated team for tier " + tier_choice + "!")
+              ans = pbMessage("Load team?", ["Yes", "No", "Modify"])
+							if ans == 0
+                scene = SCTeamBuilder.new(false, scTeamStorage.partyAt(team_index), scTeamStorage.tierAt(team_index))
+                scene.create_team(scTeamStorage.partyAt(team_index))
+              elsif ans == 1
+                scene = SCTeamBuilder.new(false, scTeamStorage.partyAt(team_index), scTeamStorage.tierAt(team_index))
+                scene.main
+              end 
 							break
             # elsif keep_team == 1
               # Generate again. 
@@ -1822,9 +1831,14 @@ class SCTeamBuilder
 	
 	def do_command
 		if @index >= 0 and @index < 6
-			scene = SCWantedDataComplete.new(@party[@index], @tier)
-			@party[@index] = scene.main 
-		
+      loop do 
+        scene = SCWantedDataComplete.new(@party[@index], @tier)
+        @party[@index], next_index = scene.main 
+        break if !next_index
+        @index += next_index
+        @index = 5 if @index < 0
+        @index = 0 if @index > 5
+      end 
 		elsif @index == 6 
 			@valid = partyListIsValidForTier(@party, true, @tier)
 			
@@ -1846,8 +1860,6 @@ class SCTeamBuilder
 				end 
 			end 
 			
-			# create_team(@party)
-			
 			@exit = canDo 
 			
 		end 
@@ -1860,99 +1872,24 @@ class SCTeamBuilder
 	def create_team(party = nil)
 		# Gives this team to the Player.
     
-		party = @party if party == nil 
-		
-		new_team = [] 
-		for pkmn in party
-			next if !pkmn[0]
-      # Form is handled at the creation of the Pokémon. 
-      # base_species = pkmn[SCMovesetsData::BASESPECIES] != nil ? pkmn[SCMovesetsData::BASESPECIES] : pkmn[SCMovesetsData::SPECIES]
-      form = pkmn[SCMovesetsData::FORM]
-      if pkmn[SCMovesetsData::BASEFORM] && pkmn[SCMovesetsData::BASEFORM] != pkmn[SCMovesetsData::FORM]
-        form = pkmn[SCMovesetsData::BASEFORM] 
-      end 
-      form = (form ? form : 0)
-      # scMessage("species = {2}, form = {1}", form, pkmn[SCMovesetsData::BASESPECIES])
-      base_species = pbGetFSpeciesFromForm(pkmn[SCMovesetsData::BASESPECIES], form)
-			pokemon = PokeBattle_Pokemon.new(base_species,pkmn[SCMovesetsData::LEVEL], $Trainer)
-			
-			# Give gender; 0 if male and 1 if female 
-			if pkmn[SCMovesetsData::GENDER]
-				pokemon.setGender(pkmn[SCMovesetsData::GENDER])
-			end 
-			
-			# Give ability 
-			if pkmn[SCMovesetsData::ABILITYINDEX]
-				pokemon.setAbility(pkmn[SCMovesetsData::ABILITYINDEX])
-			end 
-			
-			# Give item 
-			if pkmn[SCMovesetsData::ITEM]
-				pokemon.item = pkmn[SCMovesetsData::ITEM]
-			end 
-			
-			# Give nature 
-			if pkmn[SCMovesetsData::NATURE]
-				pokemon.setNature(pkmn[SCMovesetsData::NATURE])
-			end 
-			
-			# Give nickname 
-			if pkmn[SCMovesetsData::NICKNAME] && pkmn[SCMovesetsData::NICKNAME] != ""
-				pokemon.name = pkmn[SCMovesetsData::NICKNAME]
-			end 
-			
-			for i in 0...6
-				pokemon.iv[i] = pkmn[SCMovesetsData::IV][i]
-				pokemon.ev[i] = pkmn[SCMovesetsData::EV][i]
-			end 
-			
-			# Check if it has moves. If not, then the moves will be given by the level. 
-			for i in 0...4
-				if pkmn[SCMovesetsData::MOVE1 + i]
-					pokemon.moves[i] = PBMove.new(pkmn[SCMovesetsData::MOVE1 + i])
-				end 
-			end 
-			
-			# Shiny 
-			if pkmn[SCMovesetsData::SHINY] == true
-				pokemon.makeShiny 
-			end 
-        
-      # Dynamax stuff
-      pokemon.setDynamaxLvl(pkmn[SCMovesetsData::DYNAMAXLEVEL] || 10)
-      
-      if (pkmn[SCMovesetsData::GMAXFACTOR] || pkmn[SCMovesetsData::GMAXFACTOR].nil?) && pokemon.hasGmax?
-        pokemon.giveGMaxFactor 
-      else 
-        pokemon.removeGMaxFactor 
-      end 
-      
-      # Give other details no one cares about.
-      pokemon.ballused = pkmn[SCMovesetsData::BALL] if pkmn[SCMovesetsData::BALL]
-      pokemon.happiness = (pkmn[SCMovesetsData::HAPPINESS] ? pkmn[SCMovesetsData::HAPPINESS] : 255)
-      
-			pokemon.calcStats 
-			
-			new_team.push(pokemon)
-		end 
+		party = @party if !party
 		
 		
-		
-		# Store the current team in the PC.
-		for pk in 0...$Trainer.party.length
-			if new_team.length > pk and @original_party_species[pk] != new_team[pk].species 
-				if pbBoxesFull?
-					pbMessage(_INTL("Boxes are full."))
-					pbMessage(_INTL("Adding a new box."))
-					$PokemonStorage.addBox
-				end 
-				pbStorePokemon($Trainer.party[pk])
-			end 
-		end 
+		# # Store the current team in the PC.
+		# for pk in 0...$Trainer.party.length
+			# if new_team.length > pk and @original_party_species[pk] != new_team[pk].species 
+				# if pbBoxesFull?
+					# pbMessage(_INTL("Boxes are full."))
+					# pbMessage(_INTL("Adding a new box."))
+					# $PokemonStorage.addBox
+				# end 
+				# pbStorePokemon($Trainer.party[pk])
+			# end 
+		# end 
 		
 		
 		# And replace the team with the new one:
-		$Trainer.party = new_team
+		$Trainer.party = scConvertListToParty(party, nil)
 		
     # Store the tier of the team, just to warn the player in case they fight in another tier.
     scSetTierOfTeam(@tier)
@@ -2047,6 +1984,88 @@ end
 
 
 
+def scConvertListToParty(party, trainer = nil)
+  new_team = [] 
+  
+  for pkmn in party
+    next if !pkmn[0]
+    # Form is handled at the creation of the Pokémon. 
+    # base_species = pkmn[SCMovesetsData::BASESPECIES] != nil ? pkmn[SCMovesetsData::BASESPECIES] : pkmn[SCMovesetsData::SPECIES]
+    form = pkmn[SCMovesetsData::FORM]
+    if pkmn[SCMovesetsData::BASEFORM] && pkmn[SCMovesetsData::BASEFORM] != pkmn[SCMovesetsData::FORM]
+      form = pkmn[SCMovesetsData::BASEFORM] 
+    end 
+    form = (form ? form : 0)
+    # scMessage("species = {2}, form = {1}", form, pkmn[SCMovesetsData::BASESPECIES])
+    base_species = pbGetFSpeciesFromForm(pkmn[SCMovesetsData::BASESPECIES], form)
+    pokemon = PokeBattle_Pokemon.new(base_species,pkmn[SCMovesetsData::LEVEL], (trainer ? trainer : $Trainer))
+    
+    # Give gender; 0 if male and 1 if female 
+    if pkmn[SCMovesetsData::GENDER]
+      pokemon.setGender(pkmn[SCMovesetsData::GENDER])
+    end 
+    
+    # Give ability 
+    if pkmn[SCMovesetsData::ABILITYINDEX]
+      pokemon.setAbility(pkmn[SCMovesetsData::ABILITYINDEX])
+    end 
+    
+    # Give item 
+    if pkmn[SCMovesetsData::ITEM]
+      pokemon.item = pkmn[SCMovesetsData::ITEM]
+    end 
+    
+    # Give nature 
+    if pkmn[SCMovesetsData::NATURE]
+      pokemon.setNature(pkmn[SCMovesetsData::NATURE])
+    end 
+    
+    # Give nickname 
+    if pkmn[SCMovesetsData::NICKNAME] && pkmn[SCMovesetsData::NICKNAME] != ""
+      pokemon.name = pkmn[SCMovesetsData::NICKNAME]
+    end 
+    
+    for i in 0...6
+      pokemon.iv[i] = pkmn[SCMovesetsData::IV][i]
+      pokemon.ev[i] = pkmn[SCMovesetsData::EV][i]
+    end 
+    
+    # Check if it has moves. If not, then the moves will be given by the level. 
+    for i in 0...4
+      if pkmn[SCMovesetsData::MOVE1 + i]
+        pokemon.moves[i] = PBMove.new(pkmn[SCMovesetsData::MOVE1 + i])
+      end 
+    end 
+    
+    # Shiny 
+    if pkmn[SCMovesetsData::SHINY] == true
+      pokemon.makeShiny 
+    end 
+      
+    # Dynamax stuff
+    pokemon.setDynamaxLvl(pkmn[SCMovesetsData::DYNAMAXLEVEL] || 10)
+    
+    if (pkmn[SCMovesetsData::GMAXFACTOR] || pkmn[SCMovesetsData::GMAXFACTOR].nil?) && pokemon.hasGmax?
+      pokemon.giveGMaxFactor 
+    else 
+      pokemon.removeGMaxFactor 
+    end 
+    
+    # Give other details no one cares about.
+    pokemon.ballused = pkmn[SCMovesetsData::BALL] if pkmn[SCMovesetsData::BALL]
+    pokemon.happiness = (pkmn[SCMovesetsData::HAPPINESS] ? pkmn[SCMovesetsData::HAPPINESS] : 255)
+    
+    pokemon.calcStats 
+    
+    new_team.push(pokemon)
+  end 
+  
+  return new_team
+end 
+
+
+
+
 
 ###############################################################################
 # SCWantedDataComplete
@@ -2077,6 +2096,7 @@ class SCWantedDataComplete
     @old_filter_by_move = nil
     @typeBitmap = AnimatedBitmap.new(_INTL("Graphics/Pictures/types"))
     @dict_of_species = {} 
+    @next_pkmn_index = nil 
     
 		resetMoves
 	end
@@ -2649,7 +2669,7 @@ class SCWantedDataComplete
 		#Graphics.freeze
 		pbDisposeSpriteHash(@sprites)
 		Graphics.transition
-		return @wanted_data 
+		return @wanted_data, @next_pkmn_index
 	end
 	
 	
@@ -2685,7 +2705,12 @@ class SCWantedDataComplete
 		end
 		
 		if Input.trigger?(Input::RIGHT)
-			@column = 1 - @column
+      if @index == 0 
+        @exit = true
+        @next_pkmn_index = 1
+      else 
+        @column = 1 - @column
+      end 
 			# if @column == 2
 				# @column = 0
 				# self.showBaseStats
@@ -2693,7 +2718,12 @@ class SCWantedDataComplete
 		end 
 		
 		if Input.trigger?(Input::LEFT)
-			@column = 1 - @column
+      if @index == 0 
+        @exit = true
+        @next_pkmn_index = -1
+      else 
+        @column = 1 - @column
+      end 
 			# if @column == -1
 				# @column = 1
 				# self.showBaseStats
@@ -2773,6 +2803,8 @@ class SCWantedDataComplete
         # Choose Pokemons by letter. 
         updateDictOfSpecies
         
+        c2 = 1 
+        
         while true
           filter_by_type_index = 1 # index of the option "type filter", might change if option to choose a moveset
           filter_by_move_index = 2 # index of the option "move filter", might change if option to choose a moveset
@@ -2806,7 +2838,7 @@ class SCWantedDataComplete
           end
           
           msg = "Choose a letter (" + self.filterMessage + ")"
-          c2 = pbMessage(msg, commands2, -1, nil, 1)
+          c2 = pbMessage(msg, commands2, -1, nil, c2)
           
           if c2 == 0 
             break 

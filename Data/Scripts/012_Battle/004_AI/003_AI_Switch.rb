@@ -23,14 +23,14 @@ class PokeBattle_AI
         moveType = moveData[MOVE_TYPE]
         typeMod = pbCalcTypeMod(moveType,target,battler)
         if PBTypes.superEffective?(typeMod) && moveData[MOVE_BASE_DAMAGE]>50
-          switchChance = (moveData[MOVE_BASE_DAMAGE]>70) ? 30 : 20
+          switchChance = (moveData[MOVE_BASE_DAMAGE]>70) ? 80 : 40
           shouldSwitch = (pbAIRandom(100)<switchChance)
         end
       end
     end
     # Pokémon can't do anything (must have been in battle for at least 5 rounds)
     if !@battle.pbCanChooseAnyMove?(idxBattler) &&
-       battler.turnCount && battler.turnCount>=5
+       battler.turnCount && battler.turnCount>=0
       shouldSwitch = true
     end
     # Pokémon is Perish Songed and has Baton Pass
@@ -112,15 +112,15 @@ class PokeBattle_AI
           typeMod = pbCalcTypeModPokemon(pkmn,battler.pbDirectOpposing(true))
           if PBTypes.superEffective?(typeMod.to_f/PBTypeEffectivenesss::NORMAL_EFFECTIVE)
             # Greater weight if new Pokemon's type is effective against target
-            weight = 85
+            weight = 100
           end
           list.unshift(i) if pbAIRandom(100)<weight   # Put this Pokemon first
         elsif moveType>=0 && PBTypes.resistant?(pbCalcTypeMod(moveType,battler,battler))
-          weight = 40
+          weight = 65
           typeMod = pbCalcTypeModPokemon(pkmn,battler.pbDirectOpposing(true))
           if PBTypes.superEffective?(typeMod.to_f/PBTypeEffectivenesss::NORMAL_EFFECTIVE)
             # Greater weight if new Pokemon's type is effective against target
-            weight = 60
+            weight = 80
           end
           list.unshift(i) if pbAIRandom(100)<weight   # Put this Pokemon first
         else

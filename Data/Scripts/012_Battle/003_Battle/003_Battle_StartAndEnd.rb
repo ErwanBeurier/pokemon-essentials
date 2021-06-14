@@ -22,9 +22,12 @@ class PokeBattle_Battle
     #       trainer, it's possible that battlers will be unable to move close
     #       enough to hit each other if there are multiple trainers on each
     #       side.
+    
     if trainerBattle? && (@sideSizes[0]>2 || @sideSizes[1]>2) &&
-       @player.length>1 && @opponent.length>1 && !@battleRoyale
-      raise _INTL("Can't have battles larger than 2v2 where both sides have multiple trainers")
+       @player.length>1 && @opponent.length>1 && 
+       (@sideSizes[0] != @player.length || @sideSizes[1] != @opponent.length) #&&
+       # !@battleRoyale
+      raise _INTL("Can't have battles larger than 2v2 where both sides have uneven number of trainers\nSizes={1}-{2}, trainers={3}-{4}", @sideSizes[0], @sideSizes[1], @player.length, @opponent.length)
     end
     # Find out how many Pokémon each trainer has
     side1counts = pbAbleTeamCounts(0)

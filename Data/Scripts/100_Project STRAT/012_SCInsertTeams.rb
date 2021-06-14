@@ -9,7 +9,7 @@
 
 
 # Reads the database of Teams and inserts the team it finds. 
-def scInsertTeamToStorage(tier, id)
+def scInsertTeamToStorage(tier, id, giveToPlayer = false)
   # trainerdata = pbLoadTrainer(PBTrainers::POKEMONTRAINER_Red, "Player", id)
   
   party = []
@@ -68,7 +68,13 @@ def scInsertTeamToStorage(tier, id)
   end
   
 	scTeamStorage.addTeam(team_name, party, tier)
+  
+  if giveToPlayer
+		$Trainer.party = scConvertListToParty(party, nil)
+    scSetTierOfTeam(tier)
+  end 
 end 
+
 
 
 
